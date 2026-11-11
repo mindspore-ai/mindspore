@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Preserved SparseSegmentMean primitive regression against NumPy."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -19,14 +20,14 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.ops as ops
+from mindspore.ops.operations.math_ops import SparseSegmentMean
 from mindspore import Tensor
 
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
-        self.op = ops.sparse_segment_mean
+        super().__init__()
+        self.op = SparseSegmentMean()
 
     def construct(self, x, indices, segment_ids):
         return self.op(x, indices, segment_ids)

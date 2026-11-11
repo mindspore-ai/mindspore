@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test auto parallel reshape."""
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -34,7 +36,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -45,7 +47,7 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x):
@@ -54,7 +56,7 @@ class GradWrap(nn.Cell):
 
 class NetWithLossTwoInput(nn.Cell):
     def __init__(self, network):
-        super(NetWithLossTwoInput, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -65,7 +67,7 @@ class NetWithLossTwoInput(nn.Cell):
 
 class NetWithReduceLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithReduceLoss, self).__init__()
+        super().__init__()
         self.mean = P.ReduceMean(keep_dims=False)
         self.network = network
 
@@ -76,7 +78,7 @@ class NetWithReduceLoss(nn.Cell):
 
 class GradWrapTwoInput(nn.Cell):
     def __init__(self, network):
-        super(GradWrapTwoInput, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x, y):
@@ -398,7 +400,7 @@ def test_appeq_reshape():
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.app_eq = P.ApproximateEqual(2.)
+            self.app_eq = _private_math.ApproximateEqual(2.)
             self.reshape = P.Reshape()
             self.cast = P.Cast()
             self.relu = P.ReLU().shard(((1, 8),))

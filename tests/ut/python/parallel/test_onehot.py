@@ -39,7 +39,7 @@ class NetWithLoss(nn.Cell):
         self.one_hot = P.OneHot(axis=axis).shard(strategy3)
         self.on_value = Tensor(2.0, ms.float32)
         self.off_value = Tensor(1.0, ms.float32)
-        self.loss = P.SoftmaxCrossEntropyWithLogits().shard(strategy4)
+        self.loss = P._inner_ops.SoftmaxCrossEntropyWithLogits().shard(strategy4)
         self.network = network
 
     def construct(self, x, y, b):

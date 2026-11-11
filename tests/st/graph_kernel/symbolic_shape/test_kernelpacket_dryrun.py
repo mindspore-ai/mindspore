@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test kernelpacket dryrun."""
 import os
 import numpy as np
 import mindspore as ms
@@ -33,8 +34,8 @@ def test_dynamic_broadcast_to():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
-            self.shape = ops.TensorShape()
+            super().__init__()
+            self.shape = ops.operations._inner_ops.TensorShape()
             self.bt = DynamicBroadcastTo()
 
         def construct(self, x, y):

@@ -13,17 +13,22 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test tensor shape."""
 import numpy as np
+
 import pytest
+
+from mindspore.ops.operations import _inner_ops
 from mindspore import ops
 import mindspore as ms
+
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 
 
 @test_utils.run_with_cell
 def tensor_shape_forward_func(x):
-    return ops.TensorShape()(x)
+    return _inner_ops.TensorShape()(x)
 
 
 @test_utils.run_with_cell
@@ -31,7 +36,8 @@ def tensor_shape_backward_func(x):
     return ops.grad(tensor_shape_forward_func, (0,))(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_tensor_shape_forward(mode):
@@ -47,7 +53,8 @@ def test_tensor_shape_forward(mode):
     assert (out.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_tensor_shape_backward(mode):
@@ -63,7 +70,8 @@ def test_tensor_shape_backward(mode):
     assert (grad.asnumpy() == expect_grad).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', mem_peak=2048.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_tensor_shape_vmap(mode):

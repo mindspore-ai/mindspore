@@ -12,21 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test log uniform candidate sampler."""
 from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
 from mindspore.common import dtype as mstype
 
 
 class Net(nn.Cell):
     def __init__(self, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0):
-        super(Net, self).__init__()
-        self.sampler = P.LogUniformCandidateSampler(num_true, num_sampled, unique, range_max, seed)
+        super().__init__()
+        self.sampler = _inner_ops.LogUniformCandidateSampler(num_true, num_sampled, unique, range_max, seed)
 
     def construct(self, x):
         return self.sampler(x)

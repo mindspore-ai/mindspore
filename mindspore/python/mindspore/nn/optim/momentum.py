@@ -15,7 +15,8 @@
 """momentum"""
 from __future__ import absolute_import
 
-from mindspore.ops import functional as F, composite as C, operations as P
+from mindspore.ops.operations import _inner_ops
+from mindspore.ops import functional as F, composite as C
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.graph.api import jit
@@ -184,7 +185,7 @@ class Momentum(Optimizer):
         self.params = self._parameters
         self.use_nesterov = Validator.check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
-        self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)
+        self.opt = _inner_ops.ApplyMomentum(use_nesterov=self.use_nesterov)
 
 
     @jit(backend="ms_backend")

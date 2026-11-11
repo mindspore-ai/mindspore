@@ -12,20 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-import pytest
-
+"""Test gathernd further."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
 from mindspore.nn import Cell, Momentum
 from mindspore.ops import operations as P
 from mindspore.train import Model
+
+import numpy as np
+
+import pytest
+
 from tests.dataset_mock import MindData
 
 
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
-        super(Dataset, self).__init__(size=length)
+        super().__init__(size=length)
         self.predict = predict
         self.label = label
         self.index = 0
@@ -50,7 +54,7 @@ class Net(Cell):
         self.mul = P.Mul().shard(strategy1)
         self.w1 = Parameter(Tensor(np.ones(w1_shape), dtype=ms.float32), "w1")
         self.indices = Tensor(np.ones(indices_shape), dtype=ms.int32)
-        self.gathernd = P.GatherNd().shard(strategy2)
+        self.gathernd = _inner_ops.GatherNd().shard(strategy2)
         self.relu = P.ReLU().shard(strategy3)
 
     def construct(self, x, b):
@@ -66,7 +70,7 @@ class Net2(Cell):
         self.mul = P.Mul().shard(strategy1)
         self.w1 = Parameter(Tensor(np.ones(w1_shape), dtype=ms.float32), "w1")
         self.indices = Tensor(np.ones(indices_shape), dtype=ms.int32)
-        self.gathernd = P.GatherNd().shard(strategy2)
+        self.gathernd = _inner_ops.GatherNd().shard(strategy2)
         self.relu = P.ReLU().shard(strategy3)
 
     def construct(self, x, b):
@@ -81,7 +85,7 @@ class Net3(Cell):
         self.mul = P.Mul().shard(strategy1)
         self.w1 = Parameter(Tensor(np.ones(w1_shape), dtype=ms.float32), "w1")
         self.indices = Tensor(np.ones(indices_shape), dtype=ms.int32)
-        self.gathernd = P.GatherNd().shard(strategy2)
+        self.gathernd = _inner_ops.GatherNd().shard(strategy2)
         self.relu = P.ReLU().shard(strategy3)
 
     def construct(self, x, b):

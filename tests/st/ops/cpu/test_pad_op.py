@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test pad op."""
 import mindspore.context as context
 import mindspore.nn as nn
 import numpy as np
@@ -26,8 +27,8 @@ from tests.mark_utils import arg_mark
 def vmap_case():
     class Net(nn.Cell):
         def __init__(self, paddings):
-            super(Net, self).__init__()
-            self.pad = ops.Pad(paddings)
+            super().__init__()
+            self.pad = ops.operations._inner_ops.Pad(paddings)
 
         def construct(self, x):
             return self.pad(x)
@@ -47,7 +48,7 @@ def vmap_case():
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_pad_vmap_cpu():
     """
-    Feature: test ops.Pad vmap.
+    Feature: test ops.operations._inner_ops.Pad vmap.
     Description: inputs with batch.
     Expectation: the result match with expect
     """
@@ -59,8 +60,8 @@ def test_pad_vmap_cpu():
 
 class PadNet(nn.Cell):
     def __init__(self, paddings):
-        super(PadNet, self).__init__()
-        self.pad = ops.Pad(paddings)
+        super().__init__()
+        self.pad = ops.operations._inner_ops.Pad(paddings)
 
     def construct(self, x):
         return self.pad(x)
@@ -72,7 +73,7 @@ class PadNet(nn.Cell):
                                    np.int64, np.float16, np.float64, np.complex64, np.complex128])
 def test_pad_dtype(mode, dtype):
     """
-    Feature: test ops.Pad forward.
+    Feature: test ops.operations._inner_ops.Pad forward.
     Description: inputs with different data type.
     Expectation: the result match with expect
     """

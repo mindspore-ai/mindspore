@@ -16,6 +16,7 @@
 """vmap base functions"""
 from __future__ import absolute_import
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -26,7 +27,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.function import _VmapGeneralPreprocess
 from mindspore.ops.primitive import Primitive, _PrimitiveC
-from mindspore.ops.operations.random_ops import UniformCandidateSampler, RandomShuffle
+from mindspore.ops.operations.random_ops import UniformCandidateSampler
 from mindspore.ops._grad_experimental.grad_base import BpropRegistry as VmapRuleRegistry
 from mindspore._c_expression import PrimitiveFunction_
 
@@ -525,15 +526,12 @@ _ops_vmap_clone_prim_dict = {
     "ApplyRMSProp": P.ApplyRMSProp,
     'Adam': P.Adam,
     "ApplyCenteredRMSProp": P.ApplyCenteredRMSProp,
-    "ApplyFtrl": P.ApplyFtrl,
+    "ApplyFtrl": _inner_ops.ApplyFtrl,
     "ApplyGradientDescent": P.ApplyGradientDescent,
-    "ApplyProximalAdagrad": P.ApplyProximalAdagrad,
-    "ApplyProximalGradientDescent": P.ApplyProximalGradientDescent,
+    "ApplyProximalAdagrad": _inner_ops.ApplyProximalAdagrad,
     "ApplyAdamWithAmsgrad": P.ApplyAdamWithAmsgrad,
     "ApplyAdamWithAmsgradV2": P.ApplyAdamWithAmsgradV2,
-    "ApplyPowerSign": P.ApplyPowerSign,
-    "ApplyAdagradDA": P.ApplyAdagradDA,
-    "ApplyAdagradV2": P.ApplyAdagradV2,
+    "ApplyAdagradV2": _inner_ops.ApplyAdagradV2,
     "UniformCandidateSampler": UniformCandidateSampler,
     "UniqueWithPad": P.UniqueWithPad,
     "STFT": math_ops.STFT,
@@ -548,8 +546,6 @@ _ops_vmap_clone_prim_dict = {
     "InstanceNorm": nps.InstanceNorm,
     "InstanceNormGrad": G.InstanceNormGrad,
     "SparseApplyAdagrad": P.SparseApplyAdagrad,
-    "SparseApplyAdagradV2": P.SparseApplyAdagradV2,
-    "SparseApplyFtrl": P.SparseApplyFtrl,
-    "RandomShuffle": RandomShuffle,
-    "RandomChoiceWithMask": P.RandomChoiceWithMask
+    "SparseApplyFtrl": _inner_ops.SparseApplyFtrl,
+    "RandomChoiceWithMask": _inner_ops.RandomChoiceWithMask
 }

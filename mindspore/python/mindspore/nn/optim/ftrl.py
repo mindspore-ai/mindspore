@@ -15,6 +15,7 @@
 """FTRL"""
 from __future__ import absolute_import
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.graph.api import jit
 from mindspore import _checkparam as validator
@@ -222,9 +223,9 @@ class FTRL(Optimizer):
         self.lr_power = lr_power
         if not self.is_group:
             self.decay_flags = tuple(True for x in self._parameters)
-        self.opt = P.ApplyFtrl(use_locking=use_locking)
+        self.opt = _inner_ops.ApplyFtrl(use_locking=use_locking)
         self.use_locking = use_locking
-        self.sparse_opt = P.SparseApplyFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
+        self.sparse_opt = _inner_ops.SparseApplyFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
 
     @jit
     def construct(self, grads):
@@ -260,6 +261,6 @@ class FTRL(Optimizer):
             self.sparse_opt = P.FusedSparseFtrl(self.lr, self.l1, self.l2, self.lr_power, self.use_locking)
             self.sparse_opt.set_device("CPU")
         else:
-            self.sparse_opt = P.SparseApplyFtrl(self.lr, self.l1, self.l2, self.lr_power, self.use_locking)
+            self.sparse_opt = _inner_ops.SparseApplyFtrl(self.lr, self.l1, self.l2, self.lr_power, self.use_locking)
 
         self._target = value

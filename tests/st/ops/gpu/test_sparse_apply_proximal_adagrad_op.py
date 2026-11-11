@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test sparse apply proximal adagrad op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore as ms
 from mindspore import Tensor, Parameter
-from mindspore.ops import operations as P
+
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -29,8 +31,8 @@ context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 class Net(nn.Cell):
 
     def __init__(self, var, accum, lr, l1, l2):
-        super(Net, self).__init__()
-        self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
+        super().__init__()
+        self.sparse_apply_proximal_adagrad = _inner_ops.SparseApplyProximalAdagrad()
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
         self.lr = lr

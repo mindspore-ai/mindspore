@@ -1,5 +1,6 @@
+"""Test floordiv."""
 import numpy as np
-import mindspore.ops.operations as op
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore import Tensor
 from mindspore.common import dtype
 from ..share.ops.primitive.floordiv_ops import FloorDivFactory
@@ -151,7 +152,7 @@ def test_p_floordiv_forward_right_input_int():
     """
     left_input_np = np.random.randn(13, 8).astype(np.float32)
     right_input_np = 5
-    net = op.FloorDiv()
+    net = _private_math.FloorDiv()
     out = net(Tensor(left_input_np), right_input_np)
     assert "float32" in str(out.dtype).lower()
 
@@ -167,7 +168,7 @@ def test_p_floordiv_forward_left_input_bool():
         2. the result is the same as psjit
     """
     right_input_np = np.random.randn(5, 3).astype(np.float16)
-    net = op.FloorDiv()
+    net = _private_math.FloorDiv()
     out = net(True, Tensor(right_input_np))
     assert "float16" in str(out.dtype).lower()
 

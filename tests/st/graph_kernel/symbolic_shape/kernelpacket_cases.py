@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+"""Kernelpacket cases."""
 import numpy as np
 import mindspore as ms
 from mindspore import ops, nn, Tensor, JitConfig
@@ -39,7 +40,7 @@ def test_reshape():
 
     class ReshapeNet(nn.Cell):
         def __init__(self):
-            super(ReshapeNet, self).__init__()
+            super().__init__()
             self.shape = ops.Shape()
             self.reshape = ops.Reshape()
 
@@ -72,7 +73,7 @@ def test_reducesum():
 
     class ReduceSumNet(nn.Cell):
         def __init__(self):
-            super(ReduceSumNet, self).__init__()
+            super().__init__()
             self.add = ops.Add()
             self.shape = ops.Shape()
             self.reducesum = ops.ReduceSum(True, True)
@@ -130,9 +131,9 @@ def test_stridedslice():
 
     class SdNet(nn.Cell):
         def __init__(self):
-            super(SdNet, self).__init__()
+            super().__init__()
             self.stack = ops.Stack()
-            self.tensorshape = ops.TensorShape()
+            self.tensorshape = ops.operations._inner_ops.TensorShape()
             self.stridedslice = ops.StridedSlice(2, 2, 0, 0, 1)
 
         def construct(self, x):
@@ -181,7 +182,7 @@ def test_matmul_only_shape():
 
 class GradNet(nn.Cell):
     def __init__(self, net):
-        super(GradNet, self).__init__()
+        super().__init__()
         self.net = net
         self.grad = ops.composite.GradOperation(get_all=True)
 
@@ -198,7 +199,7 @@ def test_concat_grad():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.abs = ops.Abs()
 
         def construct(self, x, y):
@@ -223,7 +224,7 @@ def test_stridedslice_grad():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.stridedslice = ops.StridedSlice(0, 0, 0, 0, 0)
 
         def construct(self, x, y):

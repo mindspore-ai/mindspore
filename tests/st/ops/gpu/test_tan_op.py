@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test tan op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.nn as nn
 import mindspore.ops as ops
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops.operations import _inner_ops as inner
+
 
 
 def tan(nptype):
@@ -31,7 +32,7 @@ def tan(nptype):
     x_np = np.random.rand(2, 3, 4, 4).astype(nptype)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    output_ms = P.Tan()(Tensor(x_np))
+    output_ms = _private_math.Tan()(Tensor(x_np))
     output_np = np.tan(x_np)
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
 
@@ -104,9 +105,9 @@ def test_tan_functional_func_check():
 
 class DynamicShapeTanNet(nn.Cell):
     def __init__(self):
-        super(DynamicShapeTanNet, self).__init__()
-        self.tan_func = P.Tan()
-        self.gpu_convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
+        super().__init__()
+        self.tan_func = _private_math.Tan()
+        self.gpu_convert_to_dynamic_shape = _private_math.GpuConvertToDynamicShape()
 
     def construct(self, in_x):
         data = self.gpu_convert_to_dynamic_shape(in_x)
@@ -135,7 +136,7 @@ def test_tan_dy_shape():
 
 
 def tan_graph(x):
-    return P.Tan()(x)
+    return _private_math.Tan()(x)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')

@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test dynamic sequence to tensor."""
 from tests.mark_utils import arg_mark
 import numpy as np
-import pytest
+
 
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
@@ -32,7 +33,7 @@ class Net(nn.Cell):
     def __init__(self):
         super().__init__()
         self.tuple_to_tensor = seq.TupleToTensor()
-        self.scalar_to_tensor = ops.ScalarToTensor()
+        self.scalar_to_tensor = ops.operations._inner_ops.ScalarToTensor()
 
     def construct(self, x, y):
         return self.tuple_to_tensor(x, mstype.float32), self.scalar_to_tensor(y, mstype.int64)

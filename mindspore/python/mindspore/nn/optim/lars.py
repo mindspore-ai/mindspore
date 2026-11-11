@@ -15,6 +15,7 @@
 """lars optimizer"""
 from __future__ import absolute_import
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -137,7 +138,7 @@ class LARS(Optimizer):
         self.decay_flags = optimizer.decay_flags
         self.reciprocal_scale = optimizer.reciprocal_scale
         self.need_scale = optimizer.need_scale
-        self.lars = P.LARSUpdate(epsilon, coefficient, use_clip)
+        self.lars = _inner_ops.LARSUpdate(epsilon, coefficient, use_clip)
         self.cast = P.Cast()
         self.loss_scale = optimizer.loss_scale
 

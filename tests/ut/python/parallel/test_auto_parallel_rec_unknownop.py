@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test auto parallel rec unknownop."""
 import numpy as np
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 from mindspore import context, Tensor
 from mindspore.graph.api import _cell_graph_executor
@@ -39,7 +41,7 @@ class UnknownOp_Net(Cell):
         self.seed2 = seed2
         self.cast = P.Cast()
         self.mul = P.Mul()
-        self.random_choice_with_mask = P.RandomChoiceWithMask(count=256, seed=self.seed,
+        self.random_choice_with_mask = _inner_ops.RandomChoiceWithMask(count=256, seed=self.seed,
                                                               seed2=self.seed2)
 
     def construct(self, input_a, label):
@@ -89,7 +91,7 @@ class ParallelStrategySearchNet(Cell):
         self.cos = P.Cos()
         self.prelu = P.PReLU()
         self.matmul = P.MatMul(transpose_b=transpose_b)
-        self.l2norm = P.L2Normalize(axis=(1 - axis))
+        self.l2norm = P.L2Normalize(axis=1 - axis)
         self.tensoradd = P.TensorAdd()
         self.strided_slice = P.StridedSlice()
         self.dense = Dense(in_channels=6,

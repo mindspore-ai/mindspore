@@ -12,15 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test isnan op."""
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.context as context
 import mindspore.nn as nn
-import numpy as np
-import pytest
 from mindspore.common import dtype as mstype
-
 import mindspore as ms
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
+import numpy as np
+
+import pytest
+
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
@@ -28,8 +31,8 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 class NetIsNan(nn.Cell):
     def __init__(self):
-        super(NetIsNan, self).__init__()
-        self.isnan = P.IsNan()
+        super().__init__()
+        self.isnan = _private_math.IsNan()
 
     def construct(self, x):
         return self.isnan(x)

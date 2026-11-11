@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test mul div bn."""
 import numpy as np
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 import mindspore.context as context
 from mindspore.graph.api import _cell_graph_executor
@@ -47,7 +49,7 @@ class ParallelFloorDivBpropNet(Cell):
         self.mul_weight = Parameter(Tensor(mul_np), name="mul_weight")
         self.floordiv_weight = Parameter(Tensor(floordiv_np), name="floordiv_weight")
         self.mul = TwoInputBpropOperator()
-        self.floor_div = P.FloorDiv()
+        self.floor_div = _private_math.FloorDiv()
         self.bn = nn.BatchNorm1d(num_features=96)
         if strategy is not None:
             self.mul.op.shard(strategy2)

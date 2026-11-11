@@ -1,15 +1,16 @@
+"""Shared InplaceSub checks for the two graph capture modes."""
 from ...utils import allclose_nparray
+from mindspore.ops.operations import _inplace_ops
 from mindspore import Tensor, jit, context
-from mindspore import ops
+
 from mindspore.nn import Cell
-import mindspore.ops.operations as op
 import numpy as np
 
 
 class InplaceSub(Cell):
     def __init__(self, indices):
         super().__init__()
-        self.op = op.InplaceSub(indices)
+        self.op = _inplace_ops.InplaceSub(indices)
 
     def construct(self, input_x, input_v):
         return self.op(input_x, input_v)
@@ -38,7 +39,7 @@ class InplaceSubFactory():
         return out.asnumpy()
 
     def forward_mindspore_func_impl(self):
-        out = ops.inplace_sub(self.input_x_me, self.input_v_me, self.indices)
+        out = _inplace_ops.InplaceSub(self.indices)(self.input_x_me, self.input_v_me)
         return out.asnumpy()
 
     def forward_cmp(self):

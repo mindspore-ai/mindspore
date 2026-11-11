@@ -12,24 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
-
-import numpy as np
-import pytest
-
+"""Test gathernd op."""
+from mindspore.ops.operations import _inner_ops
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
 from mindspore.ops.functional import vmap
+
+from tests.mark_utils import arg_mark
+
+import numpy as np
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class OpNetWrapper(nn.Cell):
     def __init__(self, op):
-        super(OpNetWrapper, self).__init__()
+        super().__init__()
         self.op = op
 
     def construct(self, *inputs):
@@ -38,7 +39,7 @@ class OpNetWrapper(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_case1_basic_func():
-    op = P.GatherNd()
+    op = _inner_ops.GatherNd()
     op_wrapper = OpNetWrapper(op)
 
     indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
@@ -51,7 +52,7 @@ def test_case1_basic_func():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_case2_indices_to_matrix():
-    op = P.GatherNd()
+    op = _inner_ops.GatherNd()
     op_wrapper = OpNetWrapper(op)
 
     indices = Tensor(np.array([[1], [0]]), mindspore.int32)
@@ -64,7 +65,7 @@ def test_case2_indices_to_matrix():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_case3_indices_to_3d_tensor():
-    op = P.GatherNd()
+    op = _inner_ops.GatherNd()
     op_wrapper = OpNetWrapper(op)
 
     indices = Tensor(np.array([[1]]), mindspore.int32)  # (1, 1)
@@ -78,7 +79,7 @@ def test_case3_indices_to_3d_tensor():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_case4():
-    op = P.GatherNd()
+    op = _inner_ops.GatherNd()
     op_wrapper = OpNetWrapper(op)
 
     indices = Tensor(np.array([[0, 1], [1, 0]]), mindspore.int32)  # (2, 2)
@@ -92,7 +93,7 @@ def test_case4():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_case5():
-    op = P.GatherNd()
+    op = _inner_ops.GatherNd()
     op_wrapper = OpNetWrapper(op)
 
     indices = Tensor(np.array([[0, 0, 1], [1, 0, 1]]), mindspore.int32)  # (2, 3)
@@ -106,7 +107,7 @@ def test_case5():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_case6():
-    op = P.GatherNd()
+    op = _inner_ops.GatherNd()
     op_wrapper = OpNetWrapper(op)
 
     indices = Tensor(np.array([[[0, 0]], [[0, 1]]]), mindspore.int32)  # (2, 1, 2)
@@ -120,7 +121,7 @@ def test_case6():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_case7():
-    op = P.GatherNd()
+    op = _inner_ops.GatherNd()
     op_wrapper = OpNetWrapper(op)
 
     indices = Tensor(np.array([[[1]], [[0]]]), mindspore.int32)  # (2, 1, 1)
@@ -134,7 +135,7 @@ def test_case7():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_case8():
-    op = P.GatherNd()
+    op = _inner_ops.GatherNd()
     op_wrapper = OpNetWrapper(op)
 
     indices = Tensor(np.array([[[0, 1], [1, 0]], [[0, 0], [1, 1]]]), mindspore.int32)  # (2, 2, 2)
@@ -148,7 +149,7 @@ def test_case8():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 def test_case9():
-    op = P.GatherNd()
+    op = _inner_ops.GatherNd()
     op_wrapper = OpNetWrapper(op)
 
     indices = Tensor(np.array([[[0, 0, 1], [1, 0, 1]], [[0, 1, 1], [1, 1, 0]]]), mindspore.int32)  # (2, 2, 3)
@@ -169,7 +170,7 @@ def test_gather_nd_vmap():
     """
 
     def cal_gather_nd(x, index):
-        return P.GatherNd()(x, index)
+        return _inner_ops.GatherNd()(x, index)
 
     x = Tensor(np.array([[[[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
                           [[2, 2, 2, 2], [2, 2, 2, 2], [2, 2, 2, 2]]],

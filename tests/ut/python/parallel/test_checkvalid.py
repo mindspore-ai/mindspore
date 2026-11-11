@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-import pytest
-
+"""Test checkvalid."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.train import Model
+
+import numpy as np
+
+import pytest
 
 
 def setup_function():
@@ -29,7 +32,7 @@ def setup_function():
 class Net(Cell):
     def __init__(self, weight, strategy):
         super().__init__()
-        self.check_valid = P.CheckValid().shard(strategy)
+        self.check_valid = _inner_ops.CheckValid().shard(strategy)
         self.mul = P.Mul()
         cast_strategy = None
         if strategy:

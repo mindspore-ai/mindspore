@@ -156,8 +156,6 @@ class StandardNormal(Primitive):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
-    Refer to :func:`mindspore.ops.standard_normal` for more details.
-
     Note:
         - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
           and the random seed determines the initial value of this random number. If the random seed is the same in two
@@ -268,54 +266,7 @@ class StandardLaplace(Primitive):
 
 
 class RandomGamma(Primitive):
-    r"""
-    `mindspore.ops.RandomGamma` is deprecated from version 2.10.0 and will be removed in a future version.
-
-    Produces random positive floating-point values x, distributed according to probability density function:
-
-    Note:
-        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed determines the initial value of this random number. If the random seed is the same in two
-          separate calls, the random number generated will not change.
-        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
-          to worry about which seed is more important.
-
-    Args:
-        seed (int, optional): The operator-level random seed, used to generate random numbers,
-            must be non-negative. Default: ``0`` .
-        seed2 (int, optional): The global random seed, which combines with the operator-level
-            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
-
-    Inputs:
-        - **shape** (Tensor) - The shape of random tensor to be generated. It must be constant value.
-        - **alpha** (Tensor) - α is the shape parameter of RandomGamma distribution, it mainly determines the
-          shape of the graph curve. It must be greater than 0 and have date type float32.
-
-    Outputs:
-        Tensor. The shape should be equal to the concat shape between the input `shape` and `alpha`.
-        The dtype is the same type as alpha.
-
-    Raises:
-        TypeError: If data type of `seed` or `seed2` is not int.
-        TypeError: If `shape` or `alpha` is not a Tensor.
-        TypeError: If data type of `alpha` is not float32.
-        ValueError: If `shape` is not a constant value.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> shape = Tensor(np.array([3, 1, 2]), mstype.int32)
-        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
-        >>> gamma = ops.RandomGamma(seed=3)
-        >>> output = gamma(shape, alpha)
-        >>> result = output.shape
-        >>> print(result)
-        (3, 1, 2, 2, 2)
-    """
+    """Internal RandomGamma primitive."""
 
     @deprecated("2.10.0", None, False)
     @prim_attr_register
@@ -630,59 +581,7 @@ class Poisson(PrimitiveWithInfer):
 
 
 class RandomPoisson(Primitive):
-    r"""
-    `mindspore.ops.RandomPoisson` is deprecated from version 2.10.0 and will be removed in a future version.
-
-    Produces random non-negative values i, distributed according to discrete probability function:
-
-    .. math::
-        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
-
-    Note:
-        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed determines the initial value of this random number. If the random seed is the same in two
-          separate calls, the random number generated will not change.
-        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
-          to worry about which seed is more important.
-
-    Args:
-        seed (int, optional): The operator-level random seed, used to generate random numbers,
-            must be non-negative. Default: ``0`` .
-        seed2 (int, optional): The global random seed, which combines with the operator-level
-            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
-        dtype (mindspore.dtype, optional): The type of output. Default: ``mstype.int64`` .
-
-    Inputs:
-        - **shape** (Tensor) - The shape of random tensor to be generated, 1-D Tensor, whose dtype must be in
-          [int32, int64].
-        - **rate** (Tensor) - μ parameter the distribution was constructed with. The parameter defines mean number
-          of occurrences of the event. Its type must be in [float16, float32, float64, int32, int64].
-
-    Outputs:
-        Tensor. Its shape is :math:`(*shape, *rate.shape)`. Its type is specified by `dtype`.
-
-    Raises:
-        TypeError: If `shape` is not a Tensor or its dtype is not int32 or int64.
-        TypeError: If `dtype` is not int32 or int64.
-        ValueError: If `shape` is not a 1-D tensor.
-        ValueError: If `shape` elements are negative.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> shape = Tensor(np.array([2, 3]), mstype.int32)
-        >>> rate = Tensor(np.array([2, 2]), mstype.int32)
-        >>> seed = 0
-        >>> seed2 = 0
-        >>> random_poisson = ops.RandomPoisson(seed=seed, seed2=seed2)
-        >>> output = random_poisson(shape,rate)
-        >>> print(output.shape)
-        (2, 3, 2)
-    """
+    """Internal RandomPoisson primitive."""
 
     @deprecated("2.10.0", None, False)
     @prim_attr_register
@@ -835,51 +734,7 @@ class UniformReal(Primitive):
 
 
 class RandomChoiceWithMask(Primitive):
-    """
-    Generates a random sample as index tensor with a mask tensor from a given tensor.
-
-    Refer to :func:`mindspore.ops.choice_with_mask` for more details.
-
-    Note:
-        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed determines the initial value of this random number. If the random seed is the same in two
-          separate calls, the random number generated will not change.
-        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
-          to worry about which seed is more important.
-
-    Args:
-        count (int, optional): Number of items expected to get and the number must be greater than 0. Default: ``256`` .
-        seed (int, optional): The operator-level random seed, used to generate random numbers,
-            must be non-negative. Default: ``0`` .
-        seed2 (int, optional): The global random seed, which combines with the operator-level
-            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
-
-    Inputs:
-        - **input_x** (Tensor[bool]) - The input tensor.
-          The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
-
-    Outputs:
-        Two tensors, the first one is the index tensor and the other one is the mask tensor.
-
-        - **index** (Tensor) - The output shape is 2-D, its shape is :math:`(count, rank of input_x)`.
-        - **mask** (Tensor) - The output shape is 1-D, its shape is :math:`(count)`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> rnd_choice_mask = ops.RandomChoiceWithMask()
-        >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool_))
-        >>> output_y, output_mask = rnd_choice_mask(input_x)
-        >>> result = output_y.shape
-        >>> print(result)
-        (256, 2)
-        >>> result = output_mask.shape
-        >>> print(result)
-        (256,)
-    """
+    """Internal RandomChoiceWithMask primitive."""
 
     @prim_attr_register
     def __init__(self, count=256, seed=0, seed2=0):
@@ -1018,48 +873,7 @@ class Multinomial(Primitive):
 
 
 class MultinomialWithReplacement(Primitive):
-    r"""
-    Returns a tensor where each row contains `numsamples` indices sampled from the multinomial distribution
-    with replacement. It diffs from `Multinomial` in that it allows the same outcome to be chosen multiple times.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.multinomial_with_replacement` for more details.
-
-    Note:
-        The rows of input do not need to sum to one (in which case we use the values as weights),
-        but must be non-negative, finite and have a non-zero sum.
-
-    Args:
-        numsamples (int): number of samples to draw, must be a nonnegative number.
-        replacement (bool, optional): Whether to draw with replacement or not. Default: ``False`` .
-
-    Inputs:
-        - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
-          dimensions.
-        - **seed** (Tensor) - If `seed` and 'offset' are both set to 0, the random number generator
-          is generated by a random seed. Otherwise, it is seeded by the given seed and offset.
-          Supported dtype: int64.
-        - **offset** (Tensor) - Offset used to avoid seed collision. Supported dtype: int64.
-
-    Outputs:
-        Tensor with the same rows as `x`, each row has `numsamples` sampled indices.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
-        >>> seed = Tensor(2, mstype.int64)
-        >>> offset = Tensor(5, mstype.int64)
-        >>> multinomialwithreplacement = ops.MultinomialWithReplacement(numsamples=2,replacement=True)
-        >>> output = multinomialwithreplacement(x, seed, offset)
-        >>> print(output)
-        [[1 1]]
-    """
+    """Internal MultinomialWithReplacement primitive."""
 
     @prim_attr_register
     def __init__(self, numsamples, replacement=False):
@@ -1071,59 +885,7 @@ class MultinomialWithReplacement(Primitive):
 
 
 class UniformCandidateSampler(Primitive):
-    r"""
-    `mindspore.ops.UniformCandidateSampler` is deprecated from version 2.10.0 and will be removed in a future version.
-
-    Uniform candidate sampler.
-
-    This function samples a set of classes(sampled_candidates) from [0, range_max-1] based on uniform distribution.
-
-    Refer to :func:`mindspore.ops.uniform_candidate_sampler` for more details.
-
-    .. warning::
-        - The Ascend backend does not support the reproducibility of random numbers, so
-          the `seed` parameter has no effect.
-        - The Ascend backend does not support dynamic shape scenarios currently.
-
-    Args:
-        num_true (int): The number of target classes in each training example.
-        num_sampled (int): The number of classes to randomly sample. The sampled_candidates will have a shape
-            of num_sampled. If unique=True, num_sampled must be less than or equal to range_max.
-        unique (bool): Whether all sampled classes in a batch are unique.
-        range_max (int): The number of possible classes, must be non-negative.
-        seed (int, optional): Used for random number generation, must be non-negative. If seed has a value of 0,
-            the seed will be replaced with a randomly generated value. Default: ``0`` .
-        remove_accidental_hits (bool, optional): Whether accidental hit is removed.
-            Accidental hit is when one of the true classes matches one of the sample classes.
-            Set ``True`` to remove which accidentally sampling the true class as sample class. Default: ``False`` .
-
-    Inputs:
-        - **true_classes** (Tensor) - A Tensor. The target classes with a Tensor shape of
-          :math:`(batch\_size, num\_true)`. The value range of the elements must be :math:`[0, range\_max)`.
-
-    Outputs:
-        - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
-          Shape: :math:`(num\_sampled, )`.
-        - **true_expected_count** (Tensor) - The expected counts under the sampling distribution of each
-          of true_classes. Shape: :math:`(batch\_size, num\_true)`.
-        - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
-          each of sampled_candidates. Shape: :math:`(num\_sampled, )`.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> sampler = ops.UniformCandidateSampler(1, 3, False, 4, 1)
-        >>> output1, output2, output3 = sampler(Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int64)))
-        >>> print(output1.shape)
-        (3,)
-        >>> print(output2.shape)
-        (5, 1)
-        >>> print(output3.shape)
-        (3,)
-    """
+    """Internal UniformCandidateSampler primitive."""
 
     @deprecated("2.10.0", None, False)
     @prim_attr_register
@@ -1153,57 +915,7 @@ class UniformCandidateSampler(Primitive):
 
 
 class LogUniformCandidateSampler(Primitive):
-    r"""
-    `mindspore.ops.LogUniformCandidateSampler` is deprecated from version 2.10.0 and will be removed
-    in a future version.
-
-    Generates random labels with a log-uniform distribution for sampled_candidates.
-
-    Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
-
-    Refer to :func:`mindspore.ops.log_uniform_candidate_sampler` for more details.
-
-    .. warning::
-        The Ascend backend does not support the reproducibility of random numbers, so
-        the `seed` parameter has no effect.
-
-    Args:
-        num_true (int, optional): The number of target classes per training example. Default: ``1`` .
-        num_sampled (int, optional): The number of classes to randomly sample. Default: ``5`` .
-        unique (bool, optional): Determines whether sample with rejection. If `unique` is ``True`` ,
-          all sampled classes in a batch are unique. Default: ``True`` .
-        range_max (int, optional): The number of possible classes. When `unique` is ``True`` ,
-          `range_max` must be greater than or equal to `num_sampled`. Default: ``5`` .
-        seed (int, optional): Random seed, must be non-negative. Default: ``0`` .
-
-    Inputs:
-        - **true_classes** (Tensor) - The target classes. With data type of int64 and
-          shape :math:`(batch\_size, num\_true)` .
-
-    Outputs:
-        Tuple of 3 Tensors.
-
-        - **sampled_candidates** (Tensor) - A Tensor with shape :math:`(num\_sampled,)`
-          and the same type as `true_classes`.
-        - **true_expected_count** (Tensor) - A Tensor with the same shape as `true_classes and` type float32.
-        - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> sampler = ops.LogUniformCandidateSampler(2, 5, True, 5)
-        >>> output1, output2, output3 = sampler(Tensor(np.array([[1, 7], [0, 4], [3, 3]])))
-        >>> print(output1, output2, output3)
-        [3 2 0 4 1]
-        [[0.92312991 0.49336370]
-         [0.99248987 0.65806371]
-         [0.73553443 0.73553443]]
-        [0.73553443 0.82625800 0.99248987 0.65806371 0.92312991]
-
-    """
+    """Internal LogUniformCandidateSampler primitive."""
 
     @deprecated("2.10.0", None, False)
     @prim_attr_register
@@ -1229,55 +941,6 @@ class LogUniformCandidateSampler(Primitive):
         self.unique = unique
         self.seed = Validator.check_number("seed", seed, 0, Validator.GE, self.name)
         self.add_prim_attr("side_effect_hidden", True)
-
-
-class RandomShuffle(Primitive):
-    r"""
-    Randomly shuffles a Tensor along its first dimension.
-
-    Note:
-        - Random seed: a set of regular random numbers can be obtained through some complex mathematical algorithms,
-          and the random seed determines the initial value of this random number. If the random seed is the same in two
-          separate calls, the random number generated will not change.
-        - Using the Philox algorithm to scramble seed and seed2 to obtain random seed so that the user doesn't need
-          to worry about which seed is more important.
-
-    Args:
-        seed (int, optional): The operator-level random seed, used to generate random numbers,
-            must be non-negative. Default: ``0`` .
-        seed2 (int, optional): The global random seed, which combines with the operator-level
-            random seed to determine the final generated random number, must be non-negative. Default: ``0`` .
-
-    Inputs:
-        - **x** (Tensor) - The Tensor need be shuffled.
-
-    Outputs:
-        Tensor. The shape and type are the same as the input `x`.
-
-    Raises:
-        TypeError: If data type of `seed` or `seed2` is not int.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
-        >>> shuffle = ops.RandomShuffle(seed=1, seed2=1)
-        >>> output = shuffle(x)
-        >>> print(output.shape)
-        (4,)
-    """
-
-    @prim_attr_register
-    def __init__(self, seed=0, seed2=0):
-        """Initialize RandomShuffle"""
-        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
-        self.add_prim_attr("side_effect_hidden", True)
-        Validator.check_non_negative_int(seed, "seed", self.name)
-        Validator.check_non_negative_int(seed2, "seed2", self.name)
 
 
 class Uniform(Primitive):

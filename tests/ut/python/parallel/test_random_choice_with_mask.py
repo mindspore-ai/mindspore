@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test random choice with mask."""
 import numpy as np
 import pytest
 
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 from mindspore import context, Tensor
 from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import Cell
-from mindspore.ops import operations as P
+
 
 
 def setup_function():
@@ -35,8 +37,8 @@ class Net(Cell):
     """
 
     def __init__(self, strategy=None):
-        super(Net, self).__init__()
-        self.random_choice_with_mask = P.RandomChoiceWithMask().shard(strategy)
+        super().__init__()
+        self.random_choice_with_mask = _inner_ops.RandomChoiceWithMask().shard(strategy)
 
     def construct(self, input_x):
         x = self.random_choice_with_mask(input_x)

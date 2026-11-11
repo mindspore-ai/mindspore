@@ -12,21 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-
+"""Test pad."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.graph.api import jit
-from mindspore.ops import operations as P
+
+
+import numpy as np
 
 context.set_context(device_target="Ascend")
 
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
-        self.pad = P.Pad(paddings=((3, 2), (2, 3)))
+        super().__init__()
+        self.pad = _inner_ops.Pad(paddings=((3, 2), (2, 3)))
 
     @jit
     def construct(self, x):

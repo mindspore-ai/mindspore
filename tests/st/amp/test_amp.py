@@ -14,6 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 from mindspore import ops, nn, Parameter, Tensor, context
 from mindspore.train.amp import auto_mixed_precision
@@ -36,7 +37,7 @@ def test_amp_white_black_list(mode):
             self.weight = Parameter(Tensor(np.random.randn(*weight_shape).astype(input_type_np)),
                                     name="weight")
             self.matmul = ops.MatMul()
-            self.tan = ops.Tan()
+            self.tan = _private_math.Tan()
 
         def construct(self, x):
             out1 = self.matmul(x, self.weight)

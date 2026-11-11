@@ -16,6 +16,8 @@
 """Define the grad rules of math related operations."""
 
 import numpy as np
+
+from mindspore.ops.operations import _inner_ops
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -231,7 +233,7 @@ def get_bprop_matrix_solve_ls(self):
     conjugate_transpose = ConjugateTranspose()
     shape = P.Shape()
     _complex = P.Complex()
-    scalar2tensor = P.ScalarToTensor()
+    scalar2tensor = _inner_ops.ScalarToTensor()
 
     def regularized_gramian_cholesky(matrix, l2, first_kind):
         matrix_dim = rank(matrix)
@@ -526,7 +528,7 @@ def _batch_matmul_shape_decrease(matrix_shape):
 def get_bprop_fft_with_size(self):
     """Grad definition for `FFTWithSize` operation."""
     complex_op = P.Complex()
-    to_tensor_op = P.ScalarToTensor()
+    to_tensor_op = _inner_ops.ScalarToTensor()
     type_op = P.DType()
     concat_op = P.Concat()
     concat_op_last = P.Concat(axis=-1)

@@ -22,6 +22,7 @@
 from __future__ import absolute_import
 from math import pi, log, floor
 
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore import context
 from mindspore import log as logger
 from mindspore import ops
@@ -143,19 +144,19 @@ ones_like_ = P.OnesLike()
 reduce_mean_ = P.ReduceMean()
 reduce_sum_ = P.ReduceSum()
 reshape_ = P.Reshape()
-scalar_to_tensor_ = P.ScalarToTensor()
+scalar_to_tensor_ = _private_math.ScalarToTensor()
 select_ = P.Select()
 selu_ = NN_OPS.SeLU()
 shape_ = P.Shape()
 sigmoid_ = P.Sigmoid()
 sign_ = P.Sign()
 slice_ = P.Slice()
-softplus_ = P.Softplus()
+softplus_ = _private_math.Softplus()
 softsign_ = P.Softsign()
 sqrt_ = P.Sqrt()
 square_ = P.Square()
 sub_ = P.Sub()
-tensor_shape_ = P.TensorShape()
+tensor_shape_ = _private_math.TensorShape()
 tensor_to_tuple_ = TensorToTuple()
 transpose_ = P.Transpose()
 tuple_to_tensor_ = TupleToTensor()
@@ -3173,8 +3174,6 @@ def softsign(x):
     return softsign_(x)
 
 
-
-
 def softmax(input, axis=-1, *, dtype=None):
     r"""
     Applies the Softmax operation to the input tensor on the specified axis.
@@ -3582,202 +3581,6 @@ def _check_dense_add_bias_shape(input_shape, output_shape, bias_shape):
     """Check that the output has the correct shape after adding bias."""
     if input_shape != output_shape:
         raise ValueError(f"For dense, the bias shape {bias_shape} does not match the input shape {input_shape}.")
-
-
-@_primexpr
-def check_dense_inputs_same_shape(input1_shape, input2_shape, prim_name=None):
-    """check bidense input Tensors' shape"""
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if input1_shape[:-1] != input2_shape[:-1]:
-        raise ValueError(f"{msg_prefix} dimensions except the last of 'input1' must be same as 'input2', but got "
-                         f"{input1_shape} of 'input1' and {input2_shape} of 'input2'")
-
-
-def bidense(input1, input2, weight, bias=None):
-    r"""
-    Applies bilinear dense connected layer to `input1` and `input2`. The bilinear dense function is defined as:
-
-    .. math::
-        output = x_{1}^{T}Ax_{2} + b
-
-    :math:`x_{1}` represents `input1` , :math:`x_{2}` represents `input2` , :math:`A` represents `weight` ,
-    :math:`b` represents `bias` .
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        input1 (Tensor): Input Tensor of shape :math:`(*, in1\_channels)`,
-            where :math:`*` means any number of additional dimensions. All but the last dimension
-            should be the same with `input2`.
-        input2 (Tensor): Input Tensor of shape :math:`(*, in2\_channels)`,
-            where :math:`*` means any number of additional dimensions. All but the last dimension
-            should be the same with `input1`.
-        weight (Tensor): The weight applied to `input1` and `input2`.
-            The shape is :math:`(out\_channels, in1\_channels, in2\_channels)`.
-        bias (Tensor, optional): Additive biases to the output.
-            The shape is :math:`(out\_channels)` or :math:`()`. Defaults: ``None`` , the `bias` is 0.
-
-    Returns:
-        Tensor, shape :math:`(*, out\_channels)`, where :math:`*` means any number of additional dimensions.
-        All but the last dimension should be the same with the input Tensors.
-
-    Raises:
-        TypeError: If `input1` is not Tensor.
-        TypeError: If `input2` is not Tensor.
-        TypeError: If `weight` is not Tensor.
-        TypeError: If `bias` is not Tensor.
-        ValueError: If dimensions except the last of `input1` are different from `input2` .
-
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input1 = mindspore.Tensor([[-1.1283, 1.2603],
-        ...                            [0.0214, 0.7801],
-        ...                            [-1.2086, 1.2849]], mindspore.float32)
-        >>> input2 = mindspore.Tensor([[-0.4631, 0.3238, 0.4201],
-        ...                            [0.6215, -1.0910, -0.5757],
-        ...                            [-0.7788, -0.0706, -0.7942]], mindspore.float32)
-        >>> weight = mindspore.Tensor([[[-0.3132, 0.9271, 1.1010],
-        ...                             [0.6555, -1.2162, -0.2987]],
-        ...                            [[1.0458, 0.5886, 0.2523],
-        ...                             [-1.3486, -0.8103, -0.2080]],
-        ...                            [[1.1685, 0.5569, -0.3987],
-        ...                             [-0.4265, -2.6295, 0.8535]],
-        ...                            [[0.6948, -1.1288, -0.6978],
-        ...                             [0.3511, 0.0609, -0.1122]]], mindspore.float32)
-        >>> output = ops.bidense(input1, input2, weight)
-        >>> print(output)
-        [[-2.0612743 0.5581219 0.22383511 0.8667302]
-         [1.4476739 0.12626505 1.6552988 0.21297503]
-         [0.6003161 2.912046 0.5590313 -0.35449564]]
-    """
-    _check_is_tensor("input1", input1, "bidense")
-    _check_is_tensor("input2", input2, "bidense")
-    _check_is_tensor("weight", weight, "bidense")
-    _check_is_tensor("bias", bias, "bidense")
-    input1_shape = input1.shape
-    input2_shape = input2.shape
-    check_dense_inputs_same_shape(input1_shape, input2_shape, "bidense")
-
-    if len(input1_shape) != 2:
-        input1 = input1.reshape((-1, input1_shape[-1]))
-        input2 = input2.reshape((-1, input2_shape[-1]))
-    batch_size = input1.shape[0]
-    output = matmul_(input1, weight.transpose(1, 2, 0).view(input1_shape[-1], -1))
-    output = output.view(batch_size, input2_shape[-1], weight.shape[0])
-    output = output.transpose(2, 0, 1) * input2
-    output = output.sum(2).swapaxes(0, 1)
-    if bias is not None:
-        if input1.dtype != bias.dtype or input2.dtype != bias.dtype:
-            raise TypeError(f"For 'bidense', the dtype of 'bias', 'input1' and 'input2' must be the same,"
-                            f" but got {bias.dtype}, {input1.dtype} and {input2.dtype}.")
-        output = bias_add_(output.astype(bias.dtype), bias)
-    if len(input1_shape) != 2:
-        output_shape = input1_shape[:-1] + (-1,)
-        output = output.reshape(output_shape)
-    return output
-
-
-def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1,
-                      deformable_groups=1, modulated=True):
-    r"""
-    Given 4D tensor inputs `x`, `weight` and `offsets`, compute a 2D deformable convolution. The deformable convolution
-    operation can be expressed as follows:
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Deformable Convolution v1:
-
-    .. math::
-        y(p)=\sum_{k=1}^{K}w_{k}\cdot x(p+p_{k}+\Delta{p_{k}})
-
-    Deformable Convolution v2:
-
-    .. math::
-        y(p)=\sum_{k=1}^{K}w_{k}\cdot x(p+p_{k}+\Delta{p_{k}})\cdot \Delta{m_{k}}
-
-    Where :math:`\Delta{p_{k}}` and :math:`\Delta{m_{k}}` are the learnable offset and modulation scalar for the k-th
-    location. For details, please refer to `Deformable ConvNets v2: More Deformable, Better Results
-    <https://arxiv.org/abs/1811.11168>`_ and `Deformable Convolutional Networks <https://arxiv.org/abs/1703.06211>`_.
-
-    Args:
-        x (Tensor): A 4D tensor of input image. With the format "NCHW",
-            the shape is :math:`(N, C_{in}, H_{in}, W_{in})`. Dtype: float16 or float32.
-        weight (Tensor): A 4D tensor of learnable filters. Must have the same type as `x`.
-            The shape is :math:`(C_{out}, C_{in} / groups, H_{f}, W_{f})`.
-        offsets (Tensor): A 4D tensor of x-y coordinates offset and mask. With the format "NCHW",
-            the shape is :math:`(batch, 3 * deformable\_groups * H_{f} * W_{f}, H_{out}, W_{out})`. Note the C dimension
-            is stored in the order of (offset_x, offset_y, mask). Must have the same type as `x`.
-        kernel_size (tuple[int]): A tuple of 2 integers. The size of the kernel.
-        strides (tuple[int]): A tuple of 4 integers. The stride of the sliding window for each dimension of
-            input. The dimension order is interpreted according to the data format of `x`. The N and C dimensions must
-            be set to 1.
-        padding (tuple[int]): A tuple of 4 integers. The number of pixels to add to each (top, bottom, left,
-            right) side of the input.
-        bias (Tensor, optional): A 1D tensor of additive biases to the filter outputs.
-            The shape is :math:`(C_{out})`. Default: ``None`` .
-        dilations (tuple[int], optional): A tuple of 4 integers. The dilation factor for each dimension of input. The
-            dimension order is interpreted according to the data format of `x`. The N and C dimensions must be set
-            to 1. Default: ``(1, 1, 1, 1)`` .
-        groups (int, optional): An integer of type int32. The number of blocked connections from input channels
-            to output channels. In_channels and out_channels must both be divisible by `groups`. Default: ``1`` .
-        deformable_groups (int, optional): An integer of type int32. The number of deformable group partitions.
-            In_channels must be divisible by `deformable_groups`. Default: ``1`` .
-        modulated (bool, optional): Specifies version of DeformableConv2D, True means v2, False means v1, currently
-            only supports v2. Default: ``True`` .
-
-    Returns:
-        Tensor, A 4D Tensor of output feature map. With the same type as `x`. With the format "NCHW",
-        the shape is :math:`(N, C_{out}, H_{out}, W_{out})`.
-
-        .. math::
-            \begin{array}{ll} \\
-                H_{out} = \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (H_{f} - 1) \times
-                \text{dilations[2]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
-                W_{out} = \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (W_{f} - 1) \times
-                \text{dilations[3]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
-            \end{array}
-
-    Raises:
-        TypeError: If `strides`, `padding`, `kernel_size` or `dilations` is not a tuple with integer elements.
-        TypeError: If `modulated` is not a bool.
-        ValueError: If the tuple size of `strides`, `padding`, `kernel_size` or `dilations` is not expected.
-        ValueError: The N or C dimensions of `strides` or `dilations` are not set to 1.
-        ValueError: If `modulated` is not set to True.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor(np.ones((4, 3, 10, 10)), mstype.float32)
-        >>> kh, kw = 3, 3
-        >>> weight = Tensor(np.ones((5, 3, kh, kw)), mstype.float32)
-        >>> offsets = Tensor(np.ones((4, 3 * kh * kw, 8, 8)), mstype.float32)
-        >>> output = ops.deformable_conv2d(x, weight, offsets, (kh, kw), (1, 1, 1, 1), (0, 0, 0, 0))
-        >>> print(output.shape)
-        (4, 5, 8, 8)
-    """
-    deformable_offsets = _get_cache_prim(NN_OPS.DeformableOffsets)(strides, padding, kernel_size, dilations, "NCHW",
-                                                                   deformable_groups,
-                                                                   modulated)
-    fm_offset = deformable_offsets(x, offsets)
-    weight_shape = weight.shape
-    out_channel = weight_shape[0]
-    strides_conv = (kernel_size[0], kernel_size[1])
-    conv = _get_cache_prim(P.Conv2D)(out_channel, kernel_size, 1, "valid", 0, strides_conv, 1, groups)
-    output = conv(fm_offset, weight)
-    if bias is not None:
-        output = bias_add_(output, bias)
-    return output
 
 
 def pdist(input, p=2.0):
@@ -5118,88 +4921,6 @@ def leaky_relu(input, alpha=0.2):
     return select_op(alpha * input, input)
 
 
-@deprecated("2.9.0", None, False, "ops.")
-def intopk(x1, x2, k):
-    r"""
-    `mindspore.ops.intopk` is deprecated from version 2.9.0 and will be removed in a future version.
-
-    Return whether the elements in second input tensor exist among the top `k` elements of the first input tensor.
-
-    Args:
-        x1 (Tensor): The 2-D input tensor.
-        x2 (Tensor): The 1-D input tensor, should satisfy :math:`x2.shape[0] = x1.shape[0]` .
-        k (int): Top `k` elements.
-
-    Returns:
-        A 1-D tensor whose data type is bool, has the same shape as `x2`.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> x1 = mindspore.tensor([[1, 8, 5, 2, 7], [4, 9, 1, 3, 5]], mindspore.float32)
-        >>> x2 = mindspore.tensor([1, 3], mindspore.int32)
-        >>> mindspore.ops.intopk(x1, x2, 3)
-        Tensor(shape=[2], dtype=Bool, value= [ True, False])
-    """
-    _in_topk = _get_cache_prim(P.InTopK)(k)
-    return _in_topk(x1, x2)
-
-
-def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
-    r"""
-    Local Response Normalization.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0. It's recommended to use other
-        normalization methods, e.g. :class:`mindspore.ops.batch_norm`.
-
-    .. math::
-
-        b_{c} = a_{c}\left(k + \frac{\alpha}{n}
-        \sum_{c'=\max(0, c-n/2)}^{\min(N-1,c+n/2)}a_{c'}^2\right)^{-\beta}
-
-    where the :math:`a_{c}` indicates the specific value of the pixel corresponding to :math:`c` in feature map;
-    where the :math:`n/2` indicates the `depth_radius`; where the :math:`k` indicates the `bias`;
-    where the :math:`\alpha` indicates the `alpha`; where the :math:`\beta` indicates the `beta`.
-
-    Args:
-        x (Tensor): A 4-D Tensor with float16 or float32 data type.
-        depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: ``5`` .
-        bias (float): An offset (usually positive to avoid dividing by 0). Default: ``1.0`` .
-        alpha (float): A scale factor, usually positive. Default: ``1.0`` .
-        beta (float): An exponent. Default: ``0.5`` .
-        norm_region (str): Specifies normalization region. Options: ``"ACROSS_CHANNELS"`` .
-            Default: ``"ACROSS_CHANNELS"`` .
-
-    Returns:
-        Tensor, with the same shape and data type as `x`.
-
-    Raises:
-        TypeError: If `depth_radius` is not an int.
-        TypeError: If `bias`, `alpha` or `beta` is not a float.
-        TypeError: If `norm_region` is not a str.
-        TypeError: If `x` is not a Tensor.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.array([[[[0.1], [0.2]],
-        ...                       [[0.3], [0.4]]]]), mindspore.float32)
-        >>> output = ops.lrn(input_x)
-        >>> print(output)
-        [[[[0.09534626]
-           [0.1825742 ]]
-          [[0.2860388 ]
-           [0.3651484 ]]]]
-    """
-    lrn_op = NN_OPS.LRN(depth_radius, bias, alpha, beta, norm_region)
-    return lrn_op(x)
 
 
 def mish(x):
@@ -5935,70 +5656,6 @@ def hinge_embedding_loss(inputs, targets, margin=1.0, reduction='mean'):
     return loss
 
 
-def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
-    r"""
-    Performs greedy decoding on the logits given in inputs.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Note:
-        On Ascend, 'merge_repeated' can not be set to false.
-
-    Args:
-        inputs (Tensor): The input Tensor must be a 3-D tensor whose shape is
-            :math:`(max\_time, batch\_size, num\_classes)`. `num_classes` must have `num_labels + 1` classes,
-            `num_labels` indicates the number of actual labels. Blank labels are reserved.
-            Default blank label is `num_classes - 1`. Data type must be float32 or float64.
-        sequence_length (Tensor): A tensor containing sequence lengths with the shape of :math:`(batch\_size, )`.
-            The type must be int32. Each value in the tensor must be equal to or less than `max_time`.
-        merge_repeated (bool): If ``True`` , merge repeated classes in output. Default: ``True`` .
-
-    Returns:
-        decoded_indices (Tensor), A tensor with shape of :math:`(total\_decoded\_outputs, 2)`.
-        Data type is int64.
-
-        decoded_values (Tensor), A tensor with shape of :math:`(total\_decoded\_outputs, )`,
-        it stores the decoded classes. Data type is int64.
-
-        decoded_shape (Tensor), A tensor with shape of :math:`(batch\_size, max\_decoded\_length)`.
-        Data type is int64.
-
-        log_probability (Tensor), A tensor with shape of :math:`(batch\_size, 1)`,
-        containing sequence log-probability, has the same type as `inputs`.
-
-    Raises:
-        TypeError: If `merge_repeated` is not a bool.
-        ValueError: If length of shape of `inputs` is not equal to 3.
-        ValueError: If length of shape of `sequence_length` is not equal to 1.
-        ValueError: If value in the `sequence_length` is larger than `max_time`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> inputs = Tensor(np.array([[[0.6, 0.4, 0.2], [0.8, 0.6, 0.3]],
-        ...                           [[0.0, 0.6, 0.0], [0.5, 0.4, 0.5]]]), mindspore.float32)
-        >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
-        >>> decoded_indices, decoded_values, decoded_shape, log_probability = ops.ctc_greedy_decoder(inputs,
-        ...                                                                                          sequence_length)
-        >>> print(decoded_indices)
-        [[0 0]
-         [0 1]
-         [1 0]]
-        >>> print(decoded_values)
-        [0 1 0]
-        >>> print(decoded_shape)
-        [2 2]
-        >>> print(log_probability)
-        [[-1.2]
-         [-1.3]]
-    """
-    _ctc_greedy_decoder = _get_cache_prim(NN_OPS.CTCGreedyDecoder)(merge_repeated)
-    return _ctc_greedy_decoder(inputs, sequence_length)
 
 
 def conv3d_transpose(inputs, weight, pad_mode='valid', padding=0, stride=1, dilation=1, group=1,
@@ -9529,7 +9186,6 @@ __all__ = [
     'avg_pool3d',
     'batch_norm',
     'bias_add',
-    'bidense',
     'binary_cross_entropy',
     'binary_cross_entropy_with_logits',
     'cosine_embedding_loss',
@@ -9538,7 +9194,6 @@ __all__ = [
     'kl_div',
     'celu',
     'dense',
-    'deformable_conv2d',
     'dropout1d',
     'dropout2d',
     'dropout3d',
@@ -9560,14 +9215,12 @@ __all__ = [
     'flip',
     'fliplr',
     'flipud',
-    'intopk',
     'interpolate',
     'upsample',
     'layer_norm',
     'mse_loss_ext',
     'log_softmax',
     'mish',
-    'lrn',
     'hardswish',
     'hardtanh',
     'huber_loss',
@@ -9591,7 +9244,6 @@ __all__ = [
     'leaky_relu',
     'nll_loss',
     'ctc_loss',
-    'ctc_greedy_decoder',
     'dropout',
     'conv3d_transpose',
     'conv1d',

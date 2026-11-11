@@ -149,28 +149,9 @@ class Optimizer(Cell):
         >>> import mindspore
         >>> from mindspore import nn, ops, Tensor
         >>>
-        >>> class MyMomentum(nn.Optimizer):
-        ...     def __init__(self, params, learning_rate, momentum=0.9):
-        ...         super().__init__(learning_rate, params)
-        ...         self.moments = self.parameters.clone(prefix="moments", init="zeros")
-        ...         self.momentum = momentum
-        ...         self.opt = ops.ApplyMomentum()
-        ...
-        ...     def construct(self, gradients):
-        ...         params = self.parameters
-        ...         lr = self.get_lr()
-        ...         gradients = self.decay_weight(gradients)
-        ...         gradients = self.gradients_centralization(gradients)
-        ...         gradients = self.scale_grad(gradients)
-        ...
-        ...         success = None
-        ...         for param, mom, grad in zip(params, self.moments, gradients):
-        ...             success = self.opt(param, mom, lr, grad, self.momentum)
-        ...         return success
-        >>>
         >>> net = nn.Dense(2, 3)
         >>> loss_fn = nn.L1Loss()
-        >>> opt = MyMomentum(net.trainable_params(), 0.01)
+        >>> opt = nn.Momentum(net.trainable_params(), learning_rate=0.01, momentum=0.9)
         >>>
         >>> device_target = opt.target
         >>> opt_unique = opt.unique

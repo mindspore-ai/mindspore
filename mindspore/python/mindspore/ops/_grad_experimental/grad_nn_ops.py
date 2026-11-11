@@ -17,6 +17,7 @@
 """Define the grad rules of neural network related operations."""
 from __future__ import absolute_import
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.common import dtype as mstype
 from mindspore.ops._grad_experimental.grad_base import bprop_getters
 from mindspore.ops import operations as P
@@ -143,11 +144,11 @@ def get_bprop_depthwise_conv2d_native(self):
     return bprop
 
 
-@bprop_getters.register(P.SparseSoftmaxCrossEntropyWithLogits)
+@bprop_getters.register(_inner_ops.SparseSoftmaxCrossEntropyWithLogits)
 def get_bprop_sparse_softmax_cross_entropy_with_logits(self):
     """Grad definition for `SparseSoftmaxCrossEntropyWithLogits` operation."""
     is_grad = self.is_grad
-    grad_op = P.SparseSoftmaxCrossEntropyWithLogits(is_grad=True)
+    grad_op = _inner_ops.SparseSoftmaxCrossEntropyWithLogits(is_grad=True)
 
     def bprop(logits, labels, out, dout):
         grad = out[0]

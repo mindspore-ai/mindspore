@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test float status op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
@@ -26,7 +28,7 @@ from mindspore.ops import operations as P
 
 class NetFloatStatus(nn.Cell):
     def __init__(self):
-        super(NetFloatStatus, self).__init__()
+        super().__init__()
         self.status = P.FloatStatus()
 
     def construct(self, x):
@@ -35,8 +37,8 @@ class NetFloatStatus(nn.Cell):
 
 class NetIsNan(nn.Cell):
     def __init__(self):
-        super(NetIsNan, self).__init__()
-        self.isnan = P.IsNan()
+        super().__init__()
+        self.isnan = _private_math.IsNan()
 
     def construct(self, x):
         return self.isnan(x)
@@ -44,7 +46,7 @@ class NetIsNan(nn.Cell):
 
 class NetIsInf(nn.Cell):
     def __init__(self):
-        super(NetIsInf, self).__init__()
+        super().__init__()
         self.isinf = P.IsInf()
 
     def construct(self, x):
@@ -53,7 +55,7 @@ class NetIsInf(nn.Cell):
 
 class NetIsFinite(nn.Cell):
     def __init__(self):
-        super(NetIsFinite, self).__init__()
+        super().__init__()
         self.isfinite = P.IsFinite()
 
     def construct(self, x):

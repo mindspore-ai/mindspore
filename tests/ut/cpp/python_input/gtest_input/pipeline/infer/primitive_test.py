@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Primitive test."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
 from mindspore.common import dtype
 from mindspore.ops import operations as P
@@ -33,7 +35,7 @@ def get_relu(x):
     return relu(x)
 
 
-softmax_cross_entropy_with_logits = P.SoftmaxCrossEntropyWithLogits()
+softmax_cross_entropy_with_logits = _inner_ops.SoftmaxCrossEntropyWithLogits()
 
 
 def get_softmax_cross_entropy_with_logits(logits, labels):
@@ -101,6 +103,7 @@ def test_conv2d(out_channel, kernel_size, pad, stride, dilation):
 
 
 def test_dropout():
+    """Return the dropout inference graph builder."""
     dropOutGenMask = P.DropoutGenMask()
     dropoutDoMask = P.DropoutDoMask()
     shape = P.Shape()

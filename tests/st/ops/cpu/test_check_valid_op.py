@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression coverage for retained detection primitives."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -20,14 +21,12 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.common import dtype as mstype
 
 
 class NetCheckValid(nn.Cell):
     def __init__(self):
-        super(NetCheckValid, self).__init__()
-        self.valid = P.CheckValid()
+        super().__init__()
+        self.valid = P._inner_ops.CheckValid()
 
     def construct(self, anchor, image_metas):
         return self.valid(anchor, image_metas)
@@ -108,33 +107,3 @@ def test_check_valid_uint8():
     boundingbox_decode = NetCheckValid()
     output = boundingbox_decode(anchor_box, image_metas_box)
     assert np.array_equal(output.asnumpy(), expect)
-
-
-def test_check_valid_functional():
-    """
-    Feature: test check_valid functional API.
-    Description: test case for check_valid functional API.
-    Expectation: the result match with expected result.
-    """
-    bboxes = Tensor(np.linspace(0, 6, 12).reshape(3, 4), mstype.float32)
-    img_metas = Tensor(np.array([2, 1, 3]), mstype.float32)
-    output = F.check_valid(bboxes, img_metas)
-    expected = np.array([True, False, False])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_check_valid_functional_modes():
-    """
-    Feature: test check_valid functional API in PyNative and Graph modes.
-    Description: test case for check_valid functional API.
-    Expectation: the result match with expected result.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    test_check_valid_functional()
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_check_valid_functional()
-
-
-if __name__ == '__main__':
-    test_check_valid_functional_modes()

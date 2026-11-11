@@ -1,4 +1,6 @@
+"""Inplacesub."""
 import numpy as np
+from mindspore.ops.operations import _inplace_ops
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore import Tensor
@@ -8,7 +10,7 @@ from ..share.utils import allclose_nparray
 class DynamicShapeInplaceSub(Cell):
     def __init__(self, indices):
         super().__init__()
-        self.inplacesub = P.InplaceSub(indices)
+        self.inplacesub = _inplace_ops.InplaceSub(indices)
         self.reducesum = P.ReduceSum(keep_dims=False)
         self.relu = P.ReLU()
 

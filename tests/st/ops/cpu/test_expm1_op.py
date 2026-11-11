@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test expm1 op."""
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.context as context
 import mindspore.nn as nn
-import numpy as np
 from mindspore.common import dtype as mstype
-
 from mindspore import Tensor
 from mindspore import dtype
-from mindspore.ops import operations as P
+
+import numpy as np
+
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -27,8 +29,8 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class NetExpm1(nn.Cell):
     def __init__(self):
-        super(NetExpm1, self).__init__()
-        self.expm1 = P.Expm1()
+        super().__init__()
+        self.expm1 = _private_math.Expm1()
 
     def construct(self, x):
         return self.expm1(x)

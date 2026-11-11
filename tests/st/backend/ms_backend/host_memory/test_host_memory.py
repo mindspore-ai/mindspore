@@ -19,6 +19,7 @@ import os
 import psutil
 import numpy as np
 import mindspore as ms
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore import nn, Tensor
 from tests.mark_utils import arg_mark
 
@@ -43,7 +44,7 @@ class ContextModel(nn.Cell):
         self.predict_bias = nn.SequentialCell(nn.Dense(self.hidden_dim, self.hidden_dim),
                                               nn.ReLU(),
                                               nn.Dense(self.hidden_dim, 1))
-        self.ms_soft_plus = ms.ops.Softplus()
+        self.ms_soft_plus = _private_math.Softplus()
 
         self.tanh = nn.Tanh()
 

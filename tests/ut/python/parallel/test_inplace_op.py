@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Check retained inplace add/sub operations and parallel strategies."""
+
 import numpy as np
 import pytest
 
+from mindspore.ops.operations import _inplace_ops
 from mindspore import context, Tensor
 from mindspore.nn import Cell
-from mindspore.ops import operations as P
+
 
 from parallel.utils.utils import compile_net
 
@@ -33,8 +36,8 @@ indices_ = tuple(range(16))
 
 class InplaceAddNet(Cell):
     def __init__(self, indices, strategy=None):
-        super(InplaceAddNet, self).__init__()
-        self.inplace_add = P.InplaceAdd(indices).shard(strategy)
+        super().__init__()
+        self.inplace_add = _inplace_ops.InplaceAdd(indices).shard(strategy)
 
     def construct(self, x, input_v):
         return self.inplace_add(x, input_v)
@@ -42,23 +45,14 @@ class InplaceAddNet(Cell):
 
 class InplaceSubNet(Cell):
     def __init__(self, indices, strategy=None):
-        super(InplaceSubNet, self).__init__()
-        self.inplace_sub = P.InplaceSub(indices).shard(strategy)
+        super().__init__()
+        self.inplace_sub = _inplace_ops.InplaceSub(indices).shard(strategy)
 
     def construct(self, x, input_v):
         return self.inplace_sub(x, input_v)
 
 
-class InplaceUpdateNet(Cell):
-    def __init__(self, indices, strategy=None):
-        super(InplaceUpdateNet, self).__init__()
-        self.inplace_update = P.InplaceUpdate(indices).shard(strategy)
-
-    def construct(self, x, input_v):
-        return self.inplace_update(x, input_v)
-
-
-@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet, InplaceUpdateNet])
+@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet])
 def test_inplace_add_auto_parallel(network):
     """
     Feature: test InplaceOp auto parallel
@@ -71,7 +65,7 @@ def test_inplace_add_auto_parallel(network):
     compile_net(net, x_, input_v_)
 
 
-@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet, InplaceUpdateNet])
+@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet])
 def test_inplace_op_model_parallel(network):
     """
     Feature: test InplaceOp model parallel
@@ -84,7 +78,7 @@ def test_inplace_op_model_parallel(network):
     compile_net(net, x_, input_v_)
 
 
-@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet, InplaceUpdateNet])
+@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet])
 def test_inplace_add_model_parallel_with_repeated_cal(network):
     """
     Feature: test InplaceOp model parallel with repeated calculation
@@ -97,7 +91,7 @@ def test_inplace_add_model_parallel_with_repeated_cal(network):
     compile_net(net, x_, input_v_)
 
 
-@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet, InplaceUpdateNet])
+@pytest.mark.parametrize("network", [InplaceAddNet, InplaceSubNet])
 def test_inplace_add_strategy_error(network):
     """
     Feature: test invalid strategy for InplaceAdd

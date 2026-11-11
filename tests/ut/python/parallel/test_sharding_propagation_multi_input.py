@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
-
+"""Test sharding propagation multi input."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context, mint
@@ -21,7 +21,11 @@ from mindspore.common import Parameter
 from mindspore.graph.api import _cell_graph_executor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+
+import numpy as np
+
 from tests.ut.python.ops.test_math_ops import VirtualLoss
+
 import re
 
 
@@ -34,7 +38,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -44,8 +48,8 @@ class NetWithLoss(nn.Cell):
 
 class NetWithLossSoftmax(nn.Cell):
     def __init__(self, network):
-        super(NetWithLossSoftmax, self).__init__()
-        self.loss = P.SoftmaxCrossEntropyWithLogits()
+        super().__init__()
+        self.loss = _inner_ops.SoftmaxCrossEntropyWithLogits()
         self.network = network
 
     def construct(self, x, b):
@@ -54,7 +58,7 @@ class NetWithLossSoftmax(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x):
@@ -63,7 +67,7 @@ class GradWrap(nn.Cell):
 
 class GradWrapTwoInput(nn.Cell):
     def __init__(self, network):
-        super(GradWrapTwoInput, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x, y):
@@ -72,7 +76,7 @@ class GradWrapTwoInput(nn.Cell):
 
 class GradWrapThreeInput(nn.Cell):
     def __init__(self, network):
-        super(GradWrapThreeInput, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x, y, z):
@@ -82,7 +86,7 @@ class GradWrapThreeInput(nn.Cell):
 
 class NetWithLossTwoInput(nn.Cell):
     def __init__(self, network):
-        super(NetWithLossTwoInput, self).__init__()
+        super().__init__()
         self.mean = P.ReduceMean(keep_dims=False)
         self.network = network
 
@@ -93,7 +97,7 @@ class NetWithLossTwoInput(nn.Cell):
 
 class NetWithLoss3(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss3, self).__init__()
+        super().__init__()
         self.mean = P.ReduceMean(keep_dims=False)
         self.network = network
 
@@ -373,7 +377,7 @@ def test_relu_relu_matmul_layout():
     device_num = 8
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.rma_net = RMANet()
             ly = ms.Layout((4, 2), ("axis0", "axis1"))
             in_layout = (ly("axis0", "axis1"), ly("axis1", "None"))
@@ -441,7 +445,7 @@ def test_mint_waitting():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.rmasd_net = RMASDNet()
             ly = ms.Layout((4, 2), ("axis0", "axis1"))
             in_layout = (ly("axis0", "axis1"), ly("axis0", "axis1"))
@@ -507,7 +511,7 @@ def test_mint_rma_softmaxcrossentropywithlogits():
     """
     class Net(nn.Cell):
         def __init__(self, in_layout, gamma_layout, use_shard=False, matmul_strategy=False, relu_strategy=False):
-            super(Net, self).__init__()
+            super().__init__()
             if matmul_strategy and relu_strategy:
                 self.rma_net = RMANet(matmul_strategy=matmul_strategy, relu_strategy=relu_strategy)
             elif matmul_strategy and not relu_strategy:

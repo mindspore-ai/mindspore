@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test adagrad v2 op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore.ops import operations as P
+
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
@@ -30,8 +32,8 @@ eps_f32 = np.array([1e-4 for i in range(4)]).reshape(2, 2)
 
 class Net(nn.Cell):
     def __init__(self, var_np, accum_np, epsilon=1e-6, update_slots=True):
-        super(Net, self).__init__()
-        self.apply_adagrad_v2 = P.ApplyAdagradV2(epsilon=epsilon, update_slots=update_slots)
+        super().__init__()
+        self.apply_adagrad_v2 = _inner_ops.ApplyAdagradV2(epsilon=epsilon, update_slots=update_slots)
         self.var = Parameter(Tensor(var_np), name="var")
         self.accum = Parameter(Tensor(accum_np), name="accum")
 

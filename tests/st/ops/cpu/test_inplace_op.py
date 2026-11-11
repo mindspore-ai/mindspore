@@ -12,42 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Check retained inplace add/sub operations and parallel strategies."""
+
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
-from mindspore import context, Tensor, ops
+from mindspore import context, Tensor
+from mindspore.ops.operations import _inplace_ops
 from mindspore import dtype as mstype
-from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
 import mindspore.nn as nn
 
 
-class InplaceUpdate(nn.Cell):
-    def __init__(self, indices):
-        super(InplaceUpdate, self).__init__()
-        self.inplace_update = P.InplaceUpdate(indices)
-
-    def construct(self, x, v):
-        return self.inplace_update(x, v)
-
-
 class InplaceAdd(nn.Cell):
     def __init__(self, indices):
-        super(InplaceAdd, self).__init__()
+        super().__init__()
         self.indices = indices
 
     def construct(self, x, v):
-        return ops.inplace_add(x, v, self.indices)
+        return _inplace_ops.InplaceAdd(self.indices)(x, v)
 
 
 class InplaceSub(nn.Cell):
     def __init__(self, indices):
-        super(InplaceSub, self).__init__()
+        super().__init__()
         self.indices = indices
 
     def construct(self, x, v):
-        return ops.inplace_sub(x, v, self.indices)
+        return _inplace_ops.InplaceSub(self.indices)(x, v)
 
 
 def inplace_op_np(op, x: np.ndarray, v: np.ndarray, indices):
@@ -55,11 +48,9 @@ def inplace_op_np(op, x: np.ndarray, v: np.ndarray, indices):
     if v.shape[0] == 1:
         v = np.squeeze(v, axis=0)
     if op == 'add':
-        result[indices, :] += v
+        np.add.at(result, (indices, slice(None)), v)
     elif op == 'sub':
-        result[indices, :] -= v
-    elif op == 'update':
-        result[indices, :] = v
+        np.subtract.at(result, (indices, slice(None)), v)
     return result
 
 
@@ -79,9 +70,9 @@ def test_inplace_add(shape, indice_len, dtype):
     indices = np.random.choice(list(range(shape[0])), indice_len, replace=False)
     indices = tuple((int(i) for i in indices))
 
-    result = ops.inplace_add(Tensor(x), Tensor(v), indices)
+    result = _inplace_ops.InplaceAdd(indices)(Tensor(x), Tensor(v))
     expected = inplace_op_np('add', x, v, indices)
-    np.allclose(result.asnumpy(), expected)
+    assert np.allclose(result.asnumpy(), expected)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -96,12 +87,14 @@ def test_inplace_add_same_indice(shape, dtype):
     context.set_context(device_target='CPU')
 
     indices = (1, 2, 1)
-    x = np.random.random(shape).astype(dtype)
-    v = np.random.random((len(indices),) + shape[1:]).astype(dtype)
+    # Binary-exact inputs avoid round-off differences between duplicate update orders.
+    x = np.arange(np.prod(shape), dtype=dtype).reshape(shape) / 16
+    v_shape = (len(indices),) + shape[1:]
+    v = np.arange(1, np.prod(v_shape) + 1, dtype=dtype).reshape(v_shape) / 16
 
-    result = ops.inplace_add(Tensor(x), Tensor(v), indices)
+    result = _inplace_ops.InplaceAdd(indices)(Tensor(x), Tensor(v))
     expected = inplace_op_np('add', x, v, indices)
-    np.allclose(result.asnumpy(), expected)
+    assert np.allclose(result.asnumpy(), expected)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -117,9 +110,9 @@ def test_inplace_add_1d(shape, indice, dtype):
     x = np.random.random(shape).astype(dtype)
     v = np.random.random((1,) + shape[1:]).astype(dtype)
 
-    result = ops.inplace_add(Tensor(x), Tensor(v), indice)
+    result = _inplace_ops.InplaceAdd(indice)(Tensor(x), Tensor(v))
     expected = inplace_op_np('add', x, v, indice)
-    np.allclose(result.asnumpy(), expected)
+    assert np.allclose(result.asnumpy(), expected)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -138,9 +131,9 @@ def test_inplace_sub(shape, indice_len, dtype):
     indices = np.random.choice(list(range(shape[0])), indice_len, replace=False)
     indices = tuple((int(i) for i in indices))
 
-    result = ops.inplace_sub(Tensor(x), Tensor(v), indices)
+    result = _inplace_ops.InplaceSub(indices)(Tensor(x), Tensor(v))
     expected = inplace_op_np('sub', x, v, indices)
-    np.allclose(result.asnumpy(), expected)
+    assert np.allclose(result.asnumpy(), expected)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -155,12 +148,14 @@ def test_inplace_sub_same_indice(shape, dtype):
     context.set_context(device_target='CPU')
 
     indices = (1, 2, 1)
-    x = np.random.random(shape).astype(dtype)
-    v = np.random.random((len(indices),) + shape[1:]).astype(dtype)
+    # Binary-exact inputs avoid round-off differences between duplicate update orders.
+    x = np.arange(np.prod(shape), dtype=dtype).reshape(shape) / 16
+    v_shape = (len(indices),) + shape[1:]
+    v = np.arange(1, np.prod(v_shape) + 1, dtype=dtype).reshape(v_shape) / 16
 
-    result = ops.inplace_sub(Tensor(x), Tensor(v), indices)
+    result = _inplace_ops.InplaceSub(indices)(Tensor(x), Tensor(v))
     expected = inplace_op_np('sub', x, v, indices)
-    np.allclose(result.asnumpy(), expected)
+    assert np.allclose(result.asnumpy(), expected)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -176,52 +171,9 @@ def test_inplace_sub_1d(shape, indice, dtype):
     x = np.random.random(shape).astype(dtype)
     v = np.random.random((1,) + shape[1:]).astype(dtype)
 
-    result = ops.inplace_sub(Tensor(x), Tensor(v), indice)
+    result = _inplace_ops.InplaceSub(indice)(Tensor(x), Tensor(v))
     expected = inplace_op_np('sub', x, v, indice)
-    np.allclose(result.asnumpy(), expected)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
-def test_inplace_update(shape, indice_len, dtype):
-    """
-    Feature: test InplaceUpdate
-    Description: test InplaceUpate
-    Expectation: result is the same as expected
-    """
-    context.set_context(device_target='CPU')
-    x = np.random.random(shape).astype(dtype)
-    v = np.random.random((indice_len,) + shape[1:]).astype(dtype)
-    indices = np.random.choice(list(range(shape[0])), indice_len, replace=False)
-    indices = tuple((int(i) for i in indices))
-
-    result = P.InplaceUpdate(indices)(Tensor(x), Tensor(v))
-    expected = inplace_op_np('update', x, v, indices)
-    np.allclose(result.asnumpy(), expected)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
-def test_vmap_inplace_update(shape, indice_len, dtype):
-    """
-    Feature: test vmap inplace operators
-    Description: test vmap inplace operators
-    Expectation: result is the same as expected
-    """
-    context.set_context(device_target='CPU')
-    x = np.random.random(shape).astype(dtype)
-    v = np.random.random((indice_len,) + shape[2:]).astype(dtype)
-    indices = np.random.choice(list(range(shape[1])), indice_len, replace=False)
-    indices = tuple((int(i) for i in indices))
-
-    inplace_op = InplaceUpdate(indices)
-    result = vmap(inplace_op, in_axes=(0, None), out_axes=0)(Tensor(x), Tensor(v))
-    expected = np.zeros(shape=shape)
-    for i in range(shape[0]):
-        expected[i] = inplace_op_np('update', x[i], v, indices)
-    np.allclose(result.asnumpy(), expected)
+    assert np.allclose(result.asnumpy(), expected)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -244,7 +196,7 @@ def test_vmap_inplace_add(shape, indice_len, dtype):
     expected = np.zeros(shape=shape)
     for i in range(shape[0]):
         expected[i] = inplace_op_np('add', x[i], v, indices)
-    np.allclose(result.asnumpy(), expected)
+    assert np.allclose(result.asnumpy(), expected)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -267,11 +219,11 @@ def test_vmap_inplace_sub(shape, indice_len, dtype):
     expected = np.zeros(shape=shape)
     for i in range(shape[0]):
         expected[i] = inplace_op_np('sub', x[i], v, indices)
-    np.allclose(result.asnumpy(), expected)
+    assert np.allclose(result.asnumpy(), expected)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize('op', ['add', 'sub', 'update'])
+@pytest.mark.parametrize('op', ['add', 'sub'])
 def test_inplace_op_dynamic_shape(op):
     """
     Feature: test test_inplace_op_dynamic_shape dynamic_shape feature.
@@ -291,10 +243,8 @@ def test_inplace_op_dynamic_shape(op):
 
     if op == 'add':
         dynamic_net = InplaceAdd(indices)
-    elif op == 'sub':
-        dynamic_net = InplaceSub(indices)
     else:
-        dynamic_net = InplaceUpdate(indices)
+        dynamic_net = InplaceSub(indices)
 
     place_holder_x = Tensor(shape=[None, 4, 3, 2], dtype=mstype.float32)
     place_holder_v = Tensor(shape=[None, 4, 3, 2], dtype=mstype.float32)
@@ -302,4 +252,4 @@ def test_inplace_op_dynamic_shape(op):
 
     result = dynamic_net(Tensor(x), Tensor(v))
     expected = inplace_op_np(op, x, v, indices)
-    np.allclose(result.asnumpy(), expected)
+    assert np.allclose(result.asnumpy(), expected)

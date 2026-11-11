@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test crop and resize."""
 from tests.mark_utils import arg_mark
 import pytest
 
@@ -22,8 +23,8 @@ from mindspore import nn, ops, Tensor
 
 class Net(nn.Cell):
     def __init__(self, method_="bilinear", extrapolation_value_=0.0):
-        super(Net, self).__init__()
-        self.op = ops.CropAndResize(method=method_,
+        super().__init__()
+        self.op = ops.operations._inner_ops.CropAndResize(method=method_,
                                     extrapolation_value=extrapolation_value_)
 
     def construct(self, image, boxes, box_index, channel):
@@ -32,7 +33,7 @@ class Net(nn.Cell):
 
 class GradNet(nn.Cell):
     def __init__(self, network):
-        super(GradNet, self).__init__()
+        super().__init__()
         self.grad = ops.GradOperation()
         self.network = network
 

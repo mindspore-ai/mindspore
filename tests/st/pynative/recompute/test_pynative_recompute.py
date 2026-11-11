@@ -365,7 +365,7 @@ def create_dataset(repeat_num=1, training=True, batch_size=32):
 class CrossEntropyLoss(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.cross_entropy = P.SoftmaxCrossEntropyWithLogits()
+        self.cross_entropy = P._inner_ops.SoftmaxCrossEntropyWithLogits()
         self.mean = P.ReduceMean()
         self.one_hot = P.OneHot()
         self.one = Tensor(1.0, mstype.float32)

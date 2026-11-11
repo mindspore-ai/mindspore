@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test momentum op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -31,7 +33,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class MomentumNet(nn.Cell):
     def __init__(self):
-        super(MomentumNet, self).__init__()
+        super().__init__()
         self.batch_size = 1
 
         self.reshape = P.Reshape()
@@ -74,12 +76,12 @@ def test_momentum():
 
 class DynamicShapeNet(nn.Cell):
     def __init__(self, variable, accumulation):
-        super(DynamicShapeNet, self).__init__()
+        super().__init__()
         self.unique = P.Unique()
         self.gather = P.Gather()
         self.variable = Parameter(variable, name="variable")
         self.accumulation = Parameter(accumulation, name="accumulation")
-        self.apply_momentum = P.ApplyMomentum()
+        self.apply_momentum = _inner_ops.ApplyMomentum()
 
     def construct(self, learning_rate, gradient, momentum, indices):
         unique_indices, _ = self.unique(indices)

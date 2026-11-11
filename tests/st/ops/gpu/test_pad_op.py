@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test pad op."""
 from tests.mark_utils import arg_mark
 
 import pytest
@@ -24,8 +25,8 @@ from mindspore import Tensor
 
 class PadNet(nn.Cell):
     def __init__(self, paddings):
-        super(PadNet, self).__init__()
-        self.pad = ops.Pad(paddings)
+        super().__init__()
+        self.pad = ops.operations._inner_ops.Pad(paddings)
 
     def construct(self, x):
         return self.pad(x)
@@ -37,7 +38,7 @@ class PadNet(nn.Cell):
                                    np.int64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
 def test_pad_dtype(mode, dtype):
     """
-    Feature: test ops.Pad forward.
+    Feature: test ops.operations._inner_ops.Pad forward.
     Description: inputs with different data type.
     Expectation: the result match with expect
     """

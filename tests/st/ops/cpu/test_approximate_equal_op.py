@@ -12,18 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained approximate equality primitive and Tensor behavior on CPU."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore.ops import operations as P
 from mindspore import dtype as mstype
 from mindspore.ops import functional as F
-from mindspore.ops.function.math_func import approximate_equal
 from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -33,8 +33,8 @@ Y = np.random.rand(3, 3).astype(np.float32)
 
 class NetApproxmiateEqual(nn.Cell):
     def __init__(self, user_tolerance):
-        super(NetApproxmiateEqual, self).__init__()
-        self.approximate_equal = P.ApproximateEqual(tolerance=user_tolerance)
+        super().__init__()
+        self.approximate_equal = _private_math.ApproximateEqual(tolerance=user_tolerance)
         self.x = Parameter(X, name='x')
         self.y = Parameter(Y, name='y')
 
@@ -176,25 +176,25 @@ def test_approxmiate_equal_tensor_api():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_approxmiate_equal_functional_api():
+def test_approximate_equal_primitive_default_tolerance():
     r"""
-    Feature: test ops ApproximateEqual on functional API.
+    Feature: test retained ApproximateEqual primitive.
     Description: Tests based on the docs and random x, y parameters.
     Expectation: match to expected numpy output.
     """
     tol = 0.5
-    output = approximate_equal(Tensor(X), Tensor(Y), tol)
+    output = _private_math.ApproximateEqual(tol)(Tensor(X), Tensor(Y))
     expect = my_approximate_equal(X, Y, tol)
     assert (output.asnumpy() == expect).all()
     x1 = np.random.rand(4, 3, 3).astype(np.float32) / 12345
     x2 = np.random.rand(4, 3, 3).astype(np.float32) / 23456
-    output = approximate_equal(Tensor(x1), Tensor(x2))
+    output = _private_math.ApproximateEqual()(Tensor(x1), Tensor(x2))
     expect = my_approximate_equal(x1, x2)
     assert (output.asnumpy() == expect).all()
     tol = 2.
     x1 = Tensor(np.array([1, 2, 3]), mstype.float32)
     x2 = Tensor(np.array([2, 4, 6]), mstype.float32)
-    output = approximate_equal(Tensor(x1), Tensor(x2), tol)
+    output = _private_math.ApproximateEqual(tol)(Tensor(x1), Tensor(x2))
     expect = my_approximate_equal(x1, x2, tol)
     assert (output.asnumpy() == expect).all()
 
@@ -208,7 +208,7 @@ def test_vmap_approximate_equal():
     """
 
     def cal_approximate_equal(input0, input1):
-        func = P.ApproximateEqual(2.0)
+        func = _private_math.ApproximateEqual(2.0)
         return func(input0, input1)
 
     def manually_batched(func, input0, input1):

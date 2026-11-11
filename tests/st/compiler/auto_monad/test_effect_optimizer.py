@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import pytest
+"""Check effect ordering for retained optimizer operations."""
+
 import numpy as np
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.ops import operations as P
@@ -26,7 +28,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class AdamNet(nn.Cell):
     def __init__(self, var, m, v):
-        super(AdamNet, self).__init__()
+        super().__init__()
         self.apply_adam = P.Adam()
         self.var = Parameter(var, name="var")
         self.m = Parameter(m, name="m")
@@ -65,7 +67,7 @@ def test_apply_adam():
 
 class ApplyAdaMaxNet(nn.Cell):
     def __init__(self, val, m, v):
-        super(ApplyAdaMaxNet, self).__init__()
+        super().__init__()
         self.apply_ada_max = P.ApplyAdaMax()
         self.var = Parameter(val, name="var")
         self.m = Parameter(m, name="m")
@@ -102,7 +104,7 @@ def test_apply_ada_max():
 
 class ApplyAdadeltaNet(nn.Cell):
     def __init__(self, var, accum, accum_update):
-        super(ApplyAdadeltaNet, self).__init__()
+        super().__init__()
         self.apply_adadelta = P.ApplyAdadelta()
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
@@ -137,7 +139,7 @@ def test_apply_adadelta():
 
 class ApplyAdagrad(nn.Cell):
     def __init__(self, var, accum):
-        super(ApplyAdagrad, self).__init__()
+        super().__init__()
         self.apply_adagrad = P.ApplyAdagrad()
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
@@ -167,8 +169,8 @@ def test_apply_adagrad():
 
 class ApplyAdagradV2Net(nn.Cell):
     def __init__(self, var, accum):
-        super(ApplyAdagradV2Net, self).__init__()
-        self.apply_adagrad_v2 = P.ApplyAdagradV2(epsilon=1e-6)
+        super().__init__()
+        self.apply_adagrad_v2 = _inner_ops.ApplyAdagradV2(epsilon=1e-6)
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
 
@@ -195,43 +197,9 @@ def test_apply_adagrad_v2():
         "The results should be different!"
 
 
-class ApplyAddSignNet(nn.Cell):
-    def __init__(self, var, m):
-        super(ApplyAddSignNet, self).__init__()
-        self.apply_add_sign = P.ApplyAddSign()
-        self.var = Parameter(var, name="var")
-        self.m = Parameter(m, name="m")
-
-    def construct(self, lr, alpha, sign_decay, beta, grad):
-        self.apply_add_sign(self.var, self.m, lr, alpha,
-                            sign_decay, beta, grad)
-        return self.var, self.m
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.02)
-def test_apply_add_sign():
-    """
-    Feature: Auto monad feature.
-    Description: Verify ApplyAddSign operator.
-    Expectation: No exception.
-    """
-    var = Tensor(np.random.rand(3, 3).astype(np.float32))
-    m = Tensor(np.random.rand(3, 3).astype(np.float32))
-    net = ApplyAddSignNet(var, m)
-
-    lr = Tensor(0.001, mstype.float32)
-    alpha = Tensor(1.0, mstype.float32)
-    sign_decay = Tensor(0.99, mstype.float32)
-    beta = Tensor(0.9, mstype.float32)
-    grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-    new_var, new_m = net(lr, alpha, sign_decay, beta, grad)
-    assert ((new_var != var).any() and (new_m != m).any()), \
-        "The results should be different!"
-
-
 class ApplyCenteredRMSPropNet(nn.Cell):
     def __init__(self, var):
-        super(ApplyCenteredRMSPropNet, self).__init__()
+        super().__init__()
         self.apply_centered_rms_prop = P.ApplyCenteredRMSProp()
         self.var = Parameter(var, name="var")
 
@@ -267,8 +235,8 @@ def test_apply_centered_rms_prop():
 
 class ApplyFtrlNet(nn.Cell):
     def __init__(self, var, accum, linear):
-        super(ApplyFtrlNet, self).__init__()
-        self.apply_ftrl = P.ApplyFtrl()
+        super().__init__()
+        self.apply_ftrl = _inner_ops.ApplyFtrl()
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
         self.linear = Parameter(linear, name="linear")
@@ -303,7 +271,7 @@ def test_apply_ftrl():
 
 class ApplyGradientDescentNet(nn.Cell):
     def __init__(self, var):
-        super(ApplyGradientDescentNet, self).__init__()
+        super().__init__()
         self.apply_gradient_descent = P.ApplyGradientDescent()
         self.var = Parameter(var, name="var")
 
@@ -330,8 +298,8 @@ def test_apply_gradient_descent():
 
 class ApplyMomentumNet(nn.Cell):
     def __init__(self, var, accum):
-        super(ApplyMomentumNet, self).__init__()
-        self.apply_momentum = P.ApplyMomentum(gradient_scale=1024.0)
+        super().__init__()
+        self.apply_momentum = _inner_ops.ApplyMomentum(gradient_scale=1024.0)
         self.var = Parameter(var, name='var')
         self.accum = Parameter(accum, name='accum')
 
@@ -359,44 +327,10 @@ def test_apply_momentum():
         "The results should be different!"
 
 
-class ApplyPowerSignNet(nn.Cell):
-    def __init__(self, var, m):
-        super(ApplyPowerSignNet, self).__init__()
-        self.apply_power_sign = P.ApplyPowerSign()
-        self.var = Parameter(var, name="var")
-        self.m = Parameter(m, name="m")
-
-    def construct(self, lr, logbase, sign_decay, beta, grad):
-        self.apply_power_sign(self.var, self.m, lr,
-                              logbase, sign_decay, beta, grad)
-        return self.var, self.m
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
-def test_apply_power_sign():
-    """
-    Feature: Auto monad feature.
-    Description: Verify ApplyPowerSign operator.
-    Expectation: No exception.
-    """
-    var = Tensor(np.random.rand(3, 3).astype(np.float32))
-    m = Tensor(np.random.rand(3, 3).astype(np.float32))
-    net = ApplyPowerSignNet(var, m)
-
-    lr = Tensor(0.001, mstype.float32)
-    logbase = Tensor(np.e, mstype.float32)
-    sign_decay = Tensor(0.99, mstype.float32)
-    beta = Tensor(0.9, mstype.float32)
-    grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-    new_var, new_m = net(lr, logbase, sign_decay, beta, grad)
-    assert ((new_var != var).any() and (new_m != m).any()), \
-        "The results should be different!"
-
-
 class ApplyProximalAdagradNet(nn.Cell):
     def __init__(self, var, accum):
-        super(ApplyProximalAdagradNet, self).__init__()
-        self.apply_proximal_adagrad = P.ApplyProximalAdagrad()
+        super().__init__()
+        self.apply_proximal_adagrad = _inner_ops.ApplyProximalAdagrad()
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name='accum')
 
@@ -425,38 +359,9 @@ def test_apply_proximal_adagrad():
         "The results should be different!"
 
 
-class ApplyProximalGradientDescentNet(nn.Cell):
-    def __init__(self, var):
-        super(ApplyProximalGradientDescentNet, self).__init__()
-        self.apply_proximal_gradient_descent = P.ApplyProximalGradientDescent()
-        self.var = Parameter(var, name="var")
-
-    def construct(self, alpha, l1, l2, delta):
-        self.apply_proximal_gradient_descent(self.var, alpha, l1, l2, delta)
-        return self.var
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
-def test_apply_proximal_gradient_descent():
-    """
-    Feature: Auto monad feature.
-    Description: Verify ApplyProximalGradientDescent operator.
-    Expectation: No exception.
-    """
-    var = Tensor(np.random.rand(3, 3).astype(np.float32))
-    net = ApplyProximalGradientDescentNet(var)
-
-    alpha = Tensor(0.001, mstype.float32)
-    l1 = Tensor(0.0, mstype.float32)
-    l2 = Tensor(0.0, mstype.float32)
-    delta = Tensor(np.random.rand(3, 3).astype(np.float32))
-    new_var = net(alpha, l1, l2, delta)
-    assert (new_var != var).any(), "The results should be different!"
-
-
 class ApplyRMSPropNet(nn.Cell):
     def __init__(self, var):
-        super(ApplyRMSPropNet, self).__init__()
+        super().__init__()
         self.apply_rms_prop = P.ApplyRMSProp()
         self.var = Parameter(var, name="var")
 
@@ -486,7 +391,7 @@ def test_apply_rms_prop():
 
 class FusedSparseAdamNet(nn.Cell):
     def __init__(self, var, m, v):
-        super(FusedSparseAdamNet, self).__init__()
+        super().__init__()
         self.fused_sparse_adam = P.FusedSparseAdam()
         self.var = Parameter(var, name="var")
         self.m = Parameter(m, name="m")
@@ -526,7 +431,7 @@ def test_fused_sparse_adam():
 
 class FusedSparseFtrlNet(nn.Cell):
     def __init__(self, var, accum, linear):
-        super(FusedSparseFtrlNet, self).__init__()
+        super().__init__()
         self.fused_sparse_ftrl = P.FusedSparseFtrl(
             lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
         self.var = Parameter(var, name="var")
@@ -560,7 +465,7 @@ def test_fused_sparse_ftrl():
 
 class FusedSparseLazyAdamNet(nn.Cell):
     def __init__(self, var, m, v):
-        super(FusedSparseLazyAdamNet, self).__init__()
+        super().__init__()
         self.fused_sparse_lazyadam = P.FusedSparseLazyAdam()
         self.var = Parameter(var, name="var")
         self.m = Parameter(m, name="m")
@@ -600,7 +505,7 @@ def test_fused_sparse_lazyadam():
 
 class FusedSparseProximalAdagradNet(nn.Cell):
     def __init__(self, var, accum):
-        super(FusedSparseProximalAdagradNet, self).__init__()
+        super().__init__()
         self.fused_sparse_proximal_adagrad = P.FusedSparseProximalAdagrad()
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
@@ -634,7 +539,7 @@ def test_fused_sparse_proximal_adagrad():
 
 class SparseApplyAdagradNet(nn.Cell):
     def __init__(self, var, accum):
-        super(SparseApplyAdagradNet, self).__init__()
+        super().__init__()
         self.sparse_apply_adagrad = P.SparseApplyAdagrad(lr=0.01)
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
@@ -662,41 +567,10 @@ def test_sparse_apply_adagrad():
     assert (new_var != var).any(), "The results should be different!"
 
 
-class SparseApplyAdagradV2Net(nn.Cell):
-    def __init__(self, var, accum):
-        super(SparseApplyAdagradV2Net, self).__init__()
-        self.sparse_apply_adagrad_v2 = P.SparseApplyAdagradV2(
-            lr=0.01, epsilon=0.001)
-        self.var = Parameter(var, name="var")
-        self.accum = Parameter(accum, name="accum")
-
-    def construct(self, grad, indices):
-        self.sparse_apply_adagrad_v2(self.var, self.accum, grad, indices)
-        return self.var, self.accum
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
-def test_sparse_apply_adagrad_v2():
-    """
-    Feature: Auto monad feature.
-    Description: Verify SparseApplyAdagradV2 operator.
-    Expectation: No exception.
-    """
-    var = Tensor(np.random.rand(3, 3).astype(np.float32))
-    accum = Tensor(np.random.rand(3, 3).astype(np.float32))
-    net = SparseApplyAdagradV2Net(var, accum)
-
-    grad = grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-    indices = Tensor([0, 1, 2], mstype.int32)
-    new_var, new_accum = net(grad, indices)
-    assert ((new_var != var).any() and (new_accum != accum).any()), \
-        "The results should be different!"
-
-
 class SparseApplyFtrlNet(nn.Cell):
     def __init__(self, var, accum, linear):
-        super(SparseApplyFtrlNet, self).__init__()
-        self.sparse_apply_ftrl = P.SparseApplyFtrl(
+        super().__init__()
+        self.sparse_apply_ftrl = _inner_ops.SparseApplyFtrl(
             lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
@@ -727,44 +601,10 @@ def test_sparse_apply_ftrl():
         "The results should be different!"
 
 
-class SparseApplyFtrlV2Net(nn.Cell):
-    def __init__(self, var, accum, linear):
-        super(SparseApplyFtrlV2Net, self).__init__()
-        self.sparse_apply_ftrl_v2 = P.SparseApplyFtrlV2(
-            lr=0.01, l1=0.0, l2=0.0, l2_shrinkage=0.0, lr_power=-0.5)
-        self.var = Parameter(var, name="var")
-        self.accum = Parameter(accum, name="accum")
-        self.linear = Parameter(linear, name="linear")
-
-    def construct(self, grad, indices):
-        self.sparse_apply_ftrl_v2(
-            self.var, self.accum, self.linear, grad, indices)
-        return self.var, self.accum, self.linear
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
-def test_sparse_apply_ftrl_v2():
-    """
-    Feature: Auto monad feature.
-    Description: Verify SparseApplyFtrlV2 operator.
-    Expectation: No exception.
-    """
-    var = Tensor(np.random.rand(3, 3).astype(np.float32))
-    accum = Tensor(np.random.rand(3, 3).astype(np.float32))
-    linear = Tensor(np.random.rand(3, 3).astype(np.float32))
-    net = SparseApplyFtrlV2Net(var, accum, linear)
-
-    grad = Tensor(np.random.rand(3, 3).astype(np.float32))
-    indices = Tensor(np.ones((3,), np.int32))
-    new_var, new_accum, new_linear = net(grad, indices)
-    assert ((new_var != var).any() and (new_accum != accum).any() and (new_linear != linear).any()), \
-        "The results should be different!"
-
-
 class SparseApplyProximalAdagradNet(nn.Cell):
     def __init__(self, var, accum):
-        super(SparseApplyProximalAdagradNet, self).__init__()
-        self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
+        super().__init__()
+        self.sparse_apply_proximal_adagrad = _inner_ops.SparseApplyProximalAdagrad()
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
 
@@ -797,7 +637,7 @@ def test_sparse_apply_proximal_adagrad():
 
 class SGDNet(nn.Cell):
     def __init__(self, var):
-        super(SGDNet, self).__init__()
+        super().__init__()
         self.sgd = P.SGD()
         self.var = Parameter(var, name="var")
 
@@ -829,7 +669,7 @@ class ApplyProximalAdagradConstantNet(nn.Cell):
     def __init__(self, var, accum):
         super().__init__()
         self.depend = P.Depend()
-        self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
+        self.sparse_apply_proximal_adagrad = _inner_ops.SparseApplyProximalAdagrad()
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
         self.const = Tensor(9999, mstype.float32)

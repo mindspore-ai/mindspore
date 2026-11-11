@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test dynamic asr."""
 from tests.mark_utils import arg_mark
 import math
 import numpy as np
@@ -72,7 +73,7 @@ def compare_acc(outputs, expects):
 
 class GradNetWrtX(nn.Cell):
     def __init__(self, network):
-        super(GradNetWrtX, self).__init__()
+        super().__init__()
         self.grad = ops.GradOperation(get_all=True)
         self.network = network
 
@@ -82,7 +83,7 @@ class GradNetWrtX(nn.Cell):
 
 class GradNetWrtX2inputs(nn.Cell):
     def __init__(self, network):
-        super(GradNetWrtX2inputs, self).__init__()
+        super().__init__()
         self.grad = ops.GradOperation(get_all=True)
         self.network = network
 
@@ -145,14 +146,14 @@ class CustomDense(nn.Dense):
                  has_bias=True,
                  activation=None):
         """Initialize CustomDense."""
-        super(CustomDense, self).__init__(in_channels,
+        super().__init__(in_channels,
                                           out_channels,
                                           weight_init,
                                           bias_init,
                                           has_bias,
                                           activation)
         self.scatterupdate = ops.TensorScatterUpdate()
-        self.dyn_shape = ops.TensorShape()
+        self.dyn_shape = ops.operations._inner_ops.TensorShape()
         self.mul = ops.Mul()
         self.cast = ops.Cast()
         self.indices_0 = Tensor(np.array([[0]]), mstype.int32)
@@ -205,9 +206,9 @@ class CustomDense(nn.Dense):
 
 class BatchNorm1d(nn.Cell):
     def __init__(self, channels):
-        super(BatchNorm1d, self).__init__()
+        super().__init__()
         self.expand_dims = ops.ExpandDims()
-        self.shape = ops.TensorShape()
+        self.shape = ops.operations._inner_ops.TensorShape()
         self.reshape = ops.Reshape()
         self.batchnorm = nn.BatchNorm2d(channels)
 
@@ -222,7 +223,7 @@ class BatchNorm1d(nn.Cell):
 
 class BatchNorm1dSingleOp(nn.Cell):
     def __init__(self, channels):
-        super(BatchNorm1dSingleOp, self).__init__()
+        super().__init__()
         self.batchnorm = nn.BatchNorm1d(channels)
 
     def construct(self, x):
@@ -246,7 +247,7 @@ class Positional(nn.Cell):
         self.pe[:, 0::2] = np.sin(position * div_term)
         self.pe[:, 1::2] = np.cos(position * div_term)
         self.pe = Tensor(np.expand_dims(self.pe, 0), mstype.float32)
-        self.dyn_shape = ops.TensorShape()
+        self.dyn_shape = ops.operations._inner_ops.TensorShape()
         self.stridedslice = ops.StridedSlice()
         self.indices_1 = Tensor(([[1]]), mstype.int32)
         self.scatterupdate = ops.TensorScatterUpdate()
@@ -270,7 +271,7 @@ class Positional(nn.Cell):
 
 class Sort(nn.Cell):
     def __init__(self):
-        super(Sort, self).__init__()
+        super().__init__()
         self.sort = ops.Sort(axis=0)
 
     def construct(self, x):
@@ -280,7 +281,7 @@ class Sort(nn.Cell):
 
 class NMSWithMask(nn.Cell):
     def __init__(self, iou_threshold):
-        super(NMSWithMask, self).__init__()
+        super().__init__()
         self.nmswithmask = ops.NMSWithMask(iou_threshold)
 
     def construct(self, x):
@@ -290,7 +291,7 @@ class NMSWithMask(nn.Cell):
 
 class Concat(nn.Cell):
     def __init__(self):
-        super(Concat, self).__init__()
+        super().__init__()
         self.concat = ops.Concat(axis=0)
 
     def construct(self, x):
@@ -301,7 +302,7 @@ class Concat(nn.Cell):
 
 class Stack(nn.Cell):
     def __init__(self):
-        super(Stack, self).__init__()
+        super().__init__()
         self.stack = ops.Stack(axis=0)
 
     def construct(self, x):
@@ -312,7 +313,7 @@ class Stack(nn.Cell):
 
 class MaxPool(nn.Cell):
     def __init__(self):
-        super(MaxPool, self).__init__()
+        super().__init__()
         self.maxpool = ops.MaxPool(pad_mode="VALID", kernel_size=2, strides=1)
 
     def construct(self, x):

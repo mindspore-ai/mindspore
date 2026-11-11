@@ -20,18 +20,19 @@ import numpy as np
 import pytest
 import gc
 
+from mindspore.ops.operations import _inner_ops
 from mindspore import context
 import mindspore.common.dtype as mstype
 from mindspore import nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
 from mindspore.graph.api import _pynative_executor
 
 
 class RCWM_count_in(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.RCWM_count_in = P.RandomChoiceWithMask(count=4, seed=1)
+        self.RCWM_count_in = _inner_ops.RandomChoiceWithMask(count=4, seed=1)
 
     def construct(self, x):
         return self.RCWM_count_in(x)
@@ -40,7 +41,7 @@ class RCWM_count_in(nn.Cell):
 class RCWM_count_out(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.RCWM_count_out = P.RandomChoiceWithMask(count=10, seed=1)
+        self.RCWM_count_out = _inner_ops.RandomChoiceWithMask(count=10, seed=1)
 
     def construct(self, x):
         return self.RCWM_count_out(x)
@@ -49,7 +50,7 @@ class RCWM_count_out(nn.Cell):
 class RCWM_3D(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.RCWM_3D = P.RandomChoiceWithMask(count=10, seed=1)
+        self.RCWM_3D = _inner_ops.RandomChoiceWithMask(count=10, seed=1)
 
     def construct(self, x):
         return self.RCWM_3D(x)
@@ -58,7 +59,7 @@ class RCWM_3D(nn.Cell):
 class RCWM_1D(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.RCWM_1D = P.RandomChoiceWithMask(count=10, seed=9)
+        self.RCWM_1D = _inner_ops.RandomChoiceWithMask(count=10, seed=9)
 
     def construct(self, x):
         return self.RCWM_1D(x)
@@ -67,7 +68,7 @@ class RCWM_1D(nn.Cell):
 class RCWM_max_count(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.rcwm_max_count = P.RandomChoiceWithMask(count=2051328285, seed=0, seed2=-1024)
+        self.rcwm_max_count = _inner_ops.RandomChoiceWithMask(count=2051328285, seed=0, seed2=-1024)
 
     def construct(self, x):
         return self.rcwm_max_count(x)

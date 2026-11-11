@@ -5,8 +5,6 @@ mindspore.ops.CTCGreedyDecoder
 
     对输入中给定的logits执行贪婪解码。
 
-    更多参考详见 :func:`mindspore.ops.ctc_greedy_decoder`。
-
     .. note::
         在Ascend平台上，目前不支持配置 `merge_repeated=False` 。
 

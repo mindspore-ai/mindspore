@@ -26,6 +26,7 @@ import math
 import numbers
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 from mindspore import log as logger
 from mindspore import ops
@@ -60,7 +61,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, muls, sin, sinc,
                                          sum_ext_op, prod_ext_op, all, matrix_inverse_ext, atan2_ext, sign, acos_ext,
                                          acosh_ext, asin_ext, asinh_ext, atan_ext, tan, median_ext_op, median_dim_op,
                                          xlogy_op, xlogy_scalar_other_op, xlogy_scalar_self_op, trunc, histc_ext, roll,
-                                         bincount_ext, rotated_iou_op, cat, narrow, var_op, pow, inplace_erfinv_op,
+                                         bincount_ext, cat, narrow, var_op, pow, inplace_erfinv_op,
                                          frac_ext, pow_tensor_scalar_op, not_equal_op, isinf, addmv_op, cdist,
                                          addbmm_op, addmm_op, pow_scalar_tensor_op, transpose_op)
 # 2
@@ -112,12 +113,8 @@ from mindspore.ops.operations.math_ops import (
     BesselI1,
     BesselJ0,
     BesselJ1,
-    BesselK0,
-    BesselK0e,
     BesselY0,
     BesselY1,
-    BesselK1,
-    BesselK1e,
     CumulativeLogsumexp,
     LuSolve,
     MatrixExp,
@@ -133,10 +130,8 @@ from mindspore.ops.operations.math_ops import (
     Gcd,
     Quantile,
     NanToNum,
-    SparseSegmentMean,
     TrilIndices,
     TriuIndices,
-    InplaceIndexAdd,
     InplaceUpdateV2,
     Igamma,
     Igammac,
@@ -203,11 +198,11 @@ class _NanMeanWithBprop(Cell):
 absolute_ = P.Abs()
 cast_ = P.Cast()
 tensor_add = P.Add()
-tensor_ceil = P.Ceil()
+tensor_ceil = _private_math.Ceil()
 tensor_div = P.RealDiv()
 tensor_exp = P.Exp()
-tensor_expm1 = P.Expm1()
-tensor_floordiv = P.FloorDiv()
+tensor_expm1 = _private_math.Expm1()
+tensor_floordiv = _private_math.FloorDiv()
 floordiv = tensor_floordiv
 tensor_ge = P.GreaterEqual()
 tensor_gt = greater
@@ -229,17 +224,6 @@ tuple_to_tensor_ = TupleToTensor()
 #####################################
 # Private Operation Functions.
 #####################################
-_accumulate_prim = None
-
-
-def _get_accumulate_prim():
-    """Lazy init to avoid import-time deprecated warnings."""
-    global _accumulate_prim
-    if _accumulate_prim is None:
-        _accumulate_prim = P.AccumulateNV2()
-    return _accumulate_prim
-
-
 acos_ = P.ACos()
 acosh_ = P.Acosh()
 addcdiv_ = P.Addcdiv()
@@ -249,7 +233,7 @@ angle_ = Angle()
 asin_ = P.Asin()
 asinh_ = P.Asinh()
 atan2_ = P.Atan2()
-atan_ = P.Atan()
+atan_ = _private_math.Atan()
 atanh_ = P.Atanh()
 batch_matmul_ = BatchMatMul()
 bernoulli_ext_ = BernoulliExt()
@@ -259,10 +243,6 @@ bessel_i1_ = BesselI1()
 bessel_i1e_ = P.BesselI1e()
 bessel_j0_ = BesselJ0()
 bessel_j1_ = BesselJ1()
-bessel_k0_ = BesselK0()
-bessel_k0e_ = BesselK0e()
-bessel_k1_ = BesselK1()
-bessel_k1e_ = BesselK1e()
 bessel_y0_ = BesselY0()
 bessel_y1_ = BesselY1()
 bitwise_and_ = P.BitwiseAnd()
@@ -287,12 +267,12 @@ igammac_ = Igammac()
 imag_ = P.Imag()
 inv_ = P.math_ops.Inv()
 invert_ = P.Invert()
-isnan_ = P.IsNan()
+isnan_ = _private_math.IsNan()
 lcm_ = Lcm()
 lerp_ = P.Lerp()
 lgamma_ = P.Lgamma()
 linspace_ = P.LinSpace()
-log1p_ = P.Log1p()
+log1p_ = _private_math.Log1p()
 log_ = P.Log()
 log_matrix_determinant_ = P.LogMatrixDeterminant()
 logical_and_ = P.LogicalAnd()
@@ -316,24 +296,14 @@ reshape_ = P.Reshape()
 select_ = P.Select()
 slice_ = P.Slice()
 size_ = P.Size()
-scalar_to_tensor_ = P.ScalarToTensor()
+scalar_to_tensor_ = _private_math.ScalarToTensor()
 shape_ = P.Shape()
-_sparse_segment_mean_prim = None
-
-
-def _get_sparse_segment_mean_prim():
-    """Lazy init to avoid import-time deprecated warnings."""
-    global _sparse_segment_mean_prim
-    if _sparse_segment_mean_prim is None:
-        _sparse_segment_mean_prim = SparseSegmentMean()
-    return _sparse_segment_mean_prim
 
 
 tensor_round_ = P.Round()
 tile_ = P.Tile()
 tile_size_ = TileSize()
 trunc_ = P.Trunc()
-truncate_div_ = P.TruncateDiv()
 truncate_mod_ = P.TruncateMod()
 xlogy_ = P.Xlogy()
 zeros_ = P.Zeros()
@@ -1060,20 +1030,6 @@ def float_power_ext(input, exponent):
     return op(input, exponent)
 
 
-def floor_div(x, y):
-    """
-    Alias for :func:`mindspore.ops.floor_divide` .
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-        Please use :func:`mindspore.ops.floor_divide` instead.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-    """
-    return tensor_floordiv(x, y)
-
-
 def fmod(input, other):
     """
     Compute the remainder of element-wise division of first input by the second input.
@@ -1190,122 +1146,6 @@ def inplace_update(x, v, indices):
     return inplace_update_inner(x, indices, v)
 
 
-def inplace_add(x, v, indices):
-    r"""
-    Add `x` to `v` according to the indices.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    For each `i, ..., j` in `indices` :
-
-    .. math::
-        x[\text{indices}[i, ..., j]] \mathrel{+}= v[i, ..., j]
-
-    Args:
-        x (Tensor): The input tensor.
-        v (Tensor): The input tensor to add to `x`.
-        indices (Union[int, tuple]): Indices into the input `x` along the 0th dimension.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> indices = (0, 1)
-        >>> x = mindspore.tensor([[1, 2], [3, 4], [5, 6]], mindspore.float32)
-        >>> input_v = mindspore.tensor([[0.5, 1.0], [1.0, 1.5]], mindspore.float32)
-        >>> output = mindspore.ops.inplace_add(x, input_v, indices)
-        >>> print(output)
-        [[1.5 3. ]
-         [4.  5.5]
-         [5.  6. ]]
-    """
-    inplace_add_inner = _get_cache_prim(P.InplaceAdd)(indices)
-    return inplace_add_inner(x, v)
-
-
-def inplace_index_add(var, indices, updates, axis):  # pylint: disable=redefined-outer-name
-    r"""
-    Add `updates` to `var` according to the indices and axis.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    For each `i, ..., j` in `indices` :
-
-    .. math::
-        x[:, \text{indices}[i, ..., j], :] \mathrel{+}= v[:, i, ..., j, :]
-
-    where `i` is the index of the element in `indices`, and the axis of `indices[i]` is determined by the input `axis`.
-
-    Args:
-        var (Union[Parameter, Tensor]): The input parameter or tensor.
-        indices (Tensor): The specified indices, a 1-D tensor.
-        updates (Tensor): The input tensor to add to `var`.
-        axis (int): The specified axis.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> var = mindspore.Parameter(mindspore.tensor([[1, 2], [3, 4], [5, 6]], mindspore.float32))
-        >>> indices = mindspore.tensor([0, 1], mindspore.int32)
-        >>> updates = mindspore.tensor([[0.5, 1.0], [1.0, 1.5]], mindspore.float32)
-        >>> mindspore.ops.inplace_index_add(var, indices, updates, axis=0)
-        >>> print(var.asnumpy())
-        [[1.5 3. ]
-         [4.  5.5]
-         [5.  6. ]]
-    """
-
-    inplace_index_add_ = InplaceIndexAdd(axis)
-    return inplace_index_add_(var, indices, updates)
-
-
-def inplace_sub(x, v, indices):
-    r"""
-    Subtract `v` in `x` according to the indices.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    For each `i, ..., j` in `indices` :
-
-    .. math::
-        x[\text{indices}[i, ..., j]] \mathrel{-}= v[i, ..., j]
-
-    Args:
-        x (Tensor): The input tensor.
-        v (Tensor): The input tensor to subtract from `x` .
-        indices (Union[int, tuple]): Indices into the input `x` along the 0th dimension.
-
-    Returns:
-        Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> indices = (0, 1)
-        >>> x = mindspore.tensor([[1, 2], [3, 4], [5, 6]], mindspore.float32)
-        >>> input_v = mindspore.tensor([[0.5, 1.0], [1.0, 1.5]], mindspore.float32)
-        >>> output = mindspore.ops.inplace_sub(x, input_v, indices)
-        >>> print(output)
-        [[0.5 1. ]
-         [2.  2.5]
-         [5.  6. ]]
-    """
-    inplace_sub_inner = _get_cache_prim(P.InplaceSub)(indices)
-    return inplace_sub_inner(x, v)
 
 
 def logical_not(input):
@@ -2518,69 +2358,8 @@ def bessel_i0e(x):
     return bessel_i0e_(x)
 
 
-def bessel_k0(x):
-    r"""
-    Computes the zeroth order modified Bessel function of the second kind for each element input.
-
-    .. math::
-        \begin{array}{ll} \\
-            K_{0}(x)= \lim_{\nu \to 0} \left(\frac{\pi}{2}\right) \frac
-            {I_{-\nu}(x)-I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} d t
-        \end{array}
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        x (Tensor): The input tensor.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([0.5, 1., 2., 4.])
-        >>> output = mindspore.ops.bessel_k0(x)
-        >>> print(output)
-        [0.92441907  0.42102444  0.11389387  0.01115968]
-    """
-    return bessel_k0_(x)
 
 
-def bessel_k0e(x):
-    r"""
-    Computes the exponentially scaled zeroth order modified Bessel function of the
-    second kind for each element input.
-
-    .. math::
-        \begin{array}{ll} \\
-            K_{0}e(x)= e^{(-|x|)} * K_{0}(x) = e^{(-|x|)} * \int_{0}^
-            {\infty} e^{-x \cosh t} d t
-        \end{array}
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        x (Tensor): The input tensor.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([0.5, 1., 2., 4.])
-        >>> output = mindspore.ops.bessel_k0e(x)
-        >>> print(output)
-        [1.52410939  1.14446308  0.84156822  0.60929767]
-    """
-    return bessel_k0e_(x)
 
 
 def bessel_y0(x):
@@ -2958,33 +2737,6 @@ def slogdet(input):
     return log_matrix_determinant_(input)
 
 
-def truncate_div(x, y):
-    """
-    Divide the first input tensor `x` by the second input tensor `y` element-wise and rounds the results
-    of division towards zero.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Note:
-        Support implicit type conversion and broadcasting.
-
-    Args:
-        x(Union[Tensor, Number, bool]): The first input tensor.
-        y(Union[Tensor, Number, bool]): The second input tensor.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> mindspore.ops.truncate_div(mindspore.tensor([2, 4, -1]), mindspore.tensor([3, 3, 3]))
-        Tensor(shape=[3], dtype=Int64, value= [0, 1, 0])
-    """
-    return truncate_div_(x, y)
 
 
 def truncate_mod(x, y):
@@ -3333,58 +3085,6 @@ def ne(input, other):
         [ False False  True]
     """
     return not_equal(input, other)
-
-@deprecated("2.8.0", "Tensor.isclose", False, "ops.")
-def approximate_equal(x, y, tolerance=1e-5):
-    r"""
-    Return a boolean tensor where two tensors are element-wise equal within a tolerance.
-
-    .. warning::
-        This API is deprecated since version 2.8.0 and will be removed after version 2.9.0.
-        Please use :func:`mindspore.Tensor.isclose` instead.
-
-    Support implicit type conversion and type promotion.
-
-    Math function is defined as:
-
-    .. math::
-
-        out_i = \begin{cases}
-        & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True  \\
-        & \text{ if } \left | x_{i} - y_{i} \right | \ge \text{tolerance},\ \  False
-        \end{cases}
-
-    Two infinite values and two NaN values are not considered equal.
-
-    Args:
-        x (Tensor): The first input tensor.
-        y (Tensor): The second input tensor.
-        tolerance (float): The maximum deviation within which two elements can be considered equal. Default ``1e-5`` .
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> mindspore.ops.approximate_equal(mindspore.tensor([1e6, 2e6, float("inf"), float("-inf"), float("nan")]),
-        ...                                 mindspore.tensor([1e6, 2e7, float("inf"), float("-inf"), float("nan")]))
-        Tensor(shape=[5], dtype=Bool, value= [ True, False, False, False, False])
-        >>>
-        >>> mindspore.ops.approximate_equal(mindspore.tensor([1e6, 2e6, 3e6]),
-        ...                                 mindspore.tensor([1.00001e6, 2.00002e6, 3.00009e6]), tolerance=1e3)
-        Tensor(shape=[3], dtype=Bool, value= [ True,  True,  True])
-        >>>
-        >>> # If `x` and `y` have different datatypes, the lower precision data type will be converted to the
-            relatively highest precision data type.
-        >>> mindspore.ops.approximate_equal(mindspore.tensor([1, 2], mindspore.int32),
-        ...                                 mindspore.tensor([1., 2], mindspore.float32))
-        Tensor(shape=[2], dtype=Bool, value= [ True,  True])
-    """
-    return _get_cache_prim(P.ApproximateEqual)(tolerance)(x, y)
-
 
 def isnan(input):
     r"""
@@ -5393,69 +5093,8 @@ def bessel_i1e(x):
     return bessel_i1e_(x)
 
 
-def bessel_k1(x):
-    r"""
-    Computes the first order modified Bessel function of the second kind for each element input.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    .. math::
-        \begin{array}{ll} \\
-            K_{1}(x)=\lim_{\nu \to 1} \left(\frac{\pi}{2}\right) \frac{I_{-\nu}(x)-
-            I_{\nu}(x)}{\sin (\nu \pi)} = \int_{0}^{\infty} e^{-x \cosh t} \cosh (t) d t
-        \end{array}
-
-    Args:
-        x (Tensor): The input tensor.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([0.5, 1., 2., 4.])
-        >>> output = mindspore.ops.bessel_k1(x)
-        >>> print(output)
-        [1.65644112  0.60190723  0.13986588  0.0124835]
-    """
-    return bessel_k1_(x)
 
 
-def bessel_k1e(x):
-    r"""
-    Computes the exponentially scaled first order modified Bessel function of the
-    second kind for each element input.
-
-    .. math::
-        \begin{array}{ll} \\
-            K_{1}e(x)= e^{(-|x|)} * K_{1}(x) = e^{(-|x|)} * \int_{0}
-            ^{\infty} e^{-x \cosh t} \cosh (t) d t
-        \end{array}
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        x (Tensor): The input tensor.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([0.5, 1., 2., 4.])
-        >>> output = mindspore.ops.bessel_k1e(x)
-        >>> print(output)
-        [2.73100971  1.63615349  1.03347685  0.68157595]
-    """
-    return bessel_k1e_(x)
 
 
 @constexpr
@@ -5683,50 +5322,6 @@ def cumsum(x, axis, dtype=None):
     if dtype is not None and x.dtype != dtype:
         x = x.astype(dtype, copy=False)
     return cumsum_(x, axis)
-
-
-@deprecated("2.8.0", None, False, "ops.")
-def sparse_segment_mean(x, indices, segment_ids):
-    r"""
-    Computes the mean of sparse segments in the input tensor.
-
-    .. warning::
-        This API is deprecated since version 2.8.0 and will be removed after version 2.9.0.
-
-    .. math::
-        output_i = \frac{\sum_j x_{indices[j]}}{N}
-
-    where `N` is the number of elements where :math:`segment\_ids[j] == i` .
-    If `segment_ids` doesn't contain `i`, then :math:`output[i] = 0` .
-
-    Note:
-        - On CPU, values in `segment_ids` must be sorted and `indices` must be within range[0, x.shape[0]).
-        - On GPU, unsorted `segment_ids` may result in undefined but safe behavior. Out-of-range `indices` will
-          be ignored.
-
-    Args:
-        x (Tensor): The input tensor with at least one dimension.
-        indices (Tensor): The specified indices, a 1-D tensor.
-        segment_ids (Tensor): A 1-D tensor, must be sorted and can contain duplicates.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([[0, 1, 2], [1, 2, 3], [3, 6, 7]], dtype=mindspore.float32)
-        >>> indices = mindspore.tensor([0, 1, 2], dtype=mindspore.int32)
-        >>> segment_ids = mindspore.tensor([1,2,2], dtype=mindspore.int32)
-        >>> out = mindspore.ops.sparse_segment_mean(x, indices, segment_ids)
-        >>> print(out)
-        [[0. 0. 0.]
-         [0. 1. 2.]
-         [2. 4. 5.]]
-    """
-    return _get_sparse_segment_mean_prim()(x, indices, segment_ids)
 
 
 def block_diag(*inputs):
@@ -9505,90 +9100,6 @@ def remainder_ext(input, other):
     raise TypeError("For 'remainder', inputs should either be two tensors, or a tensor and a scalar.")
 
 
-@deprecated("2.8.0", "ops.addn", False, "ops.")
-def accumulate_n(x):
-    r"""
-    Return the element-wise sum of all input tensors.
-
-    .. warning::
-        This API is deprecated since version 2.8.0 and will be removed after version 2.9.0.
-        Please use :func:`mindspore.ops.addn` instead.
-
-    :func:`mindspore.ops.accumulate_n` is similar to :func:`mindspore.ops.addn`,
-    but accumulate_n will not wait for all of its inputs to be ready before summing, which is able
-    to reduce peak memory.
-
-    Args:
-        x (Union(tuple[Tensor], list[Tensor])): List of tensors or tuple of tensors.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([1, 2, 3], mindspore.float32)
-        >>> y = mindspore.tensor([4, 5, 6], mindspore.float32)
-        >>> output = mindspore.ops.accumulate_n([x, y, x, y])
-        >>> print(output)
-        [10. 14. 18.]
-    """
-    return _get_accumulate_prim()(x)
-
-
-def iou(anchor_boxes, gt_boxes, mode='iou'):
-    r"""
-    Calculates intersection over union for boxes.
-
-    .. warning::
-        - This interface is deprecated and will be removed after version 2.9.0.
-        - In Ascend, only computation of float16 data is supported. To avoid overflow, the input length
-          and width are scaled by 0.2 internally.
-
-    Computes the intersection over union (IOU) or the intersection over foreground (IOF) based on the ground-truth and
-    predicted regions.
-
-    .. math::
-        \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
-
-        \text{IOF} = \frac{\text{Area of Overlap}}{\text{Area of Ground Truth}}
-
-    Args:
-        anchor_boxes (Tensor): Anchor boxes, tensor of shape :math:`(N, 4)` . :math:`N` indicates the number of
-            anchor boxes, and the value :math:`4` refers to four boundary coordinates of the predicted area
-            "x0", "y0", "x1", and "y1". Data type must be either float16, float32 or float64.
-        gt_boxes (Tensor): Ground truth boxes, tensor of shape :math:`(M, 4)` . :math:`M` indicates the number
-            of ground truth boxes, and the value :math:`4` refers to four boundary coordinates of the truth
-            area "x0", "y0", "x1", and "y1". Data type must be either float16, float32 or float64.
-        mode (str): The mode is used to specify the calculation method,
-            now supporting 'iou' (intersection over union) or 'iof' (intersection over foreground) mode.
-            Default: ``'iou'`` .
-
-    Returns:
-        Tensor, the IOU/IOF values, tensor of shape :math:`(M, N)` , with the same data type as `anchor_boxes`.
-
-    Raises:
-        KeyError: When `mode` is not ``'iou'`` or ``'iof'``.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
-        >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
-        >>> mode = 'iou'
-        >>> output = ops.iou(anchor_boxes, gt_boxes, mode)
-        >>> print(output.shape)
-        (3, 3)
-    """
-    return _get_cache_prim(P.IOU)(mode)(anchor_boxes, gt_boxes)
-
-
 def _check_is_float(dtype):
     return dtype in (mstype.float16, mstype.float32)
 
@@ -11009,7 +10520,7 @@ def _resize_input(input, input_dim, ret_dim, ret_shape, input_sizes):
         paddings = np.reshape(paddings, (input_dim, 2)).tolist()
         paddings.reverse()
         paddings = (*paddings,)
-        input = _get_cache_prim(P.Pad)(paddings)(input)
+        input = _get_cache_prim(_private_math.Pad)(paddings)(input)
 
     return input
 
@@ -11948,252 +11459,6 @@ def dot(input, other):
     return matmul_op(input, other)
 
 
-@_primexpr
-def _get_batch_size(x1_shape, x2_shape, prim_name=None):
-    """
-    Get batch sizes from two inputs
-    """
-
-    def _check():
-        msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-        if len(x1_shape) < 2 or len(x2_shape) < 2:
-            raise ValueError(f"{msg_prefix} inputs x1, x2 should have 'dimension >= 2', "
-                             f"but got 'len(x1_shape)': ({len(x1_shape)}) and 'len(x2_shape)': ({len(x2_shape)}).")
-
-    _check()
-    return x1_shape[0], x2_shape[0]
-
-
-@constexpr
-def _typecheck_input_batch_dot(x1_type, x2_type, prim_name=None):
-    """
-    Check input tensor types to be valid and confirm they are the same type for batch dot ops.
-    """
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    const_utils.check_type_valid(x1_type, [mstype.float32], 'x1')
-    const_utils.check_type_valid(x2_type, [mstype.float32], 'x2')
-    if x1_type != x2_type:
-        raise TypeError(f"{msg_prefix} inputs must be the same type, but got x1_type: {x1_type} and "
-                        f"x2_type: {x2_type}.")
-
-
-@_primexpr
-def _check_axes_for_batch_dot(x1_shape, x2_shape, axes, prim_name=None):
-    """
-    Check whether axes are valid and cast axes from tuple to list
-    """
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-
-    def _check_1(axes):
-        if 0 in axes:
-            raise ValueError(f"{msg_prefix} 'axes' cannot contain 0, but got axes: {axes}.")
-        if len(axes) != 2:
-            raise ValueError(f"{msg_prefix} length of 'axes' must be equal to 2, but got {len(axes)}.")
-
-    def _check_2(axes, x1_shape, x2_shape):
-        if axes[0] > len(x1_shape) or axes[1] > len(x2_shape):
-            raise ValueError(f"{msg_prefix} axes[0] must be less than or equal to len(x1_shape), "
-                             f"and axes[1] must be less than or equal to len(x2_shape)."
-                             f"But got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
-
-    def _check_3(axes, x1_shape, x2_shape):
-        if axes == 0:
-            raise ValueError(f"{msg_prefix} 'axes' should not be equal to 0, but got {axes}.")
-
-        if axes > len(x1_shape) or axes > len(x2_shape):
-            raise ValueError(f"{msg_prefix} 'axes' cannot be greater than the length of 'x1_shape' and 'x2_shape', "
-                             f"but got 'axes': {axes}, 'x1_shape': {x1_shape}, 'x2_shape': {x2_shape}.")
-
-    if axes is None:
-        if len(x2_shape) == 2:
-            axes = [len(x1_shape) - 1, len(x2_shape) - 1]
-        else:
-            axes = [len(x1_shape) - 1, len(x2_shape) - 2]
-
-    if isinstance(axes, (list, tuple)):
-        _check_1(axes)
-        if isinstance(axes, tuple):
-            axes = list(axes)
-        validator.check_value_type('axes[0]', axes[0], [int], 'batch_dot')
-        validator.check_value_type('axes[1]', axes[1], [int], 'batch_dot')
-        # Reverse if axis < 0
-        if axes[0] < 0:
-            axes[0] += len(x1_shape)
-        if axes[1] < 0:
-            axes[1] += len(x2_shape)
-        validator.check_non_negative_int(axes[0], 'reversed axes[0]', 'batch_dot')
-        validator.check_non_negative_int(axes[1], 'reversed axes[1]', 'batch_dot')
-        _check_2(axes, x1_shape, x2_shape)
-    elif isinstance(axes, int):
-        _check_3(axes, x1_shape, x2_shape)
-        if axes < 0:
-            axes = [axes + len(x1_shape), axes + len(x2_shape)]
-            validator.check_non_negative_int(axes[0], 'reversed axes', 'batch_dot')
-        else:
-            axes = [axes, axes]
-    else:
-        raise ValueError(f"{msg_prefix} type of 'axes' must be one of those: int, tuple(int), list(int), "
-                         f"but got {type(axes).__name__}.")
-    return axes
-
-
-@_primexpr
-def _calc_new_shape_batchdot(shape, axes, position=0):
-    """
-    Calculate transpose and reshape parameters for input transformations,
-    'position' refers to whether tensor is first or second in the op.
-    """
-    axis = axes[position]
-    contraction_axes = tuple([axis])
-    prod_contraction = 1
-    for i in contraction_axes:
-        prod_contraction *= shape[i]
-    free_axes = tuple(i for i in range(1, len(shape)) if i not in contraction_axes)
-    free_dims = tuple(shape[i] for i in free_axes)
-    prod_free = 1
-    for free_dim in free_dims:
-        prod_free *= free_dim
-
-    transpose_perm = contraction_axes + free_axes if position else free_axes + contraction_axes
-    transpose_perm = tuple([0]) + transpose_perm
-    new_shape = (prod_contraction, prod_free) if position else (prod_free, prod_contraction)
-    new_shape = tuple([shape[0]]) + new_shape
-    return new_shape, transpose_perm, free_dims
-
-
-@_primexpr
-def _check_batch_size(x1_batch_size, x2_batch_size, prim_name=None):
-    """
-    Check whether batch size of two inputs are the same
-    """
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if x1_batch_size != x2_batch_size:
-        raise ValueError(f"{msg_prefix} inputs 'x1', 'x2' should have the same batch sizes, but got "
-                         f"'x1_batch_size': {x1_batch_size} and 'x2_batch_size': {x2_batch_size}.")
-
-
-@_primexpr
-def _get_output_shape(batch_size, x1_ret, x2_ret):
-    """
-    Compute output shape for batch dot
-    """
-    output_shape = tuple([batch_size]) + x1_ret + x2_ret
-    return output_shape
-
-
-@deprecated("2.8.0", None, False, "ops.")
-def batch_dot(x1, x2, axes=None):
-    """
-    Computation of batch dot product between samples in two tensors containing batch dims.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    .. note::
-        The first dimension of `x1` or `x2` is batch size. Datatype must be float32 and the rank must
-        be greater than or equal to 2.
-
-    .. math::
-        output = x1[batch, :] · x2[batch, :]
-
-    Args:
-        x1 (Tensor): The first input tensor.
-        x2 (Tensor): The second input tensor.
-        axes (Union[int, tuple(int), list(int)]): Specify the axes for computation. Default ``None`` .
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> # case 1: axes is a tuple(axes of `x1` , axes of `x2` )
-        >>> x1 = mindspore.ops.ones([2, 2, 3])
-        >>> x2 = mindspore.ops.ones([2, 3, 2])
-        >>> axes = (-1, -2)
-        >>> output = mindspore.ops.batch_dot(x1, x2, axes)
-        >>> print(output)
-        [[[3. 3.]
-          [3. 3.]]
-         [[3. 3.]
-          [3. 3.]]]
-        >>> print(output.shape)
-        (2, 2, 2)
-        >>> x1 = mindspore.ops.ones([2, 2], mindspore.float32)
-        >>> x2 = mindspore.ops.ones([2, 3, 2], mindspore.float32)
-        >>> axes = (1, 2)
-        >>> output = mindspore.ops.batch_dot(x1, x2, axes)
-        >>> print(output)
-        [[2. 2. 2.]
-         [2. 2. 2.]]
-        >>> print(output.shape)
-        (2, 3)
-        >>>
-        >>> # case 2: axes is None
-        >>> x1 = mindspore.ops.ones([6, 2, 3, 4], mindspore.float32)
-        >>> x2 = mindspore.ops.ones([6, 5, 4, 8], mindspore.float32)
-        >>> output = mindspore.ops.batch_dot(x1, x2)
-        >>> print(output.shape)
-        (6, 2, 3, 5, 8)
-        >>>
-        >>> # case 3: axes is an int data.
-        >>> x1 = mindspore.ops.ones([2, 2, 4])
-        >>> x2 = mindspore.ops.ones([2, 5, 4, 5])
-        >>> output = mindspore.ops.batch_dot(x1, x2, 2)
-        >>> print(output.shape)
-        (2, 2, 5, 5)
-
-    """
-    squeeze_one_op = _get_cache_prim(P.Squeeze)(1)
-    squeeze_minus_one_op = _get_cache_prim(P.Squeeze)(-1)
-    # input validity checks
-    x1_shape = shape_(x1)
-    x2_shape = shape_(x2)
-    x1_dim_num = len(x1_shape)
-    x2_dim_num = len(x2_shape)
-    x1_type = dtype_(x1)
-    x2_type = dtype_(x2)
-
-    x1_batch_size, x2_batch_size = _get_batch_size(x1_shape, x2_shape, 'batch_dot')
-
-    _typecheck_input_batch_dot(x1_type, x2_type, 'batch_dot')
-    _check_batch_size(x1_batch_size, x2_batch_size, 'batch_dot')
-    axes = _check_axes_for_batch_dot(x1_shape, x2_shape, axes, 'batch_dot')
-
-    if x1_dim_num == 2:
-        x1 = F.expand_dims(x1, 1)
-        axes[0] += 1
-    if x2_dim_num == 2:
-        x2 = F.expand_dims(x2, 2)
-
-    x1_shape = shape_(x1)
-    x2_shape = shape_(x2)
-
-    x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape_batchdot(x1_shape, axes, 0)
-    x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape_batchdot(x2_shape, axes, 1)
-    output_shape = _get_output_shape(x1_batch_size, x1_ret, x2_ret)
-
-    x1_transposed = transpose_op(x1, x1_transpose_fwd)
-    x2_transposed = transpose_op(x2, x2_transpose_fwd)
-    x1_reshaped = reshape_(x1_transposed, x1_reshape_fwd)
-    x2_reshaped = reshape_(x2_transposed, x2_reshape_fwd)
-
-    # Batch matmal op part
-    mul_result = batch_matmul_(x1_reshaped, x2_reshaped)
-
-    final_result = reshape_(mul_result, output_shape)
-
-    # if the original dims are expanded, restore them from 3 to 2
-    if x1_dim_num == 2:
-        final_result = squeeze_one_op(final_result)
-    elif x2_dim_num == 2:
-        final_result = squeeze_minus_one_op(final_result)
-
-    return final_result
-
-
 def round(input, *, decimals=0):
     r"""
     Round elements of input to the nearest integer.
@@ -12325,77 +11590,6 @@ def multi_scale_deformable_attn_function(value, shape, offset, locations, weight
     return multi_scale_deformable_attn_op(value, shape, offset, locations, weight)
 
 
-def rotated_iou(boxes, query_boxes, trans=False, mode=0, is_cross=True, v_threshold=0.0, e_threshold=0.0):
-    r"""
-    Calculate the overlap area between rotated rectangles.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    .. note::
-        The input data types supported by the Ascend platform include
-        bfloat16, float16, float32.
-
-    Args:
-        boxes (Tensor): The first set of rectangles which has a
-            shape of :math:`(B, N, 5)`.
-        query_boxes (Tensor): The second set of rectangles which
-            has a shape of :math:`(B, K, 5)`.
-        trans (bool, optional): Distinguish the rectangles representations
-            of boxes and query_boxes. If ``True``, the format of boxes
-            and query_boxes is ``'xyxyt'``, else the format is ``'xywht'``.
-            The default value is ``False``.
-        mode (int, optional): Distinguish the calculation mode. If the value
-            is ``1``, the calculation mode is ``'iof'``, else the
-            calculation mode is ``'iou'``. The default value is ``0``.
-        is_cross (bool, optional): If ``True``, use cross-calculation, else use
-            one-to-one calculation. The default value is ``True``.
-        v_threshold (float, optional): Tolerance threshold for vertex determination.
-            The default value is ``0.0``.
-        e_threshold (float, optional): Tolerance threshold for edge intersection
-            determination. The default value is ``0.0``.
-
-    Returns:
-        Tensor, the shape is :math:`(B, N, K)`.
-
-    Raises:
-        TypeError: If `boxes` is not a Tensor.
-        TypeError: If `query_boxes` is not a Tensor.
-        ValueError: If `boxes` and `query_boxes` do not have same first dim.
-        ValueError: If the third dimension of `boxes` or `query_boxes` is not ``5``.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> a = np.random.uniform(0,1,(2,2,5)).astype(np.float16)
-        >>> b = np.random.uniform(0,1,(2,3,5)).astype(np.float16)
-        >>> box1 = Tensor(a)
-        >>> box2 = Tensor(b)
-        >>> output = ops.rotated_iou(box1, box2, trans=False, mode=0, is_cross=True)
-    """
-    origin_dtype = boxes.dtype
-    if origin_dtype not in {mstype.float16, mstype.float32, mstype.bfloat16}:
-        raise ValueError("input boxes type is illegal.")
-
-    if query_boxes.dtype not in {mstype.float16, mstype.float32, mstype.bfloat16}:
-        raise ValueError("input query_boxes type is illegal.")
-
-    boxes_perm = (0, 2, 1)
-    boxes_cp = permute(boxes, boxes_perm)
-    if boxes_cp.dtype in {mstype.float16, mstype.bfloat16}:
-        boxes_cp = cast_(boxes_cp, mstype.float32)
-
-    query_boxes_perm = (0, 2, 1)
-    query_boxes_cp = permute(query_boxes, query_boxes_perm)
-    if query_boxes_cp.dtype in {mstype.float16, mstype.bfloat16}:
-        query_boxes_cp = cast_(query_boxes_cp, mstype.float32)
-
-    iou = rotated_iou_op(boxes_cp, query_boxes_cp, trans, mode, is_cross, v_threshold, e_threshold)
-    return cast_(iou, origin_dtype)
 
 
 def mul_ext(input, other):
@@ -12531,7 +11725,6 @@ __all__ = [
     'divide',
     'true_divide',
     'tensor_floordiv',
-    'floor_div',
     'floor_divide',
     'floordiv',
     'float_power',
@@ -12555,8 +11748,6 @@ __all__ = [
     'numel',
     'permute',
     'inplace_update',
-    'inplace_add',
-    'inplace_sub',
     'isfinite',
     'isnan',
     'isnan_ext',
@@ -12634,19 +11825,14 @@ __all__ = [
     'bessel_j1',
     'bessel_i0',
     'bessel_i0e',
-    'bessel_k0',
-    'bessel_k0e',
     'bessel_y0',
     'bessel_y1',
     'bessel_i1',
     'bessel_i1e',
-    'bessel_k1',
-    'bessel_k1e',
     'exp2',
     'deg2rad',
     'stft',
     'rad2deg',
-    'truncate_div',
     'truncate_mod',
     'trunc',
     'gumbel_softmax',
@@ -12662,7 +11848,6 @@ __all__ = [
     'prod',
     'all',
     'any',
-    'sparse_segment_mean',
     'block_diag',
     'atleast_1d',
     'dstack',
@@ -12688,7 +11873,6 @@ __all__ = [
     'xlogy',
     'log10',
     'log1p',
-    'approximate_equal',
     'frac',
     'kron',
     'rot90',
@@ -12696,9 +11880,6 @@ __all__ = [
     'sgn',
     'sign',
     'signbit',
-    'accumulate_n',
-    'iou',
-    'rotated_iou',
     'baddbmm',
     'baddbmm_ext',
     'bmm',
@@ -12731,7 +11912,6 @@ __all__ = [
     'diag_embed',
     'fmax',
     'fmin',
-    'inplace_index_add',
     'lu_unpack',
     'nanquantile',
     'polar',
@@ -12752,7 +11932,6 @@ __all__ = [
     'tensor_dot',
     'vecdot',
     'dot',
-    'batch_dot',
     'eps',
     'multi_scale_deformable_attn_function',
 ]

@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
-import pytest
-
+"""Test iou."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 from mindspore import context, Tensor
 from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import Cell
-from mindspore.ops import operations as P
+
+
+import numpy as np
+
+import pytest
 
 
 def setup_function():
@@ -32,8 +35,8 @@ _gt_boxes = Tensor(np.ones([64, 4]), ms.float32)
 
 class Net(Cell):
     def __init__(self, strategy=None):
-        super(Net, self).__init__()
-        self.iou = P.IOU().shard(strategy)
+        super().__init__()
+        self.iou = _inner_ops.IOU().shard(strategy)
 
     def construct(self, anchor_boxes, gt_boxes):
         x = self.iou(anchor_boxes, gt_boxes)

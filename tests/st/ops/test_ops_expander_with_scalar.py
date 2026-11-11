@@ -14,6 +14,7 @@
 # ============================================================================
 ''' test ops expander with scalar '''
 import numpy as np
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype
@@ -344,7 +345,7 @@ def test_log1p_with_grad():
     Description: test log1p with grad
     Expectation: the result match expectation
     """
-    log1p = OpsCell(P.Log1p())
+    log1p = OpsCell(_private_math.Log1p())
     x = np.array([2.0, 3.0, 4.0, 5.0], dtype=np.float32)
     x = Tensor(x, dtype=dtype.float32)
     net_me = ops.GradOperation(get_all=True)(log1p)
@@ -425,7 +426,7 @@ def test_expm1_with_grad():
     Description: Test expm1 with grad.
     Expectation: Success.
     """
-    net = OpsCell(P.Expm1())
+    net = OpsCell(_private_math.Expm1())
     x = np.array([2.0, 3.0, 4.0, 5.0], dtype=np.float32)
     x = Tensor(x, dtype=dtype.float32)
     net_me = ops.GradOperation(get_all=True)(net)
@@ -459,7 +460,7 @@ def test_tan_grad():
     """
     np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype('float32')
     input_x = Tensor(np_array)
-    net = OpsCell(P.Tan())
+    net = OpsCell(_private_math.Tan())
     net_me = ops.GradOperation(get_all=True)(net)
     output = net_me(input_x)
     expect_output = np.array([3.4255, 1.2984, 1.0, 1.2984, 3.4255])

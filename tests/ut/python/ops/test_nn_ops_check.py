@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """ test ops """
-import numpy as np
-
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+
+import numpy as np
+
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
     import pipeline_for_compile_forward_ge_graph_for_case_by_case_config_exception
@@ -26,7 +28,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 
 class Conv2DBackpropInputNet(nn.Cell):
     def __init__(self, net, x_shape):
-        super(Conv2DBackpropInputNet, self).__init__()
+        super().__init__()
         self.net = net
         self.x_shape = x_shape
 
@@ -36,7 +38,7 @@ class Conv2DBackpropInputNet(nn.Cell):
 
 class TopKNet(nn.Cell):
     def __init__(self, net, k):
-        super(TopKNet, self).__init__()
+        super().__init__()
         self.net = net
         self.k = k
 
@@ -405,50 +407,50 @@ raise_set = [
 
     # input is scalar
     ('SoftmaxCrossEntropyWithLogits0', {
-        'block': (P.SoftmaxCrossEntropyWithLogits(),
+        'block': (_inner_ops.SoftmaxCrossEntropyWithLogits(),
                   {'exception': TypeError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [5.0, 5.0],
         'skip': ['backward']}),
     # input is Tensor(bool)
     ('SoftmaxCrossEntropyWithLogits1', {
-        'block': (P.SoftmaxCrossEntropyWithLogits(),
+        'block': (_inner_ops.SoftmaxCrossEntropyWithLogits(),
                   {'exception': TypeError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.bool_)), Tensor(np.ones([5]).astype(np.bool_))],
         'skip': ['backward']}),
     # types of logits and labels mismatch
     ('SoftmaxCrossEntropyWithLogits2', {
-        'block': (P.SoftmaxCrossEntropyWithLogits(),
+        'block': (_inner_ops.SoftmaxCrossEntropyWithLogits(),
                   {'exception': TypeError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.float16)), Tensor(np.ones([5]).astype(np.float32))],
         'skip': ['backward']}),
     # shapes of logits and labels mismatch
     ('SoftmaxCrossEntropyWithLogits3', {
-        'block': (P.SoftmaxCrossEntropyWithLogits(),
+        'block': (_inner_ops.SoftmaxCrossEntropyWithLogits(),
                   {'exception': ValueError, 'error_keywords': ['SoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.float32)), Tensor(np.ones([3]).astype(np.float32))],
         'skip': ['backward']}),
 
     # input is scalar
     ('SparseSoftmaxCrossEntropyWithLogits0', {
-        'block': (P.SparseSoftmaxCrossEntropyWithLogits(),
+        'block': (_inner_ops.SparseSoftmaxCrossEntropyWithLogits(),
                   {'exception': TypeError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [5.0, 5.0],
         'skip': ['backward']}),
     # logits is Tensor(bool)
     ('SparseSoftmaxCrossEntropyWithLogits1', {
-        'block': (P.SparseSoftmaxCrossEntropyWithLogits(),
+        'block': (_inner_ops.SparseSoftmaxCrossEntropyWithLogits(),
                   {'exception': TypeError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.bool_)), Tensor(np.ones([5]).astype(np.bool_))],
         'skip': ['backward']}),
     # labels is Tensor(bool)
     ('SparseSoftmaxCrossEntropyWithLogits2', {
-        'block': (P.SparseSoftmaxCrossEntropyWithLogits(),
+        'block': (_inner_ops.SparseSoftmaxCrossEntropyWithLogits(),
                   {'exception': TypeError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.float32)), Tensor(np.ones([5]).astype(np.bool_))],
         'skip': ['backward']}),
     # logits_shape[0] != labels_shape[0]
     ('SparseSoftmaxCrossEntropyWithLogits3', {
-        'block': (P.SparseSoftmaxCrossEntropyWithLogits(),
+        'block': (_inner_ops.SparseSoftmaxCrossEntropyWithLogits(),
                   {'exception': ValueError, 'error_keywords': ['SparseSoftmaxCrossEntropyWithLogits']}),
         'desc_inputs': [Tensor(np.ones([5]).astype(np.float32)), Tensor(np.ones([3]).astype(np.int32))],
         'skip': ['backward']}),

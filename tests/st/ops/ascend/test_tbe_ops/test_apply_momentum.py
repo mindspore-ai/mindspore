@@ -13,17 +13,19 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test apply momentum."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
+
 
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
-        self.apply_momentum = P.ApplyMomentum(gradient_scale=1024.0)
+        super().__init__()
+        self.apply_momentum = _inner_ops.ApplyMomentum(gradient_scale=1024.0)
         self.variable = Parameter(initializer(
             'normal', [2, 3, 3, 4]), name='variable')
         self.accumulation = Parameter(initializer(

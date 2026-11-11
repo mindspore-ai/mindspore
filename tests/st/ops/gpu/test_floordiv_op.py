@@ -12,21 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test floordiv op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
 
 
 class NetFloorDiv(nn.Cell):
     def __init__(self):
-        super(NetFloorDiv, self).__init__()
-        self.floordiv = P.FloorDiv()
+        super().__init__()
+        self.floordiv = _private_math.FloorDiv()
 
     def construct(self, x, y):
         return self.floordiv(x, y)
@@ -34,6 +35,11 @@ class NetFloorDiv(nn.Cell):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_floor_div():
+    """
+    Feature: FloorDiv on GPU.
+    Description: Divide scalar, equal-shaped and broadcastable tensor inputs.
+    Expectation: Result shapes and floor quotients match the reference for each input pair.
+    """
     x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
     y0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)

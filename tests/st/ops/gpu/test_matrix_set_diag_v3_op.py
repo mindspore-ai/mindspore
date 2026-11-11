@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained primitive, dynamic-shape and vmap coverage after legacy function removal."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 import mindspore.nn as nn
 import mindspore as ms
 from mindspore import Tensor, context, ops
@@ -26,7 +26,7 @@ from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 class MatrixSetDiagV3Net(nn.Cell):
 
     def __init__(self, align='RIGHT_LEFT'):
-        super(MatrixSetDiagV3Net, self).__init__()
+        super().__init__()
         self.matrix_set_diag_v3 = MatrixSetDiagV3(align=align)
 
     def construct(self, x, diagonal, k):
@@ -64,22 +64,6 @@ def test_matrix_set_diag_v3_dynamic_shape_v2():
     assert out.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
-def test_matrix_set_diag_v3_function():
-    """
-    Feature: matrix_set_diag_v3 functional api.
-    Description: Compatible with expect.
-    Expectation: The result matches numpy.
-    """
-    context.set_context(device_target="GPU")
-    input_x = Tensor(
-        np.array([[[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]],
-                  [[5, 5, 5, 5], [5, 5, 5, 5], [5, 5, 5, 5]]]), mstype.float32)
-    diagonal = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mstype.float32)
-    result = ops.matrix_set_diag(input_x, diagonal).asnumpy()
-    expect = np.array([[[1, 5, 5, 5], [5, 2, 5, 5], [5, 5, 3, 5]],
-                       [[4, 5, 5, 5], [5, 5, 5, 5], [5, 5, 6, 5]]], np.float32)
-    np.testing.assert_allclose(result, expect)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')

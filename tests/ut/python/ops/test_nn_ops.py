@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+from mindspore.ops.operations import _inner_ops
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
@@ -62,7 +63,7 @@ class ResidualBlock(nn.Cell):
                  out_channels,
                  stride=1,
                  down_sample=False):
-        super(ResidualBlock, self).__init__()
+        super().__init__()
 
         out_chls = out_channels // self.expansion
         self.conv1 = conv1x1(in_channels, out_chls, stride=1, padding=0)
@@ -158,7 +159,7 @@ class VirtualNetWithLoss(nn.Cell):
     """ VirtualNetWithLoss definition """
 
     def __init__(self, network):
-        super(VirtualNetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -171,7 +172,7 @@ class SoftMaxGrad(nn.Cell):
     """ SoftMaxGrad definition """
 
     def __init__(self, network):
-        super(SoftMaxGrad, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x):
@@ -182,7 +183,7 @@ class DropoutGrad(nn.Cell):
     """ DropoutGrad definition """
 
     def __init__(self, network):
-        super(DropoutGrad, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x):
@@ -193,7 +194,7 @@ class ScalarSummaryNet(nn.Cell):
     """ ScalarSummaryNet definition """
 
     def __init__(self):
-        super(ScalarSummaryNet, self).__init__()
+        super().__init__()
         self.summary = P.ScalarSummary()
 
     def construct(self, scalar):
@@ -206,7 +207,7 @@ class L2NormalizeNet(nn.Cell):
     """ L2NormalizeNet definition """
 
     def __init__(self):
-        super(L2NormalizeNet, self).__init__()
+        super().__init__()
         self.l2_normalize = P.L2Normalize()
 
     def construct(self, x):
@@ -216,7 +217,7 @@ class L2NormalizeNet(nn.Cell):
 
 class TripletMarginWithDistanceLossNet(nn.Cell):
     def __init__(self):
-        super(TripletMarginWithDistanceLossNet, self).__init__()
+        super().__init__()
         self.triplet_margin_with_distance_loss = nn.TripletMarginWithDistanceLoss()
 
     def construct(self, x, positive, negative):
@@ -225,7 +226,7 @@ class TripletMarginWithDistanceLossNet(nn.Cell):
 
 class CosineSimilarityNet(nn.Cell):
     def __init__(self):
-        super(CosineSimilarityNet, self).__init__()
+        super().__init__()
         self.cosine_similarity = nn.layer.CosineSimilarity()
 
     def construct(self, x1, x2):
@@ -234,7 +235,7 @@ class CosineSimilarityNet(nn.Cell):
 
 class UpsampleNet(nn.Cell):
     def __init__(self):
-        super(UpsampleNet, self).__init__()
+        super().__init__()
         self.upsample = nn.Upsample(size=(5, 5))
 
     def construct(self, x):
@@ -243,7 +244,7 @@ class UpsampleNet(nn.Cell):
 
 class PoissonNLLLossNet(nn.Cell):
     def __init__(self):
-        super(PoissonNLLLossNet, self).__init__()
+        super().__init__()
         self.poisson_nllloss = nn.PoissonNLLLoss()
 
     def construct(self, x, target):
@@ -252,7 +253,7 @@ class PoissonNLLLossNet(nn.Cell):
 
 class MultiLabelSoftMarginLossNet(nn.Cell):
     def __init__(self):
-        super(MultiLabelSoftMarginLossNet, self).__init__()
+        super().__init__()
         self.multi_label_soft_margin_loss = nn.MultiLabelSoftMarginLoss(reduction='mean')
 
     def construct(self, x, target):
@@ -263,7 +264,7 @@ class HistogramSummaryNet(nn.Cell):
     """HistogramSummaryNet definition"""
 
     def __init__(self):
-        super(HistogramSummaryNet, self).__init__()
+        super().__init__()
         self.summary = P.HistogramSummary()
 
     def construct(self, tensor):
@@ -276,7 +277,7 @@ class FusedBatchNormGrad(nn.Cell):
     """ FusedBatchNormGrad definition """
 
     def __init__(self, network):
-        super(FusedBatchNormGrad, self).__init__()
+        super().__init__()
         self.grad = C.GradOperation(get_all=True, sens_param=True)
         self.network = network
 
@@ -288,7 +289,7 @@ class NetWithLoss(nn.Cell):
     """ NetWithLoss definition """
 
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = P.SmoothL1Loss()
         self.network = network
 
@@ -301,7 +302,7 @@ class Grad(nn.Cell):
     """ GradWrap definition """
 
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.network = network
         self.network.set_train()
 
@@ -313,7 +314,7 @@ class BatchnormNet(nn.Cell):
     """ BatchnormNet definition """
 
     def __init__(self):
-        super(BatchnormNet, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 4, kernel_size=8, stride=2, pad_mode="pad", padding=3)
         self.bn1 = nn.BatchNorm2d(4)
         self.flatten = P.Flatten()
@@ -334,7 +335,7 @@ class NetWithLossClass(nn.Cell):
     """ NetWithLossClass definition """
 
     def __init__(self, network):
-        super(NetWithLossClass, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.loss = nn.SoftmaxCrossEntropyWithLogits()
         self.network = network
 
@@ -349,7 +350,7 @@ class BlockNet(nn.Cell):
     """ BlockNet definition """
 
     def __init__(self):
-        super(BlockNet, self).__init__()
+        super().__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, pad_mode="pad", padding=3)
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
@@ -372,7 +373,7 @@ class Conv2dWithBiasNet(nn.Cell):
     """ Conv2dWithBiasNet definition """
 
     def __init__(self):
-        super(Conv2dWithBiasNet, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(3, 10, 1, bias_init='zeros')
         self.flatten = P.Flatten()
 
@@ -384,7 +385,7 @@ class Conv2dNativeNet(nn.Cell):
     """ Conv2dNativeNet definition """
 
     def __init__(self):
-        super(Conv2dNativeNet, self).__init__()
+        super().__init__()
         self.conv = P.DepthwiseConv2dNative(channel_multiplier=3, kernel_size=(3, 3))
         self.flatten = P.Flatten()
         channel_multipliers = 1
@@ -402,7 +403,7 @@ class StateNet(nn.Cell):
     """ StateTestTensor definition """
 
     def __init__(self):
-        super(StateNet, self).__init__()
+        super().__init__()
         weight = Tensor(np.ones([2, 1, 2, 2], np.float32))
         self.s1 = Parameter(weight, name="s1")
         self.s2 = Parameter(weight, name="s2")
@@ -420,7 +421,7 @@ class StateNet(nn.Cell):
 def test_conv2d_same_primitive():
     class Conv2DSameNet(nn.Cell):
         def __init__(self):
-            super(Conv2DSameNet, self).__init__()
+            super().__init__()
             self.conv1 = nn.Conv2d(16, 64, (1, 41), (1, 4), "same", 0, 1, has_bias=True)
             self.conv2 = nn.Conv2d(16, 64, (1, 41), (1, 4), "same", 0, 1, has_bias=True)
 
@@ -437,7 +438,7 @@ def test_conv2d_same_primitive():
 class ComparisonNet(nn.Cell):
     def __init__(self, empty=None):
         """ ComparisonNet definition """
-        super(ComparisonNet, self).__init__()
+        super().__init__()
         self.empty = empty
 
     def construct(self, x, y):
@@ -449,7 +450,7 @@ def test_max_pool_with_arg_max():
     class NetMaxPoolWithArgMax(nn.Cell):
         def __init__(self):
             """ ComparisonNet definition """
-            super(NetMaxPoolWithArgMax, self).__init__()
+            super().__init__()
             self.max_pool_with_arg_max = P.MaxPoolWithArgmax(pad_mode="valid", kernel_size=2, strides=1)
 
         def construct(self, x):
@@ -467,7 +468,7 @@ class GradWrapUnfold(nn.Cell):
     """ GradWrapUnfold definition """
 
     def __init__(self, network):
-        super(GradWrapUnfold, self).__init__()
+        super().__init__()
         self.network = network
         self.sens = Tensor(np.ones([1, 4, 2, 2], np.float32))
 
@@ -479,7 +480,7 @@ class UnfoldNetValid(nn.Cell):
     """ UnfoldNetValid definition """
 
     def __init__(self):
-        super(UnfoldNetValid, self).__init__()
+        super().__init__()
         self.unfold = nn.Unfold(ksizes=[1, 2, 2, 1],
                                 strides=[1, 1, 1, 1],
                                 rates=[1, 1, 1, 1],
@@ -493,7 +494,7 @@ class UnfoldNetSame(nn.Cell):
     """ UnfoldNetSame definition """
 
     def __init__(self):
-        super(UnfoldNetSame, self).__init__()
+        super().__init__()
         self.unfold = nn.Unfold(ksizes=[1, 2, 2, 1],
                                 strides=[1, 1, 1, 1],
                                 rates=[1, 1, 1, 1],
@@ -507,7 +508,7 @@ class FlattenNet(nn.Cell):
     """ FlattenNet definition """
 
     def __init__(self):
-        super(FlattenNet, self).__init__()
+        super().__init__()
         self.flatten = P.Flatten()
 
     def construct(self, x):
@@ -518,7 +519,7 @@ class PReLUNet(nn.Cell):
     """ PReLUNet definition """
 
     def __init__(self):
-        super(PReLUNet, self).__init__()
+        super().__init__()
         self.prelu = P.PReLU()
         self.w = Tensor(np.ones(3, np.float32))
 
@@ -530,7 +531,7 @@ class PReLUGradNet(nn.Cell):
     """ PReLUGradNet definition """
 
     def __init__(self):
-        super(PReLUGradNet, self).__init__()
+        super().__init__()
         self.prelu_grad = mindspore.ops.auto_generate.PReLUGrad()
 
     def construct(self, dout, x, w):
@@ -541,7 +542,7 @@ class LRNNet(nn.Cell):
     """ LRNNet definition """
 
     def __init__(self):
-        super(LRNNet, self).__init__()
+        super().__init__()
         self.lrn = P.LRN()
 
     def construct(self, x):
@@ -552,7 +553,7 @@ class LRNGradNet(nn.Cell):
     """ LRNGradNet definition """
 
     def __init__(self):
-        super(LRNGradNet, self).__init__()
+        super().__init__()
         self.lrn_grad = G.LRNGrad()
 
     def construct(self, dout, x, out):
@@ -563,7 +564,7 @@ class ChannelShuffleFunc(nn.Cell):
     """ ChannelShuffleFunc definition """
 
     def __init__(self):
-        super(ChannelShuffleFunc, self).__init__()
+        super().__init__()
         self.channel_shuffle = mindspore.ops.function.nn_func.channel_shuffle
 
     def construct(self, x, group):
@@ -753,7 +754,7 @@ test_cases = [
 
 test_cases_for_verify_exception = [
     ('ApplyMomentum_Error', {
-        'block': (P.ApplyMomentum(), {'exception': TypeError}),
+        'block': (_inner_ops.ApplyMomentum(), {'exception': TypeError}),
         'desc_inputs': [[2], [128, 32, 32, 64], [128, 32, 32, 64], [128, 32, 32, 64], [128, 32, 32, 64]],
         'desc_bprop': [[128, 32, 32, 64]],
         'skip': ['backward']

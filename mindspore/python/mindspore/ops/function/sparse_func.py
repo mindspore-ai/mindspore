@@ -17,6 +17,8 @@
 
 from __future__ import absolute_import
 from typing import Tuple
+
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops.operations.sparse_ops import (
     DenseToCSRSparseMatrix,
     CSRSparseMatrixToSparseTensor,
@@ -288,7 +290,8 @@ def _csr_to_dense(csr_tensor: CSRTensor) -> Tensor:
 
     shape = _convert_shape(csr_tensor.shape)
     dense_shape = Tensor(shape, dtype=mstype.int32)
-    batch_pointers = ops.concat((make_tensor([0]), ops.TensorShape()(csr_tensor.values))).astype("int32")
+    batch_pointers = ops.concat(
+        (make_tensor([0]), _inner_ops.TensorShape()(csr_tensor.values))).astype("int32")
     row_pointers = csr_tensor.indptr
     col_indices = csr_tensor.indices
     values = csr_tensor.values
@@ -450,8 +453,10 @@ def _csr_add(a: CSRTensor, b: CSRTensor, alpha: Tensor, beta: Tensor) -> CSRTens
     a, b = promote_csr(a, b)
     alpha = alpha.astype(a.dtype)
     beta = beta.astype(a.dtype)
-    a_batch_pointers = ops.concat((make_tensor([0]), ops.TensorShape()(a.values))).astype(a.indptr.dtype)
-    b_batch_pointers = ops.concat((make_tensor([0]), ops.TensorShape()(b.values))).astype(b.indptr.dtype)
+    a_batch_pointers = ops.concat(
+        (make_tensor([0]), _inner_ops.TensorShape()(a.values))).astype(a.indptr.dtype)
+    b_batch_pointers = ops.concat(
+        (make_tensor([0]), _inner_ops.TensorShape()(b.values))).astype(b.indptr.dtype)
     a_shape = make_tensor(a.shape, a.indptr.dtype)
     b_shape = make_tensor(b.shape, b.indptr.dtype)
     _, _, indptr, indices, values = csr_add_op(a_shape, a_batch_pointers, a.indptr, a.indices, a.values,

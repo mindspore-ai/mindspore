@@ -13,11 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test uniform candidate sampler."""
 import numpy as np
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
 from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -25,14 +27,15 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 class Net(nn.Cell):
     def __init__(self, true_classes, num_true, num_sampled, unique, range_max, seed):
-        super(Net, self).__init__()
+        super().__init__()
         self.true_classes = true_classes
         self.num_true = num_true
         self.num_sampled = num_sampled
         self.unique = unique
         self.range_max = range_max
         self.seed = seed
-        self.uniformcandidatesampler = P.UniformCandidateSampler(num_true, num_sampled, unique, range_max, seed)
+        self.uniformcandidatesampler = _inner_ops.UniformCandidateSampler(
+            num_true, num_sampled, unique, range_max, seed)
 
     def construct(self):
         return self.uniformcandidatesampler(self.true_classes)

@@ -15,6 +15,7 @@
 
 import re
 import numpy as np
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 from mindspore import nn
 from mindspore import Tensor
@@ -323,7 +324,7 @@ def test_matmul_tan():
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul().shard(strategy1)
-            self.tan = P.Tan().shard(strategy2)
+            self.tan = _private_math.Tan().shard(strategy2)
             self.matmul2 = P.MatMul().shard(strategy1)
 
         def construct(self, x, y, b):
@@ -401,7 +402,7 @@ def test_matmul_log1p():
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul().shard(strategy1)
-            self.log1p = P.Log1p().shard(strategy2)
+            self.log1p = _private_math.Log1p().shard(strategy2)
             self.matmul2 = P.MatMul().shard(strategy1)
 
         def construct(self, x, y, b):
@@ -427,7 +428,7 @@ def test_matmul_expm1():
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul().shard(strategy1)
-            self.expm1 = P.Expm1().shard(strategy2)
+            self.expm1 = _private_math.Expm1().shard(strategy2)
             self.matmul2 = P.MatMul().shard(strategy1)
 
         def construct(self, x, y, b):
@@ -635,7 +636,7 @@ def test_matmul_ceil():
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul().shard(strategy1)
-            self.Ceil = P.Ceil().shard(strategy2)
+            self.Ceil = _private_math.Ceil().shard(strategy2)
             self.matmul2 = P.MatMul().shard(strategy1)
 
         def construct(self, x, y, b):
@@ -661,7 +662,7 @@ def test_matmul_atan():
         def __init__(self, strategy1, strategy2):
             super().__init__()
             self.matmul = P.MatMul().shard(strategy1)
-            self.atan = P.Atan().shard(strategy2)
+            self.atan = _private_math.Atan().shard(strategy2)
             self.matmul2 = P.MatMul().shard(strategy1)
 
         def construct(self, x, y, b):

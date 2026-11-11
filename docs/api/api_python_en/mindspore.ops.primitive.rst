@@ -68,7 +68,6 @@ Neural Network
     mindspore.ops.MaxUnpool2D
     mindspore.ops.MaxUnpool3D
     mindspore.ops.MirrorPad
-    mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
     mindspore.ops.ResizeBicubic
@@ -95,8 +94,6 @@ Loss Function
     mindspore.ops.SigmoidCrossEntropyWithLogits
     mindspore.ops.SmoothL1Loss
     mindspore.ops.SoftMarginLoss
-    mindspore.ops.SoftmaxCrossEntropyWithLogits
-    mindspore.ops.SparseSoftmaxCrossEntropyWithLogits
     mindspore.ops.TripletMarginLoss
 
 Activation Function
@@ -123,7 +120,6 @@ Activation Function
     mindspore.ops.SeLU
     mindspore.ops.Sigmoid
     mindspore.ops.Softmax
-    mindspore.ops.Softplus
     mindspore.ops.SoftShrink
     mindspore.ops.Softsign
     mindspore.ops.Tanh
@@ -142,25 +138,12 @@ Optimizer
     mindspore.ops.AdaptiveAvgPool3D
     mindspore.ops.ApplyAdadelta
     mindspore.ops.ApplyAdagrad
-    mindspore.ops.ApplyAdagradDA
-    mindspore.ops.ApplyAdagradV2
     mindspore.ops.ApplyAdaMax
     mindspore.ops.ApplyAdamWithAmsgradV2
-    mindspore.ops.ApplyAddSign
     mindspore.ops.ApplyCenteredRMSProp
-    mindspore.ops.ApplyFtrl
     mindspore.ops.ApplyGradientDescent
-    mindspore.ops.ApplyMomentum
-    mindspore.ops.ApplyPowerSign
-    mindspore.ops.ApplyProximalAdagrad
-    mindspore.ops.ApplyProximalGradientDescent
     mindspore.ops.ApplyRMSProp
-    mindspore.ops.LARSUpdate
-    mindspore.ops.SparseApplyAdagradV2
-    mindspore.ops.SparseApplyProximalAdagrad
     mindspore.ops.SGD
-    mindspore.ops.SparseApplyFtrl
-    mindspore.ops.SparseApplyFtrlV2
 
 Distance Function
 ^^^^^^^^^^^^^^^^^
@@ -171,7 +154,6 @@ Distance Function
     :template: classtemplate.rst
 
     mindspore.ops.Cdist
-    mindspore.ops.EditDistance
     mindspore.ops.LpNorm
     mindspore.ops.Pdist
 
@@ -183,9 +165,6 @@ Sampling Operator
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.ComputeAccidentalHits
-    mindspore.ops.LogUniformCandidateSampler
-    mindspore.ops.UniformCandidateSampler
 
 Image Processing
 ^^^^^^^^^^^^^^^^
@@ -197,10 +176,6 @@ Image Processing
 
     mindspore.ops.BoundingBoxDecode
     mindspore.ops.BoundingBoxEncode
-    mindspore.ops.CheckValid
-    mindspore.ops.CropAndResize
-    mindspore.ops.ExtractVolumePatches
-    mindspore.ops.IOU
     mindspore.ops.L2Normalize
     mindspore.ops.NMSWithMask
     mindspore.ops.ResizeBilinearV2
@@ -216,7 +191,6 @@ Text Processing
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.NoRepeatNGram
 
 Mathematical Operators
 ------------------------
@@ -243,7 +217,6 @@ Element-wise Operator
     :template: classtemplate.rst
 
     mindspore.ops.Abs
-    mindspore.ops.AccumulateNV2
     mindspore.ops.ACos
     mindspore.ops.Acosh
     mindspore.ops.Add
@@ -253,7 +226,6 @@ Element-wise Operator
     mindspore.ops.Angle
     mindspore.ops.Asin
     mindspore.ops.Asinh
-    mindspore.ops.Atan
     mindspore.ops.Atan2
     mindspore.ops.Atanh
     mindspore.ops.BesselI0
@@ -271,7 +243,6 @@ Element-wise Operator
     mindspore.ops.BitwiseAnd
     mindspore.ops.BitwiseOr
     mindspore.ops.BitwiseXor
-    mindspore.ops.Ceil
     mindspore.ops.Conj
     mindspore.ops.Cos
     mindspore.ops.Cosh
@@ -283,9 +254,7 @@ Element-wise Operator
     mindspore.ops.Erfc
     mindspore.ops.Erfinv
     mindspore.ops.Exp
-    mindspore.ops.Expm1
     mindspore.ops.Floor
-    mindspore.ops.FloorDiv
     mindspore.ops.FloorMod
     mindspore.ops.Geqrf
     mindspore.ops.Imag
@@ -293,7 +262,6 @@ Element-wise Operator
     mindspore.ops.Invert
     mindspore.ops.Lerp
     mindspore.ops.Log
-    mindspore.ops.Log1p
     mindspore.ops.LogicalAnd
     mindspore.ops.LogicalNot
     mindspore.ops.LogicalOr
@@ -322,7 +290,6 @@ Element-wise Operator
     mindspore.ops.SquaredDifference
     mindspore.ops.SquareSumAll
     mindspore.ops.Sub
-    mindspore.ops.Tan
     mindspore.ops.Trunc
     mindspore.ops.TruncateDiv
     mindspore.ops.TruncateMod
@@ -360,15 +327,12 @@ Comparison Operator
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.ApproximateEqual
     mindspore.ops.Equal
     mindspore.ops.EqualCount
     mindspore.ops.Greater
     mindspore.ops.GreaterEqual
-    mindspore.ops.InTopK
     mindspore.ops.IsFinite
     mindspore.ops.IsInf
-    mindspore.ops.IsNan
     mindspore.ops.Less
     mindspore.ops.LessEqual
     mindspore.ops.Maximum
@@ -425,11 +389,7 @@ Random Generation Operator
     mindspore.ops.Bernoulli
     mindspore.ops.Gamma
     mindspore.ops.Multinomial
-    mindspore.ops.MultinomialWithReplacement
     mindspore.ops.RandomCategorical
-    mindspore.ops.RandomChoiceWithMask
-    mindspore.ops.RandomGamma
-    mindspore.ops.RandomPoisson
     mindspore.ops.Randperm
     mindspore.ops.RandpermV2
     mindspore.ops.StandardLaplace
@@ -447,7 +407,6 @@ Array Operation
 
     mindspore.ops.AffineGrid
     mindspore.ops.BatchToSpace
-    mindspore.ops.BatchToSpaceND
     mindspore.ops.BroadcastTo
     mindspore.ops.Cast
     mindspore.ops.ChannelShuffle
@@ -457,7 +416,6 @@ Array Operation
     mindspore.ops.Cummin
     mindspore.ops.CumProd
     mindspore.ops.CumSum
-    mindspore.ops.DataFormatDimMap
     mindspore.ops.DepthToSpace
     mindspore.ops.Diag
     mindspore.ops.DType
@@ -468,22 +426,17 @@ Array Operation
     mindspore.ops.Fmax
     mindspore.ops.Gather
     mindspore.ops.GatherD
-    mindspore.ops.GatherNd
     mindspore.ops.HammingWindow
     mindspore.ops.Heaviside
     mindspore.ops.HistogramFixedWidth
     mindspore.ops.Hypot
     mindspore.ops.Identity
-    mindspore.ops.Igamma
     mindspore.ops.Igammac
     mindspore.ops.Im2Col
     mindspore.ops.IndexAdd
     mindspore.ops.IndexFill
     mindspore.ops.IndexPut
-    mindspore.ops.InplaceAdd
     mindspore.ops.InplaceIndexAdd
-    mindspore.ops.InplaceSub
-    mindspore.ops.InplaceUpdate
     mindspore.ops.InplaceUpdateV2
     mindspore.ops.InvertPermutation
     mindspore.ops.IsClose
@@ -495,17 +448,13 @@ Array Operation
     mindspore.ops.MaskedScatter
     mindspore.ops.MaskedSelect
     mindspore.ops.MatrixBandPart
-    mindspore.ops.MatrixDiagPartV3
-    mindspore.ops.MatrixDiagV3
     mindspore.ops.MatrixSetDiagV3
     mindspore.ops.MatrixSolve
     mindspore.ops.Meshgrid
     mindspore.ops.Mvlgamma
     mindspore.ops.NanToNum
     mindspore.ops.NonZero
-    mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
-    mindspore.ops.RandomShuffle
     mindspore.ops.Range
     mindspore.ops.Rank
     mindspore.ops.Renorm
@@ -520,7 +469,6 @@ Array Operation
     mindspore.ops.Size
     mindspore.ops.Slice
     mindspore.ops.Sort
-    mindspore.ops.SpaceToBatchND
     mindspore.ops.SpaceToDepth
     mindspore.ops.SparseGatherV2
     mindspore.ops.Split
@@ -534,7 +482,6 @@ Array Operation
     mindspore.ops.TensorScatterMul
     mindspore.ops.TensorScatterSub
     mindspore.ops.TensorScatterUpdate
-    mindspore.ops.TensorShape
     mindspore.ops.Tile
     mindspore.ops.Trace
     mindspore.ops.Transpose
@@ -560,7 +507,6 @@ Type Conversion
     :template: classtemplate.rst
 
     mindspore.ops.ScalarCast
-    mindspore.ops.ScalarToTensor
     mindspore.ops.TupleToArray
 
 Parameter Operation Operator
@@ -576,8 +522,6 @@ Parameter Operation Operator
     mindspore.ops.AssignSub
     mindspore.ops.ScatterAdd
     mindspore.ops.ScatterNdUpdate
-    mindspore.ops.ScatterNonAliasingAdd
-    mindspore.ops.ScatterSub
     mindspore.ops.ScatterUpdate
 
 Data Operation Operator
@@ -616,12 +560,10 @@ Please see the `msrun startup \
     mindspore.ops.CollectiveGather
     mindspore.ops.CollectiveScatter
     mindspore.ops.NeighborExchangeV2
-    mindspore.ops.Receive
     mindspore.ops.Reduce
     mindspore.ops.ReduceOp
     mindspore.ops.ReduceScatter
     mindspore.ops.ReduceScatterV
-    mindspore.ops.Send
 
 Debugging Operator
 ------------------
@@ -649,7 +591,6 @@ Sparse Operator
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.SparseTensorDenseMatmul
     mindspore.ops.SparseToDense
 
 Frame Operators
@@ -710,4 +651,3 @@ Spectral Operator
 
     mindspore.ops.BartlettWindow
     mindspore.ops.BlackmanWindow
-

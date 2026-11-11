@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
-
+"""Test loss and optimizer."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
@@ -23,6 +23,8 @@ from mindspore.nn import TrainOneStepCell
 from mindspore.nn.optim import Momentum, LARS
 from mindspore.ops import operations as P
 
+import numpy as np
+
 
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
@@ -30,8 +32,8 @@ def setup_function():
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network, strategy3):
-        super(NetWithLoss, self).__init__()
-        self.loss = P.SoftmaxCrossEntropyWithLogits().shard(strategy3)
+        super().__init__()
+        self.loss = _inner_ops.SoftmaxCrossEntropyWithLogits().shard(strategy3)
         self.network = network
 
     def construct(self, x, b):

@@ -1,5 +1,7 @@
+"""Inplaceadd ops."""
 import numpy as np
-from mindspore import Tensor, jit, context, ops
+from mindspore.ops.operations import _inplace_ops
+from mindspore import Tensor, jit, context
 from mindspore.nn import Cell
 from ...utils import allclose_nparray
 
@@ -7,7 +9,7 @@ from ...utils import allclose_nparray
 class InplaceAdd(Cell):
     def __init__(self, indices):
         super().__init__()
-        self.op = ops.operations.InplaceAdd(indices)
+        self.op = _inplace_ops.InplaceAdd(indices)
 
     def construct(self, input_x, input_v):
         return self.op(input_x, input_v)

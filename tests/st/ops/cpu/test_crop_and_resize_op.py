@@ -24,7 +24,7 @@ from mindspore import nn
 class NetCropAndResize(nn.Cell):
     def __init__(self, method_="bilinear", extrapolation_value_=0.0):
         super().__init__()
-        self.op = P.CropAndResize(method=method_, extrapolation_value=extrapolation_value_)
+        self.op = P._inner_ops.CropAndResize(method=method_, extrapolation_value=extrapolation_value_)
 
     def construct(self, image, boxes, box_index, channel):
         return self.op(image, boxes, box_index, channel)

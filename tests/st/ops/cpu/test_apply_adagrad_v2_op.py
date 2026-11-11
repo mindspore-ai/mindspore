@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test apply adagrad v2 op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import functional as F
-from mindspore.ops import operations as P
+
 import mindspore.common.dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -32,8 +34,8 @@ accum_np = np.random.rand(3, 3).astype(np.float32)
 
 class Net(nn.Cell):
     def __init__(self, user_eps):
-        super(Net, self).__init__()
-        self.apply_adagrad_v2 = P.ApplyAdagradV2(epsilon=user_eps)
+        super().__init__()
+        self.apply_adagrad_v2 = _inner_ops.ApplyAdagradV2(epsilon=user_eps)
         self.var = Parameter(Tensor(var_np), name="var")
         self.accum = Parameter(Tensor(accum_np), name="accum")
 
@@ -52,7 +54,7 @@ def test_apply_adagrad_v2():
     v2_eps = 1e-6
     gradient_np = np.random.rand(3, 3).astype(np.float32)
     expect_accum_np = accum_np + gradient_np * gradient_np
-    np_dividend = (np.sqrt(expect_accum_np) + v2_eps)
+    np_dividend = np.sqrt(expect_accum_np) + v2_eps
     # update zero values to avoid division-by-zero
     np_dividend[np_dividend == 0] = 1e-6
     expect_var_np = var_np - (0.001 * gradient_np * (1 / np_dividend))
@@ -71,8 +73,8 @@ def test_apply_adagrad_v2():
 
 class VmapNet(nn.Cell):
     def __init__(self):
-        super(VmapNet, self).__init__()
-        self.apply_gradient_descent = P.ApplyAdagradV2(1e-6)
+        super().__init__()
+        self.apply_gradient_descent = _inner_ops.ApplyAdagradV2(1e-6)
 
     def construct(self, var, accum, lr, grad):
         return self.apply_gradient_descent(var, accum, lr, grad)

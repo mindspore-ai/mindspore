@@ -16,6 +16,7 @@
 """other_ops vmap impl."""
 from __future__ import absolute_import
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import Primitive
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, get_assign_vmap_rule, _raise_value_error, \
@@ -102,4 +103,4 @@ get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.UniformInt)(ge
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.UniformReal)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.StandardNormal)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = \
-    vmap_rules_getters.register(P.RandomGamma)(get_unsupported_dynamic_vmap_rule)
+    vmap_rules_getters.register(_inner_ops.RandomGamma)(get_unsupported_dynamic_vmap_rule)

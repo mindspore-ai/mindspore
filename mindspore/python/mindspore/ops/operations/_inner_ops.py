@@ -21,14 +21,29 @@ import numpy as np
 
 from mindspore.common import Tensor
 from mindspore.ops import composite as C
-from mindspore.ops.operations.array_ops import Cast
+from mindspore.ops.deprecated import BatchToSpaceND
+from mindspore.ops.operations.array_ops import (
+    Cast, GatherNd, MatrixDiagPartV3, MatrixDiagV3, ScalarToTensor, SpaceToBatchND, TensorShape)
+from mindspore.ops.operations.image_ops import CropAndResize
+from mindspore.ops.operations.other_ops import CheckValid, IOU
+from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
+from mindspore.ops.operations.comm_ops import Receive, Send
+from mindspore.ops.operations.nn_ops import Pad, SoftmaxCrossEntropyWithLogits, SparseSoftmaxCrossEntropyWithLogits
 # The parallel graph builder resolves these private primitives by their original names.
 from mindspore.ops.operations._scatter_ops import ScatterDiv, ScatterMax, ScatterMin, ScatterMul
 from mindspore.ops.operations._scatter_nd_ops import (ScatterNdAdd, ScatterNdDiv, ScatterNdMax, ScatterNdMin,
                                                       ScatterNdMul, ScatterNdSub)
 from mindspore.ops.operations._scalar_ops import bit_or, bit_and
 from mindspore.ops import signature as sig
-from mindspore.ops.operations.math_ops import _infer_shape_reduce
+from mindspore.ops.operations.math_ops import (
+    _infer_shape_reduce, ApproximateEqual, Atan, Ceil, Expm1, FloorDiv, Igamma, IsNan, Log1p, Tan)
+from mindspore.ops.operations.nn_ops import Softplus
+from mindspore.ops.operations.nn_ops import (
+    ApplyAdagradV2, ApplyFtrl, ApplyMomentum, ApplyProximalAdagrad, LARSUpdate, SparseApplyFtrl,
+    SparseApplyProximalAdagrad)
+from mindspore.ops.operations.random_ops import (
+    LogUniformCandidateSampler, MultinomialWithReplacement, RandomChoiceWithMask, RandomGamma, RandomPoisson,
+    UniformCandidateSampler)
 from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register, Primitive, \
     _check_contains_variable
 from mindspore._c_expression import GeneratorImpl
@@ -2484,3 +2499,26 @@ class _VirtualConverterBegin(PrimitiveWithInfer):
 
     def infer_dtype(self, arg):
         return (arg,) * self.output_nums
+
+
+_PRIVATE_SHAPE_IMAGE = frozenset((
+    "BatchToSpaceND", "CheckValid", "CropAndResize", "GatherNd", "IOU", "MatrixDiagPartV3", "MatrixDiagV3",
+    "ScalarToTensor", "SpaceToBatchND", "SparseTensorDenseMatmul", "TensorShape"))
+
+
+# These class identities remain available to internal callers and parallel graph construction.
+_PRIVATE_MATH_PRIMITIVES = frozenset((
+    "ApproximateEqual", "Atan", "Ceil", "Expm1", "FloorDiv", "Igamma", "IsNan", "Log1p", "Softplus", "Tan"))
+
+
+# Private classes available for internal parallel graph construction by name.
+_PRIVATE_UPDATE_AND_RANDOM = frozenset((
+    "ApplyAdagradV2", "ApplyFtrl", "ApplyMomentum",
+    "ApplyProximalAdagrad", "LARSUpdate", "LogUniformCandidateSampler",
+    "MultinomialWithReplacement", "RandomChoiceWithMask", "RandomGamma",
+    "RandomPoisson", "SparseApplyFtrl", "SparseApplyProximalAdagrad",
+    "UniformCandidateSampler"))
+
+
+_PRIVATE_PAD_LOSS_COMM = frozenset((
+    "Pad", "Receive", "Send", "SoftmaxCrossEntropyWithLogits", "SparseSoftmaxCrossEntropyWithLogits"))

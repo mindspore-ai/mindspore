@@ -16,8 +16,10 @@
 from __future__ import absolute_import
 
 import math
+
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
 import mindspore.ops as ops
 import mindspore.context as context
@@ -101,7 +103,7 @@ def get_hidden(output, seq_length):
     """get hidden state by seq_length"""
     batch_index = ops.arange(start=0, end=seq_length.shape[0], step=1, dtype=seq_length.dtype)
     indices = ops.Concat(1)((seq_length.view(-1, 1) - 1, batch_index.view(-1, 1)))
-    return ops.GatherNd()(output, indices)
+    return _inner_ops.GatherNd()(output, indices)
 
 
 class _DynamicRNNBase(Cell):

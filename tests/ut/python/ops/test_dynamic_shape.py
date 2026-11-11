@@ -15,6 +15,7 @@
 """ test dynamic shape """
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops
 from mindspore import Tensor, context, nn, Parameter
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
@@ -25,8 +26,8 @@ context.set_context(mode=context.GRAPH_MODE)
 def test_sparse_apply_proximal_ada_grad():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
-            self.sparse_apply_proximal_adagrad = P.SparseApplyProximalAdagrad()
+            super().__init__()
+            self.sparse_apply_proximal_adagrad = _inner_ops.SparseApplyProximalAdagrad()
             self.var = Parameter(Tensor(np.random.rand(7800, 80).astype(np.float32)), name="var")
             self.accum = Parameter(Tensor(np.random.rand(7800, 80).astype(np.float32)), name="accum")
             self.lr = 0.01
@@ -39,7 +40,7 @@ def test_sparse_apply_proximal_ada_grad():
 
     class NetWrapper(nn.Cell):
         def __init__(self):
-            super(NetWrapper, self).__init__()
+            super().__init__()
             self.unq = P.Unique()
             self.add = P.Add()
             self.expand_dims = P.ExpandDims()
@@ -61,8 +62,8 @@ def test_sparse_apply_proximal_ada_grad():
 def test_sparse_apply_ftrl():
     class SparseApplyFtrlNet(nn.Cell):
         def __init__(self):
-            super(SparseApplyFtrlNet, self).__init__()
-            self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
+            super().__init__()
+            self.sparse_apply_ftrl = _inner_ops.SparseApplyFtrl(lr=0.01, l1=0.0, l2=0.0, lr_power=-0.5)
             self.var = Parameter(Tensor(np.random.rand(7800, 80).astype(np.float32)), name="var")
             self.accum = Parameter(Tensor(np.random.rand(7800, 80).astype(np.float32)), name="accum")
             self.linear = Parameter(Tensor(np.random.rand(7800, 80).astype(np.float32)), name="linear")
@@ -73,7 +74,7 @@ def test_sparse_apply_ftrl():
 
     class NetWrapper(nn.Cell):
         def __init__(self):
-            super(NetWrapper, self).__init__()
+            super().__init__()
             self.unq = P.Unique()
             self.add = P.Add()
             self.expand_dims = P.ExpandDims()
@@ -95,7 +96,7 @@ def test_sparse_apply_ftrl():
 def test_gatherv2():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.unq = P.Unique()
             self.gather = P.Gather()
             self.yy = Tensor(np.ones([8], dtype=np.int32))
@@ -117,7 +118,7 @@ def test_gatherv2():
 def test_segmentsum():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.unq = P.Unique()
             self.segment_ids = Tensor([0, 0, 1, 2, 1, 1, 1, 1], mstype.int32)
             self.sum = P.UnsortedSegmentSum()
@@ -135,7 +136,7 @@ def test_segmentsum():
 def test_addn():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.unq = P.Unique()
             self.addn = P.AddN()
 

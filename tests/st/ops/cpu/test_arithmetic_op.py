@@ -12,12 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test arithmetic op."""
 from tests.mark_utils import arg_mark
 import os
 import stat
 import numpy as np
 import pytest
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore
@@ -30,7 +32,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 class SubNet(nn.Cell):
     def __init__(self):
-        super(SubNet, self).__init__()
+        super().__init__()
         self.sub = P.Sub()
 
     def construct(self, x, y):
@@ -39,7 +41,7 @@ class SubNet(nn.Cell):
 
 class DivNet(nn.Cell):
     def __init__(self):
-        super(DivNet, self).__init__()
+        super().__init__()
         self.div = P.Div()
 
     def construct(self, x, y):
@@ -48,8 +50,8 @@ class DivNet(nn.Cell):
 
 class FloorDivNet(nn.Cell):
     def __init__(self):
-        super(FloorDivNet, self).__init__()
-        self.floor_div = P.FloorDiv()
+        super().__init__()
+        self.floor_div = _private_math.FloorDiv()
 
     def construct(self, x, y):
         return self.floor_div(x, y)
@@ -57,7 +59,7 @@ class FloorDivNet(nn.Cell):
 
 class ModNet(nn.Cell):
     def __init__(self):
-        super(ModNet, self).__init__()
+        super().__init__()
         self.mod = P.Mod()
 
     def construct(self, x, y):
@@ -66,7 +68,7 @@ class ModNet(nn.Cell):
 
 class FloorModNet(nn.Cell):
     def __init__(self):
-        super(FloorModNet, self).__init__()
+        super().__init__()
         self.floor_mod = P.FloorMod()
 
     def construct(self, x, y):

@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
+
+"""Test scalar to tensor ops."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 from mindspore import nn
-from mindspore import ops
-from tests.mark_utils import arg_mark
+
 
 
 def test_mutable_scalar_input():
@@ -29,7 +30,7 @@ def test_mutable_scalar_input():
 
     class Net(nn.Cell):
         def construct(self, x):
-            out = ops.ScalarToTensor()(x)
+            out = _inner_ops.ScalarToTensor()(x)
             return out
 
     x = ms.mutable(1.2)

@@ -16,6 +16,8 @@
 """math_ops vmap impl."""
 from __future__ import absolute_import
 
+from mindspore.ops.operations import _inplace_ops
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import auto_generate as gen
@@ -27,7 +29,7 @@ from mindspore.ops.primitive import _primexpr
 from mindspore.common import Tensor
 from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import linalg_ops
-from mindspore.ops.operations import _inner_ops
+
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.function import _VmapGeneralRule
 from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
@@ -48,7 +50,7 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.Div)
 @vmap_rules_getters.register(P.Xdivy)
 @vmap_rules_getters.register(P.RealDiv)
-@vmap_rules_getters.register(P.FloorDiv)
+@vmap_rules_getters.register(_private_math.FloorDiv)
 @vmap_rules_getters.register(P.FloorMod)
 @vmap_rules_getters.register(P.Maximum)
 @vmap_rules_getters.register(P.Minimum)
@@ -67,7 +69,7 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.BitwiseOr)
 @vmap_rules_getters.register(P.BitwiseXor)
 @vmap_rules_getters.register(P.Xlogy)
-@vmap_rules_getters.register(P.ApproximateEqual)
+@vmap_rules_getters.register(_private_math.ApproximateEqual)
 @vmap_rules_getters.register(P.TruncateDiv)
 @vmap_rules_getters.register(P.TruncateMod)
 
@@ -383,11 +385,10 @@ def get_broadcast_to_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.InplaceAdd)
-@vmap_rules_getters.register(P.InplaceSub)
-@vmap_rules_getters.register(P.InplaceUpdate)
+@vmap_rules_getters.register(_inplace_ops.InplaceAdd)
+@vmap_rules_getters.register(_inplace_ops.InplaceSub)
 def get_inplace_ops_vmap_rule(prim, axis_size):
-    """VmapRule for `InplaceAdd`, `InplaceSub`, `InplaceUpdate` operation."""
+    """VmapRule for `InplaceAdd`, `InplaceSub` operation."""
 
     def vmap_rule(x_bdim, v_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, v_bdim)
@@ -750,7 +751,7 @@ def get_log_matrix_determinant_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(P.Cummax)
-@vmap_rules_getters.register(_inner_ops.Cummin)
+@vmap_rules_getters.register(_private_math.Cummin)
 def get_cum_min_max_vmap_rule(prim, axis_size):
     """VmapRule for `Cummax` and `Cummin` operation."""
 
@@ -956,23 +957,23 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.ACos)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Acosh)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Asin)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Asinh)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.Atan)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(_private_math.Atan)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Atanh)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Cos)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Cosh)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Sin)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Sinh)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.Tan)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(_private_math.Tan)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Tanh)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.Ceil)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(_private_math.Ceil)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Erf)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Erfc)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Erfinv)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Exp)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.Expm1)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(_private_math.Expm1)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Floor)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Log)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.Log1p)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(_private_math.Log1p)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.LogicalNot)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Mish)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Neg)(get_unop_vmap_rule)
@@ -986,7 +987,7 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Sqrt)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Sign)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Real)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Imag)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.IsNan)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(_private_math.IsNan)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.IsInf)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.IsFinite)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(BesselJ0)(get_unop_vmap_rule)

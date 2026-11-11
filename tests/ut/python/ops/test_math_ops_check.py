@@ -16,6 +16,7 @@
 import functools
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
@@ -29,7 +30,7 @@ from ....mindspore_test_framework.pipeline.forward.compile_forward \
 
 class AssignAddNet(nn.Cell):
     def __init__(self,):
-        super(AssignAddNet, self).__init__()
+        super().__init__()
         self.op = P.AssignAdd()
         self.inputdata = Parameter(Tensor(np.zeros([1]).astype(np.bool_), mstype.bool_), name="assign_add1")
 
@@ -40,7 +41,7 @@ class AssignAddNet(nn.Cell):
 
 class AssignSubNet(nn.Cell):
     def __init__(self,):
-        super(AssignSubNet, self).__init__()
+        super().__init__()
         self.op = P.AssignSub()
         self.inputdata = Parameter(Tensor(np.zeros([1]).astype(np.bool_), mstype.bool_), name="assign_sub1")
 
@@ -51,7 +52,7 @@ class AssignSubNet(nn.Cell):
 
 class ReduceNet(nn.Cell):
     def __init__(self, op_class, keep_dims, axis):
-        super(ReduceNet, self).__init__()
+        super().__init__()
         self.axis = axis
         self.op = op_class(keep_dims=keep_dims)
 
@@ -61,7 +62,7 @@ class ReduceNet(nn.Cell):
 
 class CumProdNet(nn.Cell):
     def __init__(self):
-        super(CumProdNet, self).__init__()
+        super().__init__()
         self.op = P.CumProd()
 
     def construct(self, x, axis):
@@ -70,7 +71,7 @@ class CumProdNet(nn.Cell):
 
 class CumSumNet(nn.Cell):
     def __init__(self, axis):
-        super(CumSumNet, self).__init__()
+        super().__init__()
         self.axis = axis
         self.op = P.CumSum()
 
@@ -333,7 +334,7 @@ raise_set = [
 
     # input two tensors, their shapes do not match
     ('FloorDiv2', {
-        'block': (P.FloorDiv(), {'exception': ValueError, 'error_keywords': ['FloorDiv']}),
+        'block': (_private_math.FloorDiv(), {'exception': ValueError, 'error_keywords': ['FloorDiv']}),
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
@@ -608,7 +609,7 @@ test_case_math_ops = [
         'skip': ['backward']}),
     # input two tensors, but element types are not same
     ('FloorDiv1', {
-        'block': P.FloorDiv(),
+        'block': _private_math.FloorDiv(),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
     # input two tensors, but element types are not same

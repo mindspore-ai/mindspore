@@ -14,13 +14,17 @@
 # ============================================================================
 """Equivariant"""
 import numpy as np
+
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 import mindspore.ops as ops
-from tests.st.mindscience.mindsponge.mindsponge.common.tensor_utils import concat_features
 from mindspore import Parameter
 from mindspore.common.tensor import Tensor
+
+from tests.st.mindscience.mindsponge.mindsponge.common.tensor_utils import concat_features
 from tests.st.mindscience.mindsponge.mindsponge.common.geometry import apply_to_point, invert_point
+
 from .initializer import lecun_init
 
 
@@ -32,7 +36,7 @@ class InvariantPointAttention(nn.Cell):
     """
 
     def __init__(self, num_head, num_scalar_qk, num_scalar_v, num_point_v, num_point_qk, num_channel, pair_dim):
-        super(InvariantPointAttention, self).__init__()
+        super().__init__()
 
         self._dist_epsilon = 1e-8
         self.num_head = num_head
@@ -53,7 +57,7 @@ class InvariantPointAttention(nn.Cell):
         self.kv_point_local = nn.Dense(self.num_channel, self.num_head * 3 * (self.num_point_qk + self.num_point_v),
                                        weight_init=lecun_init(self.num_channel), bias_init='zeros')
         self.soft_max = nn.Softmax()
-        self.soft_plus = ops.Softplus()
+        self.soft_plus = _private_math.Softplus()
         self.trainable_point_weights = Parameter(Tensor(np.ones((12,)), mstype.float32), name="trainable_point_weights")
         self.attention_2d = nn.Dense(pair_dim, self.num_head, weight_init=lecun_init(pair_dim), bias_init='zeros')
         self.output_projection = nn.Dense(self.projection_num, self.num_channel, weight_init='zeros', bias_init='zeros'

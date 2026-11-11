@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test approximate equal op."""
 from tests.mark_utils import arg_mark
 
 # This example should be run with multiple processes.
@@ -20,20 +21,20 @@ from tests.mark_utils import arg_mark
 
 # supported startup method for your hardware and get more detail information on the corresponding page.
 
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore
 from mindspore import context
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore import nn
 
 
 class NetApproximateEqual(nn.Cell):
     def __init__(self, tolerance):
-        super(NetApproximateEqual, self).__init__()
+        super().__init__()
         self.tolerance = tolerance
-        self.approximate_equal = P.ApproximateEqual(self.tolerance)
+        self.approximate_equal = _private_math.ApproximateEqual(self.tolerance)
 
     def construct(self, input_x1, input_x2):
         output = self.approximate_equal(input_x1, input_x2)

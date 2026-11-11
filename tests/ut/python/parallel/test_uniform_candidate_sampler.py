@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test uniform candidate sampler."""
 import numpy as np
 import pytest
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor, Parameter
@@ -30,8 +32,8 @@ def setup_function():
 class Net(nn.Cell):
     def __init__(self, embedding_weight, num_true, num_sampled, unique, range_max, seed, remove_accidential,
                  strategy1=None):
-        super(Net, self).__init__()
-        self.sampler = P.UniformCandidateSampler(num_true, num_sampled, unique, range_max, seed,
+        super().__init__()
+        self.sampler = _inner_ops.UniformCandidateSampler(num_true, num_sampled, unique, range_max, seed,
                                                  remove_accidential)
         if strategy1:
             self.sampler.shard(strategy1)
@@ -55,8 +57,8 @@ class Net(nn.Cell):
 class Net2(nn.Cell):
     def __init__(self, mul_weight, num_true, num_sampled, unique, range_max, seed, remove_accidential,
                  strategy1=None):
-        super(Net2, self).__init__()
-        self.sampler = P.UniformCandidateSampler(num_true, num_sampled, unique, range_max, seed,
+        super().__init__()
+        self.sampler = _inner_ops.UniformCandidateSampler(num_true, num_sampled, unique, range_max, seed,
                                                  remove_accidential)
         self.cast = P.Cast()
         self.weight = Parameter(mul_weight, "w1")

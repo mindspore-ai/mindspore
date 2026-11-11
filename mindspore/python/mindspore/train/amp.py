@@ -20,6 +20,7 @@ from typing import Any
 import functools
 import collections
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 from mindspore import nn
 from mindspore import _checkparam as validator
@@ -96,7 +97,7 @@ AMP_AUTO_BLACK_LIST = [
     gen.Cosh,
     P.Erfinv,
     P.Exp,
-    P.Expm1,
+    _private_math.Expm1,
     gen.Log,
     gen.Log10,
     gen.Log1p,
@@ -104,8 +105,8 @@ AMP_AUTO_BLACK_LIST = [
     P.Reciprocal,
     P.Rsqrt,
     P.Sinh,
-    P.Tan,
-    P.Softplus,
+    _private_math.Tan,
+    _private_math.Softplus,
     gen.SoftplusExt,
     P.LayerNorm,
     gen.LayerNormExt,

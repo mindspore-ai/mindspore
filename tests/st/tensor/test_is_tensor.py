@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test is tensor."""
 from tests.mark_utils import arg_mark
 
 import pytest
@@ -23,7 +24,7 @@ from mindspore import Tensor
 
 class Net(nn.Cell):
     def construct(self, x):
-        return ms.is_tensor(x)
+        return ms.common.is_tensor(x)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
@@ -31,8 +32,8 @@ class Net(nn.Cell):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_is_tensor(mode):
     """
-    Feature: mindspore.is_tensor
-    Description: Verify the result of mindspore.is_tensor
+    Feature: mindspore.common.is_tensor
+    Description: Verify the result of mindspore.common.is_tensor
     Expectation: success
     """
     ms.set_context(mode=mode)

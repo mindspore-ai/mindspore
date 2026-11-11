@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained primitive, dynamic-shape and vmap coverage after legacy function removal."""
 from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore
@@ -21,23 +22,6 @@ import mindspore.ops as ops
 from mindspore import Tensor
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-        card_mark='onecard', mem_peak=0.01)
-def test_batch_to_space_nd_function():
-    """
-    Feature: test BatchToSpaceND function interface.
-    Description: test interface.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(device_target="Ascend")
-    x = Tensor(np.arange(4).reshape((4, 1, 1, 1)).astype(
-        np.float32), mindspore.float32)
-    y = Tensor([2, 2], mindspore.int32)
-    z = Tensor([[0, 0], [0, 0]], mindspore.int32)
-    output = ops.batch_to_space_nd(x, y, z)
-    expect = np.array([[[[0, 1],
-                         [2, 3]]]]).astype(np.float32)
-    np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
 class BatchToSpaceNDDynamicShapeNetMS(nn.Cell):

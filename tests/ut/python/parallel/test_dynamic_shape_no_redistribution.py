@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Dynamic-shape parallel compilation without redistribution."""
 import pytest
 import numpy as np
 
@@ -77,7 +78,7 @@ class PadV3Net2(Cell):
         self.value = Tensor([0])
         self.shape = P.Shape()
         self.paddings = Tensor([0, 0, 0])
-        self.s = P.ScalarToTensor()
+        self.s = P._inner_ops.ScalarToTensor()
         self.concat = P.Concat()
 
     def construct(self, x):
@@ -98,12 +99,12 @@ class PadV3Net3(Cell):
         self.value = Tensor([0])
         self.shape = P.Shape()
         self.paddings = Tensor([0, 0, 0], ms.int32)
-        self.s = P.ScalarToTensor()
+        self.s = P._inner_ops.ScalarToTensor()
         self.concat = P.Concat()
 
     def construct(self, x):
         out = self.add(x, self.weight)
-        shape = P.Sub()(Tensor([1024]), ops.dyn_shape(out)[-1]).reshape((1,)).astype(ms.int32)
+        shape = P.Sub()(Tensor([1024]), ops.operations._inner_ops.TensorShape()(out)[-1]).reshape((1,)).astype(ms.int32)
         paddings = self.concat((self.paddings, shape))
         out = self.pad(out, paddings, self.value)
         return out

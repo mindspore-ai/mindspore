@@ -20,6 +20,7 @@ Coverage: ordinary op, single view, multi view, view-of-view chain, and inplace 
 import os
 
 import numpy as np
+from mindspore.ops.operations import _inplace_ops
 import mindspore as ms
 from mindspore import Tensor, context, nn, ops
 from mindspore._c_expression import OffloadManager
@@ -104,7 +105,7 @@ class SimpleInplaceOpNet(nn.Cell):
 
     def __init__(self):
         super().__init__()
-        self.inplace_add = ops.InplaceAdd((0,))
+        self.inplace_add = _inplace_ops.InplaceAdd((0,))
         self.update = Tensor(np.full((1, TENSOR_SHAPE[1]), 0.25, np.float32))
 
     def construct(self, x):

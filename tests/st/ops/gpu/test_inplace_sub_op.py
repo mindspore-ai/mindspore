@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test inplace sub op."""
 from tests.mark_utils import arg_mark
 
 # This example should be run with multiple processes.
@@ -20,12 +21,12 @@ from tests.mark_utils import arg_mark
 
 # supported startup method for your hardware and get more detail information on the corresponding page.
 
-import pytest
 
+
+from mindspore.ops.operations import _inplace_ops
 import mindspore
 from mindspore import context
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore import nn
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -33,9 +34,9 @@ context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 class NetInplaceSub(nn.Cell):
     def __init__(self, indices):
-        super(NetInplaceSub, self).__init__()
+        super().__init__()
         self.indices = indices
-        self.inplace_sub = P.InplaceSub(self.indices)
+        self.inplace_sub = _inplace_ops.InplaceSub(self.indices)
 
     def construct(self, input_x1, input_x2):
         output = self.inplace_sub(input_x1, input_x2)

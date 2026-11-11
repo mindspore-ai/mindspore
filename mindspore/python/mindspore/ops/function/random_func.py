@@ -26,7 +26,6 @@ from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
-from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
 from mindspore.graph.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import randperm
 from mindspore.common.generator import default_generator
@@ -63,44 +62,6 @@ generator_step_ = Tensor(12, mstype.int64)
 def _set_prim_op_user_data(prim, key, value):
     prim.add_prim_attr(key, value)
     return prim
-
-
-@deprecated("2.10.0", None, False, "ops.")
-@_function_forbid_reuse
-def random_gamma(shape, alpha, seed=None):
-    r"""
-    Generate random numbers from the Gamma distribution(s).
-
-    .. warning::
-        After version 2.9.0, this sampling interface will change to a distribution object form.
-        Please use the corresponding distribution class instead.
-
-    Args:
-        shape (Tensor): The shape of the random tensor to be generated.
-        alpha (Tensor): The :math:`\alpha` distribution parameter.
-        seed (int, optional): Random seed, must be non-negative. Default ``None`` .
-
-    Returns:
-        Tensor, the shape is `mindspore.ops.concat([shape, rate.shape], axis=0)`.
-        The data type is the same as `alpha`.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> shape = mindspore.tensor([7, 5], mindspore.int32)
-        >>> alpha = mindspore.tensor([0.5, 1.5], mindspore.float32)
-        >>> output = mindspore.ops.random_gamma(shape, alpha, seed=5)
-        >>> print(output.shape, output.dtype)
-        (7, 5, 2) Float32
-    """
-    seed1, seed2 = _get_seed(seed, "random_gamma")
-    random_gamma_op = P.RandomGamma(seed1, seed2)
-    random_gamma_op = _set_prim_op_user_data(
-        random_gamma_op, "random_cache", False)
-    output = random_gamma_op(shape, alpha)
-    return output
 
 
 @constexpr(reuse_result=False)
@@ -196,59 +157,6 @@ def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
     random_categorical_ = _set_prim_op_user_data(
         random_categorical_, "random_cache", False)
     return random_categorical_(logits, num_sample, seed)
-
-
-@_function_forbid_reuse
-def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False):
-    r"""
-    Generate a tensor from a multinomial distribution.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Note:
-        - The rows of input do not need to sum to one (in which case we use the values as weights),
-          but must be non-negative, finite and have a non-zero sum.
-        - If `seed` is set to be ``-1`` , and `offset` is set to be ``0``, the random number
-          generator is seeded by a random seed.
-
-    Args:
-        x (Tensor): The 1-D or 2-D input tensor containing probabilities.
-        seed (int): Random seed.
-        offset (int): Offset.
-        numsamples (int): The number of samples to draw.
-        replacement (bool, optional): Whether to draw with replacement or not. Default ``False`` .
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([[0., 9., 4., 0.]], mindspore.float32)
-        >>> mindspore.ops.multinomial_with_replacement(x, 2, 5, 2, True)
-        Tensor(shape=[1, 2], dtype=Int64, value=
-        [[1, 1]])
-    """
-    if not isinstance(seed, Tensor):
-        if not isinstance(seed, int):
-            # PSJit currently only supports the concatenation of f-strings,
-            # and does not support the concatenation of normal strings with f-strings.
-            raise TypeError(f"For multinomial_with_replacement, "
-                            f"the input[seed] must be int, but got {type(seed)}.")
-        seed = Tensor(seed, dtype=mstype.int64)
-    if not isinstance(offset, Tensor):
-        if not isinstance(offset, int):
-            raise TypeError(f"For multinomial_with_replacement, "
-                            f"the input[offset] must be int, but got {type(offset)}.")
-        offset = Tensor(offset, dtype=mstype.int64)
-    multinomial_with_replacement_ = P.MultinomialWithReplacement(numsamples=numsamples,
-                                                                 replacement=replacement)
-    multinomial_with_replacement_ = _set_prim_op_user_data(
-        multinomial_with_replacement_, "random_cache", False)
-    return multinomial_with_replacement_(x, seed, offset)
 
 
 @_function_forbid_reuse
@@ -403,7 +311,6 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     return value
 
 
-
 @_function_forbid_reuse
 def exponential_(input, lambd=1, *, generator=None):
     r"""
@@ -413,337 +320,6 @@ def exponential_(input, lambd=1, *, generator=None):
         generator = default_generator
     seed, offset = generator._step(generator_step_)  # pylint: disable=protected-access
     return inplace_exponential_op(input, lambd, seed, offset)
-
-
-@_function_forbid_reuse
-def standard_normal(shape, seed=None):
-    r"""
-    Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
-
-    .. math::
-        f(x)=\frac{1}{\sqrt{2 \pi}} e^{\left(-\frac{x^{2}}{2}\right)}
-
-    .. warning::
-        - The Ascend backend does not support the reproducibility of random numbers, so
-          the `seed` parameter has no effect.
-        - This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        shape (Union[tuple, Tensor]): The shape of the returned tensor.
-        seed (int, optional): Random number seed. Default ``None`` .
-
-    Returns:
-        Tensor
-
-    Raises:
-        ValueError: If `shape` is a tuple containing non-positive items.
-        ValueError: If shape is a Tensor, and the rank of the Tensor is not equal to 1.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> shape = (4, 4)
-        >>> output = mindspore.ops.standard_normal(shape, seed=5)
-        >>> print(f'output shape is {output.shape}')
-        output shape is (4, 4)
-    """
-    seed1, seed2 = _get_seed(seed, "standard_normal")
-    standard_normal_op = P.StandardNormal(seed=seed1, seed2=seed2)
-    standard_normal_op = _set_prim_op_user_data(
-        standard_normal_op, "random_cache", False)
-    return standard_normal_op(shape)
-
-
-@deprecated("2.9.0", None, False, "ops.")
-@_function_forbid_reuse
-def uniform_candidate_sampler(true_classes,
-                              num_true,
-                              num_sampled,
-                              unique,
-                              range_max,
-                              seed=0,
-                              remove_accidental_hits=False):
-    r"""
-    `mindspore.ops.uniform_candidate_sampler` is deprecated from version 2.9.0 and will be removed in a future version.
-
-    Uniform candidate sampler.
-
-    This function samples a set of classes(sampled_candidates) from [0, range_max-1] based on uniform distribution.
-    If `unique` is ``True``, candidates are drawn without replacement, else `unique` is ``False`` with replacement.
-
-    .. warning::
-        - The Ascend backend does not support the reproducibility of random numbers, so
-          the `seed` parameter has no effect.
-        - The Ascend backend does not support dynamic shape scenarios currently.
-
-    Args:
-        true_classes (Tensor): A Tensor. The target classes with a Tensor shape of :math:`(batch\_size, num\_true)` .
-            The value range of the elements must be :math:`[0, range\_max)`.
-        num_true (int): The number of target classes in each training example.
-        num_sampled (int): The number of classes to randomly sample. The sampled_candidates will have a shape
-            of num_sampled. If unique=True, num_sampled must be less than or equal to range_max.
-        unique (bool): Whether all sampled classes in a batch are unique.
-        range_max (int): The number of possible classes, must be positive.
-        seed (int): Used for random number generation, must be non-negative. If seed has a value of 0,
-            the seed will be replaced with a randomly generated value. Default: ``0`` .
-        remove_accidental_hits (bool): Whether accidental hit is removed.
-            Accidental hit is when one of the true classes matches one of the sample classes.
-            Set ``True`` to remove cases which the true class is accidentally sampled as sample class.
-            Default: ``False`` .
-
-    Returns:
-        - **sampled_candidates** (Tensor) - The sampled_candidates is independent of the true classes.
-          shape: :math:`(num\_sampled, )` .
-        - **true_expected_count** (Tensor) - The expected counts under the sampling distribution of each
-          of true_classes. shape: :math:`(batch\_size, num\_true)` .
-        - **sampled_expected_count** (Tensor) - The expected counts under the sampling distribution of
-          each of sampled_candidates. shape: :math:`(num\_sampled, )` .
-
-    Raises:
-        TypeError: If neither `num_true` nor `num_sampled` is an int.
-        TypeError: If neither `unique` nor `remove_accidental_hits` is a bool.
-        TypeError: If neither `range_max` nor `seed` is an int.
-        TypeError: If `true_classes` is not a Tensor.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> data = Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int64))
-        >>> output1, output2, output3 = ops.uniform_candidate_sampler(data, 1, 3, False, 4, 1)
-        >>> print(output1.shape)
-        (3,)
-        >>> print(output2.shape)
-        (5, 1)
-        >>> print(output3.shape)
-        (3,)
-    """
-    sampler_op = P.UniformCandidateSampler(num_true,
-                                           num_sampled,
-                                           unique,
-                                           range_max,
-                                           seed=seed,
-                                           remove_accidental_hits=remove_accidental_hits)
-    sampler_op = _set_prim_op_user_data(sampler_op, "random_cache", False)
-    sampled_candidates, true_expected_count, sampled_expected_count = sampler_op(
-        true_classes)
-    return sampled_candidates, true_expected_count, sampled_expected_count
-
-
-@deprecated("2.10.0", None, False, "ops.")
-@_function_forbid_reuse
-def random_poisson(shape, rate, seed=None, dtype=mstype.float32):
-    r"""
-    `mindspore.ops.random_poisson` is deprecated from version 2.10.0 and will be removed in a future version.
-
-    Generate random number Tensor with `shape` according to a Poisson distribution with mean `rate`.
-
-
-    .. math::
-
-        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
-
-    .. warning::
-        - The Ascend backend does not support the reproducibility of random numbers, so
-          the `seed` parameter has no effect.
-        - Starting after version 2.9.0, this API will undergo an incompatible change:
-          the signature will be adjusted to ``poisson(input, generator=None)``.
-          The current `shape` parameter semantics is incompatible with the new signature.
-
-    Args:
-        shape (Tensor): The shape of random tensor to be sampled from each poisson distribution, 1-D integer tensor.
-        rate (Tensor): The :math:`μ` parameter that the distribution is constructed with.
-            It represents the mean of poisson distribution
-            and also the variance of the distribution.
-        seed (int, optional): Random seed, must be non-negative. Default ``None`` .
-        dtype (mindspore.dtype): The data type returned. Default ``mstype.float32``.
-
-    Returns:
-        Tensor, the shape is `mindspore.ops.concat([shape, rate.shape], axis=0)`.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> # case 1: 1-D shape, 2-D rate, float64 output
-        >>> shape = mindspore.tensor([2, 2], mindspore.int64)
-        >>> rate = mindspore.tensor([[5.0, 10.0], [5.0, 1.0]], mindspore.float32)
-        >>> output = mindspore.ops.random_poisson(shape, rate, seed=5, dtype=mindspore.float64)
-        >>> print(output.shape, output.dtype)
-        (2, 2, 2, 2) Float64
-        >>> # case 2: 1-D shape, scalar rate, int64 output
-        >>> shape = mindspore.tensor([2, 2], mindspore.int64)
-        >>> rate = mindspore.tensor(5.0, mindspore.float64)
-        >>> output = mindspore.ops.random_poisson(shape, rate, seed=5, dtype=mindspore.int64)
-        >>> print(output.shape, output.dtype)
-        (2, 2) Int64
-    """
-    seed1, seed2 = _get_seed(seed, "random_poisson")
-    prim_random_poisson = P.RandomPoisson(seed1, seed2, dtype)
-    prim_random_poisson = _set_prim_op_user_data(
-        prim_random_poisson, "random_cache", False)
-    value = prim_random_poisson(shape, rate)
-    return value
-
-
-@_function_forbid_reuse
-def shuffle(x, seed=None):
-    r"""
-    Randomly shuffle a tensor along its first dimension.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        x (Tensor): The input tensor.
-        seed (int, optional): Random seed. Default ``None`` , which is equivalent to 0.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([1, 2, 3, 4], mindspore.float32)
-        >>> output = mindspore.ops.shuffle(x, seed=1)
-        >>> print(output)
-        [3. 4. 2. 1.]
-    """
-    seed, seed2 = _get_seed(seed, "shuffle")
-    random_shuffle_ = RandomShuffle(seed=seed, seed2=seed2)
-    random_shuffle_ = _set_prim_op_user_data(
-        random_shuffle_, "random_cache", False)
-    output = random_shuffle_(x)
-    return output
-
-
-@deprecated("2.9.0", None, False, "ops.")
-@_function_forbid_reuse
-def log_uniform_candidate_sampler(true_classes, num_true=1, num_sampled=5, unique=True, range_max=5, seed=0):
-    r"""
-    `mindspore.ops.log_uniform_candidate_sampler` is deprecated from version 2.9.0 and will be removed
-    in a future version.
-
-    Generates random labels with a log-uniform distribution (Zipfian) for sampled_candidates.
-
-    Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
-
-    .. warning::
-        - The Ascend backend does not support the reproducibility of random numbers, so
-          the `seed` parameter has no effect.
-
-    Args:
-        true_classes (Tensor): The target classes. With data type of int64 and
-          shape :math:`(batch\_size, num\_true)` .
-        num_true (int, optional): The number of target classes per training example. Default: ``1`` .
-        num_sampled (int, optional): The number of classes to randomly sample. Default: ``5`` .
-        unique (bool, optional): Determines whether all sampled classes in the batch are unique.
-          If `unique` is ``True`` ,
-          all sampled classes in a batch are unique. Default: ``True`` .
-        range_max (int, optional): The number of possible classes. When `unique` is ``True`` ,
-          `range_max` must be greater than or equal to `num_sampled`. Default: ``5`` .
-        seed (int, optional): Random seed, must be non-negative. Default: ``0`` .
-
-    Returns:
-        Tuple of 3 Tensors.
-
-        - **sampled_candidates** (Tensor) - A Tensor with shape :math:`(num\_sampled,)`
-          and the same type as `true_classes`.
-        - **true_expected_count** (Tensor) - A Tensor with the same shape as `true_classes` and type float32.
-        - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
-
-    Raises:
-        TypeError: If neither `num_true` nor `num_sampled` is an int.
-        TypeError: If `unique` is not a bool.
-        TypeError: If neither `range_max` nor `seed` is an int.
-        TypeError: If `true_classes` is not a Tensor.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> output1, output2, output3 = ops.log_uniform_candidate_sampler(
-        ... Tensor(np.array([[1, 7], [0, 4], [3, 3]])), 2, 5, True, 5)
-        >>> print(output1, output2, output3)
-        [3 2 0 4 1]
-        [[0.92312991 0.49336370]
-         [0.99248987 0.65806371]
-         [0.73553443 0.73553443]]
-        [0.73553443 0.82625800 0.99248987 0.65806371 0.92312991]
-
-    """
-
-    sampler = P.LogUniformCandidateSampler(
-        num_true, num_sampled, unique, range_max, seed)
-    sampler = _set_prim_op_user_data(sampler, "random_cache", False)
-    return sampler(true_classes)
-
-
-@_function_forbid_reuse
-def choice_with_mask(input_x, count=256, seed=None):
-    """
-    Generates a random sample as an index tensor with a mask tensor from a given tensor.
-
-    The `input_x` must be a tensor whose dimension is not less than 1. If its dimension is greater than or equal to 2,
-    the first dimension specifies the number of samples.
-    The returned index tensor denotes the index of the nonzero
-    sample, the mask tensor denotes which elements in the index tensor are valid.
-
-    .. warning::
-        - The Ascend backend does not support the reproducibility of random numbers, so
-          the `seed` parameter has no effect.
-        - This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        input_x (Tensor[bool]): The input tensor.
-            The input tensor rank must be greater than or equal to 1 and less than or equal to 5.
-        count (int, optional): Number of items expected to get and the number must be greater than 0. Default: ``256`` .
-        seed (int, optional): Seed is used as an entropy source for random number engines
-            generating pseudo-random numbers.
-            Default: ``None`` .
-
-    Returns:
-        Two tensors. The first one is the index tensor and the other one is the mask tensor.
-
-        - **index** (Tensor) - The output shape is 2-D.
-        - **mask** (Tensor) - The output shape is 1-D.
-
-    Raises:
-        TypeError: If `count` is not an int.
-        TypeError: If `seed` is not an int.
-        TypeError: If `input_x` is not a Tensor.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> input_x = Tensor(np.ones(shape=[240000, 4]).astype(np.bool_))
-        >>> output_y, output_mask = ops.choice_with_mask(input_x)
-        >>> result = output_y.shape
-        >>> print(result)
-        (256, 2)
-        >>> result = output_mask.shape
-        >>> print(result)
-        (256,)
-    """
-    seed1, seed2 = _get_seed(seed, "choice_with_mask")
-    choice_with_mask_ = RandomChoiceWithMask(
-        count=count, seed=seed1, seed2=seed2)
-    choice_with_mask_ = _set_prim_op_user_data(
-        choice_with_mask_, "random_cache", False)
-    output = choice_with_mask_(input_x)
-    return output
 
 
 @constexpr
@@ -1053,7 +629,7 @@ def gamma(shape, alpha, beta, seed=None):
     r"""
     `mindspore.ops.gamma` is deprecated from version 2.10.0
     and will be removed in a future version.
-    
+
     Generates random numbers according to the Gamma random number distribution.
 
     Support broadcasting.
@@ -1259,7 +835,7 @@ def rand_ext(*size, generator=None, dtype=None, device=None):
             Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype. If ``None``,
             `mindspore.float32` will be applied. Default: ``None`` .
-        device (str, optional): The specified device of the output tensor. Only ``"Ascend"``, ``"npu"`` and ``"meta"`` 
+        device (str, optional): The specified device of the output tensor. Only ``"Ascend"``, ``"npu"`` and ``"meta"``
             are supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used.
             Default: ``None`` .
 
@@ -1331,7 +907,7 @@ def rand_like_ext(input, *, dtype=None, device=None):
 @_function_forbid_reuse
 def randn_ext(*size, generator=None, dtype=None, device=None):
     r"""
-    Returns a new tensor filled with numbers from the standard normal distribution 
+    Returns a new tensor filled with numbers from the standard normal distribution
     based on the given shape and dtype.
 
     Args:
@@ -1346,7 +922,7 @@ def randn_ext(*size, generator=None, dtype=None, device=None):
             supported. If `device = None`, the value set by :func:`mindspore.set_device` will be used. Default ``None``.
 
     Returns:
-        Tensor, filled with numbers from the standard normal distribution 
+        Tensor, filled with numbers from the standard normal distribution
         based on the given shape and dtype.
 
     Raises:
@@ -1374,7 +950,7 @@ def randn_ext(*size, generator=None, dtype=None, device=None):
 @_function_forbid_reuse
 def randn_like_ext(input, *, dtype=None, device=None):
     r"""
-    Returns a new tensor filled with numbers from the standard normal distribution 
+    Returns a new tensor filled with numbers from the standard normal distribution
     based on the given dtype and shape of the input tensor.
 
     .. warning::
@@ -1390,7 +966,7 @@ def randn_like_ext(input, *, dtype=None, device=None):
             supported. If `device = None`, the device of `input` will be used. Default ``None``.
 
     Returns:
-        Tensor, filled with numbers from the standard normal distribution 
+        Tensor, filled with numbers from the standard normal distribution
         based on the given shape and dtype.
 
     Raises:
@@ -1818,7 +1394,8 @@ def randperm_ext(n, *, generator=None, dtype=mstype.int64):
 @_function_forbid_reuse
 def poisson(shape, mean, seed=None):
     r"""
-    The ops.poisson is deprecated, please use :class:`mindspore.ops.random_poisson`
+    ops.poisson remains deprecated. Its previously recommended random_poisson function
+    has been removed; this change introduces no new replacement.
     Generates random numbers according to the Poisson random number distribution.
 
     .. math::
@@ -2110,10 +1687,10 @@ def _check_param(op_name, param_name, param_value):
 
 
 __all__ = [
-    'standard_laplace', 'random_categorical', 'uniform', 'standard_normal', 'random_gamma',
-    'uniform_candidate_sampler', 'random_poisson', 'log_uniform_candidate_sampler', 'shuffle', 'choice_with_mask',
+    'standard_laplace', 'random_categorical', 'uniform',
+
     'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like',
     'randn', 'randn_like',
-    'randint', 'randint_like', 'multinomial_with_replacement', 'randperm'
+    'randint', 'randint_like', 'randperm'
 ]
 __all__.sort()

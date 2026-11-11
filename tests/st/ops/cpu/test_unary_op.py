@@ -16,6 +16,7 @@
 
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore import Tensor
 from mindspore import context
 from mindspore import dtype as mstype
@@ -123,7 +124,7 @@ def test_graph_ceil():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array([1.1, -2.1]).astype(np.float32))
     np_x = np.array([1.1, -2.1]).astype(np.float32)
-    output = P.Ceil()(x)
+    output = _private_math.Ceil()(x)
     expect = np.ceil(np_x)
     assert np.allclose(output.asnumpy(), expect)
 
@@ -138,6 +139,6 @@ def test_pynative_ceil():
     context.set_context(mode=context.PYNATIVE_MODE)
     x = Tensor(np.array([1.1, -2.1]).astype(np.float32))
     np_x = np.array([1.1, -2.1]).astype(np.float32)
-    output = P.Ceil()(x)
+    output = _private_math.Ceil()(x)
     expect = np.ceil(np_x)
     assert np.allclose(output.asnumpy(), expect)

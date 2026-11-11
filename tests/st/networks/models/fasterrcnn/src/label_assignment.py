@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Assign FasterRCNN proposal and anchor labels from ground-truth boxes."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 from mindspore import ops, nn
 
@@ -37,7 +39,7 @@ class RPNLabelAssignment(nn.Cell):
                  negative_overlap=0.3,
                  ignore_thresh=-1,
                  use_random=False):
-        super(RPNLabelAssignment, self).__init__()
+        super().__init__()
         self.rnp_sample_batch = rnp_sample_batch
         self.fg_fraction = fg_fraction
         self.positive_overlap = positive_overlap
@@ -100,7 +102,7 @@ class BBoxAssigner(nn.Cell):
                  ignore_thresh=-1.0,
                  num_classes=80,
                  with_mask=False):
-        super(BBoxAssigner, self).__init__()
+        super().__init__()
         self.rois_per_batch = rois_per_batch
         self.fg_fraction = fg_fraction
         self.fg_thresh = fg_thresh
@@ -164,14 +166,14 @@ def rpn_anchor_target(
         bg_mask = match_labels == 0
         if use_random:
             fg_num = int(rnp_sample_batch * rpn_fg_fraction)
-            fg_sampler = ops.RandomChoiceWithMask(count=fg_num, seed=1, seed2=1)
+            fg_sampler = _inner_ops.RandomChoiceWithMask(count=fg_num, seed=1, seed2=1)
             fg_idx, fg_s_mask = fg_sampler(fg_mask)
             fg_mask = ops.zeros_like(fg_mask)
             fg_mask[fg_idx.reshape(-1)] = fg_s_mask
 
             bg_num = rnp_sample_batch - fg_num
             bg_num_mask = ms.ops.arange(int(rnp_sample_batch), dtype=ms.int32) < bg_num
-            bg_sampler = ops.RandomChoiceWithMask(count=int(rnp_sample_batch), seed=1, seed2=1)
+            bg_sampler = _inner_ops.RandomChoiceWithMask(count=int(rnp_sample_batch), seed=1, seed2=1)
             bg_idx, bg_s_mask = bg_sampler(bg_mask)
             bg_mask = ops.zeros_like(bg_mask)
             bg_mask[bg_idx.reshape(-1)] = ops.logical_and(bg_s_mask, bg_num_mask)
@@ -202,7 +204,7 @@ def rpn_anchor_target(
 
 # TODO mask
 def label_box(anchors, gt_boxes, positive_overlap, negative_overlap, allow_low_quality):
-    iou = ops.iou(anchors, gt_boxes[:, 1:])
+    iou = _inner_ops.IOU(mode='iou')(anchors, gt_boxes[:, 1:])
     # when invalid gt, iou is -1
     iou = ops.select(ops.tile(gt_boxes[:, 0:1] >= 0, (1, anchors.shape[0])), iou, -ops.ones_like(iou))
 
@@ -253,11 +255,11 @@ def generate_proposal_target(rois, rois_mask, gts, rois_per_batch, fg_fraction, 
         # structure gt_box
         fg_mask = ops.logical_and(gt_class > -1, gt_class != num_classes)  # nonzero
         fg_num = int(rois_per_batch * fg_fraction)
-        fg_sampler = ops.RandomChoiceWithMask(count=fg_num, seed=1, seed2=1)
+        fg_sampler = _inner_ops.RandomChoiceWithMask(count=fg_num, seed=1, seed2=1)
         fg_idx, fg_s_mask = fg_sampler(fg_mask)
 
         bg_mask = gt_class == num_classes
-        bg_sampler = ops.RandomChoiceWithMask(count=int(rois_per_batch), seed=1, seed2=1)
+        bg_sampler = _inner_ops.RandomChoiceWithMask(count=int(rois_per_batch), seed=1, seed2=1)
         bg_idx, bg_s_mask = bg_sampler(bg_mask)
         bg_num = int(rois_per_batch - fg_num)
         bg_num_mask = ms.ops.arange(int(rois_per_batch), dtype=ms.int32) < bg_num
@@ -321,11 +323,11 @@ def generate_proposal_target_with_mask(
         # structure gt_box
         fg_mask = ops.logical_and(gt_class > -1, gt_class != num_classes)  # nonzero
         fg_num = int(rois_per_batch * fg_fraction)
-        fg_sampler = ops.RandomChoiceWithMask(count=fg_num, seed=1, seed2=1)
+        fg_sampler = _inner_ops.RandomChoiceWithMask(count=fg_num, seed=1, seed2=1)
         fg_idx, fg_s_mask = fg_sampler(fg_mask)
 
         bg_mask = gt_class == num_classes
-        bg_sampler = ops.RandomChoiceWithMask(count=int(rois_per_batch), seed=1, seed2=1)
+        bg_sampler = _inner_ops.RandomChoiceWithMask(count=int(rois_per_batch), seed=1, seed2=1)
         bg_idx, bg_s_mask = bg_sampler(bg_mask)
         bg_num = int(rois_per_batch - fg_num)
         bg_num_mask = ops.arange(int(rois_per_batch)) < bg_num

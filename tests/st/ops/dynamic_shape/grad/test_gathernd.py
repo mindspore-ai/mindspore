@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test gathernd."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
+
 from mindspore import ops, nn, context, Tensor
 from .test_grad_of_dynamic import TestDynamicGrad
 
 
 class GatherNdNet(nn.Cell):
     def __init__(self):
-        super(GatherNdNet, self).__init__()
-        self.gathernd = ops.GatherNd()
+        super().__init__()
+        self.gathernd = ops.operations._inner_ops.GatherNd()
 
     def construct(self, x, indices):
         return self.gathernd(x, indices)

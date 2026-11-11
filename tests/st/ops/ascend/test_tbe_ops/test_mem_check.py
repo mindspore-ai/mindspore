@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
-import os
-import numpy as np
-import pytest
+"""Test mem check."""
+from mindspore.ops.operations import _inner_ops
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
@@ -24,10 +22,18 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.graph.api import _pynative_executor, jit
 
+from tests.mark_utils import arg_mark
+
+import os
+
+import numpy as np
+
+import pytest
+
 
 class GatherNet(nn.Cell):
     def __init__(self):
-        super(GatherNet, self).__init__()
+        super().__init__()
         self.gather = P.Gather()
 
     def construct(self, input_x, indices, axis):
@@ -36,7 +42,7 @@ class GatherNet(nn.Cell):
 
 class AddNet(nn.Cell):
     def __init__(self):
-        super(AddNet, self).__init__()
+        super().__init__()
         self.add = P.Add()
 
     def construct(self, x, y):
@@ -45,7 +51,7 @@ class AddNet(nn.Cell):
 
 class NetSort(nn.Cell):
     def __init__(self):
-        super(NetSort, self).__init__()
+        super().__init__()
         self.sort = ops.Sort()
 
     def construct(self, x, y):
@@ -114,8 +120,8 @@ def test_sort_mem_check_graph():
 
 class NetSoftMax(nn.Cell):
     def __init__(self):
-        super(NetSoftMax, self).__init__()
-        self.softmax = P.SoftmaxCrossEntropyWithLogits()
+        super().__init__()
+        self.softmax = _inner_ops.SoftmaxCrossEntropyWithLogits()
 
     def construct(self, features, labels):
         return self.softmax(features, labels)

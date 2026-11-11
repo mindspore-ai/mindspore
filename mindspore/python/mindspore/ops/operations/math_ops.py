@@ -622,55 +622,6 @@ class AddN(Primitive):
                         f"or the length of 'inputs' should not be equal to 1, but got ({len(inputs)}).")
 
 
-class AccumulateNV2(Primitive):
-    """
-    `ops.AccumulateNV2` is deprecated from version 2.8.0 and will be removed in a future version,
-    please use :func:`mindspore.ops.addn` instead.
-
-    Computes accumulation of all input tensors element-wise.
-
-    Refer to :func:`mindspore.ops.addn` for more details.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops, nn
-        >>> class NetAccumulateNV2(nn.Cell):
-        ...     def __init__(self):
-        ...         super(NetAccumulateNV2, self).__init__()
-        ...         self.accumulateNV2 = ops.AccumulateNV2()
-        ...
-        ...     def construct(self, *z):
-        ...         return self.accumulateNV2(z)
-        ...
-        >>> net = NetAccumulateNV2()
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> y = Tensor(np.array([4, 5, 6]), mindspore.float32)
-        >>> output = net(x, y, x, y)
-        >>> print(output)
-        [10. 14. 18.]
-    """
-
-    @deprecated("2.8.0", "ops.addn", False)
-    @prim_attr_register
-    def __init__(self):
-        """Initialize AccumulateNV2."""
-        self.__setattr_flag__ = True
-        self.init_prim_io_names(inputs=["inputs"], outputs=["sum"])
-
-    def check_elim(self, inputs):
-        if len(inputs) != 1:
-            return False, None
-        if isinstance(inputs[0], Tensor):
-            return True, inputs[0]
-        raise TypeError(f"For '{self.name}', the type of 'inputs[0]' must be a tensor, "
-                        f"but got {type(inputs[0]).__name__}, "
-                        f"or the length of 'inputs' should not be equal to 1, but got ({len(inputs)}).")
-
-
 class InplaceUpdateV2(Primitive):
     r"""
     Updates specified values in `x` to `v` according to `indices`.
@@ -720,64 +671,12 @@ class InplaceUpdateV2(Primitive):
         return output
 
 
-class InplaceAdd(Primitive):
-    """
-    Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
-
-    Refer to :func:`mindspore.ops.inplace_add` for more details.
-
-    Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
-            to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
-
-    Inputs:
-        - **x** (Tensor) - The tensor to be added. It has shape :math:`(N,*)` where :math:`*` means
-          any number of additional dimensions.
-        - **input_v** (Tensor) - The value tensor add to `x`. It has the same dimension sizes as `x` except
-          the first dimension, whose size must be the same as `indices`. It has the same data type with `x`.
-
-    Outputs:
-        Tensor, has the same shape and dtype as `x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> indices = (0, 1)
-        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
-        >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
-        >>> inplaceAdd = ops.InplaceAdd(indices)
-        >>> output = inplaceAdd(x, input_v)
-        >>> print(output)
-        [[1.5 3. ]
-         [4.  5.5]
-         [5.  6. ]]
-    """
-
-    @prim_attr_register
-    def __init__(self, indices):
-        """Initialize InplaceAdd"""
-        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
-        self.indices = indices
-        validator.check_value_type('indices', indices, [tuple, int], self.name)
-        if isinstance(indices, int):
-            self.indices = (indices,)
-        for item in self.indices:
-            validator.check_value_type("item of indices", item, [int], self.name)
-        self.add_prim_attr("indices", self.indices)
-
-
 class InplaceIndexAdd(Primitive):
     """
     Adds Tensor `updates` to specified axis and indices of Tensor `var` element-wise.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.inplace_index_add` for more details.
 
     Args:
         axis (int): The dimension along which to index. It should be in range :math:`[0, len(var.dim))`.
@@ -825,56 +724,6 @@ class InplaceIndexAdd(Primitive):
         self.axis = axis
         self.add_prim_attr('side_effect_mem', True)
         validator.check_value_type('axis', axis, [int], self.name)
-
-
-class InplaceSub(Primitive):
-    r"""
-    Subtracts `v` into specified rows of `x`. Computes :math:`y = x`; :math:`y[i,] -= input\_v`.
-
-    Refer to :func:`mindspore.ops.inplace_sub` for more details.
-
-    Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
-            to subtract by `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
-
-    Inputs:
-        - **x** (Tensor) - The tensor to be subtracted. It has shape :math:`(N,*)` where :math:`*` means
-          any number of additional dimensions.
-        - **input_v** (Tensor) - The value tensor subtract from `x`. It has the same dimension sizes as `x` except
-          the first dimension, whose size must be the same as `indices`. It has the same data type with `x`.
-
-    Outputs:
-        Tensor, has the same shape and dtype as `x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> indices = (0, 1)
-        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
-        >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
-        >>> inplaceSub = ops.InplaceSub(indices)
-        >>> output = inplaceSub(x, input_v)
-        >>> print(output)
-        [[0.5 1. ]
-         [2.  2.5]
-         [5.  6. ]]
-    """
-
-    @prim_attr_register
-    def __init__(self, indices):
-        """Initialize InplaceSub"""
-        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
-        self.indices = indices
-        validator.check_value_type('indices', indices, [tuple, int], self.name)
-        if isinstance(indices, int):
-            self.indices = (indices,)
-        for item in self.indices:
-            validator.check_value_type("item of indices", item, [int], self.name)
-        self.add_prim_attr("indices", self.indices)
 
 
 class Sub(_MathBinaryOp):
@@ -1723,55 +1572,7 @@ class Quantile(Primitive):
 
 
 class ApproximateEqual(_LogicBinaryOp):
-    r"""
-    `ops.ApproximateEqual` is deprecated from version 2.8.0 and will be removed in a future version,
-    please use :func:`mindspore.Tensor.isclose` instead.
-
-    Returns ``True`` if abs(x-y) is smaller than tolerance element-wise, otherwise False.
-
-    .. math::
-
-        out_i = \begin{cases}
-        & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True  \\
-        & \text{ if } \left | x_{i} - y_{i} \right | \ge \text{tolerance},\ \  False
-        \end{cases}
-
-    where `tolerance` indicates Acceptable maximum tolerance.
-
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower precision data type will be converted to
-    the relatively highest precision data type.
-
-    Args:
-        tolerance (float, optional): The maximum deviation that two elements can be considered equal.
-            Default: ``1e-05`` .
-
-    Inputs:
-        - **x** (Tensor) - A tensor. Must be one of the following types: float32, float16.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **y** (Tensor) - A tensor of the same type and shape as `x`.
-
-    Outputs:
-        Tensor, the shape is the same as the shape of `x`, and the data type is bool.
-
-    Raises:
-        TypeError: If `tolerance` is not a float.
-        TypeError: If the data type conversion between `x` and `y` is not supported.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
-        >>> y = Tensor(np.array([2, 3, 6]), mindspore.float32)
-        >>> approximate_equal = ops.ApproximateEqual(2.)
-        >>> output = approximate_equal(x, y)
-        >>> print(output)
-        [ True  True  False]
-    """
+    """Internal ApproximateEqual primitive."""
 
     @deprecated("2.8.0", "Tensor.isclose", False)
     @prim_attr_register
@@ -1822,34 +1623,7 @@ class EqualCount(PrimitiveWithInfer):
 
 
 class IsNan(Primitive):
-    r"""
-    Determines which elements are NaN for each position.
-
-    Refer to :func:`mindspore.ops.isnan` for more details.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-
-    Outputs:
-        Tensor, with the same shape as input, and the dtype is bool.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> is_nan = ops.IsNan()
-        >>> x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
-        >>> output = is_nan(x)
-        >>> print(output)
-        [ True False False]
-        >>> x = Tensor(2.1, mindspore.float64)
-        >>> output = is_nan(x)
-        >>> print(output)
-        False
-    """
+    """Internal IsNan primitive."""
 
     @prim_attr_register
     def __init__(self):
@@ -2308,30 +2082,7 @@ class NMSWithMask(PrimitiveWithInfer):
 
 
 class Tan(Primitive):
-    r"""
-    Computes tangent of `input` element-wise.
-
-    Refer to :func:`mindspore.ops.tan` for more details.
-
-    Inputs:
-        - **input** (Tensor) - Input tensor of any dimension.
-
-    Outputs:
-        Tensor, has the same shape as `input`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> tan = ops.Tan()
-        >>> x = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
-        >>> output = tan(x)
-        >>> print(output)
-        [-1.5574081 0. 1.5574081]
-    """
+    """Internal Tan primitive."""
 
     @prim_attr_register
     def __init__(self):
@@ -3483,41 +3234,7 @@ class TridiagonalMatMul(Primitive):
 
 
 class Igamma(Primitive):
-    r"""
-    Calculates lower regularized incomplete Gamma function.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.igamma` for more details.
-
-    Inputs:
-        - **a** (Tensor) - The input tensor.
-        - **x** (Tensor) - The input tensor. It should have the same dtype with `a`.
-
-    Outputs:
-        Tensor, has the same dtype as `a` and `x`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
-        >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
-        >>> igamma = ops.Igamma()
-        >>> output = igamma(a, x)
-        >>> print (output)
-        [0.593994  0.35276785  0.21486944  0.13337152]
-        >>> a = Tensor(2.1, mindspore.float32)
-        >>> x = Tensor(2.1, mindspore.float32)
-        >>> igamma = ops.Igamma()
-        >>> output = igamma(a, x)
-        >>> print (output)
-        0.5917439
-    """
+    """Internal Igamma primitive."""
 
     @prim_attr_register
     def __init__(self):
@@ -4126,7 +3843,18 @@ class SparseSegmentMean(Primitive):
 
     Computes the mean along sparse segments of a Tensor.
 
-    Refer to :func:`mindspore.ops.sparse_segment_mean` for more details.
+    Inputs:
+        - **x** (Tensor) - Input data with at least one dimension.
+        - **indices** (Tensor) - One-dimensional row indices into `x`.
+        - **segment_ids** (Tensor) - Sorted one-dimensional segment IDs, with one ID per index.
+
+    Outputs:
+        Tensor of means for the selected rows in each segment. Missing segments contain zeros.
+
+    Note:
+        The primitive remains deprecated; it is not introduced as a new long-term replacement interface.
+        On CPU, indices must be in range and segment IDs must be sorted.
+        On GPU, unsorted segment IDs have undefined results and out-of-range indices are ignored.
 
     Supported Platforms:
         Deprecated

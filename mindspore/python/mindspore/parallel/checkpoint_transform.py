@@ -16,11 +16,17 @@
 from __future__ import absolute_import
 
 import os
+
 import glob
+
 import copy
+
 from multiprocessing import Pool
+
 from collections import defaultdict
+
 import numpy as np
+
 import mindspore as ms
 from mindspore import log as logger
 from mindspore import _checkparam as Validator
@@ -671,6 +677,7 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
 
 def _sync_params(name, param, layout):
     """synchronize single parameter"""
+    from mindspore.ops.operations import _inner_ops
     if len(layout) < 10:
         ms.log.warning("The layout dict does not contain the pipeline_shared_param info %s", name)
         return
@@ -683,12 +690,11 @@ def _sync_params(name, param, layout):
     peer_rank = layout[10]
     sr_tag = layout[11]
     if is_send:
-        ms.ops.Send(sr_tag=sr_tag, dest_rank=peer_rank)(param)
+        _inner_ops.Send(sr_tag=sr_tag, dest_rank=peer_rank)(param)
     else:
-        param.assign_value(ms.ops.Receive(sr_tag=sr_tag,
-                                          src_rank=peer_rank,
-                                          shape=param.shape,
-                                          dtype=param.dtype)(param))
+        receive = _inner_ops.Receive(
+            sr_tag=sr_tag, src_rank=peer_rank, shape=param.shape, dtype=param.dtype)
+        param.assign_value(receive(param))
 
 # pylint: disable=W0212
 def sync_pipeline_shared_parameters(net):

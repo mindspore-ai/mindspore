@@ -728,82 +728,7 @@ class Size(Primitive):
 
 
 class MatrixDiagV3(Primitive):
-    r"""
-    Constructs a diagonal matrix or a batch of diagonal matrices from a given input Tensor.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.matrix_diag` for more details.
-
-    Args:
-        align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
-            Supported values: ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
-            Default: ``"RIGHT_LEFT"`` .
-
-            - When set to ``"RIGHT_LEFT"`` , the alignment of superdiagonals will be towards the right side
-              (padding the row on the left), while subdiagonals will be towards the left side
-              (padding the row on the right)
-            - When set to ``"LEFT_RIGHT"`` , the alignment of superdiagonals will be towards the left side
-              (padding the row on the right), while subdiagonals will be towards the right side
-              (padding the row on the left)
-            - When set to ``"LEFT_LEFT"`` , the alignment of  both superdiagonals and subdiagonals will be towards
-              the left side(padding the row on the right).
-            - When set to ``"RIGHT_RIGHT"`` , the alignment of both superdiagonals and subdiagonals will be towards
-              the right side(padding the row on the left).
-
-    Inputs:
-        - **x** (Tensor) - The diagonal Tensor.
-        - **k** (Union[int, Tensor], optional) - Diagonal offsets.
-          A Tensor of type int32. Positive value means superdiagonal,
-          0 refers to the main diagonal, and negative value means subdiagonals. `k` can be a single integer
-          (for a single diagonal) or a pair of integers specifying the low and high ends of a matrix band.
-          k[0] must not be larger than k[1]. The value must be in the range of given or derivated `num_rows`
-          and `num_cols`, meaning value of k must be in (-num_rows, num_cols). Default: ``0`` .
-        - **num_rows** (Union[int, Tensor], optional) - The number of rows of the output Tensor.
-          A Tensor of type int32 with only one value. If `num_rows` is -1, indicating that the innermost
-          matrix of the output Tensor is a square
-          matrix, and the real number of rows will be derivated by other inputs. That is
-          :math:`num\_rows = x.shape[-1] - \min(k[1], 0)`. Otherwise, the value must be equal or greater than
-          :math:`x.shape[-1] - \min(k[1], 0)`. Default: -1.
-        - **num_cols** (Union[int, Tensor], optional) - The number of columns of
-          the output Tensor. A Tensor of type int32 with only one value.
-          If `num_cols` is -1, indicating that the innermost matrix of the output
-          Tensor is a square matrix, and the real number of columns will be derivated by other inputs.
-          That is :math:`num\_cols = x.shape[-1] + \max(k[0], 0)`. Otherwise, the value must be equal or
-          greater than :math:`x.shape[-1] - \min(k[1], 0)`.  Default: -1.
-        - **padding_value** (Union[int, float, Tensor], optional) - The number to fill the area outside the specified
-          diagonal band. A Tensor with only one value. Have the same dtype as x. Default: ``0`` .
-
-    Outputs:
-        A Tensor. Has the same type as `x`.
-        Suppose `x` has r dimensions with shape :math:`(I, J, ..., M, N)` . The output Tensor has rank r + 1 with shape
-        :math:`(I, J, ..., M, num\_rows, num\_cols)` when only one diagonal is given (k is an integer or k[0] == k[1]).
-        Otherwise, it has rank r with shape :math:`(I, J, ..., num\_rows, num\_cols)` .
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[8, 9, 0],
-        ...                      [1, 2, 3],
-        ...                      [0, 4, 5]]), mindspore.float32)
-        >>> k =Tensor(np.array([-1, 1]), mindspore.int32)
-        >>> num_rows = Tensor(np.array(3), mindspore.int32)
-        >>> num_cols = Tensor(np.array(3), mindspore.int32)
-        >>> padding_value = Tensor(np.array(11), mindspore.float32)
-        >>> matrix_diag_v3 = ops.MatrixDiagV3(align='LEFT_RIGHT')
-        >>> output = matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
-        >>> print(output)
-        [[ 1.  8. 11.]
-         [ 4.  2.  9.]
-         [11.  5.  3.]]
-        >>> print(output.shape)
-        (3, 3)
-    """
+    """Internal MatrixDiagV3 primitive."""
 
     @prim_attr_register
     def __init__(self, align="RIGHT_LEFT"):
@@ -814,68 +739,7 @@ class MatrixDiagV3(Primitive):
 
 
 class MatrixDiagPartV3(Primitive):
-    r"""
-    Returns the diagonal part of a tensor.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.matrix_diag_part` for more details.
-
-    Args:
-        align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
-            Supported values: ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
-            Default: ``"RIGHT_LEFT"`` .
-
-            - When set to ``"RIGHT_LEFT"`` , the alignment of superdiagonals will be towards the right side
-              (padding the row on the left), while subdiagonals will be towards the left side
-              (padding the row on the right)
-            - When set to ``"LEFT_RIGHT"`` , the alignment of superdiagonals will be towards the left side
-              (padding the row on the right), while subdiagonals will be towards the right side
-              (padding the row on the left)
-            - When set to ``"LEFT_LEFT"`` , the alignment of  both superdiagonals and subdiagonals will be towards
-              the left side(padding the row on the right).
-            - When set to ``"RIGHT_RIGHT"`` , the alignment of both superdiagonals and subdiagonals will be towards
-              the right side(padding the row on the left).
-
-    Inputs:
-        - **x** (Tensor) - Rank r, where r >= 2.
-        - **k** (Tensor) - A Tensor of type int32. Diagonal offset(s). Positive value means superdiagonal, 0 refers to
-          the main diagonal, and negative value means subdiagonals. k can be a single integer (for a single diagonal) or
-          a pair of integers specifying the low and high ends of a matrix band. k[0] must not be larger than k[1]. The
-          value of k has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]).
-        - **padding_value** (Tensor) - A Tensor. Have the same dtype as x. The number to fill the area outside the
-          specified diagonal band with. There must be only one value.
-
-    Outputs:
-        A Tensor. Has the same type as `x`.
-        Assume `x` has r dimensions :math:`(I, J, ..., M, N)` . Let `max_diag_len` be the maximum length among all
-        diagonals to be extracted, :math:`max\_diag\_len = \min(M + \min(k[1], 0), N + \min(-k[0], 0))`
-        Let `num_diags` be the number of diagonals to extract, :math:`num\_diags = k[1] - k[0] + 1`.
-        If :math:`num\_diags == 1`, the output tensor is of rank r - 1 with shape :math:`(I, J, ..., L, max\_diag\_len)`
-        Otherwise, the output tensor has rank r with dimensions :math:`(I, J, ..., L, num\_diags, max\_diag\_len)` .
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[1, 2, 3, 4],
-        ...                      [5, 6, 7, 8],
-        ...                      [9, 8, 7, 6]]), mindspore.float32)
-        >>> k =Tensor(np.array([1, 3]), mindspore.int32)
-        >>> padding_value = Tensor(np.array(9), mindspore.float32)
-        >>> matrix_diag_part_v3 = ops.MatrixDiagPartV3(align='RIGHT_LEFT')
-        >>> output = matrix_diag_part_v3(x, k, padding_value)
-        >>> print(output)
-        [[9. 9. 4.]
-         [9. 3. 8.]
-         [2. 7. 6.]]
-        >>> print(output.shape)
-        (3, 3)
-    """
+    """Internal MatrixDiagPartV3 primitive."""
 
     @prim_attr_register
     def __init__(self, align="RIGHT_LEFT"):
@@ -1656,56 +1520,6 @@ class ConcatOffsetV1(Primitive):
         """Initialize ConcatOffsetV1"""
 
 
-class ParallelConcat(Primitive):
-    r"""
-    `ops.ParallelConcat` is deprecated from version 2.8.0 and will be removed in a future version,
-    please use :func:`mindspore.ops.concat` instead.
-
-    Concats input tensors along the first dimension.
-
-    The difference between Concat and ParallelConcat is that Concat requires all of the inputs be computed
-    before the operation will begin but doesn't require that the input shapes be known during graph construction.
-    Parallel concat will copy pieces of the input into the output as they become available, in some situations
-    this can provide a performance benefit.
-
-    Note:
-        The input tensors are all required to have size 1 in the first dimension.
-
-    Inputs:
-        - **values** (tuple, list) - A tuple or a list of input tensors. The data type and shape of these
-          tensors must be the same and their rank should not be less than 1.
-          The supported date type is Number on CPU, the same for Ascend except
-          [float64, complex64, complex128].
-
-    Outputs:
-        Tensor, data type is the same as `values`.
-
-    Raises:
-        TypeError: If any type of the inputs is not a Tensor.
-        TypeError: If the data type of these tensors are not the same.
-        ValueError: If any tensor.shape[0] is not 1.
-        ValueError: If rank of any Tensor in `values` is less than 1.
-        ValueError: If the shape of these tensors are not the same.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> data1 = Tensor(np.array([[0, 1]]).astype(np.int32))
-        >>> data2 = Tensor(np.array([[2, 1]]).astype(np.int32))
-        >>> op = ops.ParallelConcat()
-        >>> output = op((data1, data2))
-        >>> print(output)
-        [[0 1]
-         [2 1]]
-    """
-
-    @deprecated("2.8.0", "ops.concat", False)
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ParallelConcat"""
 
 
 def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
@@ -2309,129 +2123,6 @@ class ScatterAdd(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class ScatterSub(Primitive):
-    r"""
-    `mindspore.ops.ScatterSub` is deprecated from version 2.10.0 and will be removed in a future version.
-
-    Updates the value of the input tensor through the subtraction operation.
-
-    Using given values to update tensor value through the subtraction operation, along with the input indices.
-    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
-
-    for each `i, ..., j` in `indices.shape`:
-
-    .. math::
-
-        \text{input_x}[\text{indices}[i, ..., j], :] \mathrel{-}= \text{updates}[i, ..., j, :]
-
-    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
-    Args:
-        use_locking (bool, optional): Whether to protect the assignment by a lock. Default: ``False`` .
-
-    Inputs:
-        - **input_x** (Union[Parameter, Tensor]) - The target tensor.
-          The shape is :math:`(N, *)` where :math:`*` means any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
-          mindspore.int64.
-        - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
-
-    Outputs:
-        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not mindspore.int32 or
-            mindspore.int64.
-        ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
-        RuntimeError: If the data type of `input_x` and `updates` conversion is required when data type conversion
-                      is not supported.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops, Parameter
-        >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mindspore.float32), name="x")
-        >>> indices = Tensor(np.array([[0, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]]), mindspore.float32)
-        >>> scatter_sub = ops.ScatterSub()
-        >>> output = scatter_sub(input_x, indices, updates)
-        >>> print(output)
-        [[-1. -1. -1.]
-         [-1. -1. -1.]]
-        >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
-        >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
-        >>> # for indices = [[0, 1], [1, 1]]
-        >>> # step 1: [0, 1]
-        >>> # input_x[0] = [0.0, 0.0, 0.0] - [1.0, 1.0, 1.0] = [-1.0, -1.0, -1.0]
-        >>> # input_x[1] = [0.0, 0.0, 0.0] - [3.0, 3.0, 3.0] = [-3.0, -3.0, -3.0]
-        >>> # step 2: [1, 1]
-        >>> # input_x[1] = [-3.0, -3.0, -3.0] - [7.0, 7.0, 7.0] = [-10.0, -10.0, -10.0]
-        >>> # input_x[1] = [-10.0, -10.0, -10.0] - [9.0, 9.0, 9.0] = [-19.0, -19.0, -19.0]
-        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
-        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_sub = ops.ScatterSub()
-        >>> output = scatter_sub(input_x, indices, updates)
-        >>> print(output)
-        [[ -1.  -1.  -1.]
-         [-19. -19. -19.]]
-        >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
-        >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
-        >>> # for indices = [[1, 0], [1, 1]]
-        >>> # step 1: [1, 0]
-        >>> # input_x[0] = [0.0, 0.0, 0.0] - [3.0, 3.0, 3.0] = [-3.0, -3.0, -3.0]
-        >>> # input_x[1] = [0.0, 0.0, 0.0] - [1.0, 1.0, 1.0] = [-1.0, -1.0, -1.0]
-        >>> # step 2: [1, 1]
-        >>> # input_x[1] = [-1.0, -1.0, -1.0] - [7.0, 7.0, 7.0] = [-8.0, -8.0, -8.0]
-        >>> # input_x[1] = [-8.0, -8.0, -8.0] - [9.0, 9.0, 9.0] = [-17.0, -17.0, -17.0]
-        >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
-        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_sub = ops.ScatterSub()
-        >>> output = scatter_sub(input_x, indices, updates)
-        >>> print(output)
-        [[ -3.  -3.  -3.]
-         [-17. -17. -17.]]
-        >>> # for input_x will be updated after the operation is completed. input_x need to be re-initialized.
-        >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
-        >>> # for indices = [[0, 1], [0, 1]]
-        >>> # step 1: [0, 1]
-        >>> # input_x[0] = [0.0, 0.0, 0.0] - [1.0, 1.0, 1.0] = [-1.0, -1.0, -1.0]
-        >>> # input_x[1] = [0.0, 0.0, 0.0] - [3.0, 3.0, 3.0] = [-3.0, -3.0, -3.0]
-        >>> # step 2: [0, 1]
-        >>> # input_x[0] = [-1.0, -1.0, -1.0] - [7.0, 7.0, 7.0] = [-8.0, -8.0, -8.0]
-        >>> # input_x[1] = [-3.0, -3.0, -3.0] - [9.0, 9.0, 9.0] = [-12.0, -12.0, -12.0]
-        >>> indices = Tensor(np.array([[0, 1], [0, 1]]), mindspore.int32)
-        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
-        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_sub = ops.ScatterSub()
-        >>> output = scatter_sub(input_x, indices, updates)
-        >>> print(output)
-        [[ -8.  -8.  -8.]
-         [-12. -12. -12.]]
-    """
-    __mindspore_signature__ = (
-        sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
-        sig.make_sig('updates', dtype=sig.sig_dtype.T)
-    )
-
-    @deprecated("2.10.0", None, False)
-    @prim_attr_register
-    def __init__(self, use_locking=False):
-        """Initialize ScatterSub"""
-        validator.check_value_type('use_locking', use_locking, [bool], self.name)
-        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
-        self.add_prim_attr('side_effect_mem', True)
-
-
 class SpaceToDepth(Primitive):
     r"""
     Rearrange blocks of spatial data into depth.
@@ -2702,71 +2393,7 @@ class BatchToSpace(PrimitiveWithInfer):
 
 
 class SpaceToBatchND(Primitive):
-    r"""
-    Divides spatial dimensions into blocks and combines the block size with the original batch.
-
-    This operation will divide spatial dimensions into blocks with `block_shape`, and then the output tensor's spatial
-    dimension is the corresponding number of blocks after division. The output tensor's batch dimension is the
-    product of the original batch and all elements in `block_shape`.
-    Before division, the spatial dimensions of the input are zero padded according to paddings if necessary.
-
-    Args:
-        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block
-            with all elements greater than or equal to 1. If `block_shape` is a list or tuple,
-            the length of `block_shape` is the number of spatial dimensions, called M later.
-            If `block_shape` is an int, the block size of M dimensions are the same, equal to `block_shape`.
-            In this case of Ascend, M must be 2.
-        paddings (Union[tuple, list]): The padding values for spatial dimensions, containing M subtraction list.
-            Each contains 2 integer values. All values must be greater than or equal to 0.
-            `paddings[i]` specifies the paddings for the spatial dimension i,
-            which corresponds to the input dimension i + offset,where offset = N-M,
-            and N is the number of input dimensions.
-            For each i, input_shape[i + offset]+paddings[i][0]+paddings[i][1]
-            should be divisible by block_shape[i].
-
-    Inputs:
-        - **input_x** (Tensor) - The input tensor. The input tensor must be a 4-D tensor on Ascend.
-
-    Outputs:
-        Tensor, the output tensor with the same data type as the input.
-        Assume the input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)` with
-        :math:`block\_shape` and :math:`paddings`.
-        The shape of the output tensor will be :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`,
-        where
-
-        .. math::
-            \begin{array}{ll} \\
-                n' = n*(block\_shape[0]*...*block\_shape[M-1]) \\
-                w'_i = (w_i+paddings[i-1][0]+paddings[i-1][1])//block\_shape[i-1]
-            \end{array}
-
-    Raises:
-        TypeError: If `block_shape` is not one of list, tuple, int.
-        TypeError: If `paddings` is neither list nor tuple.
-        ValueError: If `block_shape` is not one dimensional when `block_shape` is a list or tuple.
-        ValueError: If the length of `block_shape` is not 2 on Ascend.
-        ValueError: If shape of `paddings` is not (M, 2), where M is the length of `block_shape`.
-        ValueError: If the element of `block_shape` is not an integer larger than or equal to 1.
-        ValueError: If the element of `paddings` is not an integer larger than or equal to 0.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> import numpy as np
-        >>> block_shape = [2, 2]
-        >>> paddings = [[0, 0], [0, 0]]
-        >>> space_to_batch_nd = ops.SpaceToBatchND(block_shape, paddings)
-        >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
-        >>> output = space_to_batch_nd(input_x)
-        >>> print(output)
-        [[[[1.]]]
-         [[[2.]]]
-         [[[3.]]]
-         [[[4.]]]]
-    """
+    """Internal SpaceToBatchND primitive."""
 
     @prim_attr_register
     def __init__(self, block_shape, paddings):
@@ -2801,7 +2428,6 @@ class BatchToSpaceNDV2(Primitive):
     r"""
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 
-    Refer to :func:`mindspore.ops.batch_to_space_nd` for more details.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -2924,93 +2550,6 @@ class ReverseSequence(PrimitiveWithInfer):
         self.batch_dim_ = batch_dim
 
 
-class EditDistance(Primitive):
-    r"""
-    `ops.EditDistance` is deprecated from version 2.8.0 and will be removed in
-    a future version.
-
-    Computes the Levenshtein Edit Distance. It is used to measure the similarity of two sequences. The inputs are
-    variable-length sequences provided by SparseTensors (hypothesis_indices, hypothesis_values, hypothesis_shape)
-    and (truth_indices, truth_values, truth_shape).
-
-    .. math::
-
-        \operatorname{lev}_{a, b}(i, j)=\left\{\begin{array}{ll}
-        \max (i, j)  \qquad \qquad \qquad \qquad \qquad \quad \  \text { if } \min (i, j)=0 \\
-        \min \left\{\begin{array}{ll}
-        \operatorname{lev}_{a, b}(i-1, j)+1 & \\
-        \operatorname{lev}_{a, b}(i, j-1)+1 & \text { otherwise. } \\
-        \operatorname{lev}_{a, b}(i-1, j-1)+1_{\left(a_{i} \neq b_{j}\right)}
-        \end{array}\right. &
-        \end{array}\right.
-
-    Where the :math:`a` indicates the hypothesis and the :math:`b` indicates the truth. For ease of understanding,
-    i and j here may be considered as lengths of a and b.
-
-    .. warning::
-        Unordered `truth_indices` or `hypothesis_indices` might lead to unexpected result, so it is suggested to
-        make sure `truth_indices` and `hypothesis_indices` are both in ascending order before
-        calling this API.
-
-    Args:
-        normalize (bool): If ``True`` , edit distances are normalized by length of truth. Default: ``True`` .
-
-    Inputs:
-        - **hypothesis_indices** (Tensor) - The indices of the hypothesis list SparseTensor. With int64 data type.
-          The shape of tensor is :math:`(N, R)`.
-        - **hypothesis_values** (Tensor) - The values of the hypothesis list SparseTensor.
-          Must be 1-D vector with length of N.
-        - **hypothesis_shape** (Tensor) - The shape of the hypothesis list SparseTensor.
-          Must be R-length vector with int64 data type. Only constant value is allowed.
-        - **truth_indices** (Tensor) - The indices of the truth list SparseTensor. With int64 data type.
-          The shape of tensor is :math:`(M, R)`.
-        - **truth_values** (Tensor) - The values of the truth list SparseTensor. Must be 1-D vector with length of M.
-        - **truth_shape** (Tensor) - The shape of the truth list SparseTensor.
-          Must be R-length vector with int64 data type. Only constant value is allowed.
-
-    Outputs:
-        Tensor, a dense tensor with rank `R-1` and float32 data type.
-
-    Raises:
-        TypeError: If `normalize` is not a bool.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> import mindspore.nn as nn
-        >>> from mindspore import ops
-        >>> class EditDistance(nn.Cell):
-        ...     def __init__(self, hypothesis_shape, truth_shape, normalize=True):
-        ...         super(EditDistance, self).__init__()
-        ...         self.edit_distance = ops.EditDistance(normalize)
-        ...         self.hypothesis_shape = hypothesis_shape
-        ...         self.truth_shape = truth_shape
-        ...
-        ...     def construct(self, hypothesis_indices, hypothesis_values, truth_indices, truth_values):
-        ...         return self.edit_distance(hypothesis_indices, hypothesis_values, self.hypothesis_shape,
-        ...                                   truth_indices, truth_values, self.truth_shape)
-        ...
-        >>> hypothesis_indices = Tensor(np.array([[0, 0, 0], [1, 0, 1], [1, 1, 1]]).astype(np.int64))
-        >>> hypothesis_values = Tensor(np.array([1, 2, 3]).astype(np.float32))
-        >>> hypothesis_shape = Tensor(np.array([1, 1, 2]).astype(np.int64))
-        >>> truth_indices = Tensor(np.array([[0, 1, 0], [0, 0, 1], [1, 1, 0], [1, 0, 1]]).astype(np.int64))
-        >>> truth_values = Tensor(np.array([1, 3, 2, 1]).astype(np.float32))
-        >>> truth_shape = Tensor(np.array([2, 2, 2]).astype(np.int64))
-        >>> edit_distance = EditDistance(hypothesis_shape, truth_shape)
-        >>> output = edit_distance(hypothesis_indices, hypothesis_values, truth_indices, truth_values)
-        >>> print(output)
-        [[1. 1.]
-         [1. 1.]]
-    """
-
-    @deprecated("2.8.0", None, False)
-    @prim_attr_register
-    def __init__(self, normalize=True):
-        """Initialize EditDistance"""
-        self.normalize = validator.check_value_type("normalize", normalize, [bool], self.name)
 
 
 class TransShape(PrimitiveWithInfer):
@@ -3844,38 +3383,6 @@ class TensorScatterElements(TensorScatterElementsExt):
         super().__init__(axis, reduce=reduction)
 
 
-class ExtractVolumePatches(Primitive):
-    """
-    `ops.ExtractVolumePatches` is deprecated from version 2.3 and will be removed in a future version,
-    please use :func:`mindspore.ops.unfold` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-    @deprecated("2.3", "ops.unfold", False)
-    @prim_attr_register
-    def __init__(self, kernel_size, strides, padding):
-        validator.check_value_type("kernel_size", kernel_size, (int, list, tuple), self.name)
-        validator.check_value_type("strides", strides, (int, list, tuple), self.name)
-        if isinstance(kernel_size, (list, tuple)):
-            kernel_size = tuple(kernel_size)
-            if len(kernel_size) == 5:
-                validator.check_int(kernel_size[0], 1, validator.EQ, "kernel_size[0]", self.name)
-                validator.check_int(kernel_size[1], 1, validator.EQ, "kernel_size[1]", self.name)
-        if isinstance(strides, (list, tuple)):
-            strides = tuple(strides)
-            if len(strides) == 5:
-                validator.check_int(strides[0], 1, validator.EQ, "strides[0]", self.name)
-                validator.check_int(strides[1], 1, validator.EQ, "strides[1]", self.name)
-        self.kernel_size = _check_3d_int_or_tuple("kernel_size", kernel_size, self.name,
-                                                  allow_five=True, ret_five=True, greater_zero=True)
-        self.strides = _check_3d_int_or_tuple("strides", strides, self.name,
-                                              allow_five=True, ret_five=True, greater_zero=True)
-        self.add_prim_attr("kernel_size", self.kernel_size)
-        self.add_prim_attr("strides", self.strides)
-        validator.check_value_type("padding_dtype", padding, (str), self.name)
-        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
-        self.add_prim_attr("padding", self.padding)
 
 
 class ScatterAddWithAxis(Primitive):
@@ -4858,8 +4365,6 @@ class SegmentProd(Primitive):
 class PopulationCount(Primitive):
     r"""
     Computes element-wise population count(a.k.a bitsum, bitcount).
-
-    Refer to :func:`mindspore.ops.population_count` for more details.
 
     Inputs:
         - **input_x** (Tensor) - Tensor of any dimension. The data type must be int16 or uint16 (Ascend).

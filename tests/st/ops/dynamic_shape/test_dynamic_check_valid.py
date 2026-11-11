@@ -29,7 +29,7 @@ class CheckValidDynNet(nn.Cell):
         super().__init__()
         self.unique = ops.Unique()
         self.gather = ops.Gather()
-        self.check_valid = ops.CheckValid()
+        self.check_valid = ops.operations._inner_ops.CheckValid()
         self.axis = axis
 
     def construct(self, anchor, image_metas, indices_anchor, indices_image_metas):

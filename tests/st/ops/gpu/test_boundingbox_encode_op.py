@@ -12,23 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression coverage for retained detection primitives."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.common import dtype as mstype
 
 
 class NetBoundingBoxEncode(nn.Cell):
     def __init__(self, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0)):
-        super(NetBoundingBoxEncode, self).__init__()
+        super().__init__()
         self.encode = P.BoundingBoxEncode(means=means, stds=stds)
 
     def construct(self, anchor, groundtruth):
@@ -81,32 +79,6 @@ def test_boundingbox_encode():
     output = boundingbox_encode(anchor_box, groundtruth_box)
     diff = output.asnumpy() - expect_deltas
     assert np.all(abs(diff) < error)
-
-
-def test_bounding_box_encode_functional():
-    """
-    Feature: test bounding_box_encode functional API.
-    Description: test case for bounding_box_encode functional API.
-    Expectation: the result match with expected result.
-    """
-    anchor_box = Tensor([[2, 2, 2, 3], [2, 2, 2, 3]], mstype.float32)
-    groundtruth_box = Tensor([[1, 2, 1, 4], [1, 2, 1, 4]], mstype.float32)
-    output = F.bounding_box_encode(anchor_box, groundtruth_box, means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
-    expected = np.array([[-1., 0.25, 0., 0.40551758], [-1., 0.25, 0., 0.40551758]]).astype(np.float32)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
-def test_bounding_box_encode_functional_modes():
-    """
-    Feature: test bounding_box_encode functional API in PyNative and Graph modes.
-    Description: test case for bounding_box_encode functional API.
-    Expectation: the result match with expected result.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_bounding_box_encode_functional()
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_bounding_box_encode_functional()
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')

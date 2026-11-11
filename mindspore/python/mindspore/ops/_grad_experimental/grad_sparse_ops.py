@@ -14,6 +14,7 @@
 # ============================================================================
 
 """bprop primitives"""
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops.operations.sparse_ops import RaggedTensorToSparse
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseReorder
@@ -56,7 +57,7 @@ def get_bprop_sparse_dense_cwise_mul(self):
     ones = P.Ones()
     shape = P.Shape()
     cast = P.Cast()
-    gather_nd = P.GatherNd()
+    gather_nd = _inner_ops.GatherNd()
     size_op = P.Size()
     to_array = P.TupleToArray()
     sparse_tensor_dense_add = SparseTensorDenseAdd()
@@ -86,7 +87,7 @@ def get_bprop_sparse_dense_cwise_div(self):
     ones = P.Ones()
     shape = P.Shape()
     cast = P.Cast()
-    gather_nd = P.GatherNd()
+    gather_nd = _inner_ops.GatherNd()
     size_op = P.Size()
     to_array = P.TupleToArray()
     sparse_tensor_dense_add = SparseTensorDenseAdd()

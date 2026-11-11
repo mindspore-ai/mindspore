@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test crop and resize."""
+from mindspore.ops.operations import _inner_ops
+from mindspore import nn, context, Tensor
+
+
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
-from mindspore import nn, context, Tensor
-from mindspore.ops import operations as P
+
 from .test_grad_of_dynamic import TestDynamicGrad
 
 context.set_context(mode=context.PYNATIVE_MODE)
@@ -25,8 +28,8 @@ context.set_context(mode=context.PYNATIVE_MODE)
 
 class NetCropAndResize(nn.Cell):
     def __init__(self, method_="bilinear", extrapolation_value_=0.0):
-        super(NetCropAndResize, self).__init__()
-        self.op = P.CropAndResize(
+        super().__init__()
+        self.op = _inner_ops.CropAndResize(
             method=method_, extrapolation_value=extrapolation_value_)
 
     def construct(self, image, boxes, box_index, channel):

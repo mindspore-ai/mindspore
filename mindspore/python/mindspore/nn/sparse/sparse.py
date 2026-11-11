@@ -78,7 +78,8 @@ class SparseTensorDenseMatmul(Cell):
         super().__init__()
         self.adj_st = adjoint_st
         self.adj_dt = adjoint_dt
-        self.sparse_dense_matmul = ops.SparseTensorDenseMatmul(adjoint_st=self.adj_st, adjoint_dt=self.adj_dt)
+        self.sparse_dense_matmul = ops.operations._inner_ops.SparseTensorDenseMatmul(
+            adjoint_st=self.adj_st, adjoint_dt=self.adj_dt)
 
     def construct(self, indices, values, sparse_shape, dense):
         return self.sparse_dense_matmul(indices, values, sparse_shape, dense)

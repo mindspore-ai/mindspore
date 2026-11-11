@@ -12,20 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test dynamic shape softplus grad."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import composite as C
-from mindspore.ops import operations as P
 
 
 class SoftplusNet(nn.Cell):
     def __init__(self):
-        super(SoftplusNet, self).__init__()
-        self.softplus = P.Softplus()
+        super().__init__()
+        self.softplus = _private_math.Softplus()
 
     def construct(self, x):
         return self.softplus(x)
@@ -33,7 +34,7 @@ class SoftplusNet(nn.Cell):
 
 class Grad(nn.Cell):
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.grad = C.GradOperation(get_all=True)
         self.network = network
 
