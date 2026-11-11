@@ -8232,7 +8232,7 @@ def matrix_norm(A, ord='fro', axis=(-2, -1), keepdims=False, *, dtype=None):
 
 def lu_unpack(LU_data, LU_pivots, unpack_data=True, unpack_pivots=True):
     r"""
-    Unpack the LU decomposition returned by :func:`mindspore.scipy.linalg.lu_factor` into the P, L, U matrices.
+    Unpack a packed LU decomposition and its pivot indices into the P, L, U matrices.
 
     .. note::
         - `LU_data` of shape :math:`(*, M, N)` , `LU_pivots` of shape :math:`(*, \min(M, N))` , where

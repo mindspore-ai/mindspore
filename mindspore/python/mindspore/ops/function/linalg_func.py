@@ -253,9 +253,8 @@ def pinv(x, *, atol=None, rtol=None, hermitian=False):
     .. note::
         This function uses
         `svd <https://www.mindspore.cn/docs/en/master/api_python/ops/mindspore.ops.svd.html>`_ internally,
-        (or `eigh <https://www.mindspore.cn/docs/en/master/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ ,
-        when `hermitian = True` ). So it has the same problem as these functions. For details,
-        see the warnings in svd() and eigh().
+        or symmetric eigenvalue decomposition when `hermitian = True`.
+        Its numerical stability depends on the underlying decomposition.
 
     Args:
         x (Tensor): The input tensor whose shape is :math:`(*, M, N)`, * is zero or more batch dimensions.

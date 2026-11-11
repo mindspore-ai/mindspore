@@ -22,8 +22,7 @@ mindspore.ops.pinv
 
     .. note::
         该函数在内部使用 `svd <https://www.mindspore.cn/docs/zh-CN/master/api_python/ops/mindspore.ops.svd.html>`_
-        （或 `eigh <https://www.mindspore.cn/docs/zh-CN/master/api_python/scipy/mindspore.scipy.linalg.eigh.html>`_ , `hermitian=True` ），
-        所以和这些函数具有相同问题，详细信息请参阅svd()和eigh()中的警告。
+        （当 `hermitian=True` 时使用对称矩阵特征值分解），其数值稳定性取决于底层分解。
 
     参数：
         - **x** (Tensor) - 输入tensor。shape为 :math:`(*, M, N)` ，其中*为零或多个批量维度。 `hermitian` 为 ``True`` 时，暂不支持多个批量维度。

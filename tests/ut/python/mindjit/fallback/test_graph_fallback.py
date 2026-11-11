@@ -22,7 +22,6 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 import mindspore.graph._utils.monad as monad
-import mindspore.scipy.linalg as alg
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -223,20 +222,4 @@ def test_context():
 
     net = ContextNet()
     out = net()
-    print(out)
-
-
-def test_scipy_module():
-    """
-    Feature: JIT Fallback
-    Description: Test scipy module in graph.
-    Expectation: No exception.
-    """
-    class Network(nn.Cell):
-        def construct(self, x):
-            return alg.eigh(x)
-
-    net = Network()
-    x = Tensor([[2, 0, 0, 0], [0, 1, 0, 0], [0, 0, 2, 0], [0, 0, 0, 1]])
-    out = net(x)
     print(out)

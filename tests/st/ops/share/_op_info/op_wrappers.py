@@ -22,7 +22,6 @@ import numpy as np
 import mindspore as ms
 import numpy as np
 from mindspore import nn, mint
-from mindspore.scipy.linalg import lstsq
 from mindspore.common.parameter import Parameter
 from tests.st.optimizer_utils import apply_step_decay
 import torch
@@ -3306,11 +3305,6 @@ def tensor_logaddexp2_ms(input, other):
 def tensor_logaddexp2_torch(input, other):
     return input.logaddexp2(other)
 
-def tensor_lstsq_ms(input, other, rcond=None, driver=None):
-    return lstsq(input, other, rcond=rcond, driver=driver)
-
-def tensor_lstsq_torch(input, other, rcond=None, driver=None):
-    return torch.linalg.lstsq(input, other, rcond=rcond, driver=driver)
 
 def tensor_ndim_ms(input,):
     return input.ndim

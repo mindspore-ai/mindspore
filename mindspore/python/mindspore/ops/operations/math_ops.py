@@ -3723,7 +3723,7 @@ class LuSolve(Primitive):
     Computes the solution y to the system of linear equations :math:`Ay = b` ,
     given LU decomposition A and column vector b.
 
-    LU decomposition of a matrix can be generated from :func:`mindspore.scipy.linalg.lu` .
+    The inputs must contain the packed LU decomposition of A and its pivot indices.
 
     Note:
         The batch dimensions of lu_pivots must match the batch dimensions of lu_data, the size of the dimension and the
