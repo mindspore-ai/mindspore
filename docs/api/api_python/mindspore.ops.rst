@@ -208,9 +208,7 @@ Array操作
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.clip_by_global_norm
     mindspore.ops.clip_by_value
-    mindspore.ops.clip_by_norm
 
 数学运算函数
 ----------------

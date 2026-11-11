@@ -25,7 +25,6 @@ from mindspore.ops.composite.base import GradOperation, _Grad, HyperMap, Map, Mu
 # Initialize multitype operators before function imports to avoid a functional/array_func import cycle.
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 from mindspore.ops.composite.env_ops import env_get
-from mindspore.ops.function.clip_func import clip_by_global_norm
 from mindspore.ops.composite.multitype_ops.add_impl import hyper_add
 from mindspore.ops.composite.multitype_ops.add_impl import augassign_add
 from mindspore.ops.composite.multitype_ops.sub_impl import augassign_sub

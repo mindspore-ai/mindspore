@@ -1832,8 +1832,7 @@ class KMeansCentroids(PrimitiveWithInfer):
 
 class ClipByNorm(PrimitiveWithInfer):
     r"""
-    `ops.ClipByNorm` is deprecated from version 2.8.0 and will be removed in a future version,
-    please use :func:`mindspore.ops.clip_by_norm` instead.
+    `ops.ClipByNorm` is deprecated from version 2.8.0 and will be removed in a future version.
 
     Clips tensor values to a maximum :math:`L_2`-norm.
 
@@ -1879,7 +1878,7 @@ class ClipByNorm(PrimitiveWithInfer):
         (4, 16)
     """
 
-    @deprecated("2.8.0", "ops.clip_by_norm", False)
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, axis=None):
         """Initialize ClipByNorm"""

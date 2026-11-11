@@ -962,8 +962,7 @@ def _need_reduce_all(axis):
 class ClipByNorm(Cell):
     r"""
     `nn.ClipByNorm` is deprecated from version 2.8.0
-    and will be removed after version 2.9.0,
-    please use :func:`mindspore.ops.clip_by_norm` instead.
+    and will be removed after version 2.9.0.
 
     Clips tensor values to a maximum :math:`L_2`-norm.
 
@@ -1007,7 +1006,7 @@ class ClipByNorm(Cell):
 
     """
 
-    @deprecated("2.8.0", "ops.clip_by_norm", False)
+    @deprecated("2.8.0", None, False)
     def __init__(self, axis=None):
         """Initialize ClipByNorm."""
         super().__init__()
