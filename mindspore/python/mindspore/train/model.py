@@ -44,7 +44,6 @@ from mindspore.parallel._utils import _get_parallel_mode, _get_device_num, _get_
 from mindspore.train.metrics import Loss
 from mindspore.log import vlog_print
 from mindspore import nn
-from mindspore.boost import AutoBoost
 from mindspore.context import ParallelMode
 from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
 from mindspore.graph.api import _pynative_executor, ARG_SPECIFIED, TOTAL_ARG_LEN
@@ -551,24 +550,7 @@ class Model:
             must be a bool. The loss scale strategy can be changed by `loss_scale_manager` setting in `kwargs`.
             `loss_scale_manager` should be a subclass of :class:`mindspore.amp.LossScaleManager`.
 
-        boost_level (str, optional): Option for argument `level` in `mindspore.boost`, level for boost mode
-            training. Supports ["O0", "O1", "O2"]. Default: ``"O0"`` .
-
-            - "O0": Do not change.
-            - "O1": Enable the boost mode, the performance is improved by about 20%, and
-              the accuracy is the same as the original accuracy.
-            - "O2": Enable the boost mode, the performance is improved by about 30%, and
-              the accuracy is reduced by less than 3%.
-
-            If you want to config boost mode by yourself, you can set boost_config_dict as `boost.py`.
-            In order for this function to work, you need to set the parameter `optimizer`, along with
-            at least one of the parameter `eval_network` or performance `metrics`.
-
-            Notice: The current optimization enabled by default only applies to some networks, and not all networks
-            can obtain the same benefits.  It is recommended to enable this function on
-            the Graph mode + Ascend platform, and for better acceleration,
-            refer to :class:`mindspore.boost.AutoBoost` to configure
-            boost_config_dict.
+        boost_level (str, optional): Compatibility option. Only ``"O0"`` (Boost disabled) is supported.
 
     Examples:
         >>> from mindspore import nn
@@ -600,7 +582,10 @@ class Model:
         self._keep_bn_fp32 = None
         self._check_kwargs(kwargs)
         self._amp_level = amp_level
-        self._boost_level = boost_level
+        if boost_level != "O0" or kwargs.get("acc_level", "O0") != "O0":
+            raise ValueError("Boost training has been retired; only boost_level='O0' and acc_level='O0' are supported.")
+        if kwargs.get("boost_config_dict") not in (None, "", {}):
+            raise ValueError("Boost training has been retired; boost_config_dict must be empty.")
         self._eval_network = eval_network
         self._process_amp_args(kwargs)
         self._parallel_mode = _get_parallel_mode()
@@ -610,7 +595,6 @@ class Model:
 
         self._check_amp_level_arg(optimizer, amp_level)
         self._check_for_graph_cell(kwargs)
-        self._build_boost_network(kwargs)
         self._train_network = self._build_train_network()
         self._train_network._jit_config_dict = network.jit_config_dict
         self._build_eval_network(metrics, self._eval_network, eval_indexes)
@@ -671,28 +655,6 @@ class Model:
             raise RuntimeError("The dataset object had been used in other model by model.train(...), "
                                "please create a new dataset.")
 
-    def _build_boost_network(self, kwargs):
-        """Build the boost network."""
-        boost_config_dict = ""
-        if 'boost_config_dict' in kwargs:
-            boost_config_dict = kwargs['boost_config_dict']
-        if 'acc_level' in kwargs:
-            self._boost_level = kwargs['acc_level']
-            logger.warning("Next version acc_level will be removed, please replace with boost_level")
-        processor = AutoBoost(self._boost_level, boost_config_dict)
-        if processor.level not in ["O1", "O2"]:
-            return
-        if self._optimizer is None:
-            logger.warning("In boost mode, the optimizer must be defined.")
-            return
-        if self._eval_network is None and self._metrics is None:
-            logger.warning("In boost mode, the eval_network and metrics cannot be undefined at the same time.")
-            return
-
-        self._network, self._optimizer = processor.network_auto_process_train(self._network, self._optimizer)
-        if self._eval_network is not None:
-            self._eval_network = processor.network_auto_process_eval(self._eval_network)
-
     def _build_train_network(self):
         """Build train network"""
         network = self._network
@@ -715,7 +677,6 @@ class Model:
                                               self._optimizer,
                                               self._loss_fn,
                                               level=self._amp_level,
-                                              boost_level=self._boost_level,
                                               **amp_config)
         elif self._loss_fn:
             network = nn.WithLossCell(network, self._loss_fn)
