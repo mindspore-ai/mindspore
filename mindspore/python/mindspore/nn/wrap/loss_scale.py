@@ -23,7 +23,7 @@ from mindspore import nn
 from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell
 from mindspore.nn.cell import Cell
 from mindspore.common import Tensor
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.common.parameter import Parameter
 from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloatStatusV2
 from mindspore import ops

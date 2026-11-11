@@ -32,7 +32,8 @@ import numpy
 import asttokens
 import astunparse
 
-from mindspore import Tensor, CSRTensor, COOTensor, RowTensor
+from mindspore import Tensor
+from mindspore.common._sparse_tensor import CSRTensor, COOTensor, RowTensorInner as RowTensor
 from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops

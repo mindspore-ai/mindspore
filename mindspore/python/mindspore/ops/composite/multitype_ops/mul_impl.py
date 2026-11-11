@@ -19,7 +19,10 @@ from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite.multitype_ops._constexpr_utils import check_equal
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
-from mindspore.common import COOTensor
+from mindspore.common._sparse_tensor import COOTensor
+from mindspore.ops.function.sparse_func import (
+    _csr_mul,
+)
 from ...operations._sequence_ops import SequenceMul
 
 
@@ -293,7 +296,7 @@ def _csrtensor_mul_tensor(x, y):
     Outputs:
        CSRTensor, equal to x * y.
     """
-    return F.csr_mul(x, y)
+    return _csr_mul(x, y)
 
 
 @augassign_mul.register("Tensor", "CSRTensor")
@@ -305,7 +308,7 @@ def _tensor_mul_csrtensor(x, y):
     Outputs:
        CSRTensor, equal to x * y.
     """
-    return F.csr_mul(y, x)
+    return _csr_mul(y, x)
 
 
 @augassign_mul.register("COOTensor", "Tensor")

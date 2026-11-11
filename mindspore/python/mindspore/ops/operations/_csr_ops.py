@@ -40,7 +40,8 @@ class CSRReduceSum(Primitive):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore import Tensor
+        >>> from mindspore.common._sparse_tensor import CSRTensor
         >>> from mindspore.ops.operations import _csr_ops
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
@@ -90,7 +91,8 @@ class CSRMV(Primitive):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore import Tensor
+        >>> from mindspore.common._sparse_tensor import CSRTensor
         >>> from mindspore.ops.operations import _csr_ops
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
@@ -145,7 +147,8 @@ class CSRMul(Primitive):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore import Tensor
+        >>> from mindspore.common._sparse_tensor import CSRTensor
         >>> from mindspore.ops.operations import _csr_ops
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):
@@ -325,7 +328,8 @@ class CSRDiv(Primitive):
     Examples:
         >>> import mindspore
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore import Tensor
+        >>> from mindspore.common._sparse_tensor import CSRTensor
         >>> from mindspore.ops.operations import _csr_ops
         >>> from mindspore import dtype as mstype
         >>> class Net(nn.Cell):

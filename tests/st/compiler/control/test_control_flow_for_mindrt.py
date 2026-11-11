@@ -17,7 +17,8 @@
 import numpy as np
 from tests.mark_utils import arg_mark
 import mindspore
-from mindspore import context, nn, ops, Tensor, CSRTensor, Parameter, jit, mutable
+from mindspore import context, nn, ops, Tensor, Parameter, jit, mutable
+from mindspore.common._sparse_tensor import CSRTensor
 from mindspore.ops import functional as F
 
 

@@ -46,7 +46,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore import context
 from mindspore.ops.primitive import _primexpr
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.ops._utils.utils import generate_shape_index
 
 reduce_sum = P.ReduceSum()

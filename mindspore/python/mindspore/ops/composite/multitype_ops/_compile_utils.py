@@ -30,7 +30,8 @@ from mindspore.ops.operations._sequence_ops import TensorToTuple, TensorToScalar
 from mindspore.common import dtype as mstype
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common.initializer import Zero
-from mindspore.common import Tensor, CSRTensor, COOTensor, mutable
+from mindspore.common import Tensor, mutable
+from mindspore.common._sparse_tensor import CSRTensor, COOTensor
 from mindspore import ops
 from mindspore.ops.primitive import _primexpr
 from mindspore import _checkparam as validator

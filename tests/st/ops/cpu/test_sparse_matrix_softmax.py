@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""smoke tests for SparseMatrixSoftmax"""
 from tests.mark_utils import arg_mark
 
-"""smoke tests for SparseMatrixSoftmax"""
 
 import numpy as np
-import pytest
 import mindspore
 import mindspore.nn as nn
-from mindspore import Tensor, CSRTensor, context
+from mindspore import Tensor, context
+from mindspore.common._sparse_tensor import CSRTensor
 from mindspore.common import dtype as mstype
-from mindspore.ops.function import csr_softmax
+from mindspore.ops.function import _csr_softmax
 from mindspore.ops.operations.sparse_ops import SparseMatrixSoftmax
 from mindspore.ops.primitive import constexpr
 
@@ -148,7 +148,7 @@ def test_function_sparse_matrix_softmax_vs_nn_softmax():
     """
     context.set_context(mode=context.GRAPH_MODE)
     logits = create_csr_tensor()
-    c = csr_softmax(logits, dtype=mstype.float32)
+    c = _csr_softmax(logits, dtype=mstype.float32)
     c_values = Tensor([1, 2, 3, 4, 1, 2], dtype=mstype.float32)
     output = nn.Softmax()
     row_index = logits.shape[0]

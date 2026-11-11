@@ -13,10 +13,11 @@
 # limitations under the License.
 # ============================================================================
 
+"""Tests for ge control flow with const input."""
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor, ops, nn
-from mindspore import SparseTensor
+from mindspore.common._sparse_tensor import COOTensor as SparseTensor
 from tests.mark_utils import arg_mark
 
 
@@ -32,7 +33,7 @@ def test_ge_switch_layer_with_const_input():
 
     class SparseTensorNet(nn.Cell):
         def __init__(self, shape):
-            super(SparseTensorNet, self).__init__()
+            super().__init__()
             self.shape = shape
 
         def construct(self, indices, values):
@@ -41,7 +42,7 @@ def test_ge_switch_layer_with_const_input():
 
     class TwoInputFinalNet(nn.Cell):
         def __init__(self, funcs):
-            super(TwoInputFinalNet, self).__init__()
+            super().__init__()
             self.funcs = funcs
 
         def construct(self, i, a, b):
@@ -71,7 +72,7 @@ def test_ge_control_flow_and_nested_list_with_const_input():
 
     class NestedListNet(nn.Cell):
         def __init__(self, l, x):
-            super(NestedListNet, self).__init__()
+            super().__init__()
             self.l = l
             self.x = x
             self.relu = ops.ReLU()
@@ -102,7 +103,7 @@ def test_ge_control_flow_and_nested_tuple_with_const_input():
 
     class NestedTupleNet(nn.Cell):
         def __init__(self, c):
-            super(NestedTupleNet, self).__init__()
+            super().__init__()
             self.c = c
             self.relu = ops.ReLU()
 

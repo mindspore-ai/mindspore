@@ -22,7 +22,10 @@ from mindspore.ops.composite.multitype_ops import _compile_utils as utils
 from mindspore.ops.composite.multitype_ops._constexpr_utils import log_warning, check_equal
 from mindspore.ops.composite import base
 from mindspore.ops import functional as F
-from mindspore.common import COOTensor
+from mindspore.common._sparse_tensor import COOTensor
+from mindspore.ops.function.sparse_func import (
+    _csr_div,
+)
 
 # x /= y
 augassign_div = base.MultitypeFuncGraph("augassign_div", True)
@@ -51,7 +54,7 @@ def _csrtensor_div_tensor(x, y):
        CSRTensor, equal to x / y.
     """
     log_warning("For CSR divide, zero values in the dense tensor are ignored.")
-    return F.csr_div(x, y)
+    return _csr_div(x, y)
 
 
 @augassign_div.register("COOTensor", "Tensor")

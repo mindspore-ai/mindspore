@@ -23,7 +23,8 @@ import pytest
 
 import mindspore as ms
 from mindspore import nn
-from mindspore import Tensor, COOTensor, context
+from mindspore import Tensor, context
+from mindspore.common._sparse_tensor import COOTensor
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -93,27 +94,3 @@ def test_sparse_tensor_indices_dim_less_than_dense_shape_dim():
     dense_shape = (2, 2, 2)
     with pytest.raises(TypeError):
         MakeSparseTensor(dense_shape)(indices, values)
-
-
-def test_sparse_tensor_to_tensor():
-    """
-    Feature: Test nn.SparseToDense.
-    Description: Test COOTensor to dense tensor.
-    Expectation: Success.
-    """
-    class SparseToDenseCell(nn.Cell):
-        def __init__(self, dense_shape):
-            super().__init__()
-            self.dense_shape = dense_shape
-            self.sparse_to_dense = nn.SparseToDense()
-
-        def construct(self, indices, values):
-            sparse = COOTensor(indices, values, self.dense_shape)
-            return self.sparse_to_dense(sparse)
-
-    indices = Tensor([[0, 1], [1, 2]])
-    values = Tensor([1, 2], dtype=ms.float32)
-    dense_shape = (3, 4)
-    SparseToDenseCell(dense_shape)(indices, values)
-    grad_net = ms.grad(SparseToDenseCell(dense_shape), grad_position=(1,))
-    grad_net(indices, values)

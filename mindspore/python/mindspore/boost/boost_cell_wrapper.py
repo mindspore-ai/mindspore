@@ -25,7 +25,7 @@ from mindspore.communication.management import get_rank, get_group_size, create_
 from mindspore.nn.cell import Cell
 from mindspore.nn import SequentialCell
 from mindspore.common import Tensor
-from mindspore.common.sparse_tensor import RowTensorInner
+from mindspore.common._sparse_tensor import RowTensorInner
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.ops.operations.math_ops import NPUGetFloatStatusV2, NPUClearFloatStatusV2

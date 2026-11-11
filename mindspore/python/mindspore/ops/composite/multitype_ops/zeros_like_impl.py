@@ -20,6 +20,10 @@ from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _sequence_ops as seq
 from mindspore.ops.primitive import Primitive
+from mindspore.ops.function.sparse_func import (
+    _make_coo_tensor,
+    _make_csr_tensor,
+)
 
 zeros_like_leaf = base.MultitypeFuncGraph('zeros_like', True)
 """
@@ -79,14 +83,14 @@ def _zeros_like_tensor(x):
 def _zeros_like_coo_tensor(x):
     """Returns a tensor with the same shape and dtype as x and all elements are 0."""
     values = F.zeros_like(x.values)
-    return F.make_coo_tensor(x.indices, values, x.shape)
+    return _make_coo_tensor(x.indices, values, x.shape)
 
 
 @zeros_like_leaf.register("CSRTensor")
 def _zeros_like_csr_tensor(x):
     """Returns a tensor with the same shape and dtype as x and all elements are 0."""
     values = F.zeros_like(x.values)
-    return F.make_csr_tensor(x.indptr, x.indices, values, x.shape)
+    return _make_csr_tensor(x.indptr, x.indices, values, x.shape)
 
 
 @zeros_like_leaf.register("TypeType")

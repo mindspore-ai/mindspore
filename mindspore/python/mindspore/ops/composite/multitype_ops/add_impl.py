@@ -21,7 +21,14 @@ from mindspore.ops.composite import base
 from mindspore.ops import functional as F
 from mindspore.ops.composite.multitype_ops._constexpr_utils import make_tensor, check_equal
 from mindspore.ops.auto_generate.gen_ops_prim import InplaceAddExt, InplaceAddsExt
-from mindspore.common import CSRTensor, COOTensor
+from mindspore.common._sparse_tensor import CSRTensor, COOTensor
+from mindspore.ops.function.sparse_func import (
+    _coo_add,
+    _csr_add,
+    _make_coo_tensor,
+    _make_csr_tensor,
+    _row_tensor_add,
+)
 from ...operations._sequence_ops import SequenceAdd
 
 # x += y
@@ -327,7 +334,7 @@ def add_rowtensor_tensor(x, y):
    Returns:
        RowTensor, the dtype is same as x.
    """
-    return F.row_tensor_add(x, y)
+    return _row_tensor_add(x, y)
 
 
 @add.register("None", "None")
@@ -393,7 +400,7 @@ def _add_csrtensor(x, y):
     """
     check_equal(x.shape, y.shape,
                 "input1 (shape={}) and input2(shape={}) should be the same shape.")
-    return F.csr_add(x, y, make_tensor(1, x.values.dtype), make_tensor(1, x.values.dtype))
+    return _csr_add(x, y, make_tensor(1, x.values.dtype), make_tensor(1, x.values.dtype))
 
 
 @augassign_add.register("COOTensor", "COOTensor")
@@ -411,7 +418,7 @@ def _add_cootensor(x, y):
     """
     check_equal(x.shape, y.shape,
                 "input1 (shape={}) and input2(shape={}) should be the same shape.")
-    return F.coo_add(x, y, make_tensor(0, x.values.dtype))
+    return _coo_add(x, y, make_tensor(0, x.values.dtype))
 
 
 @augassign_add.register("COOTensor", "Tensor")
@@ -552,7 +559,7 @@ def _add_csrtensor_csrtensor(x, y):
    Returns:
        CSRTensor.
    """
-    return F.make_csr_tensor(x.indptr, x.indices, x.values + y.values, x.shape)
+    return _make_csr_tensor(x.indptr, x.indices, x.values + y.values, x.shape)
 
 
 @_add_backward.register("CSRTensor", "Tuple")
@@ -604,7 +611,7 @@ def _add_cootensor_cootensor(x, y):
    Returns:
        COOTensor.
    """
-    return F.make_coo_tensor(x.indices, x.values + y.values, x.shape)
+    return _make_coo_tensor(x.indices, x.values + y.values, x.shape)
 
 
 @_add_backward.register("COOTensor", "Tuple")

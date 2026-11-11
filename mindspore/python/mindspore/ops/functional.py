@@ -19,6 +19,40 @@
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _constants
 from mindspore.ops.function import *
+from mindspore.ops.function.sparse_func import (
+    _coo2csr,
+    _coo_add,
+    _coo_concat,
+    _coo_tensor_get_dense_shape,
+    _coo_tensor_get_indices,
+    _coo_tensor_get_values,
+    _csr2coo,
+    _csr_add,
+    _csr_div,
+    _csr_gather,
+    _csr_mm,
+    _csr_mul,
+    _csr_mv,
+    _csr_reduce_sum,
+    _csr_softmax,
+    _csr_tensor_get_dense_shape,
+    _csr_tensor_get_indices,
+    _csr_tensor_get_indptr,
+    _csr_tensor_get_values,
+    _csr_to_coo,
+    _csr_to_dense,
+    _dense_to_sparse_coo,
+    _dense_to_sparse_csr,
+    _make_coo_tensor,
+    _make_csr_tensor,
+    _make_row_tensor,
+    _make_row_tensor_inner,
+    _make_sparse_tensor,
+    _row_tensor_add,
+    _row_tensor_get_dense_shape,
+    _row_tensor_get_indices,
+    _row_tensor_get_values,
+)
 from mindspore.ops.function.array_func import zero_, tensor_scatter_add
 from mindspore.ops.function.math_func import all, argmax_ext, float_power_ext, erfinv_, tanh_, bernoulli_ext, bernoulli_
 from mindspore.ops.function.random_func import random_, uniform_ext, uniform_, normal_, exponential_
@@ -357,18 +391,18 @@ setattr(tensor_operator_registry, 'floor', floor)
 setattr(tensor_operator_registry, 'floor_', auto_generate.floor_)
 setattr(tensor_operator_registry, 'floor_divide', floor_divide)
 # support sparse tensor operators
-setattr(tensor_operator_registry, 'csr_add', csr_add)
-setattr(tensor_operator_registry, 'csr_mul', csr_mul)
-setattr(tensor_operator_registry, 'csr2coo', csr2coo)
-setattr(tensor_operator_registry, 'coo2csr', coo2csr)
-setattr(tensor_operator_registry, 'csr_div', csr_div)
-setattr(tensor_operator_registry, 'csr_mv', csr_mv)
+setattr(tensor_operator_registry, 'csr_add', _csr_add)
+setattr(tensor_operator_registry, 'csr_mul', _csr_mul)
+setattr(tensor_operator_registry, 'csr2coo', _csr2coo)
+setattr(tensor_operator_registry, 'coo2csr', _coo2csr)
+setattr(tensor_operator_registry, 'csr_div', _csr_div)
+setattr(tensor_operator_registry, 'csr_mv', _csr_mv)
 setattr(tensor_operator_registry, 'csr_mm_akg', _csr_ops.CSRMM)
-setattr(tensor_operator_registry, 'csr_mm', csr_mm)
-setattr(tensor_operator_registry, 'csr_reduce_sum', csr_reduce_sum)
-setattr(tensor_operator_registry, 'dense_to_sparse_csr', dense_to_sparse_csr)
-setattr(tensor_operator_registry, 'dense_to_sparse_coo', dense_to_sparse_coo)
-setattr(tensor_operator_registry, 'csr_to_dense', csr_to_dense)
+setattr(tensor_operator_registry, 'csr_mm', _csr_mm)
+setattr(tensor_operator_registry, 'csr_reduce_sum', _csr_reduce_sum)
+setattr(tensor_operator_registry, 'dense_to_sparse_csr', _dense_to_sparse_csr)
+setattr(tensor_operator_registry, 'dense_to_sparse_coo', _dense_to_sparse_coo)
+setattr(tensor_operator_registry, 'csr_to_dense', _csr_to_dense)
 setattr(tensor_operator_registry, 'narrow', narrow)
 setattr(tensor_operator_registry, 'sort', sort)
 setattr(tensor_operator_registry, 'argsort', argsort)
@@ -378,7 +412,7 @@ setattr(tensor_operator_registry, 'nan_to_num', nan_to_num)
 setattr(tensor_operator_registry, 'nansum', nansum)
 setattr(tensor_operator_registry, 'nanmean', nanmean)
 setattr(tensor_operator_registry, 'nanmedian', nanmedian)
-setattr(tensor_operator_registry, 'csr_to_coo', csr_to_coo)
+setattr(tensor_operator_registry, 'csr_to_coo', _csr_to_coo)
 setattr(tensor_operator_registry, 'zeros', zeros)
 setattr(tensor_operator_registry, 'ones', ones)
 setattr(tensor_operator_registry, 'unsorted_segment_min', unsorted_segment_min)
@@ -407,7 +441,7 @@ setattr(tensor_operator_registry, 'coalesce', coalesce)
 setattr(tensor_operator_registry, 'argmax_with_value', max)
 setattr(tensor_operator_registry, 'argmin_with_value', min)
 setattr(tensor_operator_registry, 'argwhere', argwhere)
-setattr(tensor_operator_registry, 'coo_add', coo_add)
+setattr(tensor_operator_registry, 'coo_add', _coo_add)
 setattr(tensor_operator_registry, 'topk', topk)
 setattr(tensor_operator_registry, 'isfinite', isfinite)
 setattr(tensor_operator_registry, 'to', _cast)

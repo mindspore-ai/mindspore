@@ -1,11 +1,14 @@
+"""Tests for sparse concat."""
 from tests.mark_utils import arg_mark
-import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, COOTensor
-from mindspore.ops import functional as F
+from mindspore import Tensor
+from mindspore.common._sparse_tensor import COOTensor
 import mindspore.common.dtype as mstype
+from mindspore.ops.function.sparse_func import (
+    _coo_concat,
+)
 
 
 class SparseConcatNet(nn.Cell):
@@ -13,7 +16,7 @@ class SparseConcatNet(nn.Cell):
         sp_input = []
         for i in range(0, num):
             sp_input.append(COOTensor(input_list[i * 3], input_list[i * 3 + 1], input_list[i * 3 + 2]))
-        return F.coo_concat(sp_input, concat_dim)
+        return _coo_concat(sp_input, concat_dim)
 
 
 def judge_result_correct(result, expect):
@@ -47,7 +50,7 @@ def coo_concat_int(i_type, v_type):
     expect_forward_output = (expect_forward_output_indices, expect_forward_output_values, expect_forward_output_shape)
     judge_result_correct(forward_output, expect_forward_output)
     # single op run
-    forward_output = F.coo_concat((input0, input1), concat_dim)
+    forward_output = _coo_concat((input0, input1), concat_dim)
     judge_result_correct(forward_output, expect_forward_output)
 
     indices0 = Tensor([[0, 1], [0, 2]], dtype=i_type)
@@ -126,7 +129,7 @@ def coo_concat_float(i_type, v_type):
     expect_forward_output = (expect_forward_output_indices, expect_forward_output_values, expect_forward_output_shape)
     judge_result_correct(forward_output, expect_forward_output)
     # single op run
-    forward_output = F.coo_concat((input0, input1), concat_dim)
+    forward_output = _coo_concat((input0, input1), concat_dim)
     judge_result_correct(forward_output, expect_forward_output)
 
     indices0 = Tensor([[0, 1], [0, 2]], dtype=i_type)
@@ -295,7 +298,7 @@ def test_coo_concat_default_value():
     shape2 = (4, 5)
     input2 = COOTensor(indices2, values2, shape2)
     # net run
-    forward_output = F.coo_concat((input0, input1, input2))
+    forward_output = _coo_concat((input0, input1, input2))
     expect_forward_output_indices = Tensor([[0, 1], [0, 2], [3, 1], [3, 2], [7, 1], [7, 2], [7, 3]], dtype=i_type)
     expect_forward_output_values = Tensor([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0], dtype=v_type)
     expect_forward_output_shape = (10, 5)

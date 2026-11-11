@@ -40,7 +40,7 @@ from mindspore import Tensor
 # 3 common import
 from mindspore.common import dtype as mstype
 # 4 common import
-from mindspore.common import COOTensor, CSRTensor
+from mindspore.common._sparse_tensor import COOTensor, CSRTensor
 
 # 5 common import
 from mindspore.ops.function.nn_func import gelu

@@ -432,8 +432,6 @@ mindspore.Tensor
     mindspore.Tensor.tile
     mindspore.Tensor.to
     mindspore.Tensor.to_
-    mindspore.Tensor.to_coo
-    mindspore.Tensor.to_csr
     mindspore.Tensor.tolist
     mindspore.Tensor.topk
     mindspore.Tensor.trace
