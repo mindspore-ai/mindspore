@@ -133,7 +133,7 @@ class ScopedValue:
                 referenced variables. Default: ``None`` .
 
         Returns:
-            An list of instance of `ScopedValue`.
+            A list of instances of `ScopedValue`.
 
         Raises:
             TypeError: If `names` is not `list` or `tuple` and name in `names` is not `str`.

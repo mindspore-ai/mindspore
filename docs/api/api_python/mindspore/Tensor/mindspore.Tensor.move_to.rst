@@ -3,7 +3,7 @@ mindspore.Tensor.move_to
 
 .. py:method:: mindspore.Tensor.move_to(to, blocking=True)
 
-    同步或异步的方式将Tensor拷贝到目标设备上，默认同步方式。只支持PyNative模式。
+    以同步或异步的方式将Tensor拷贝到目标设备上，默认同步方式。只支持PyNative模式。
 
     .. warning::
         该接口已废弃，2.9.0（不含）之后版本将删除。

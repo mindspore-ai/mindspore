@@ -23,7 +23,7 @@ repeat:
     Args:
         *repeats (int): Number of repetitions of `self` in each dimension. The value must be a
             non-negative number. ``1`` indicates that the dimension remains unchanged. The number
-            of elements in `repeats` must be greater than or equals to the number of dimensions
+            of elements in `repeats` must be greater than or equal to the number of dimensions
             in `self` . When the number of dimensions of `self` is less than the number of elements
             of `repeats` , `self` is broadcasted to the number of dimensions with the same number of
             elements of `repeats` (as shown in the example).
@@ -63,7 +63,7 @@ repeat:
 
     This function copies the tensor's data.
 
-    Expect that a variable-length int parameter is changed to a parameter which type is list or tuple,
+    Except that a variable-length int parameter is changed to a parameter which type is list or tuple,
     other operations are the same as the overload with `*repeats` parameter.
 
     The shape of the output tensor can be described as follows, where :math:`n` is the number of
@@ -86,7 +86,7 @@ repeat:
     Args:
         repeats (Union[tuple[int], list[int]]): Number of repetitions of `self` in each dimension. The value
             must be a non-negative number. ``1`` indicates that the dimension remains unchanged. The number
-            of elements in `repeats` must be greater than or equals to the number of dimensions in `self` .
+            of elements in `repeats` must be greater than or equal to the number of dimensions in `self` .
             When the number of dimensions of `self` is less than the number of elements of `repeats` , `self`
             is broadcasted to the number of dimensions with the same number of elements of `repeats` (as shown
             in the example).

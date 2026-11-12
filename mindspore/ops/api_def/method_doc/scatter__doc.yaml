@@ -33,11 +33,11 @@ scatter_:
     Args:
         dim (int): Which axis to scatter. Accepted range is `[-r, r)` where `r` is the rank of `self` .
         index (Tensor): The index to access `self` on the target axis specified by `dim` whose dtype must be int32
-            or int64. If it is an empty Tensor, no operations is performed and directly returns `self` . Otherwise,
+            or int64. If it is an empty Tensor, no operation is performed and directly returns `self` . Otherwise,
             its rank must be the same as `self` and the value of each element must be in `[0, s)`, where
             `s` is the size of `self` along axis `dim` . Negative or out-of-range values are illegal
             input and will lead to undefined behavior.
-        src (Tensor): The data to doing the update operation with `self` . It should have the same dtype and rank
+        src (Tensor): The data to do the update operation with `self` . It should have the same dtype and rank
             as `self` .
 
     Returns:
@@ -77,9 +77,9 @@ scatter_:
 
     This operator is the inverse of the in-place version of :func:`mindspore.Tensor.gather` .
 
-    Expect that the replacement operation changes to accumulation or multiplication
+    Except that the replacement operation changes to accumulation or multiplication
     based on the parameter `reduce`, other operations are the same as the overloaded
-    function that accept `src` without the parameter `reduce` .
+    function that accepts `src` without the parameter `reduce` .
 
     Here's an example using a 3-dimension tensor.
 
@@ -96,22 +96,22 @@ scatter_:
 
     .. note::
         This overload function does not support reverse gradient calculation and
-        will return zeros if calculate gradient.
+        will return zeros if the gradient is calculated.
 
     Args:
         dim (int): Which axis to scatter. Accepted range is `[-r, r)` where `r` is the rank of `self` .
         index (Tensor): The index to access `self` on the target axis specified by `dim` whose dtype must be int32
-            or int64. If it is an empty Tensor, no operations is performed and directly returns `self` . Otherwise,
+            or int64. If it is an empty Tensor, no operation is performed and directly returns `self` . Otherwise,
             its rank must be the same as `self` and the value of each element must be in `[0, s)`, where
             `s` is the size of `self` along axis `dim` . Negative or out-of-range values are illegal
             input and will lead to undefined behavior.
-        src (Tensor): The data to doing the accumulate or multiply operation with `self` . It should have the
+        src (Tensor): The data to do the accumulate or multiply operation with `self` . It should have the
             same dtype and rank as `self` .
 
     Keyword Args:
         reduce (str): Reduce operation, supports ``"add"`` and ``"multiply"`` . When `reduce` is ``"add"`` , `src`
-            is accumulated to `self` base on `index` . When `reduce` is ``"multiply"`` , `src` is multiplied
-            to `self` base on `index` .
+            is accumulated to `self` based on `index` . When `reduce` is ``"multiply"`` , `src` is multiplied
+            to `self` based on `index` .
 
     Returns:
         Tensor, the modified `self` itself.
@@ -152,7 +152,7 @@ scatter_:
 
     It can be considered that after the value is broadcasted as a Tensor whose shape
     and dtype are consistent with `self` , other operations are the same as the
-    overloaded function that accept `src` without the parameter `reduce` .
+    overloaded function that accepts `src` without the parameter `reduce` .
 
     Here's an example using a 3-dimension tensor.
 
@@ -170,11 +170,11 @@ scatter_:
     Args:
         dim (int): Which axis to scatter. Accepted range is `[-r, r)` where `r` is the rank of `self` .
         index (Tensor): The index to access `self` on the target axis specified by `dim` whose dtype must be int32
-            or int64. If it is an empty Tensor, no operations is performed and directly returns `self` . Otherwise,
+            or int64. If it is an empty Tensor, no operation is performed and directly returns `self` . Otherwise,
             its rank must be the same as `self` and the value of each element must be in `[0, s)`, where
             `s` is the size of `self` along axis `dim` . Negative or out-of-range values are illegal
             input and will lead to undefined behavior.
-        value (int, float, bool): The data to doing the update operation with `self` . It can be considered as being
+        value (int, float, bool): The data to do the update operation with `self` . It can be considered as being
             broadcasted into a Tensor whose shape and dtype are the same as `self` , and then be regarded as `src`
             for calculation.
 
@@ -212,7 +212,7 @@ scatter_:
 
     This operator is the inverse of the in-place version of :func:`mindspore.Tensor.gather` .
 
-    Expect that the replacement operation changes to accumulation or multiplication
+    Except that the replacement operation changes to accumulation or multiplication
     based on the parameter `reduce`, other operations are the same as the overloaded
     function that accept `value` without the parameter `reduce` .
 
@@ -231,23 +231,23 @@ scatter_:
 
     .. note::
         This overload function does not support reverse gradient calculation and
-        will return zeros if calculate gradient.
+        will return zeros if the gradient is calculated.
 
     Args:
         dim (int): Which axis to scatter. Accepted range is `[-r, r)` where `r` is the rank of `self` .
         index (Tensor): The index to access `self` on the target axis specified by `dim` whose dtype must be int32
-            or int64. If it is an empty Tensor, no operations is performed and directly returns `self` . Otherwise,
+            or int64. If it is an empty Tensor, no operation is performed and directly returns `self` . Otherwise,
             its rank must be the same as `self` and the value of each element must be in `[0, s)`, where
             `s` is the size of `self` along axis `dim` . Negative or out-of-range values are illegal
             input and will lead to undefined behavior.
-        value (int, float, bool): The data to doing the accumulate or multiply operation with `self` . It can be
+        value (int, float, bool): The data to do the accumulate or multiply operation with `self` . It can be
             considered as being broadcasted into a Tensor whose shape and dtype are the same as `self` , and then
             be regarded as `src` for calculation.
 
     Keyword Args:
         reduce (str): Reduce operation, supports ``"add"`` and ``"multiply"`` . When `reduce` is ``"add"`` , `value`
-            is accumulated to `self` base on `index` . When `reduce` is ``"multiply"`` , `value` is multiplied
-            to `self` base on `index` .
+            is accumulated to `self` based on `index` . When `reduce` is ``"multiply"`` , `value` is multiplied
+            to `self` based on `index` .
 
     Returns:
         Tensor, the modified `self` itself.

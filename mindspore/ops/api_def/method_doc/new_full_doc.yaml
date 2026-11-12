@@ -23,6 +23,7 @@ new_full:
             ``Ascend``
 
         Examples:
+            >>> import mindspore
             >>> from mindspore import Tensor
             >>> x = Tensor([1, 2, 3, 4], mindspore.int32)
             >>> output = x.new_full((2, 3), 3)

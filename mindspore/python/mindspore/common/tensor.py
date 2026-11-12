@@ -927,13 +927,13 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             This interface is deprecated and will be removed after version 2.9.0.
 
         Args:
-            mean (float, optional): the mean of normal distribution. With float data type.
+            mean (float, optional): the mean of log-normal distribution. With float data type.
                 Default: ``1.0``.
-            std (float, optional): the std of normal distribution. With float data type.
+            std (float, optional): the std of log-normal distribution. With float data type.
                 Default: ``2.0``.
 
         Returns:
-            Tensor. A Tensor with the same type and shape of input.
+            Tensor. A Tensor with the same type and shape as input.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -1986,7 +1986,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         Add all elements in `src` to the index specified by `index` to `self` along dimension specified by `dim`,
         `scatter_add` is an in-place operation.
-        The ranks of `self`, `index` and `src` must be greater or equal to 1.
+        The ranks of `self`, `index` and `src` must be greater than or equal to 1.
 
         For a 3-D tensor, the operation updates `self` as follows:
 
@@ -2016,7 +2016,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         Raises:
             TypeError: If `index` is neither int32 nor int64.
-            ValueError: If anyone of the rank among `self`, `index` and `src` is less than 1.
+            ValueError: If any one of the rank among `self`, `index` and `src` is less than 1.
             ValueError: If the ranks of `self`, `index` and `src` are not the same.
             ValueError: The size of any dimension of `index` except the dimension specified by `dim` is
                 greater than the size of the corresponding dimension of `self`.
@@ -2662,7 +2662,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
         Raises:
             TypeError: If `from_` or `to` is neither a number nor a Tensor.
-            TypeError: If dtype of `from` or `to` is not one of: bool, int8, int16, int32, int64, uint8, float32,
+            TypeError: If dtype of `from\_` or `to` is not one of: bool, int8, int16, int32, int64, uint8, float32,
                 float64.
             ValueError: If `from_` or `to` is Tensor but contains multiple elements.
             RuntimeError: If `from_` is larger than `to`.

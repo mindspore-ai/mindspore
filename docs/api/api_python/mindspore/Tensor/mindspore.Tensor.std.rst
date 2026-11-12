@@ -13,7 +13,7 @@ mindspore.Tensor.std
     标准差 （ :math:`\sigma` ）计算如下：
 
     .. math::
-        \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j-1}^{N-1}\left(self_{ij}-\overline{x_{i}}\right)^{2}}
+        \sigma =\sqrt{\frac{1}{N-\delta N}\sum_{j=0}^{N-1}\left(self_{ij}-\overline{x_{i}}\right)^{2}}
 
     其中 :math:`x` 表示用来计算标准差的样本集， :math:`\bar{x}` 表示样本的均值， :math:`N` 表示样本的数量， :math:`\delta N` 则为 `correction` 的值。
 

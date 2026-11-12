@@ -20,11 +20,11 @@ class NodeType(Enum):
     """
     `NodeType` represents type of `Node`.
 
-    - Unknown: Not inited NodeType.
+    - Unknown: Not initialized NodeType.
     - CallCell: `CallCell` node represents invoking cell-op in forward method.
     - CallPrimitive: `CallPrimitive` node represents invoking primitive-op in forward method.
     - CallFunction: `CallFunction` node represents invoking a function in forward method.
-    - CallMethod: `CallMethod` node represents invoking of method in forward method which can not be mapped to
+    - CallMethod: `CallMethod` node represents invoking a method in forward method which can not be mapped to
       cell-op or primitive-op in MindSpore.
     - Python: `Python` node holds unsupported-ast-node or unnecessary-to-parse-ast-node.
     - Input: `Input` node represents input of `SymbolTree` corresponding to arguments of forward method.

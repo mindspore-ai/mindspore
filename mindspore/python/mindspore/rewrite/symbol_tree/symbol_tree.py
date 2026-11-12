@@ -1019,7 +1019,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         Args:
             node (Union[Node, str]): Node to be modified. Can be a node or name of node.
             index (int): Indicate which input being modified.
-            arg (Union[ScopedValue, str]): New argument to been set.
+            arg (Union[ScopedValue, str]): New argument to be set.
 
         Raises:
             RuntimeError: If 'node' is not belong to current SymbolTree.
@@ -1089,7 +1089,7 @@ class SymbolTree(Observer, Observable, NodeManager):
         Args:
             node (Union[Node, str]): Node to be modified. Can be a node or name of node.
             index (int): Indicate which target being modified.
-            arg (Union[ScopedValue, str]): New target to been set.
+            arg (Union[ScopedValue, str]): New target to be set.
 
         Raises:
             ValueError: If `node` is not belong to current SymbolTree.
