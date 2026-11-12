@@ -44,7 +44,7 @@ def test_bias_add_grad_2d(data_type, mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
 @pytest.mark.parametrize("data_type",
                          [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
@@ -66,7 +66,7 @@ def test_bias_add_grad_4d(data_type, mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=2048.75)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=2048.75)
 @pytest.mark.parametrize("data_type", [np.complex64, np.complex128])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @test_utils.run_test_with_On

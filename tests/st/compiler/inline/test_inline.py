@@ -43,7 +43,7 @@ class TestBlock(Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 def test_nest():
     """
     Feature: Nest reusing cell with lazy inline.

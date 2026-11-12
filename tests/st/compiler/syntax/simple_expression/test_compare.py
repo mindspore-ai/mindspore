@@ -71,7 +71,7 @@ def test_compare_tensor_int_vs_tensor_float():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_multiple_compare():
     """
     Feature: Test compare including multiple comparators.
@@ -90,7 +90,7 @@ def test_multiple_compare():
     assert ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_multiple_compare_2():
     """
     Feature: Test compare including multiple comparators.
@@ -109,7 +109,7 @@ def test_multiple_compare_2():
     assert not ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
 def test_multiple_compare_3():
     """
     Feature: Test compare including multiple comparators.

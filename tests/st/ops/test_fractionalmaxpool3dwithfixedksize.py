@@ -42,7 +42,7 @@ class NetFractionalMaxPool3DGradWithFixedKsize(nn.Cell):
         return self.fractional_max_pool_3d_grad_with_fixed_ksize(origin_input, out_backprop, argmax)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', mem_peak=0.01)
 def test_fractionalmaxpool3dwithfixedksize():
     """

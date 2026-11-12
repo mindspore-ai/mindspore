@@ -33,7 +33,7 @@ context.set_context(mode=context.GRAPH_MODE)
 grad_all = C.GradOperation(get_all=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
         card_mark='onecard', mem_peak=1024.75)
 def test_custom_vjp_mul_add():
     """
@@ -92,7 +92,7 @@ def test_custom_vjp_inline_mul_add():
     assert grads[1] == Tensor(6.0, dtype=ms.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
         card_mark='onecard', mem_peak=2048.01)
 def test_custom_vjp_with_no_bprop():
     """
@@ -151,7 +151,7 @@ def test_custom_vjp_bprop_in_fn_2():
     assert (grads[1].asnumpy() == np.zeros([2, 2]).astype(np.float32)).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=1024.75)
 def test_custom_vjp_bprop_in_fn3():
     """
     Features: Custom function bprop
