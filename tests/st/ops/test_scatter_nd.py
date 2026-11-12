@@ -40,8 +40,8 @@ def scatter_nd_vmap_func(indices, updates, shape):
     return ops.vmap(scatter_nd_forward_func, in_axes=(0, 0, None), out_axes=0)(indices, updates, shape)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', mem_peak=2048.02)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', mem_peak=2048.02)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
@@ -66,8 +66,8 @@ def test_scatter_nd_op_normal_1(context_mode, data_type, indices_type):
         np.testing.assert_allclose(grad_out.asnumpy(), expect_grad, rtol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', mem_peak=2048.02)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', mem_peak=2048.02)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
@@ -149,8 +149,8 @@ def test_scatter_nd_op_dynamic_shape(context_mode, data_type, indices_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', mem_peak=1024.85)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', mem_peak=1024.85)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [ms.float32, ms.int64])
 @pytest.mark.parametrize("indices_type", [ms.int64, ms.int32])

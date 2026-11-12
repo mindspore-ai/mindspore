@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test ops fftshift"""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -23,7 +24,7 @@ from tests.mark_utils import arg_mark
 
 class FFTShiftNet(nn.Cell):
     def __init__(self):
-        super(FFTShiftNet, self).__init__()
+        super().__init__()
         self.fftshift = fftshift
 
     def construct(self, x, dim=None):
@@ -32,7 +33,7 @@ class FFTShiftNet(nn.Cell):
 
 class FFTShiftGradNet(nn.Cell):
     def __init__(self, net, dout):
-        super(FFTShiftGradNet, self).__init__()
+        super().__init__()
         self.net = net
         self.dout = dout
         self.grad = ops.GradOperation(sens_param=True)

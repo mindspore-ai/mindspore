@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test pad_v3 op"""
 from tests.mark_utils import arg_mark
 
 import pytest
@@ -25,7 +26,7 @@ from mindspore.ops.operations import nn_ops
 
 class PadV3Net(nn.Cell):
     def __init__(self, mode, paddings_contiguous=True):
-        super(PadV3Net, self).__init__()
+        super().__init__()
         self.ops = nn_ops.PadV3(mode, paddings_contiguous)
         self.mode = mode
 

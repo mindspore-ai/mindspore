@@ -38,7 +38,7 @@ np.random.seed(0)
 
 class SolveTriangularNet(nn.Cell):
     def __init__(self, lower: bool = False, unit_diagonal: bool = False, trans: str = 'N'):
-        super(SolveTriangularNet, self).__init__()
+        super().__init__()
         self.solve = mscp.linalg.solve_triangular
         self.lower = lower
         self.unit_diagonal = unit_diagonal
@@ -50,7 +50,7 @@ class SolveTriangularNet(nn.Cell):
 
 class LinearSumAssignmentNet(nn.Cell):
     def __init__(self):
-        super(LinearSumAssignmentNet, self).__init__()
+        super().__init__()
         self.solve = LinearSumAssignment()
 
     def construct(self, cost_matrix, maximize, dimension_limit):
@@ -85,8 +85,8 @@ def test_batch_cholesky(shape, lower: bool, data_type):
     Description: test cases for cholesky decomposition test cases for A[N,N]x = b[N,1]
     Expectation: the result match to scipy
     """
-    b_s_l = list()
-    b_s_a = list()
+    b_s_l = []
+    b_s_a = []
     tmp = np.zeros(shape[:-2])
     inner_row = shape[-2]
     inner_col = shape[-1]
@@ -459,7 +459,8 @@ def test_solve_triangular_error_dims_mismatched():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          mem_peak=2048.25)
 @pytest.mark.parametrize('cost_matrix_type', [ms.float16, ms.float32, ms.float64, ms.bool_, ms.int16, ms.int32,
                                               ms.int64, ms.int8, ms.uint16, ms.uint32, ms.uint64, ms.uint8])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test ops bias_add_grad"""
 import numpy as np
 import pytest
 import mindspore as ms
@@ -23,7 +24,8 @@ from tests.mark_utils import arg_mark
 def bias_add_grad(out, data_format):
     return ops.auto_generate.BiasAddGrad(data_format)(out)
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
+          mem_peak=2048.25)
 @pytest.mark.parametrize("data_type", [np.float32, np.float64])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @test_utils.run_test_with_On
@@ -44,7 +46,8 @@ def test_bias_add_grad_2d(data_type, mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
+          mem_peak=2048.25)
 @pytest.mark.parametrize("data_type",
                          [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
@@ -66,7 +69,8 @@ def test_bias_add_grad_4d(data_type, mode):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard', mem_peak=2048.75)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
+          mem_peak=2048.75)
 @pytest.mark.parametrize("data_type", [np.complex64, np.complex128])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @test_utils.run_test_with_On
@@ -101,7 +105,7 @@ def test_bias_add_grad_vmap(mode):
         return bias_add_grad(dout, data_format="NCHW")
 
     ms.context.set_context(mode=mode)
-    vmap_bias_add_grad = ops.vmap(bias_add_grad_forward_func, in_axes=(0))
+    vmap_bias_add_grad = ops.vmap(bias_add_grad_forward_func, in_axes=0)
     x = Tensor(np.array([[[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
                          [[[9, 10], [11, 12]], [[13, 14], [15, 16]]]]).astype(np.float32))
     output = vmap_bias_add_grad(x)
