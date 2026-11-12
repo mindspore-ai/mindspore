@@ -24,6 +24,7 @@ from mindspore.ops._grad_experimental import grad_sparse as gc, grad_sparse_ops 
 from mindspore.ops._grad_experimental import grad_array_ops as ga, grad_math_ops as gm
 from mindspore.ops._grad_experimental import grad_nn_ops as gn, grad_inner_ops as ge
 from mindspore.ops._grad_experimental import grad_debug_ops as gd, grad_implementations as gi
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(autouse=True)
@@ -91,6 +92,7 @@ def native_boundary_fixture(monkeypatch):
         assert not pending, "Expected native calls were not consumed"
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['layer', 'vars', 'vars_channel', 'channel', 'learned', 'learned_channel'])
 def test_quantization_native_gradient_abi(native_boundary, kind):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -150,6 +152,7 @@ def test_quantization_native_gradient_abi(native_boundary, kind):
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError, reason='Per-channel rule copies symmetric into narrow_range')
 def test_quantization_gradient_preserves_independent_narrow_range(native_boundary):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -173,6 +176,7 @@ def test_quantization_gradient_preserves_independent_narrow_range(native_boundar
     assert result[0] is dout and not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['fold', 'fold_d', 'fold2', 'fold2_d', 'correction', 'acts'])
 def test_quantized_training_composite_native_protocol(native_boundary, kind):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -274,6 +278,7 @@ def test_quantized_training_composite_native_protocol(native_boundary, kind):
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_correction_ascend_branch_uses_reduce_without_selecting_a_device(monkeypatch, native_boundary):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Correction ascend branch uses reduce without selecting a device.
@@ -296,6 +301,7 @@ def test_correction_ascend_branch_uses_reduce_without_selecting_a_device(monkeyp
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['minmax', 'minmax_channel', 'reduce', 'weights'])
 def test_quantization_nondifferentiable_inputs_and_straight_through(kind):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -324,6 +330,7 @@ def test_quantization_nondifferentiable_inputs_and_straight_through(kind):
         )
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_base_registry_fallbacks_do_not_mutate_registries():
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Base registry fallbacks do not mutate registries.
@@ -337,6 +344,7 @@ def test_base_registry_fallbacks_do_not_mutate_registries():
     assert gb.create_tensor_by_element(value) is value
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [[1, 2], (1, 2), 3, 4.0, 'unchanged'])
 def test_base_convert_constant_values_keeps_identity(value):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -347,6 +355,7 @@ def test_base_convert_constant_values_keeps_identity(value):
     assert flag is False and actual is value
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'value,dtype,expected',
     [([1, 2], ms.int64, [1, 2]), ((3, 4), ms.int64, [3, 4]), (5, ms.int64, 5), (6.0, ms.float32, 6.0)],
@@ -366,6 +375,7 @@ def test_base_convert_dynamic_metadata_uses_real_cpu_conversion(monkeypatch, val
     check(actual, expected, dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_base_existing_tensor_remains_unchanged():
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Base existing tensor remains unchanged.
@@ -376,6 +386,7 @@ def test_base_existing_tensor_remains_unchanged():
     assert flag is True and result is value
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_debug_callback_none_preserves_cotangent_and_tensor_dump_zeros():
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Debug callback none preserves cotangent and tensor dump zeros.
@@ -396,6 +407,7 @@ def test_debug_callback_none_preserves_cotangent_and_tensor_dump_zeros():
     check(zero, [0.0, 0.0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dump_gradient_native_side_effect_protocol(native_boundary):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Dump gradient native side effect protocol.
@@ -411,6 +423,7 @@ def test_dump_gradient_native_side_effect_protocol(native_boundary):
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_inner_psroi_pooling_passes_spatial_shape_and_mapping(native_boundary):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Inner PSROI pooling passes spatial shape and mapping.
@@ -438,6 +451,7 @@ def test_inner_psroi_pooling_passes_spatial_shape_and_mapping(native_boundary):
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     strict=True, raises=AssertionError, reason='GenerateEodMask bprop returns two gradients for one input'
 )
@@ -453,6 +467,7 @@ def test_eod_mask_gradient_has_one_cotangent_per_input():
     assert result[0] is value
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['gru', 'lstm', 'wkv'])
 def test_recurrent_gradient_native_order_and_real_postprocessing(native_boundary, kind):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -516,6 +531,7 @@ def test_recurrent_gradient_native_order_and_real_postprocessing(native_boundary
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['avg', 'fractional'])
 def test_pooling_gradient_native_shape_and_indices_contract(native_boundary, kind):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -551,6 +567,7 @@ def test_pooling_gradient_native_shape_and_indices_contract(native_boundary, kin
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('is_grad', [False, True])
 def test_sparse_cross_entropy_rule_preserves_loss_scaling(native_boundary, is_grad):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -571,6 +588,7 @@ def test_sparse_cross_entropy_rule_preserves_loss_scaling(native_boundary, is_gr
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('divide', [False, True])
 @pytest.mark.parametrize('column', [False, True])
 def test_csr_elementwise_rule_native_values_and_real_dense_scatter(monkeypatch, native_boundary, divide, column):
@@ -611,6 +629,7 @@ def test_csr_elementwise_rule_native_values_and_real_dense_scatter(monkeypatch, 
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('divide', [False, True])
 def test_csr_explicit_first_axis_broadcast_rejection(monkeypatch, native_boundary, divide):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -634,6 +653,7 @@ def test_csr_explicit_first_axis_broadcast_rejection(monkeypatch, native_boundar
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_csr_reduction_gradient_tiles_then_gathers_real_cpu_values(native_boundary):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: CSR reduction gradient tiles then gathers real CPU values.
@@ -649,6 +669,7 @@ def test_csr_reduction_gradient_tiles_then_gathers_real_cpu_values(native_bounda
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_csr_matvec_gradient_transposes_and_preserves_cotangent_protocol(monkeypatch, native_boundary):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: CSR matvec gradient transposes and preserves cotangent protocol.
@@ -675,6 +696,7 @@ def test_csr_matvec_gradient_transposes_and_preserves_cotangent_protocol(monkeyp
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('with_segments', [False, True])
 def test_sparse_segment_gpu_native_protocol_stays_on_cpu(monkeypatch, native_boundary, with_segments):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -705,6 +727,7 @@ def test_sparse_segment_gpu_native_protocol_stays_on_cpu(monkeypatch, native_bou
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_segment_dynamic_dim_metadata_keeps_real_mean_gradient(monkeypatch):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Sparse segment dynamic dim metadata keeps real mean gradient.
@@ -722,6 +745,7 @@ def test_sparse_segment_dynamic_dim_metadata_keeps_real_mean_gradient(monkeypatc
     check(got[3], 0, ms.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('container', [tuple, list])
 @pytest.mark.xfail(
     strict=True, raises=AssertionError, reason='Ragged gradient zeros enumerate pairs instead of split tensors'
@@ -744,6 +768,7 @@ def test_ragged_gradient_structure_matches_input_splits(container):
     check(got[0][1], [0, 0, 0], ms.int64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_map_tensor_gradient_routes_actual_primitive_arguments(native_boundary):
     # The map handle is opaque to Python; only the native map-gradient kernel
     # consumes it. No communication, persistent map or device allocation is used.
@@ -761,6 +786,7 @@ def test_map_tensor_gradient_routes_actual_primitive_arguments(native_boundary):
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['diag_part', 'set_diag', 'resize', 'index_fill'])
 def test_array_dynamic_shape_metadata_uses_real_cpu_gradient_math(monkeypatch, kind):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -788,6 +814,7 @@ def test_array_dynamic_shape_metadata_uses_real_cpu_gradient_math(monkeypatch, k
         equal(got, (t([[2.0, 3.0], [0.0, 0.0]]), 0, t([0], ms.int32), t(12.0)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_embedding_dynamic_metadata_has_explicit_error(monkeypatch):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Embedding dynamic metadata has explicit error.
@@ -798,6 +825,7 @@ def test_embedding_dynamic_metadata_has_explicit_error(monkeypatch):
         ga.get_bprop_embedding_lookup(None)(t(np.ones((3, 2))), t([1], ms.int32), 0, None, t([[2.0, 3.0]]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unique_gradient_native_tuple_protocol(native_boundary):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Unique gradient native tuple protocol.
@@ -812,6 +840,7 @@ def test_unique_gradient_native_tuple_protocol(native_boundary):
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('adjoint', [False, True])
 @pytest.mark.xfail(
     strict=True, raises=AssertionError, reason='MatrixSolve bprop downcasts float64 gradients to float32'
@@ -833,6 +862,7 @@ def test_matrix_solve_float64_gradient_preserves_input_precision(adjoint):
     check(got[1], db, ms.float64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('condition', [True, False])
 def test_switch_gradient_native_control_flow_protocol(native_boundary, condition):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -853,6 +883,7 @@ def test_switch_gradient_native_control_flow_protocol(native_boundary, condition
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_switch_layer_native_selection_and_gradient_structure(native_boundary):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Switch layer native selection and gradient structure.
@@ -876,6 +907,7 @@ def test_switch_layer_native_selection_and_gradient_structure(native_boundary):
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name',
     [
@@ -917,6 +949,7 @@ def test_legacy_structure_getitem_gradient_correct_container(name):
         check(got[0]['second'], [0.0, 0.0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     condition=np.lib.NumpyVersion(np.__version__) >= '2.0.0',
     strict=True,
@@ -937,6 +970,7 @@ def test_legacy_scalar_cast_returns_original_scalar_type():
     assert got == (7, ms.float32) and isinstance(got[0], int)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_distribute_and_array_reduce_native_shape_protocol(native_boundary):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Distribute and array reduce native shape protocol.
@@ -957,6 +991,7 @@ def test_distribute_and_array_reduce_native_shape_protocol(native_boundary):
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['csr', 'coo'])
 @pytest.mark.xfail(strict=True, raises=TypeError, reason='Eager ZerosLike does not accept a sparse tensor')
 def test_sparse_shape_accessor_gradient_is_zero_sparse_tensor(kind):
@@ -977,6 +1012,7 @@ def test_sparse_shape_accessor_gradient_is_zero_sparse_tensor(kind):
     check(result.values, [0.0, 0.0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('adj_s,adj_d', [(False, True), (True, False)])
 def test_sparse_matmul_half_precision_uses_real_cpu_cast_and_gather(native_boundary, adj_s, adj_d):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -1016,6 +1052,7 @@ def test_sparse_matmul_half_precision_uses_real_cpu_cast_and_gather(native_bound
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shift', [None, 1])
 def test_broadcast_gradient_dynamic_metadata_dispatches_to_real_cpu_reductions(monkeypatch, shift):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -1037,6 +1074,7 @@ def test_broadcast_gradient_dynamic_metadata_dispatches_to_real_cpu_reductions(m
     check(got[1], sensitivity.sum(axis=0, keepdims=True))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scalar_left', [True, False])
 @pytest.mark.parametrize('shift', [None, 0])
 def test_broadcast_scalar_abstract_shape_protocol_keeps_real_reduction(monkeypatch, scalar_left, shift):
@@ -1058,6 +1096,7 @@ def test_broadcast_scalar_abstract_shape_protocol_keeps_real_reduction(monkeypat
     equal(got, (t(21.0), dout) if scalar_left else (dout, t(21.0)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=NotImplementedError, reason='Eager zeros_like cannot convert a dictionary type')
 def test_dictionary_inplace_gradient_zeros_each_input():
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -1072,6 +1111,7 @@ def test_dictionary_inplace_gradient_zeros_each_input():
     check(got[2], [0.0, 0.0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dynamic', [False, True])
 def test_index_fill_scalar_sensitivity_uses_real_cpu_rule(monkeypatch, dynamic):
     """Feature: Python gradient routing, metadata and native ABI contracts.
@@ -1085,6 +1125,7 @@ def test_index_fill_scalar_sensitivity_uses_real_cpu_rule(monkeypatch, dynamic):
     equal(got, (t(0.0), 0, t([0], ms.int32), t(11.0)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_add_dynamic_shape_metadata_keeps_real_cpu_native_gradient(monkeypatch):
     """Feature: Python gradient routing, metadata and native ABI contracts.
     Description: Sparse add dynamic shape metadata keeps real CPU native gradient.
@@ -1110,6 +1151,7 @@ def test_sparse_add_dynamic_shape_metadata_keeps_real_cpu_native_gradient(monkey
     )
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('under', [False, True])
 @pytest.mark.parametrize('batch', [False, True])
 @pytest.mark.parametrize('dtype', [ms.complex64, ms.complex128])
@@ -1159,6 +1201,7 @@ def test_complex_least_squares_native_factorization_protocol_and_cpu_assembly(na
     assert not pending
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     strict=True, raises=TypeError, reason='Dynamic MaskedFill supplies a range axis unsupported by eager ReduceSum'
 )
@@ -1180,6 +1223,7 @@ def test_masked_fill_dynamic_rank_path_preserves_all_input_dtypes(monkeypatch):
     check(got[1], np.zeros(mask.shape, dtype=bool), ms.bool_)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     strict=True, raises=ValueError, reason='EmbeddingLookup empty-indices rule reshapes empty dout to nonempty row'
 )
@@ -1198,6 +1242,7 @@ def test_embedding_lookup_empty_indices_preserves_empty_row_gradient():
     check(got[0].values, np.empty((0, 2)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError, reason='Sspaddmm bprop zeros differentiable sparse input values')
 def test_sspaddmm_sparse_values_gradient_matches_linear_map():
     """Feature: Python gradient routing, metadata and native ABI contracts.

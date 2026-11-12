@@ -11,6 +11,7 @@ from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.function import sparse_func as sparse
 from mindspore.ops.function import nn_func as nn
 from mindspore.ops.function import array_func as array
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -43,6 +44,7 @@ def csr_fields(value, indptr, indices, values, shape, index_dtype, value_dtype):
     tensor_fields(value.values, values, value_dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('operation', ['csr_div', 'csr_mul'])
 @pytest.mark.parametrize('index_dtype', [ms.int32, ms.int64])
 @pytest.mark.parametrize(
@@ -84,6 +86,7 @@ def test_csr_dense_arithmetic_native_protocol(
     csr_fields(result, [0, 2, 3], [0, 2, 1], supplied_values, (2, 3), index_dtype, promoted)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index_dtype', [ms.int32, ms.int64])
 @pytest.mark.parametrize(
     'value_dtype,dense_dtype,promoted', [(ms.float16, ms.float32, ms.float32), (ms.float32, ms.float64, ms.float64)]
@@ -125,6 +128,7 @@ def csr_from_array(values, index_dtype):
     return result, indptr, columns, values[rows, columns], value_dtype
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index_dtype', [ms.int32, ms.int64])
 @pytest.mark.parametrize(
     'trans_a,trans_b,adjoint_a,adjoint_b',
@@ -201,6 +205,7 @@ def test_sparse_matrix_product_native_protocol(monkeypatch, index_dtype, trans_a
     csr_fields(result, c_ptr, c_col, c_val, supplied_product.shape, index_dtype, value_dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value_dtype', [ms.float16, ms.float32])
 def test_coalesce_real_cpu_duplicate_coordinate_sum(value_dtype):
     """Feature: Sparse and scalar operator frontend contracts.
@@ -218,6 +223,7 @@ def test_coalesce_real_cpu_duplicate_coordinate_sum(value_dtype):
     tensor_fields(result[2], [2, 2], ms.int64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['coo', 'row'])
 def test_deprecated_sparse_construction_native_boundary(monkeypatch, capsys, kind):
     """Feature: Sparse and scalar operator frontend contracts.
@@ -260,6 +266,7 @@ def test_deprecated_sparse_construction_native_boundary(monkeypatch, capsys, kin
     assert 'deprecated' in capsys.readouterr().out
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape,expected', [((2,), False), ((), True), ((1, 1), True), ((1, 1, 1), False)])
 def test_sparse_scalar_metadata_uses_actual_tensor_shape(shape, expected):
     """Feature: Sparse and scalar operator frontend contracts.
@@ -270,6 +277,7 @@ def test_sparse_scalar_metadata_uses_actual_tensor_shape(shape, expected):
     assert sparse.is_scalar(value) is expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [ms.int32, ms.float64])
 def test_sparse_typed_tensor_factory_returns_real_values(dtype):
     """Feature: Sparse and scalar operator frontend contracts.
@@ -279,6 +287,7 @@ def test_sparse_typed_tensor_factory_returns_real_values(dtype):
     tensor_fields(sparse._make_tensor_with_dtype([2, 3], dtype), [2, 3], dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2, 3), (2, -1), ms.mutable([2, 3], True)])
 def test_sparse_shape_conversion_with_real_sequence_metadata(shape):
     """Feature: Sparse and scalar operator frontend contracts.
@@ -293,6 +302,7 @@ def convert_dynamic_shape(shape):
     return sparse._convert_shape(shape)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_shape_conversion_compiled_dynamic_length():
     """Feature: Sparse and scalar operator frontend contracts.
     Description: Sparse shape conversion compiled dynamic length.
@@ -301,6 +311,7 @@ def test_sparse_shape_conversion_compiled_dynamic_length():
     assert convert_dynamic_shape(ms.mutable([2, 3], True)) == (-2,)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('operation', ['csr_div', 'csr_mul'])
 def test_invalid_dense_broadcast_native_failure_protocol(monkeypatch, operation):
     """Feature: Sparse and scalar operator frontend contracts.
@@ -335,6 +346,7 @@ class DynamicMultilabelMargin(ms.nn.Cell):
         return nn.multilabel_soft_margin_loss(logits, target)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2, 2), (3, 4)])
 def test_multilabel_soft_margin_natural_dynamic_shape_cpu_graph(shape):
     """Feature: Sparse and scalar operator frontend contracts.
@@ -359,6 +371,7 @@ def scalar_to_array_compiled(value):
     return array.scalar_to_array(value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     strict=True,
     raises=RuntimeError,
@@ -376,6 +389,7 @@ def test_deprecated_scalar_to_array_compiled_cpu(value):
     np.testing.assert_allclose(result.asnumpy(), value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value,expected_dtype', [(3, ms.int64), (2.5, ms.float64)])
 def test_scalar_to_array_native_primitive_protocol(monkeypatch, value, expected_dtype):
     """Feature: Sparse and scalar operator frontend contracts.

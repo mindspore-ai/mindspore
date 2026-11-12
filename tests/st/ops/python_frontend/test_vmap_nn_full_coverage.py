@@ -23,6 +23,7 @@ from mindspore.ops.primitive import Primitive
 from mindspore.ops._utils import arg_handler
 from mindspore.ops._vmap import vmap_base as B, vmap_nn_ops as N, vmap_grad_nn_ops as D
 from mindspore.ops._vmap import vmap_convolution_ops as C, vmap_image_ops as I, vmap_random_ops as Q
+from tests.mark_utils import arg_mark
 
 
 def _eager_graph_preprocess(prim, *args):
@@ -66,6 +67,7 @@ def check(result, expected, axis=0, atol=1e-5):
     np.testing.assert_allclose(actual, expected, atol=atol, rtol=1e-5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [2, 3])
 @pytest.mark.parametrize('group', [1, 2])
 @pytest.mark.parametrize('axes', [(0, None), (None, 0), (0, 0), (2, None), (None, 2), (2, 1), (None, None)])
@@ -93,6 +95,7 @@ def test_convolution_pointwise_real_kernel(rank, group, axes):
     check(result, expected, axis)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('group', [1, 2])
 @pytest.mark.parametrize('axes', [(0, None), (None, 0), (0, 0), (2, None), (None, 2), (2, 1), (None, None)])
 def test_conv2d_transpose_pointwise(group, axes):
@@ -114,6 +117,7 @@ def test_conv2d_transpose_pointwise(group, axes):
     check(result, ex * factor, axis)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('group', [1, 2])
 @pytest.mark.parametrize('axes', [(0, None), (None, 0), (0, 0), (2, None), (None, 2), (2, 1), (None, None)])
 def test_conv2d_filter_grad_pointwise(group, axes):
@@ -135,6 +139,7 @@ def test_conv2d_filter_grad_pointwise(group, axes):
     check(result, expected[0] if axis is None else expected, axis)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['transpose', 'filter'])
 @pytest.mark.parametrize('size,axis,reason', [(Tensor([1, 1, 2, 2], ms.int32), None, 'dynamic shape'),
                                             ((1, 1, 2, 2), 0, 'must be None')])
@@ -154,6 +159,7 @@ def test_convolution_size_contract(kind, size, axis, reason):
         rule((x, 0), (x, 0), (size, axis))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('data,compare,expected', [(0, 2, (3, 0)), (3, 1, (1, 4))])
 def test_convolution_reshape_source_dimension(data, compare, expected):
     """
@@ -173,6 +179,7 @@ def test_convolution_reshape_source_dimension(data, compare, expected):
         C._get_channel_index('bad', 'Conv2D')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['kl', 'smooth', 'bce'])
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 @pytest.mark.parametrize('axes', [(0, 0), (1, None), (None, 1), (None, None)])
@@ -208,6 +215,7 @@ def test_losses_real_reductions(kind, reduction, axes):
     check(result, expected, None if xa is None and ya is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum', 'batchmean'])
 def test_kl_reductions_scalar_and_batchmean(reduction):
     """
@@ -226,6 +234,7 @@ def test_kl_reductions_scalar_and_batchmean(reduction):
     check(rule((t(x), 0), (t(y), 0)), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['bce', 'smooth', 'kl'])
 def test_invalid_loss_reduction(kind):
     """
@@ -248,6 +257,7 @@ def test_invalid_loss_reduction(kind):
         rule(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('x_axis,w_axis,b_axis', [(0, None, None), (2, 1, 1), (None, 0, None), (1, None, 0)])
 @pytest.mark.parametrize('with_bias', [False, True])
 def test_dense_transforms_and_broadcasts_inputs(x_axis, w_axis, b_axis, with_bias):
@@ -267,6 +277,7 @@ def test_dense_transforms_and_broadcasts_inputs(x_axis, w_axis, b_axis, with_bia
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['softmax', 'logsoftmax'])
 @pytest.mark.parametrize('batch_axis', [0, 1, 2])
 @pytest.mark.parametrize('axis', [0, -1])
@@ -290,6 +301,7 @@ def test_softmax_logsoftmax_reduction_axes(kind, batch_axis, axis):
     check(result, expected, batch_axis)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['avg2', 'avg3', 'max2', 'max3', 'maxarg3'])
 @pytest.mark.parametrize('extra', [False, True])
 @pytest.mark.parametrize('axis', [0, 1, None])
@@ -328,6 +340,7 @@ def test_pooling_reconstructs_all_leading_dimensions(kind, extra, axis):
         check(result, expected, None if axis is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [1, 2, 3])
 @pytest.mark.parametrize('linear', [False, True])
 @pytest.mark.parametrize('axis', [0, 1, None])
@@ -349,6 +362,7 @@ def test_upsampling_identity_real_kernel(rank, linear, axis):
     check(result, x[0] if axis is None else x, None if axis is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [1, 2, 3])
 @pytest.mark.parametrize('linear', [False, True])
 def test_upsampling_rejects_mapped_attributes(rank, linear):
@@ -365,6 +379,7 @@ def test_upsampling_rejects_mapped_attributes(rank, linear):
         factory(Primitive(name), 2)((t(np.ones((2, 1, 1) + (2,) * rank)), 0), *args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['Dropout2D', 'Dropout3D'])
 @pytest.mark.parametrize('extra', [False, True])
 @pytest.mark.parametrize('axis', [0, None])
@@ -383,6 +398,7 @@ def test_dropout_keep_probability_one_preserves_values(name, extra, axis):
     check(result[1], np.ones(expected.shape, bool), None if axis is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['pad', 'padv3', 'mirror', 'mirrorgrad'])
 @pytest.mark.parametrize('extra', [False, True])
 @pytest.mark.parametrize('axis', [0, 1])
@@ -417,6 +433,7 @@ def test_padding_and_mirror_gradient_preserve_batch(kind, extra, axis):
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['padv3', 'mirror', 'mirrorgrad'])
 @pytest.mark.parametrize('reason', ['arity', 'axis', 'rank'])
 def test_padding_rejects_invalid_contract(kind, reason):
@@ -443,6 +460,7 @@ def test_padding_rejects_invalid_contract(kind, reason):
         rule(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [2, 3])
 @pytest.mark.parametrize('axis', [0, 1, None])
 def test_grid_sampler_center_values_and_gradients(rank, axis):
@@ -471,6 +489,7 @@ def test_grid_sampler_center_values_and_gradients(rank, axis):
     check(dg, np.broadcast_to(expected_grid, grid.shape))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('grad', [False, True])
 def test_grid_sampler_rejects_unknown_primitive(grad):
     """
@@ -482,6 +501,7 @@ def test_grid_sampler_rejects_unknown_primitive(grad):
         (D.get_grid_sampler_grad_vmap_rule if grad else N.get_grid_sampler_vmap_rule)(Primitive('Add'), 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1, None])
 def test_image_resize_identity_and_size_axis_contract(axis):
     """
@@ -506,6 +526,7 @@ def test_image_resize_identity_and_size_axis_contract(axis):
             'ResizeLinear1D', 'coordinate_transformation_mode', 'align_corners'), None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=TypeError, reason='image rules omit prim in vmap_general_preprocess')
 @pytest.mark.parametrize('kind', ['bilineargrad', 'lineargrad', 'crop'])
 def test_image_rules_expected_values_pending_missing_preprocess_primitive(kind):
@@ -532,6 +553,7 @@ def test_image_rules_expected_values_pending_missing_preprocess_primitive(kind):
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['Embedding', Primitive('Embedding')])
 def test_embedding_explicitly_rejects_vmap(name):
     """
@@ -543,6 +565,7 @@ def test_embedding_explicitly_rejects_vmap(name):
         N.get_embedding_vmap_rule(name, 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['elu', 'celu'])
 @pytest.mark.parametrize('axis', [0, 1, None])
 def test_elu_and_celu_math(kind, axis):
@@ -561,6 +584,7 @@ def test_elu_and_celu_math(kind, axis):
             factory(Primitive('Elu'), 2)(packed(x, 0), (1., 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1, None])
 def test_in_top_k_handles_shared_targets(axis):
     """
@@ -574,6 +598,7 @@ def test_in_top_k_handles_shared_targets(axis):
     check(result, [True, False] if axis is None else [[True, False], [False, True]], None if axis is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['shuffle', 'choice', 'uniform'])
 @pytest.mark.parametrize('existing_batch', [False, True])
 @pytest.mark.parametrize('axis', [0, 1, None])
@@ -623,6 +648,7 @@ def test_random_rules_structural_and_probability_contracts(kind, existing_batch,
         np.testing.assert_allclose(sampled_count[0].asnumpy(), .4)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1, None])
 def test_multinomial_single_nonzero_category_is_deterministic(axis):
     """
@@ -662,6 +688,7 @@ def optimizer_primitive(name):
     return getattr(P, name)()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('factory,name', _OPTIMIZERS)
 @pytest.mark.parametrize('existing_batch', [False, True])
 @pytest.mark.parametrize('var_axis', [None, 1])
@@ -684,6 +711,7 @@ def test_optimizer_rules_reject_ambiguous_mutation_order(factory, name, existing
         rule(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('existing_batch', [False, True])
 @pytest.mark.parametrize('gamma_axis', [None, 1])
 def test_instance_norm_rejects_ambiguous_parameter_mutation(existing_batch, gamma_axis):
@@ -700,6 +728,7 @@ def test_instance_norm_rejects_ambiguous_parameter_mutation(existing_batch, gamm
             (t(np.ones((2, 1))), gamma_axis), *[(t(np.ones((2, 1))), 0)] * 3, None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1, None])
 @pytest.mark.parametrize('norm_axis', [0, 1, -1])
 @pytest.mark.parametrize('parameter_batched', [False, True])
@@ -748,6 +777,7 @@ def test_layernorm_forward_and_gradient_against_numpy(axis, norm_axis, parameter
     check(dresult[2], expected_db)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1, None])
 @pytest.mark.parametrize('parameter_batched', [False, True])
 def test_batchnorm_inference_transforms_channel_and_batch(axis, parameter_batched):
@@ -780,6 +810,7 @@ def test_batchnorm_inference_transforms_channel_and_batch(axis, parameter_batche
         assert np.all(np.isfinite(value.asnumpy()))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['train', 'rank', 'gradrank'])
 def test_batchnorm_rejects_unsupported_training_and_rank(kind):
     """
@@ -799,6 +830,7 @@ def test_batchnorm_rejects_unsupported_training_and_rank(kind):
         rule(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1])
 @pytest.mark.parametrize('kind', ['max', 'avg', 'avg3', 'maxgradgrad', 'maxgradgrad3', 'adaptmax2', 'adaptmax3'])
 def test_pooling_gradient_sparse_or_uniform_distribution(axis, kind):
@@ -841,6 +873,7 @@ def test_pooling_gradient_sparse_or_uniform_distribution(axis, kind):
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1])
 @pytest.mark.parametrize('linear', [False, True])
 def test_upsample3d_gradient_identity_and_attribute_contract(axis, linear):
@@ -860,6 +893,7 @@ def test_upsample3d_gradient_identity_and_attribute_contract(axis, linear):
         rule(packed(grad, axis), (attrs[0][0], 0), *attrs[1:], *extra)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1, 2])
 @pytest.mark.parametrize('logical_axis', [0, -1])
 def test_log_softmax_gradient_formula(axis, logical_axis):
@@ -879,6 +913,7 @@ def test_log_softmax_gradient_formula(axis, logical_axis):
     check(result, dy - probabilities * dy.sum(reduce_axis, keepdims=True), axis)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1])
 @pytest.mark.parametrize('reduction', ['none', 'sum', 'mean'])
 def test_nll_loss_gradient_scatter_and_validation(axis, reduction):
@@ -911,6 +946,7 @@ def test_nll_loss_gradient_scatter_and_validation(axis, reduction):
             rule(packed(x, axis), packed(lg, axis), (Tensor(target), 0), weight, tw, (enum, None), (-100, None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [3, 4, 5])
 @pytest.mark.parametrize('axes', [(0, None), (1, 0), (None, 1), (None, None)])
 def test_bias_add_and_bias_gradient_preserve_channels(rank, axes):
@@ -939,6 +975,7 @@ def test_bias_add_and_bias_gradient_preserve_channels(rank, axes):
     check(grad, ex.sum(reduce_axes), None if xa is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2, 3, 2)])
 @pytest.mark.parametrize('axis', [
     pytest.param(0, marks=pytest.mark.xfail(strict=True, raises=ValueError,
@@ -959,6 +996,7 @@ def test_pdist_pairwise_euclidean_distance(shape, axis):
     check(result, expected, None if axis is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('extra', [False, True])
 @pytest.mark.parametrize('axis', [0, 1, None])
 def test_local_response_normalization_and_gradient_formula(extra, axis):
@@ -985,6 +1023,7 @@ def test_local_response_normalization_and_gradient_formula(extra, axis):
     check(dx, expected_dx, output_axis)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('same_axis', [True, False])
 def test_hswish_gradient_preserves_mapped_operands(same_axis):
     """
@@ -1003,6 +1042,7 @@ def test_hswish_gradient_preserves_mapped_operands(same_axis):
         N.get_common_activation_grad_vmap_rule(G.HSwishGrad(), 2)((t([1, 2]), None), (t(np.ones((2, 3))), 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_deformable_offsets_unit_mask_and_zero_gradient_contract():
     """
     Feature: Neural-network vmap rules
@@ -1022,6 +1062,7 @@ def test_deformable_offsets_unit_mask_and_zero_gradient_contract():
     check(doffsets, np.zeros_like(offsets))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AttributeError,
                    reason='CdistGrad primitive lacks has_label/clone/set_label API used by rule')
 @pytest.mark.parametrize('axis', [0, 1])
@@ -1049,6 +1090,7 @@ def test_cdist_gradient_real_squared_euclidean_formula(axis, existing_batch):
     check(result, expected[:, None] if existing_batch else expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [3, 5])
 @pytest.mark.parametrize('axis', [0, 1])
 def test_batchnorm_gradient_inference_numpy_formula(rank, axis):
@@ -1074,6 +1116,7 @@ def test_batchnorm_gradient_inference_numpy_formula(rank, axis):
     check(result[2], dy.sum(reduce_axes))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['transpose', 'inputgrad', 'filtergrad'])
 @pytest.mark.parametrize('axes', [(0, None), (None, 0), (0, 0), (2, None), (None, 2), (None, None)])
 def test_conv3d_gradient_and_transpose_pointwise(kind, axes):
@@ -1119,6 +1162,7 @@ def test_conv3d_gradient_and_transpose_pointwise(kind, axes):
     check(result, expected, output_axis)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['max', 'maxarg', 'avg'])
 @pytest.mark.parametrize('axis', [0, 1, None])
 def test_regular_pooling_forward_max_and_mean(kind, axis):
@@ -1143,6 +1187,7 @@ def test_regular_pooling_forward_max_and_mean(kind, axis):
         check(result, expected, None if axis is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, pytest.param(None, marks=pytest.mark.xfail(strict=True, raises=(
     AssertionError, ValueError), reason='unmapped preprocess reorders SmoothL1LossGrad operands'))])
 @pytest.mark.parametrize('reduction', [
@@ -1171,6 +1216,7 @@ def test_smooth_l1_gradient_piecewise_formula(axis, reduction):
     check(result, expected, None if axis is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, None])
 def test_kl_loss_none_gradient_is_negative_target_times_sensitivity(axis):
     """
@@ -1187,6 +1233,7 @@ def test_kl_loss_none_gradient_is_negative_target_times_sensitivity(axis):
     check(result, -y[0]*dy[0] if axis is None else -y*dy, None if axis is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('extra', [False, True])
 @pytest.mark.parametrize('axis', [0, 1])
 def test_maxpool3d_gradient_with_argmax_routes_sensitivity(extra, axis):
@@ -1208,6 +1255,7 @@ def test_maxpool3d_gradient_with_argmax_routes_sensitivity(extra, axis):
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 def test_bce_equal_batched_shapes_take_direct_reduction_path(reduction):
     """
@@ -1229,6 +1277,7 @@ def test_bce_equal_batched_shapes_take_direct_reduction_path(reduction):
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum', 'batchmean'])
 def test_kl_scalar_samples_preserve_batch_without_reduction(reduction):
     """
@@ -1242,6 +1291,7 @@ def test_kl_scalar_samples_preserve_batch_without_reduction(reduction):
     check(result, target * (np.log(target)-x))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['constant', 'reflect', 'edge'])
 @pytest.mark.parametrize('extra', [False, True])
 @pytest.mark.parametrize('tensor_padding', [False, True])
@@ -1264,6 +1314,7 @@ def test_padv3_modes_and_tensor_padding(mode, extra, tensor_padding):
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('bad', ['missing_values', 'mapped_values'])
 def test_padv3_constant_value_input_contract(bad):
     """
@@ -1281,6 +1332,7 @@ def test_padv3_constant_value_input_contract(bad):
         rule(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('extra', [False, True])
 @pytest.mark.parametrize('axis', [0, 1])
 def test_random_categorical_extreme_logits_choose_only_supported_class(extra, axis):
@@ -1299,6 +1351,7 @@ def test_random_categorical_extreme_logits_choose_only_supported_class(extra, ax
         rule(packed(x, axis), (3, 0), (7, None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1])
 def test_adaptive_max_pool2d_output_size_retains_requested_dimensions(axis):
     """
@@ -1323,6 +1376,7 @@ def test_adaptive_max_pool2d_output_size_retains_requested_dimensions(axis):
         check(result[1], expected_indices)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['avg3grad', 'adaptmax3'])
 def test_pooling_rejects_mapped_shape_metadata(kind):
     """
@@ -1338,6 +1392,7 @@ def test_pooling_rejects_mapped_shape_metadata(kind):
             N.get_adaptive_max_pool3d_vmap_rule(NN.AdaptiveMaxPool3D(), 2)(x, (Tensor([1, 1, 1], ms.int32), 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.skip(reason='CPU lacks batch_rank kernel and Ascend7 lacks InstanceNormGrad adapter; probe logs')
 @pytest.mark.parametrize('existing_batch', [False, True])
 @pytest.mark.parametrize('axis', [0, 1])
@@ -1364,6 +1419,7 @@ def test_instance_norm_gradient_constant_signal_contract(existing_batch, axis):
     check(result[2], np.full(param_shape, 8, np.float32))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1])
 @pytest.mark.parametrize('data_format', [0, 1])
 def test_batchnorm_gradgrad_inference_second_derivative_contract(axis, data_format):

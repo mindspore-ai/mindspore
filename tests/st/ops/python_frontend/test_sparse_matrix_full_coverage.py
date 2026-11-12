@@ -18,6 +18,7 @@ import pytest
 
 import mindspore as ms
 from mindspore.ops.function import sparse_func as sparse
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -69,6 +70,7 @@ def dense_values(value):
     return result
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index_dtype', [ms.int32, ms.int64])
 def test_csr_dense_and_coo_conversions_preserve_coordinates(index_dtype):
     """
@@ -85,6 +87,7 @@ def test_csr_dense_and_coo_conversions_preserve_coordinates(index_dtype):
     assert coo.shape == (2, 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['csr', 'coo'])
 def test_dense_to_sparse_preserves_only_nonzero_entries(kind):
     """
@@ -102,6 +105,7 @@ def test_dense_to_sparse_preserves_only_nonzero_entries(kind):
         np.testing.assert_array_equal(result.indices.asnumpy(), [[0, 0], [0, 1], [1, 1]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['csr_to_dense', 'csr_to_coo', 'dense_to_sparse_csr', 'dense_to_sparse_coo'])
 def test_sparse_storage_conversions_reject_wrong_container(name):
     """
@@ -113,6 +117,7 @@ def test_sparse_storage_conversions_reject_wrong_container(name):
         getattr(sparse, name)([1, 2])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['dense_to_sparse_csr', 'dense_to_sparse_coo'])
 def test_dense_to_sparse_rejects_rank_above_two(name):
     """
@@ -124,6 +129,7 @@ def test_dense_to_sparse_rejects_rank_above_two(name):
         getattr(sparse, name)(ms.Tensor(np.ones((1, 2, 2), np.float32)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['csr_to_dense', 'csr_to_coo'])
 def test_csr_conversions_reject_dense_value_dimensions(name):
     """
@@ -137,6 +143,7 @@ def test_csr_conversions_reject_dense_value_dimensions(name):
         getattr(sparse, name)(value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('operation,expected', [('csr_mul', [2, 4, 6]), ('csr_div', [0.5, 1, 1.5])])
 @pytest.mark.parametrize('as_tensor', [False, True])
 def test_csr_scalar_arithmetic_preserves_stored_value_order(operation, expected, as_tensor):
@@ -150,6 +157,7 @@ def test_csr_scalar_arithmetic_preserves_stored_value_order(operation, expected,
     np.testing.assert_array_equal(result.asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('operation,expected', [('csr_mul', [[2, 8], [0, 12]]),
                                                ('csr_div', [[0.5, 0.5], [0, 0.75]])])
 def test_csr_dense_arithmetic_uses_values_at_sparse_positions(operation, expected, akg_cpu_backend):
@@ -162,6 +170,7 @@ def test_csr_dense_arithmetic_uses_values_at_sparse_positions(operation, expecte
     np.testing.assert_array_equal(dense_values(result), expected)
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('trans_a,trans_b', [(False, False), (True, False), (False, True)])
 def test_sparse_matrix_product_transpose_flags(trans_a, trans_b, sparse_gpu_backend):
     """
@@ -176,6 +185,7 @@ def test_sparse_matrix_product_transpose_flags(trans_a, trans_b, sparse_gpu_back
     np.testing.assert_allclose(dense_values(result), expected, rtol=1e-6, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_matrix_vector_product(akg_cpu_backend):
     """
     Feature: Sparse storage conversions and matrix arithmetic
@@ -186,6 +196,7 @@ def test_sparse_matrix_vector_product(akg_cpu_backend):
     np.testing.assert_array_equal(result.asnumpy(), [[10], [12]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_scaled_addition():
     """
     Feature: Sparse storage conversions and matrix arithmetic
@@ -196,6 +207,7 @@ def test_sparse_scaled_addition():
     np.testing.assert_array_equal(dense_values(result), [[2, 0], [-5, 0]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('case', ['a', 'b', 'alpha', 'beta'])
 def test_sparse_addition_requires_sparse_operands_and_tensor_coefficients(case):
     """
@@ -209,6 +221,7 @@ def test_sparse_addition_requires_sparse_operands_and_tensor_coefficients(case):
         sparse.csr_add(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('invalid_left', [False, True])
 def test_sparse_matmul_rejects_dense_operands(invalid_left):
     """
@@ -222,6 +235,7 @@ def test_sparse_matmul_rejects_dense_operands(invalid_left):
         sparse.csr_mm(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_softmax_normalizes_each_stored_row():
     """
     Feature: Sparse storage conversions and matrix arithmetic
@@ -234,6 +248,7 @@ def test_sparse_softmax_normalizes_each_stored_row():
     np.testing.assert_array_equal(result.indptr.asnumpy(), [0, 2, 3])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_softmax_rejects_dense_logits():
     """
     Feature: Sparse storage conversions and matrix arithmetic

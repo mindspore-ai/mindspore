@@ -23,6 +23,7 @@ from mindspore.ops.composite.multitype_ops import getitem_impl as getitem
 from mindspore.ops.function import nn_func as nn
 from mindspore.ops.function import random_func as random_functions
 from mindspore.ops.operations import custom_ops as custom
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -68,6 +69,7 @@ def check(value, expected, dtype=ms.float32):
     np.testing.assert_allclose(value.asnumpy(), expected, rtol=1e-6, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('error_class', [OSError, TypeError])
 def test_url_parser_maps_external_regex_failure_without_network(monkeypatch, error_class):
     """Feature: Internal frontend dispatch and external boundary contracts.
@@ -98,6 +100,7 @@ def compiled_tuple_selection(first, second, index):
     return getitem._tuple_getitem_by_tensor((first, second), index)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index,index_dtype,expected', [(0, ms.int32, [2.0, 3.0]), (-1, ms.int64, [5.0, 7.0])])
 def test_tuple_tensor_dispatch_real_cpu_compiled_graph(index, index_dtype, expected):
     """Feature: Internal frontend dispatch and external boundary contracts.
@@ -107,6 +110,7 @@ def test_tuple_tensor_dispatch_real_cpu_compiled_graph(index, index_dtype, expec
     check(compiled_tuple_selection(t([2.0, 3.0]), t([5.0, 7.0]), t(index, index_dtype)), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_map_tensor_get_real_storage_native_protocol(monkeypatch):
     """Feature: Internal frontend dispatch and external boundary contracts.
     Description: Protocol only after the CPU probe established that native MapTensorGet is unavailable.
@@ -142,6 +146,7 @@ class DynamicRrelu(ms.nn.Cell):
         return nn.rrelu(value, 0.25, 0.25)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_rrelu_natural_dynamic_shape_real_cpu_graph():
     """Feature: Internal frontend dispatch and external boundary contracts.
     Description: RReLU natural dynamic shape real CPU graph.
@@ -161,6 +166,7 @@ def same_dtype(dtype):
     return dtype
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('api_type_form', ['list', 'invalid'])
 def test_custom_workspace_real_constructor_codegen_external_protocol(monkeypatch, tmp_path, api_type_form):
     """Feature: Internal frontend dispatch and external boundary contracts.

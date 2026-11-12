@@ -19,13 +19,14 @@ its ordered GM ABI. The SDK's hardware profile state is restored after each test
 import importlib
 
 import pytest
+from tests.mark_utils import arg_mark
 
 pytest.importorskip('te', reason='Real Tik IR tests require the optional CANN TE SDK')
 # Check optional SDK availability before importing its modules.
-# pylint: disable-next=wrong-import-position
+# pylint: disable-next=wrong-import-order,wrong-import-position
 from te import tik, tvm
 # Check optional SDK availability before importing its modules.
-# pylint: disable-next=wrong-import-position
+# pylint: disable-next=wrong-import-order,wrong-import-position
 from tbe.common import platform
 
 
@@ -135,6 +136,7 @@ def assert_abi(request, inputs, outputs):
             assert str(call.args[2].dtype) == str(call.args[3].dtype) == 'float16'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('batch,heads', [(1, 4), (2, 8)])
 def test_dds_attention_builds_real_masked_softmax_ir(build_requests, batch, heads):
     """Feature: Legacy Tik IR construction and ordered kernel ABI.
@@ -174,6 +176,7 @@ def test_dds_attention_builds_real_masked_softmax_ir(build_requests, batch, head
     assert request['allocations']['mat_l1_ones'] == ('float16', (5120,))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('batch,heads', [(1, 4), (2, 8)])
 def test_dds_gradient_builds_real_softmax_and_transposed_key_gradient_ir(build_requests, batch, heads):
     """Feature: Legacy Tik IR construction and ordered kernel ABI.
@@ -214,6 +217,7 @@ def test_dds_gradient_builds_real_softmax_and_transposed_key_gradient_ir(build_r
     assert {'vmul', 'vsub', 'vadd', 'vtranspose'} <= names
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('batch,heads,sequence,embedding', [(1, 4, 1024, 64), (2, 8, 1024, 128), (1, 4, 2048, 64)])
 @pytest.mark.parametrize('backward', [False, True])
 def test_dsd_builds_real_local_and_global_matrix_paths(build_requests, batch, heads, sequence, embedding, backward):
@@ -261,6 +265,7 @@ def test_dsd_builds_real_local_and_global_matrix_paths(build_requests, batch, he
         assert request['allocations']['v_global_l1'] == ('float16', (global_size * embedding,))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     strict=True,
     raises=RuntimeError,

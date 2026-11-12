@@ -29,6 +29,7 @@ from mindspore.ops.operations import _ms_kernel as hybrid
 from mindspore.ops.operations import _custom_ops_utils as custom
 from mindspore.ops.operations import other_ops as other
 from mindspore.ops.operations.manually_defined import ops_def as manual
+from tests.mark_utils import arg_mark
 
 F32 = dt.TensorType(dt.float32)
 F16 = dt.TensorType(dt.float16)
@@ -138,6 +139,7 @@ QUANT_CASES = [
 ]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,kwargs,shapes,out_shape,types,out_type', QUANT_CASES, ids=[c[0] for c in QUANT_CASES])
 def test_quantization_inference(name, kwargs, shapes, out_shape, types, out_type):
     """
@@ -151,6 +153,7 @@ def test_quantization_inference(name, kwargs, shapes, out_shape, types, out_type
     assert op.infer_dtype(*types) == out_type
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name,kwargs,shapes,out_shape,types,out_type', [
         c for c in QUANT_CASES if c[0] not in (
@@ -175,6 +178,7 @@ def test_quantization_rejects_integer_data(name, kwargs, shapes, out_shape, type
         op.infer_dtype(*invalid)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name',
     ['MinMaxUpdatePerLayer',
     'MinMaxUpdatePerChannel',
@@ -195,6 +199,7 @@ def test_quantization_ema_validation(name, kwargs, error, reason):
         getattr(quant, name)(**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['FakeQuantPerLayer', 'FakeQuantPerLayerGrad',
                          'FakeQuantPerChannel', 'FakeQuantPerChannelGrad'])
 def test_quantization_bits_and_symmetric_validation(name):
@@ -210,6 +215,7 @@ def test_quantization_bits_and_symmetric_validation(name):
         getattr(quant, name)(symmetric=1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['FakeQuantWithMinMaxVars', 'FakeQuantWithMinMaxVarsGradient'])
 def test_quantization_broadcast(name):
     """
@@ -225,6 +231,7 @@ def test_quantization_broadcast(name):
         op.check_broadcast([2], [2, 3])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['FakeLearnedScaleQuantPerChannel', 'FakeQuantPerChannel'])
 def test_quantization_rank_one_channel_axis(name):
     """
@@ -240,6 +247,7 @@ def test_quantization_rank_one_channel_axis(name):
         op.infer_shape([], [5], [5])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scale,zp,expected_scale,expected_zp',
                          [(0.5, 2, [0.5], [2]), ([0.1, 0.2], [0, 1], [0.1, 0.2], [0, 1]), ((0.3,), (0,), (0.3,), (0,))])
 def test_linear_quant_param(scale, zp, expected_scale, expected_zp):
@@ -257,6 +265,7 @@ def test_linear_quant_param(scale, zp, expected_scale, expected_zp):
     assert op.attrs['label'] == 'test'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scale,zp,flag,reason', [('bad', 0, False, 'scale'),
                          (0.1, 0.5, False, 'zero_point'), (0.1, 0, 1, 'is_per_channel')])
 def test_linear_quant_param_rejects_bad_types(scale, zp, flag, reason):
@@ -297,6 +306,7 @@ THOR_CASES = [
 ]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,kwargs,shapes,expected,dtype', THOR_CASES,
                          ids=[f'{x[0]}-{i}' for i,x in enumerate(THOR_CASES)])
 def test_thor_inference(name, kwargs, shapes, expected, dtype):
@@ -312,6 +322,7 @@ def test_thor_inference(name, kwargs, shapes, expected, dtype):
     assert op.attrs['output_names'] == ['y']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls,kwargs,expected,pads', [
     (thor.ThorIm2Col, {'kernel_size': 3, 'stride': 2, 'pad_mode': 'valid'}, [3, 3, 3, 2, 3, 3], (0, 0, 0, 0)),
     (thor.ThorIm2Col, {'kernel_size': 3, 'stride': 2, 'pad_mode': 'same'}, [3, 3, 3, 2, 4, 4], (0, 1, 0, 1)),
@@ -354,6 +365,7 @@ INNER_CASES = [
 ]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,kwargs,shapes,out_shape,types,out_type', INNER_CASES,
                          ids=[c[0]+str(i) for i,c in enumerate(INNER_CASES)])
 def test_inner_inference(name, kwargs, shapes, out_shape, types, out_type):
@@ -367,6 +379,7 @@ def test_inner_inference(name, kwargs, shapes, out_shape, types, out_type):
     assert op.infer_dtype(*types) == out_type
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls', [inner.GpuConvertToDynamicShape, inner.ConvertToDynamic])
 def test_dynamic_shape_checkers(cls):
     """
@@ -384,6 +397,7 @@ def test_dynamic_shape_checkers(cls):
         op.check_dtype(dt.float32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_error_on_dynamic_shape_and_sequence_mask():
     """
     Feature: Error on dynamic shape and sequence mask.
@@ -408,6 +422,7 @@ def test_error_on_dynamic_shape_and_sequence_mask():
         op.check_dtype(dt.int32, dt.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [1, (0, 1), [0], ()])
 def test_centralization_const_axis(axis):
     """
@@ -420,6 +435,7 @@ def test_centralization_const_axis(axis):
     assert inner.Centralization().__infer__(x, abstract([], dt.int64, axis)) == abstract([2, 3])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis,error,reason', [(None, ValueError, 'const'), (2,
                          ValueError, 'axis'), ((0, 'bad'), TypeError, 'axis'), ('bad', TypeError, 'axis')])
 def test_centralization_bad_axis(axis, error, reason):
@@ -432,6 +448,7 @@ def test_centralization_bad_axis(axis, error, reason):
         inner.Centralization().__infer__(abstract([2, 3]), abstract([], dt.int64, axis))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_stack_and_dynamic_stitch():
     """
     Feature: Stack and dynamic stitch.
@@ -456,6 +473,7 @@ def test_stack_and_dynamic_stitch():
         op.check_dtype([I64], [F32])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('attribute,expected', [('start', 1), ('stop', 7), ('step', 2)])
 @pytest.mark.parametrize('tensor_bound', [False, True])
 def test_slice_getitem(attribute, expected, tensor_bound):
@@ -469,6 +487,7 @@ def test_slice_getitem(attribute, expected, tensor_bound):
     assert inner.SliceGetItem()(slice(*values), attribute) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_getitem_errors():
     """
     Feature: Slice getitem errors.
@@ -482,6 +501,7 @@ def test_slice_getitem_errors():
         inner.SliceGetItem()(slice(1, 2), 'missing')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls,kwargs', [
     (inner.ParallelResizeBilinear, {
         'ori_image_size': (8, 8), 'split_size': (2, 3), 'src_start_w': 0,
@@ -511,6 +531,7 @@ def test_parallel_resize_const_size(cls, kwargs):
         op.__infer__(*args, abstract([2], I32))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xshapes,yshapes', [(([2, 3],), ([2, 3],)),
                          (([-1, 3],), ([2, 3],)), (([-2],), ([2, 3],)), (([],), ([2, 3],))])
 def test_check_bprop_dynamic_shapes(xshapes, yshapes):
@@ -522,6 +543,7 @@ def test_check_bprop_dynamic_shapes(xshapes, yshapes):
     assert inner.CheckBprop().infer_shape(xshapes, yshapes) == xshapes
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('method,args,error,reason', [
     ('infer_shape', (([2],), ()), ValueError, 'number'),
     ('infer_shape', (([2],), ([2, 3],)), ValueError, 'shape'),
@@ -540,6 +562,7 @@ def test_check_bprop_errors(method, args, error, reason):
         getattr(inner.CheckBprop(), method)(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_inner_misc_python_protocols():
     """
     Feature: Inner misc python protocols.
@@ -571,6 +594,7 @@ def test_inner_misc_python_protocols():
     assert result[2] == 3
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['iou', 'iof'])
 def test_iou_mode(mode):
     """
@@ -581,6 +605,7 @@ def test_iou_mode(mode):
     assert other.IOU(mode).attrs['mode'] == mode
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_other_operator_contracts():
     """
     Feature: Other operator contracts.
@@ -609,6 +634,7 @@ def test_other_operator_contracts():
     assert op.attrs['side_effect_io'] is True
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('weights', [None, [4]])
 def test_confusion_matrix_inference(weights):
     """
@@ -626,6 +652,7 @@ def test_confusion_matrix_inference(weights):
         op.infer_dtype(I32, F32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('out_types,out_shapes,expected_shape,expected_type,fake', [
     ([dt.float32], [(2, 3)], ((2, 3),), (F32,), False),
     ([], [], ((1,),), (I32,), True),
@@ -647,6 +674,7 @@ def test_pyfunc_output_protocol(out_types, out_shapes, expected_shape, expected_
     assert op.attrs['side_effect_io'] is False
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('args,reason', [(([], [()], [], []), 'in_types length'),
                          (([], [], [dt.float32], []), 'out_types length')])
 def test_pyfunc_mismatched_metadata(args, reason):
@@ -670,6 +698,7 @@ SCALAR_CASES = [
 ]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,args,expected', SCALAR_CASES, ids=[x[0]+str(i) for i,x in enumerate(SCALAR_CASES)])
 def test_manual_scalar_values(name, args, expected):
     """
@@ -681,6 +710,7 @@ def test_manual_scalar_values(name, args, expected):
     assert getattr(manual, name)()(*args) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,reason', [('ScalarDiv', 'divisor'),
                          ('ScalarFloorDiv', 'divisor'), ('ScalarMod', 'modulo')])
 def test_manual_scalar_zero_divisor(name, reason):
@@ -693,6 +723,7 @@ def test_manual_scalar_zero_divisor(name, reason):
         getattr(manual, name)()(2, 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,axis,keepdims,expected', [
     ('ReduceMax', 1, False, [3, 6]), ('ReduceMin', (1, 1), True, [[1], [4]]),
     ('ReduceProd', [], False, 720), ('ReduceMean', 0, False, [2.5, 3.5, 4.5]),
@@ -712,6 +743,7 @@ def test_manual_reduce_constants(name, axis, keepdims, expected):
     assert manual._infer_value_for_Reduce(tensor, axis, keepdims, 'Unknown') is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,axis,expected', [('MeanExt', 1, [2, 5]),
                          ('SumExt', (0, 0), [5, 7, 9]), ('ProdExt', [], 720)])
 @pytest.mark.parametrize('cast_dtype', [None, 43])
@@ -727,6 +759,7 @@ def test_manual_extended_reduce(name, axis, expected, cast_dtype):
     np.testing.assert_allclose(result.asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_manual_constant_folding_tensor_values():
     """
     Feature: Manual constant folding tensor values.
@@ -756,6 +789,7 @@ def test_manual_constant_folding_tensor_values():
     np.testing.assert_array_equal(manual.infer_value_for_Reshape(x, (4,)).asnumpy(), [1, 2, 3, 4])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode,expected', [(1, [-3., 3.]), (2, [-4., 3.]), (0, None)])
 def test_manual_division_rounding(mode, expected):
     """
@@ -775,6 +809,7 @@ def test_manual_division_rounding(mode, expected):
         assert func(None, divisor, mode) is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value,dtype,expected_dtype',
                          [(7, dt.int32, dt.float32), (7., dt.float16, dt.float16), ([7., -7.], dt.float32, dt.float32)])
 def test_manual_divs_scalar_dtype(value, dtype, expected_dtype):
@@ -788,6 +823,7 @@ def test_manual_divs_scalar_dtype(value, dtype, expected_dtype):
     np.testing.assert_allclose(result.asnumpy(), [3.5, -3.5] if isinstance(value, list) else 3.5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_manual_norm_cast_tile_typeas():
     """
     Feature: Manual norm cast tile typeas.
@@ -861,6 +897,7 @@ GRAD_INIT_CASES = [
 ]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,kwargs,key,value', GRAD_INIT_CASES, ids=[x[0] for x in GRAD_INIT_CASES])
 def test_gradient_constructor_contracts(name, kwargs, key, value):
     """
@@ -871,6 +908,7 @@ def test_gradient_constructor_contracts(name, kwargs, key, value):
     assert getattr(grad, name)(**kwargs).attrs[key] == value
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls', [grad.LSTMGradData, grad.LSTMGradWeight, grad.LSTMGrad,
                          grad.GruGradData, grad.GruGradWeight, grad.GRUV2Grad])
 @pytest.mark.parametrize('bidirectional,directions', [(False, 1), (True, 2)])
@@ -891,6 +929,7 @@ def test_recurrent_gradient_constructor(cls, bidirectional, directions):
         cls(3, 4, 2, True, bidirectional, 1.5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('bidirectional,bias,layers,weight_size',
                          [(False, False, 1, 84), (False, True, 2, 228), (True, True, 2, 552)])
 def test_gru_gradient_inference(bidirectional, bias, layers, weight_size):
@@ -913,6 +952,7 @@ def test_gru_gradient_inference(bidirectional, bias, layers, weight_size):
         op.infer_shape(y, y, [99, 2, 4], [1], h, [1], [1])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls',
     [grad.MaxPoolGrad,
     grad.AvgPoolGradVm,
@@ -935,6 +975,7 @@ def test_pool_gradient_kernel_normalization(cls, size, expected):
     assert op.attrs['pad_mode'] == 'SAME'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls', [grad.MaxPoolGrad, grad.AvgPoolGradV1, grad.MaxPoolGradV1, grad.MaxPoolGradWithArgmax])
 @pytest.mark.parametrize('size', [0, (2,), (1, -1), (1, 1, 1, 'bad')])
 def test_pool_gradient_rejects_bad_kernel(cls, size):
@@ -947,6 +988,7 @@ def test_pool_gradient_rejects_bad_kernel(cls, size):
         cls(kernel_size=size)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_maxpoolgrad_v1_tuple_format():
     """
     Feature: Maxpoolgrad v1 tuple format.
@@ -958,6 +1000,7 @@ def test_maxpoolgrad_v1_tuple_format():
     assert op.attrs['strides'] == (1, 1, 2, 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,kwargs,error,reason', [
     ('ScaleAndTranslateGrad', {'kernel_type': 'bad'}, ValueError, 'kernel_type'),
     ('SyncBatchNormGrad', {'group': 3}, TypeError, 'group'),
@@ -992,6 +1035,7 @@ def test_gradient_constructor_errors(name, kwargs, error, reason):
         getattr(grad, name)(**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls', [grad.Dilation2DBackpropInput, grad.Dilation2DBackpropFilter])
 @pytest.mark.parametrize('stride,expected', [(2, (1, 1, 2, 2)), ((2, 3), (1, 1, 2, 3)), ((1, 1, 2, 3), (1, 1, 2, 3))])
 def test_dilation_gradient_normalizes_stride(cls, stride, expected):
@@ -1007,6 +1051,7 @@ def test_dilation_gradient_normalizes_stride(cls, stride, expected):
     assert op.attrs['pad_mode'] == 'SAME'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls', [grad.Dilation2DBackpropInput, grad.Dilation2DBackpropFilter])
 @pytest.mark.parametrize('stride', [(2,), (2, 1, 1, 1), (0, 2), (True, 2)])
 def test_dilation_gradient_invalid_stride(cls, stride):
@@ -1019,6 +1064,7 @@ def test_dilation_gradient_invalid_stride(cls, stride):
         cls(stride=stride, dilation=1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls', [grad.Dilation2DBackpropInput, grad.Dilation2DBackpropFilter])
 def test_dilation_gradient_unsupported_nhwc(cls):
     """
@@ -1030,6 +1076,7 @@ def test_dilation_gradient_unsupported_nhwc(cls):
         cls(1, 1, data_format='NHWC')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_gradient_infer_methods():
     """
     Feature: Gradient infer methods.
@@ -1061,6 +1108,7 @@ def test_gradient_infer_methods():
     assert op.infer_dtype(F32, F32, I32) == F32
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis,shapes,expected', [
     (1, [[2, 3], [2, 4]], {'shape': None, 'dtype': None, 'value': ((0, 0), (0, 3))}),
     (-1, [[2, 3], [2, 4]], {'shape': None, 'dtype': None, 'value': ((0, 0), (0, 3))}),
@@ -1079,6 +1127,7 @@ def test_concat_offset_infer(axis, shapes, expected):
     assert op.attrs['T'] == dt.float32
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('pad_mode,expected', [('VALID', (0, 0, 0, 0, 0, 0)), ('SAME', (1, 1, 0, 1, 0, 0))])
 def test_maxpool3d_gradgrad_padding(pad_mode, expected):
     """
@@ -1096,6 +1145,7 @@ def test_maxpool3d_gradgrad_padding(pad_mode, expected):
         op.infer_shape([2, 3], [1], [2, 3])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('size', [(2, 3), (-1, 3), None])
 def test_slice_gradient_size_inference(size):
     """
@@ -1111,6 +1161,7 @@ def test_slice_gradient_size_inference(size):
         grad.SliceGrad().__infer__(abstract([5, 3]), x, abstract([], I32, (0, 0)), abstract([], I32, (5, 3)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls', [grad.DepthwiseConv2dNativeBackpropFilter, grad.DepthwiseConv2dNativeBackpropInput])
 def test_depthwise_gradient_shape_from_const(cls):
     """
@@ -1125,6 +1176,7 @@ def test_depthwise_gradient_shape_from_const(cls):
     assert op.__infer__(*args) == abstract((3, 1, 3, 3))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_hybrid_runtime_intrinsics():
     """
     Feature: Hybrid runtime intrinsics.
@@ -1149,6 +1201,7 @@ def test_hybrid_runtime_intrinsics():
     assert stub.__del__() is stub
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('body,error,reason', [
     ('b = unknown\n    return a', ValueError, 'undeclared variable'),
     ('for i in range(4):\n        i = 0\n    return a', ValueError, 'iter var'),
@@ -1188,6 +1241,7 @@ def test_hybrid_dsl_rejects_invalid_programs(body, error, reason):
         hybrid.determine_variable_usage(tree, 'kernel_case')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_hybrid_dsl_tracks_output_alias_and_scopes():
     """
     Feature: Hybrid dsl tracks output alias and scopes.
@@ -1210,6 +1264,7 @@ def test_hybrid_dsl_tracks_output_alias_and_scopes():
     assert hybrid.determine_variable_usage(ast.parse(source), 'valid') == [[1, 0]]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kwargs,reason', [({'compile_attrs': []}, 'dict'),
                          ({'compile_attrs': {1: 'x'}}, 'str'), ({'reg_info': []}, 'reg_info')])
 def test_hybrid_decorator_metadata_validation(kwargs, reason):
@@ -1222,6 +1277,7 @@ def test_hybrid_decorator_metadata_validation(kwargs, reason):
         hybrid.kernel(**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_hybrid_decorator_executes_numpy_runtime():
     # These names are injected by the real decorator when the wrapper is called.
     """
@@ -1249,6 +1305,7 @@ def test_hybrid_decorator_executes_numpy_runtime():
             globals().pop(key, None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_version_manager_detects_source_flags_and_directory(tmp_path):
     """
     Feature: Custom version manager detects source flags and directory.
@@ -1271,6 +1328,7 @@ def test_custom_version_manager_detects_source_flags_and_directory(tmp_path):
     assert manager._get_version('module') == 2
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_file_locker_contention_and_release(tmp_path):
     """
     Feature: Custom file locker contention and release.
@@ -1293,6 +1351,7 @@ def test_custom_file_locker_contention_and_release(tmp_path):
     second.release_lock()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('typ,expected',
     [('tensor',
     'aclTensor*'),
@@ -1323,6 +1382,7 @@ def test_custom_callback_type_declarations(typ, expected):
     assert custom.CustomCodeGenerator._get_type_declaration(typ) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_callback_generation_protocol():
     """
     Feature: Custom callback generation protocol.
@@ -1357,6 +1417,7 @@ def test_custom_callback_generation_protocol():
         generator._generate_callback_func_params([], ['bad'])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,pure,prefix', [('TestOp', 'TestOp',
                          'aclnnTestOp'), ('aclnnTestOp', 'TestOp', 'aclnnTestOp')])
 def test_custom_info_names(name, pure, prefix):
@@ -1376,6 +1437,7 @@ def test_custom_info_names(name, pure, prefix):
         info._get_prefix_name(None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('header,error', [
     ('// aclnnTestGetWorkspaceSize(x);', 'aclnnStatus'),
     ('aclnnStatus aclnnTestGetWorkspaceSize(aclTensor* x)', 'end marker'),
@@ -1392,6 +1454,7 @@ def test_custom_info_invalid_header(tmp_path, header, error):
         info._get_aclnn_api_from_file(str(tmp_path))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_info_discovers_real_files(tmp_path, monkeypatch):
     """
     Feature: Custom info discovers real files.
@@ -1420,6 +1483,7 @@ aclTensor *out, uint64_t *workspace, aclOpExecutor **executor);
     assert custom.CustomInfoGenerator._parse_load_priority(str(config)) == []
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_type_as_dispatch_protocol(monkeypatch):
     """
     Feature: Type as dispatch protocol.
@@ -1449,6 +1513,7 @@ def metadata_device(monkeypatch, target):
     monkeypatch.setattr(context, 'get_context', lambda key=None: target if key == 'device_target' else get_context(key))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('target', ['Ascend', 'GPU'])
 def test_quantization_target_specific_metadata(monkeypatch, target):
     """
@@ -1490,6 +1555,7 @@ def test_quantization_target_specific_metadata(monkeypatch, target):
             assert op.infer_dtype(F32, F32, F32, F32) == (F32, F32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_te_optional_dependency_unavailable(monkeypatch):
     """
     Feature: Te optional dependency unavailable.
@@ -1500,6 +1566,7 @@ def test_te_optional_dependency_unavailable(monkeypatch):
     assert quant._support_te() is False
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_hybrid_ascend_compile_metadata(monkeypatch):
     """
     Feature: Hybrid ascend compile metadata.
@@ -1512,6 +1579,7 @@ def test_hybrid_ascend_compile_metadata(monkeypatch):
     assert json.loads(fn.compile_attrs) == {'debug': True, 'enable_polytops': 'always'}
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_gradient_target_metadata_and_remaining_constructor_branches(monkeypatch):
     """
     Feature: Gradient target metadata and remaining constructor branches.
@@ -1534,6 +1602,7 @@ def test_gradient_target_metadata_and_remaining_constructor_branches(monkeypatch
         grad.Dilation2DBackpropFilter(256, 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_gradient_python_only_primitive_dispatch(monkeypatch):
     # EmbeddingLookupCommGrad only delegates tuple_setitem to a C++ primitive.
     """
@@ -1566,6 +1635,7 @@ def test_gradient_python_only_primitive_dispatch(monkeypatch):
     assert calls[-1] == ('MultiMarginLossGrad', ('dy', 'x', 'target', None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_inner_remaining_constructors_and_virtual_zero():
     """
     Feature: Inner remaining constructors and virtual zero.
@@ -1581,6 +1651,7 @@ def test_inner_remaining_constructors_and_virtual_zero():
     assert inner.Format().__infer__(abstract([], dt.string, None)) == abstract([], dt.string)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cell_backward_hook_infer_and_pre_hook_protocol(monkeypatch):
     """
     Feature: Cell backward hook infer and pre hook protocol.
@@ -1604,6 +1675,7 @@ def test_cell_backward_hook_infer_and_pre_hook_protocol(monkeypatch):
         registered[0][0]((1,))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason=(
     'CusTranspose02314 bprop references undefined C and lacks the transpose '
     'gradient'
@@ -1623,6 +1695,7 @@ def test_thor_backward_preserves_transpose_gradient():
     np.testing.assert_array_equal(result[0].asnumpy(), np.transpose(sensitivity, (0, 3, 1, 2, 4)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_manual_control_flow_fallbacks():
     """
     Feature: Manual control flow fallbacks.
@@ -1645,6 +1718,7 @@ def test_manual_control_flow_fallbacks():
         manual.ForiLoop()(0, 1, broken, 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_manual_shape_constants_and_bfloat16():
     """
     Feature: Manual shape constants and bfloat16.
@@ -1674,6 +1748,7 @@ def test_manual_shape_constants_and_bfloat16():
     assert manual.infer_value_for_DivMods(bfloat, 2, 1) is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_manual_batch_norm_cpu_values():
     """
     Feature: Manual batch norm cpu values.
@@ -1686,6 +1761,7 @@ def test_manual_batch_norm_cpu_values():
     np.testing.assert_allclose(result[0].asnumpy(), [[[[0.999995, 1.99999], [2.999985, 3.99998]]]], rtol=1e-5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_ninja_unavailable_boundary(monkeypatch):
     """
     Feature: Custom ninja unavailable boundary.
@@ -1701,6 +1777,7 @@ def test_custom_ninja_unavailable_boundary(monkeypatch):
         custom.ExtensionBuilder._verify_ninja_availability()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_ninja_failure_cleans_artifacts(tmp_path, monkeypatch):
     """
     Feature: Custom ninja failure cleans artifacts.
@@ -1725,6 +1802,7 @@ def test_custom_ninja_failure_cleans_artifacts(tmp_path, monkeypatch):
     assert 'invalid C++' in (tmp_path / '.build_log.txt').read_text()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_compile_unchanged_and_completed_contender(tmp_path, monkeypatch):
     """
     Feature: Custom compile unchanged and completed contender.
@@ -1753,6 +1831,7 @@ def test_custom_compile_unchanged_and_completed_contender(tmp_path, monkeypatch)
     assert (tmp_path / 'module.so').read_bytes() == b'\x7fELFcompleted'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_vendor_discovery_and_missing_attribute(tmp_path, monkeypatch):
     """
     Feature: Custom vendor discovery and missing attribute.
@@ -1784,6 +1863,7 @@ def test_custom_vendor_discovery_and_missing_attribute(tmp_path, monkeypatch):
         info._get_op_json()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['Cast', 'Tile'])
 @pytest.mark.parametrize('compiled', [False, True])
 def test_manual_jit_dispatch_protocol(name, compiled, monkeypatch):
@@ -1824,6 +1904,7 @@ def test_manual_jit_dispatch_protocol(name, compiled, monkeypatch):
         assert calls[0][2][1] == argument
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_file_locker_windows_system_errors(tmp_path, monkeypatch):
     """
     Feature: Custom file locker windows system errors.
@@ -1851,6 +1932,7 @@ def test_custom_file_locker_windows_system_errors(tmp_path, monkeypatch):
     assert calls[-1][1:] == (2, 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_file_locker_close_failure(tmp_path, monkeypatch):
     """
     Feature: Custom file locker close failure.
@@ -1871,6 +1953,7 @@ def test_custom_file_locker_close_failure(tmp_path, monkeypatch):
     assert locker.lock_fd is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_maxpool_argmax_subclass_preserves_data_format():
     """
     Feature: Maxpool argmax subclass preserves data format.
@@ -1885,6 +1968,7 @@ def test_maxpool_argmax_subclass_preserves_data_format():
         grad.MaxPoolGradWithArgmax(data_format='NHWC')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='MaxPoolGradV1 calls len() on a valid integer kernel_size')
 def test_maxpoolgrad_v1_integer_kernel_normalization():
     """
@@ -1897,6 +1981,7 @@ def test_maxpoolgrad_v1_integer_kernel_normalization():
     assert op.attrs['strides'] == (1, 1, 2, 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='VirtualConverterBegin returns ValueError instead of raising it')
 def test_virtual_converter_rejects_zero_output_count():
     """
@@ -1909,6 +1994,7 @@ def test_virtual_converter_rejects_zero_output_count():
         inner._VirtualConverterBegin(0).infer_shape([2, 3])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='Scan validates xs against None rather than type(None)')
 def test_scan_supports_none_inputs_with_explicit_length():
     """

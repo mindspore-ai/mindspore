@@ -21,6 +21,7 @@ import itertools
 import numpy as np
 import pytest
 import mindspore as ms
+from tests.mark_utils import arg_mark
 
 te = pytest.importorskip('te', reason='Legacy compute graph tests require the optional CANN TE SDK')
 # Check optional SDK availability before importing its modules.
@@ -70,6 +71,7 @@ def evaluate(compute, arrays, *constants):
     return evaluate_graph(inputs, compute(*inputs, *constants), arrays)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'symmetric,narrow,expected',
     [
@@ -89,6 +91,7 @@ def test_legacy_fake_quantization_real_llvm_graph(symmetric, narrow, expected):
     np.testing.assert_allclose(actual, expected, rtol=2e-6, atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'symmetric,narrow,expected',
     [
@@ -108,6 +111,7 @@ def test_legacy_quantization_gradient_real_llvm_graph(symmetric, narrow, expecte
     np.testing.assert_allclose(actual, expected, rtol=2e-6, atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'negative_truncation,expected',
     [
@@ -133,6 +137,7 @@ def test_legacy_learned_scale_quantization_real_llvm_graph(negative_truncation, 
     np.testing.assert_allclose(actual, expected, rtol=2e-6, atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('negative_truncation', [False, True])
 @pytest.mark.parametrize('module', ['fake_learned_scale_quant_perlayer', 'fake_learned_scale_quant_perchannel'])
 def test_learned_scale_nonnegative_domain_real_llvm_graph(module, negative_truncation):
@@ -145,6 +150,7 @@ def test_learned_scale_nonnegative_domain_real_llvm_graph(module, negative_trunc
     np.testing.assert_allclose(actual, [0, 1, 1, 2], rtol=1e-6, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('module', ['fake_learned_scale_quant_perlayer', 'fake_learned_scale_quant_perchannel'])
 def test_learned_scale_zero_alpha_is_finite(module):
     """Feature: Legacy TE compute graphs and frontend validation.
@@ -155,6 +161,7 @@ def test_learned_scale_zero_alpha_is_finite(module):
     np.testing.assert_allclose(actual, [0, 1e-6, 1e-6], rtol=1e-6, atol=1e-12)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('ema,expected', [(False, ([-2], [4])), (True, ([-3], [6]))])
 def test_legacy_minmax_ema_real_llvm_graph(ema, expected):
     """Feature: Legacy TE compute graphs and frontend validation.
@@ -167,6 +174,7 @@ def test_legacy_minmax_ema_real_llvm_graph(ema, expected):
         np.testing.assert_allclose(actual, value, rtol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_legacy_correction_multiplication_real_llvm_graph():
     """Feature: Legacy TE compute graphs and frontend validation.
     Description: Legacy correction multiplication real LLVM graph.
@@ -179,6 +187,7 @@ def test_legacy_correction_multiplication_real_llvm_graph():
     np.testing.assert_allclose(actual, data * np.array([0.5, 1, 3]).reshape((1, 3, 1, 1)), rtol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_legacy_batchnorm_fold_gradient_real_llvm_graph():
     """Feature: Legacy TE compute graphs and frontend validation.
     Description: Legacy batchnorm fold gradient real LLVM graph.
@@ -197,6 +206,7 @@ def test_legacy_batchnorm_fold_gradient_real_llvm_graph():
     np.testing.assert_allclose(actual, expected, rtol=1e-6, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_legacy_second_fold_real_llvm_graph():
     """Feature: Legacy TE compute graphs and frontend validation.
     Description: Legacy second fold real LLVM graph.
@@ -215,6 +225,7 @@ def descriptor(shape, dtype='float32'):
     return {'shape': tuple(shape), 'ori_shape': tuple(shape), 'dtype': dtype, 'format': 'NCHW', 'ori_format': 'NCHW'}
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('ema', [False, True])
 def test_minmax_entry_validates_and_emits_the_same_executable_graph(monkeypatch, ema):
     """Feature: Legacy TE compute graphs and frontend validation.
@@ -249,6 +260,7 @@ def test_minmax_entry_validates_and_emits_the_same_executable_graph(monkeypatch,
         np.testing.assert_allclose(actual, expected, rtol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', ['int32', 'bool'])
 def test_minmax_entry_rejects_unsupported_storage_dtype(dtype):
     """Feature: Legacy TE compute graphs and frontend validation.
@@ -285,6 +297,7 @@ def capture_emitted_graph(monkeypatch, arrays, expected):
     return calls
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('perchannel', [False, True])
 @pytest.mark.parametrize('narrow', [False, True])
 @pytest.mark.parametrize('symmetric', [False, True])
@@ -323,6 +336,7 @@ def test_quantization_entry_real_scheduler_and_host_execution(monkeypatch, perch
     assert calls == ['coverage_legacy']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('perchannel', [False, True])
 @pytest.mark.parametrize('narrow', [False, True])
 def test_quantization_gradient_entry_real_scheduler(monkeypatch, perchannel, narrow):
@@ -351,6 +365,7 @@ def test_quantization_gradient_entry_real_scheduler(monkeypatch, perchannel, nar
     assert calls == ['coverage_legacy']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('perchannel', [False, True])
 @pytest.mark.parametrize('negative_truncation', [False, True])
 def test_learned_scale_entry_real_scheduler(monkeypatch, perchannel, negative_truncation):
@@ -378,6 +393,7 @@ def test_learned_scale_entry_real_scheduler(monkeypatch, perchannel, negative_tr
     assert calls == ['coverage_legacy']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('perchannel', [False, True])
 @pytest.mark.parametrize('negative_truncation', [False, True])
 def test_learned_scale_gradient_entry_real_scheduler(monkeypatch, perchannel, negative_truncation):
@@ -408,6 +424,7 @@ def test_learned_scale_gradient_entry_real_scheduler(monkeypatch, perchannel, ne
     assert calls == ['coverage_legacy']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('samples', [1, 8])
 def test_batchnorm_statistics_real_llvm_graph(samples):
     """Feature: Legacy TE compute graphs and frontend validation.
@@ -435,6 +452,7 @@ def test_batchnorm_statistics_real_llvm_graph(samples):
         np.testing.assert_allclose(actual, value, rtol=2e-6, atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_second_fold_gradient_real_llvm_graph():
     """Feature: Legacy TE compute graphs and frontend validation.
     Description: Second fold gradient real LLVM graph.
@@ -457,6 +475,7 @@ def test_second_fold_gradient_real_llvm_graph():
         np.testing.assert_allclose(actual, value, rtol=1e-6, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'shape,channel,data_format,axes',
     [
@@ -475,6 +494,7 @@ def test_correction_gradient_reduction_real_llvm_graph(shape, channel, data_form
     np.testing.assert_allclose(actual, data.sum(axes, keepdims=True), rtol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('blocked', [False, True])
 @pytest.mark.parametrize(
     'operation',
@@ -554,6 +574,7 @@ def test_normalization_entry_real_scheduler(monkeypatch, blocked, operation):
     assert calls == ['coverage_legacy']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1])
 @pytest.mark.parametrize('ema', [False, True])
 def test_channel_minmax_entry_real_scheduler(monkeypatch, axis, ema):
@@ -583,6 +604,7 @@ def test_channel_minmax_entry_real_scheduler(monkeypatch, axis, ema):
     assert calls == ['coverage_legacy']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('blocked', [False, True])
 def test_second_fold_gradient_reduce_real_llvm_graph(blocked):
     """Feature: Legacy TE compute graphs and frontend validation.
@@ -603,6 +625,7 @@ def test_second_fold_gradient_reduce_real_llvm_graph(blocked):
         np.testing.assert_allclose(actual, value, rtol=1e-6, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'symmetric,narrow,expected',
     [
@@ -629,6 +652,7 @@ def test_channel_quantization_preserves_distinct_ranges(symmetric, narrow, expec
     np.testing.assert_allclose(actual, [expected, np.array(expected) * 2], rtol=2e-6, atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('negative_truncation', [False, True])
 def test_channel_learned_scale_preserves_distinct_scales(monkeypatch, negative_truncation):
     """Feature: Legacy TE compute graphs and frontend validation.
@@ -651,6 +675,7 @@ def test_channel_learned_scale_preserves_distinct_scales(monkeypatch, negative_t
     assert calls == ['coverage_legacy']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_zero_sample_count_is_rejected():
     """Feature: Legacy TE compute graphs and frontend validation.
     Description: Batchnorm zero sample count is rejected.
@@ -662,6 +687,7 @@ def test_batchnorm_zero_sample_count_is_rejected():
         legacy('batchnorm_fold')._batchnorm_fold_compute(data, statistic, statistic, statistic, statistic, 0.9, 1e-5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'module,helper',
     [
@@ -694,6 +720,7 @@ def test_channel_parameter_layout_and_dense_weight_axis_remap(module, helper, bl
         assert dtype == 'float32'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('channel_axis', [None, 0, 1, 2])
 def test_learned_scale_gradient_reduce_entry_real_scheduler(monkeypatch, channel_axis):
     """Feature: Legacy TE compute graphs and frontend validation.
@@ -716,6 +743,7 @@ def test_learned_scale_gradient_reduce_entry_real_scheduler(monkeypatch, channel
     assert calls == ['coverage_legacy']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'module', ['fake_learned_scale_quant_perlayer_grad', 'fake_learned_scale_quant_perchannel_grad']
 )
@@ -732,6 +760,7 @@ def test_learned_scale_sign_real_llvm_graph(module, dtype):
     np.testing.assert_array_equal(actual, [-1, -1, 0, 1, 1])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'operation',
     [
@@ -771,6 +800,7 @@ def test_normalization_entries_reject_unsupported_layout_before_emission(monkeyp
     assert not calls
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('operation', ['batchnorm_fold', 'batchnorm_fold_grad'])
 @pytest.mark.parametrize(
     'case,reason', [('blocked_rank', '5D'), ('nchw_rank', '2D to 4D'), ('channels', 'second axis')]
@@ -795,6 +825,7 @@ def test_fold_rejects_invalid_statistics_layout(operation, case, reason):
         getattr(legacy(operation), operation)(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fold_rejects_unsupported_logical_data_format():
     """Feature: Legacy TE compute graphs and frontend validation.
     Description: Fold rejects unsupported logical data format.
@@ -805,6 +836,7 @@ def test_fold_rejects_unsupported_logical_data_format():
         legacy('batchnorm_fold').batchnorm_fold(*([desc] * 12), data_format='NHWC')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('operation', ['batchnorm_fold2', 'batchnorm_fold2_grad'])
 @pytest.mark.parametrize('case', ['dtype', 'original_format'])
 def test_second_fold_rejects_invalid_dtype_or_original_format(operation, case):
@@ -820,6 +852,7 @@ def test_second_fold_rejects_invalid_dtype_or_original_format(operation, case):
         getattr(legacy(operation), operation)(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_correction_mul_rejects_integer_storage():
     """Feature: Legacy TE compute graphs and frontend validation.
     Description: Correction mul rejects integer storage.
@@ -831,6 +864,7 @@ def test_correction_mul_rejects_integer_storage():
         )
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', ['float16', 'float32'])
 @pytest.mark.parametrize(
     'scheduler',
@@ -898,6 +932,7 @@ def test_second_fold_gradient_reduce_entry_real_scheduler(monkeypatch, dtype, sc
     assert calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('narrow,expected', [(False, [0, 2, 3, 4, 0, 0]), (True, [0, 0, 3, 4, 0, 0])])
 def test_symmetric_channel_quantization_gradient_entry(monkeypatch, narrow, expected):
     """Feature: Legacy TE compute graphs and frontend validation.

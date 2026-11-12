@@ -28,6 +28,7 @@ from mindspore.ops._vmap import vmap_array_ops as V
 from mindspore.ops._vmap import vmap_math_ops as W
 from mindspore.ops._vmap import vmap_grad_math_ops as D
 from mindspore.ops._vmap import vmap_sparse_ops as S
+from tests.mark_utils import arg_mark
 
 
 def _eager_preprocess(prim, *args):
@@ -69,6 +70,7 @@ def check(result, expected, axis=0):
     np.testing.assert_allclose(value.asnumpy(), expected, rtol=2e-5, atol=2e-6, equal_nan=True)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd,yd', [(0, 0), (1, 0), (None, 0), (0, None), (None, None)])
 def test_binary_broadcast(xd, yd):
     """
@@ -86,6 +88,7 @@ def test_binary_broadcast(xd, yd):
           xd if xd == yd else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_binary_rank_and_scalar_broadcast():
     """
     Feature: Array and math vmap rules
@@ -102,6 +105,7 @@ def test_binary_rank_and_scalar_broadcast():
     assert W._broadcast_shape(4, 2, (2, 3)) == (2, 3, 1, 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['Addcmul', 'Addcdiv'])
 @pytest.mark.parametrize('align', [True, False])
 def test_addcxxx(name, align):
@@ -117,6 +121,7 @@ def test_addcxxx(name, align):
     check(W.get_addcxxx_vmap_rule(getattr(P, name)(), 2)(*inputs), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('weight_kind', ['scalar', 'tensor', 'broadcast_scalar', 'broadcast_tensor'])
 def test_lerp(weight_kind):
     """
@@ -133,6 +138,7 @@ def test_lerp(weight_kind):
                                          (weight, weight_dim)), x + .25 * (y - x))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('prob', [0., 1.])
 @pytest.mark.parametrize('tensor_prob', [False, True])
 def test_bernoulli_endpoints(prob, tensor_prob):
@@ -147,6 +153,7 @@ def test_bernoulli_endpoints(prob, tensor_prob):
           np.full_like(x, prob))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_addn_stack_concat_unstack():
     """
     Feature: Array and math vmap rules
@@ -164,6 +171,7 @@ def test_addn_stack_concat_unstack():
         check(out, exp)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd', [0, 1, None])
 def test_matmul_and_solve(xd):
     """
@@ -182,6 +190,7 @@ def test_matmul_and_solve(xd):
           np.linalg.solve(sample_a, rhs))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1, -1])
 @pytest.mark.parametrize('keep', [False, True])
 def test_reduce_and_arg_extrema(axis, keep):
@@ -210,6 +219,7 @@ def test_reduce_and_arg_extrema(axis, keep):
     assert logical.shape == (2, 3, 4)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd', [0, 2])
 def test_matrix_determinants(xd):
     """
@@ -225,6 +235,7 @@ def test_matrix_determinants(xd):
     check(logabs, np.log([6, 20]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd,yd', [(0, 0), (0, None), (1, 0)])
 def test_isclose(xd, yd):
     """
@@ -242,6 +253,7 @@ def test_isclose(xd, yd):
           np.moveaxis(expected, 0, xd), xd)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, -1])
 def test_cumulative_max(axis):
     """
@@ -255,6 +267,7 @@ def test_cumulative_max(axis):
     check(result[1], [[0, 0, 2], [0, 1, 1]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd,gd', [(0, 0), (None, 0), (0, None), (1, 0)])
 def test_logit_gradient(xd, gd):
     """
@@ -274,6 +287,7 @@ def test_logit_gradient(xd, gd):
     check(W.get_logit_vmap_rule(Primitive('Logit'), 2)((t(xx), xd), (-1., None)), np.log(xx / (1 - xx)), xd)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['MaximumGrad', 'MinimumGrad'])
 @pytest.mark.parametrize('broadcast', [False, True])
 def test_extremum_gradient(name, broadcast):
@@ -292,6 +306,7 @@ def test_extremum_gradient(name, broadcast):
     check(result[1], np.where(mask, 0, g))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1, 2, -1])
 def test_transpose_and_reshape(axis):
     """
@@ -308,6 +323,7 @@ def test_transpose_and_reshape(axis):
     np.testing.assert_array_equal(np.moveaxis(out.asnumpy(), dim, 0), logical.reshape(2, 12))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 2])
 def test_tile_and_expand(axis):
     """
@@ -326,6 +342,7 @@ def test_tile_and_expand(axis):
                                       np.expand_dims(logical, 1 if insert == 0 else -1))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [None, (0,), (-1,)])
 @pytest.mark.parametrize('batch', [1, 2])
 def test_squeeze(axis, batch):
@@ -340,6 +357,7 @@ def test_squeeze(axis, batch):
     check(V.get_squeeze_vmap_rule(ops.squeeze, batch)((t(x), 0), (axis, None)), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_and_grad_and_strided_slice():
     """
     Feature: Array and math vmap rules
@@ -358,6 +376,7 @@ def test_slice_and_grad_and_strided_slice():
           ((1,), None), ((6,), None), ((2,), None)), np.array([[0, 1, 0, 2, 0, 3], [0, 4, 0, 5, 0, 6]]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2, 3), ms.Tensor([2, 3], ms.int64)])
 def test_fill_variants(shape):
     """
@@ -372,6 +391,7 @@ def test_fill_variants(shape):
           np.broadcast_to(np.array([2, 5])[:, None, None], (2, 2, 3)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd,vd', [(0, None), (None, 0), (1, 0)])
 def test_fills(xd, vd):
     """
@@ -388,6 +408,7 @@ def test_fills(xd, vd):
     check(V.get_fills_vmap_rule('Fills', 2)((t(x), xd), (v, vd)), expected, xd if vd is None else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd,idim', [(0, None), (None, 0), (0, 0)])
 @pytest.mark.parametrize('axis', [0, -1])
 def test_gather(xd, idim, axis):
@@ -409,6 +430,7 @@ def test_gather(xd, idim, axis):
     np.testing.assert_array_equal(np.moveaxis(result.asnumpy(), dim, 0), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_gather_nd_and_scatter_nd():
     """
     Feature: Array and math vmap rules
@@ -426,6 +448,7 @@ def test_gather_nd_and_scatter_nd():
         (t(x), 0), (t(index, np.int32), 0), (updates, 0)), x + expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dims', [(0, None, None), (None, 0, None), (None, None, 0),
                                  (None, 0, 0), (0, None, 0), (0, 0, None), (0, 0, 0)])
 def test_tensor_scatter_elements(dims):
@@ -446,6 +469,7 @@ def test_tensor_scatter_elements(dims):
     check(V.get_tensor_scatter_elements_vmap_rule('TensorScatterElements', 2)(*args), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('indexing', [0, 1])
 def test_meshgrid(indexing):
     """
@@ -462,6 +486,7 @@ def test_meshgrid(indexing):
         check(result[j], np.stack([e[j] for e in expected]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_masked_select_and_gradient():
     """
     Feature: Array and math vmap rules
@@ -477,6 +502,7 @@ def test_masked_select_and_gradient():
           [[1, 0, 2, 0], [3, 0, 4, 0]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd', [0, 1])
 def test_topk(xd):
     """
@@ -491,6 +517,7 @@ def test_topk(xd):
     check(index, [[1, 2], [0, 2]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_flatten_split_tensor_shape():
     """
     Feature: Array and math vmap rules
@@ -506,6 +533,7 @@ def test_flatten_split_tensor_shape():
     check(result[1], x[:, :, 2:])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_base_stack_unstack_output_and_unary():
     """
     Feature: Array and math vmap rules
@@ -522,6 +550,7 @@ def test_base_stack_unstack_output_and_unary():
         B.vmap_general_output_process(((x, x), (x, x)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_base_dynamic_and_monad_errors():
     """
     Feature: Array and math vmap rules
@@ -545,6 +574,7 @@ def test_base_dynamic_and_monad_errors():
         B._vmap_clone_prim(Primitive('NotRegisteredVmapTest'))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', [
     pytest.param('UnsortedSegmentSum', marks=pytest.mark.xfail(
         strict=True, reason='UnsortedSegmentSum wrapper lacks PrimitiveFunction label API')),
@@ -569,6 +599,7 @@ def test_unsorted_segments(name):
         factory(prim, 2)((t(x), 0), (t(ids, np.int32), None), (2, 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['CSRSparseMatrixToSparseTensor', 'DenseToCSRSparseMatrix', 'CSRSparseMatrixToDense'])
 def test_sparse_conversions(name):
     """
@@ -603,6 +634,7 @@ def test_sparse_conversions(name):
             rule(*bdims)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('batch_axis', [0, 1])
 def test_diagonal_matrix_family(batch_axis):
     """
@@ -621,6 +653,7 @@ def test_diagonal_matrix_family(batch_axis):
           (t(diagonal), 0), (t(0, np.int32), None)), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd', [0, 1])
 def test_padding(xd):
     """
@@ -635,6 +668,7 @@ def test_padding(xd):
     np.testing.assert_array_equal(np.moveaxis(result.asnumpy(), dim, 0), np.pad(logical, ((0, 0), (0, 0), (0, 2))))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_padding_last_batch_axis():
     """
     Feature: Array and math vmap rules
@@ -646,6 +680,7 @@ def test_padding_last_batch_axis():
           np.pad(logical, ((0, 0), (0, 0), (0, 2))))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim,idx_dim,grad_dim', [(0, 0, 0), (None, 1, 1), (None, None, 0)])
 def test_gatherd_gradient(dim, idx_dim, grad_dim):
     """
@@ -667,6 +702,7 @@ def test_gatherd_gradient(dim, idx_dim, grad_dim):
     np.testing.assert_array_equal(np.moveaxis(result.asnumpy(), outdim, 0), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd,idim', [(0, 0), (0, None)])
 def test_gatherd(xd, idim):
     """
@@ -681,6 +717,7 @@ def test_gatherd(xd, idim):
           np.stack([x[i, index[0] if idim is None else index[i]] for i in range(2)]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_ger_band_and_data_format():
     """
     Feature: Array and math vmap rules
@@ -699,6 +736,7 @@ def test_ger_band_and_data_format():
           [[0, 3, 1, 2], [0, 3, 1, 2]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='MaskedFill wrapper lacks the required PrimitiveFunction label API')
 def test_masked_fill_preserves_values():
     """
@@ -712,6 +750,7 @@ def test_masked_fill_preserves_values():
     check(result, [[-1, 2], [3, -1]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd', [0, 2])
 def test_no_repeat_ngram(xd):
     """
@@ -728,6 +767,7 @@ def test_no_repeat_ngram(xd):
           (t(probs), 0)), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_searchsorted_and_sorter():
     """
     Feature: Array and math vmap rules
@@ -750,6 +790,7 @@ def test_searchsorted_and_sorter():
                 result[0].asnumpy()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd', [0, 1])
 def test_im2col(xd):
     """
@@ -763,6 +804,7 @@ def test_im2col(xd):
     check(V.get_im2col_vmap_rule(P.Im2Col(ksizes=2), 2)((t(np.moveaxis(x, 0, xd)), xd)), expected[:, :, None])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd', [0, 1])
 def test_space_batch_inverse(xd):
     """
@@ -783,6 +825,7 @@ def test_space_batch_inverse(xd):
     np.testing.assert_array_equal(np.moveaxis(restored.asnumpy(), 1, 0), x)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('compute_uv', [False, True])
 def test_svd(compute_uv):
     """
@@ -802,6 +845,7 @@ def test_svd(compute_uv):
         assert u[0].size == v[0].size == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('keep', [False, True])
 def test_norm_and_std(keep):
     """
@@ -817,6 +861,7 @@ def test_norm_and_std(keep):
           np.linalg.norm(x, axis=-1, keepdims=keep))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd', [0, 1, -1])
 def test_renorm(xd):
     """
@@ -834,6 +879,7 @@ def test_renorm(xd):
     np.testing.assert_allclose(np.moveaxis(value.asnumpy(), dim, 0), expected, rtol=1e-5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='LinSpace wrapper lacks the required PrimitiveFunction label API')
 def test_linspace_retains_each_samples_endpoints():
     """
@@ -846,6 +892,7 @@ def test_linspace_retains_each_samples_endpoints():
     check(result, [[0, 1, 2], [2, 3, 4]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_segment_and_square_sum():
     """
     Feature: Array and math vmap rules
@@ -861,6 +908,7 @@ def test_sparse_segment_and_square_sum():
     check(b, ((x + 1) ** 2).sum(axis=(1, 2)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('string', [
     pytest.param(False, marks=pytest.mark.xfail(
         strict=True, reason='FFTWithSize object rule reads missing oneside attr')),
@@ -879,6 +927,7 @@ def test_fft(string):
         W.get_fft_with_size_vmap_rule(prim, 2)((t(x, np.complex64), 1))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_round_and_logit_type_errors():
     """
     Feature: Array and math vmap rules
@@ -895,6 +944,7 @@ def test_round_and_logit_type_errors():
             factory('Logit', 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('longest', ['x', 'y', 'g'])
 def test_extremum_gradient_rank_broadcast(longest):
     """
@@ -923,6 +973,7 @@ def test_extremum_gradient_rank_broadcast(longest):
     check(result[1], dy)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('maximum', [True])
 @pytest.mark.parametrize('broadcast', [False, True])
 def test_extremum_second_gradient(maximum, broadcast):
@@ -948,6 +999,7 @@ def test_extremum_second_gradient(maximum, broadcast):
     check(result[2], np.where(mask, dx, dy))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, -1])
 @pytest.mark.parametrize('keep', [False, True])
 def test_median_and_gradient(axis, keep):
@@ -968,6 +1020,7 @@ def test_median_and_gradient(axis, keep):
           (t(med), 0), (t(idx, np.int64), 0)), [[0, 0, 10], [0, 0, 20]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd,vd', [(0, None), (1, 0), (None, None)])
 def test_assignment_real_parameter(xd, vd):
     """
@@ -985,6 +1038,7 @@ def test_assignment_real_parameter(xd, vd):
 
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['ScatterAdd', 'ScatterNdAdd'])
 def test_stateful_scatter(name):
     """
@@ -1003,6 +1057,7 @@ def test_stateful_scatter(name):
     np.testing.assert_array_equal(x.asnumpy(), np.zeros((2, 4)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xd,yd', [(0, None), (None, 0), (0, 0)])
 def test_inplace_add(xd, yd):
     """
@@ -1022,6 +1077,7 @@ def test_inplace_add(xd, yd):
     np.testing.assert_array_equal(np.moveaxis(result.asnumpy(), dim, 0), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_reverse_sequence_mapped_and_unmapped_x():
     """
     Feature: Array and math vmap rules
@@ -1042,6 +1098,7 @@ def test_reverse_sequence_mapped_and_unmapped_x():
         check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis,batchdim,expected', [(0, 0, (1, 0)), (0, 1, (0, 2)),
                                                   (-1, 1, (1, 2)), (-1, 0, (-1, 0))])
 def test_onehot_axis_helper(axis, batchdim, expected):
@@ -1056,6 +1113,7 @@ def test_onehot_axis_helper(axis, batchdim, expected):
     assert V._get_one_hot_vmap_axis(axis, 2, batchdim) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, -1])
 def test_onehot(axis):
     """
@@ -1074,6 +1132,7 @@ def test_onehot(axis):
     np.testing.assert_array_equal(result.asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_prefix_empty_and_vector():
     """
     Feature: Array and math vmap rules
@@ -1087,6 +1146,7 @@ def test_prefix_empty_and_vector():
     np.testing.assert_array_equal(V._get_prefix((2,), 2, ms.int64).asnumpy(), [0, 1])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='Installed primitive wrappers lack the required PrimitiveFunction label API')
 @pytest.mark.parametrize('name', ['Cdist', 'Diag', 'UnsortedSegmentSum', 'MaskedFill', 'LinSpace'])
 def test_primitive_function_label_api_boundary(name):
@@ -1102,6 +1162,7 @@ def test_primitive_function_label_api_boundary(name):
     assert callable(factory(getattr(P, name)(), 2))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='STFT vmap factory uses _vmap_clone_prim without importing it')
 @pytest.mark.parametrize('existing_batch_rank', [False, True])
 def test_stft_factory_resolves_clone(existing_batch_rank):
@@ -1171,6 +1232,7 @@ def _bad_axis_cases():
     ]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('factory,prim,args,reason', _bad_axis_cases())
 def test_constant_arguments_reject_mapped_axes(factory, prim, args, reason):
     """
@@ -1182,6 +1244,7 @@ def test_constant_arguments_reject_mapped_axes(factory, prim, args, reason):
         factory(prim, 2)(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [t([[2, 3]], np.int64), [2, 3]])
 def test_fillv2_invalid_shape(shape):
     """
@@ -1195,6 +1258,7 @@ def test_fillv2_invalid_shape(shape):
         V.get_fill_v2_vmap_rule('FillV2', 2)((shape, None), (t([1, 2]), 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_reshape_multiple_negative_dimensions():
     """
     Feature: Array and math vmap rules
@@ -1205,6 +1269,7 @@ def test_reshape_multiple_negative_dimensions():
         V.get_reshape_vmap_rule(P.Reshape(), 2)((t(np.ones((3, 2, 4))), 1), ((-1, -1), None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('refdim,indexdim,updatedim', [(None, 0, None), (1, None, None)])
 def test_scatter_ref_axis_errors(refdim, indexdim, updatedim):
     """
@@ -1218,6 +1283,7 @@ def test_scatter_ref_axis_errors(refdim, indexdim, updatedim):
                 (t([0, 1], np.int32), indexdim), (t([2, 3]), updatedim), None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('inputs,reason', [([((1, 0))], 'not tuple'),
                                          (((t([1, 2]), 0),), 'greater than 1'),
                                          (((t([1, 2]), None), (t([1, 2]), 0)), 'must be same'),
@@ -1333,6 +1399,7 @@ def _check_tree(result, expected):
             _check_tree(out, exp)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('factory,prim,args,expected', _unmapped_cases())
 def test_all_unmapped_short_circuit(factory, prim, args, expected):
     """
@@ -1343,6 +1410,7 @@ def test_all_unmapped_short_circuit(factory, prim, args, expected):
     _check_tree(factory(prim, 2)(*_bind_args(args)), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_select_rank_alignment():
     """
     Feature: Array and math vmap rules
@@ -1359,6 +1427,7 @@ def test_select_rank_alignment():
           np.where(cond[:, None, :], y[:, None, :], x))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_transpose_ext_mapped():
     """
     Feature: Array and math vmap rules
@@ -1371,6 +1440,7 @@ def test_transpose_ext_mapped():
           x.transpose(2, 1, 0), 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tile_trailing_batch():
     """
     Feature: Array and math vmap rules
@@ -1381,6 +1451,7 @@ def test_tile_trailing_batch():
     check(V.get_tile_vmap_rule(P.Tile(), 2)((t(x), 2), ((2, 1), None)), np.tile(x, (2, 1, 1)), 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('target', [(3, 4), (1, 12)])
 def test_reshape_preserved_interior_axis(target):
     """
@@ -1396,6 +1467,7 @@ def test_reshape_preserved_interior_axis(target):
     assert dim == (1 if target == (3, 4) else 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, -1])
 def test_index_fill(axis):
     """
@@ -1410,6 +1482,7 @@ def test_index_fill(axis):
     check(V.get_index_fill_rule(A.IndexFill(), 2)((t([0, 1, 2, 3]), None), *args[1:]), [0, -2, 2, -2], None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unique_with_pad_real_batch():
     """
     Feature: Array and math vmap rules
@@ -1422,6 +1495,7 @@ def test_unique_with_pad_real_batch():
     check(outputs[1], [[0, 0, 1], [0, 1, 0]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_broadcast_to_and_matmul_ext():
     """
     Feature: Array and math vmap rules
@@ -1436,6 +1510,7 @@ def test_broadcast_to_and_matmul_ext():
     check(W.get_matmul_ext_vmap_rule('MatMulExt', 2)((t(a), 0), (t(b), 0)), np.matmul(a, b))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='ReduceMean string rule uses a wrapper with an incompatible call signature')
 def test_reduce_string_factory_values():
     """
@@ -1448,6 +1523,7 @@ def test_reduce_string_factory_values():
     check(result, [1.5, 3.5])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('x_dim,y_dim,axis,reason', [(None, None, 0, 'indices'),
                                                   (None, 0, 0, 'must be None'),
                                                   (3, 0, 0, 'batch dimension'),
@@ -1464,6 +1540,7 @@ def test_index_add_rejected_axes(x_dim, y_dim, axis, reason):
             (t([0], np.int32), 0 if reason == 'indices' else None), (t([[1], [2]]), y_dim), None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('x_dim,y_dim,axis', [(None, None, 0), (0, 0, 0), (1, None, -1), (-1, 0, 0)])
 def test_index_add_monad_eager_boundary(x_dim, y_dim, axis):
     """
@@ -1478,6 +1555,7 @@ def test_index_add_monad_eager_boundary(x_dim, y_dim, axis):
     np.testing.assert_array_equal(x.asnumpy(), np.zeros((2, 3)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_svd_unmapped():
     """
     Feature: Array and math vmap rules
@@ -1490,6 +1568,7 @@ def test_svd_unmapped():
     check(result[2], np.eye(2), None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('broadcast', [False, True])
 def test_minimum_second_gradient_sensitivity(broadcast):
     # The CPU kernel clears only one byte of its first two outputs (see
@@ -1514,6 +1593,7 @@ def test_minimum_second_gradient_sensitivity(broadcast):
     check(result[2], np.where(x <= 3, a, b))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='MinimumGrad string rule calls a wrapper with incompatible gradient flags')
 def test_gradient_string_factory_values():
     """
@@ -1528,6 +1608,7 @@ def test_gradient_string_factory_values():
     check(result[1], [0, 1])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_primitive_clone_and_attribute_update():
     """
     Feature: Array and math vmap rules
@@ -1549,6 +1630,7 @@ def test_primitive_clone_and_attribute_update():
         B._raise_value_error('bad value ', 3)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_general_monad_print_and_dynamic_unmapped(capfd):
     """
     Feature: Array and math vmap rules
@@ -1564,6 +1646,7 @@ def test_general_monad_print_and_dynamic_unmapped(capfd):
     check(B.get_unsupported_dynamic_vmap_rule(P.AddN(), 2)((x, None), (x, None)), [2, 4], None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_four_argument_assignment_monad_boundary():
     """
     Feature: Array and math vmap rules
@@ -1577,6 +1660,7 @@ def test_four_argument_assignment_monad_boundary():
     np.testing.assert_array_equal(x.asnumpy(), [1, 2])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_space_batch_and_im2col_unmapped():
     """
     Feature: Array and math vmap rules
@@ -1596,6 +1680,7 @@ def test_space_batch_and_im2col_unmapped():
     check(V.get_split_vmap_rule(P.Split(), 2)((t([[1, 2], [3, 4]]), 0), (0, None), (2, None))[0], [[1], [3]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('batchdim', [0, 2])
 def test_reverse_sequence_interior_batch(batchdim):
     """
@@ -1618,6 +1703,7 @@ def test_reverse_sequence_interior_batch(batchdim):
           (t(physical), 1), (t(lengths, np.int32), 0)), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_empty_reshape_falls_back_to_front_axis():
     """
     Feature: Array and math vmap rules
@@ -1627,6 +1713,7 @@ def test_empty_reshape_falls_back_to_front_axis():
     check(V.get_reshape_vmap_rule(P.Reshape(), 2)((t(np.empty((3, 2, 0))), 1), ((0,), None)), np.empty((2, 0)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_nested_general_rule_boundaries():
     """
     Feature: Array and math vmap rules
@@ -1644,6 +1731,7 @@ def test_nested_general_rule_boundaries():
                                                (t([1], np.int32), None), (t(3), None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_real_existing_batch_rank_attributes():
     """
     Feature: Array and math vmap rules
@@ -1677,6 +1765,7 @@ def test_real_existing_batch_rank_attributes():
     check(result[1], (x ** 2).sum(axis=1))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.skip(reason='The unmapped Fills primitive has no CPU kernel')
 def test_unmapped_fills_values():
     """
@@ -1687,6 +1776,7 @@ def test_unmapped_fills_values():
     check(V.get_fills_vmap_rule(A.Fills(), 2)((t([1, 2]), None), (3., None)), [3, 3], None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='FFTWithSize string factory does not supply required primitive inputs')
 def test_unmapped_fft_string_factory_values():
     """
@@ -1698,6 +1788,7 @@ def test_unmapped_fft_string_factory_values():
     check(result, [3, -1], None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_im2col_and_padding_string_protocol_boundaries():
     """
     Feature: Array and math vmap rules
@@ -1713,6 +1804,7 @@ def test_im2col_and_padding_string_protocol_boundaries():
             result[0].asnumpy()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_gatherd_unmapped_source_and_positive_gradient_axis():
     # Singleton sample axes permit both source/index layouts to coincide.
     """
@@ -1735,6 +1827,7 @@ def test_gatherd_unmapped_source_and_positive_gradient_axis():
     np.testing.assert_array_equal(np.moveaxis(out.asnumpy(), dim, 0), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_minimum_second_gradient_unmapped_sensitivity():
     """
     Feature: Array and math vmap rules
@@ -1753,6 +1846,7 @@ def test_minimum_second_gradient_unmapped_sensitivity():
     check(result[2], [[10, 2], [3, 40]], None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='MinimumGradGrad CPU clears only one byte of its first two output buffers')
 def test_minimum_second_gradient_zero_outputs_regression():
     """
@@ -1778,6 +1872,7 @@ def test_minimum_second_gradient_zero_outputs_regression():
     check(result[1], np.zeros((2, 16)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='FFTWithSize object rule passes a norm enum where a string is required')
 def test_fft_explicit_legacy_axis_attribute():
     # The object rule reads the legacy spelling; preserve the real primitive's
@@ -1794,6 +1889,7 @@ def test_fft_explicit_legacy_axis_attribute():
     check(W.get_fft_with_size_vmap_rule(prim, 2)((t(data, np.complex64), 0)), np.fft.fft(data))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='Tile pads repeats but computes output batch metadata from the unpadded rank')
 def test_tile_short_multiples_batch_axis_regression():
     """
@@ -1808,6 +1904,7 @@ def test_tile_short_multiples_batch_axis_regression():
     np.testing.assert_array_equal(out.asnumpy(), np.tile(logical, (1, 1, 2)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='GatherD discards the return value when moving mismatched batch axes')
 def test_gatherd_mismatched_batch_axes_regression():
     """
@@ -1822,6 +1919,7 @@ def test_gatherd_mismatched_batch_axes_regression():
           np.take_along_axis(x, index, axis=1))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='ReverseSequence leaves the logical batch axis ahead of the sequence axis')
 def test_reverse_sequence_axis_order_regression():
     """
@@ -1841,6 +1939,7 @@ def test_reverse_sequence_axis_order_regression():
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_reverse_sequence_string_attribute_boundary():
     """
     Feature: Array and math vmap rules
@@ -1852,6 +1951,7 @@ def test_reverse_sequence_string_attribute_boundary():
         V.get_reverse_sequence_vmap_rule('ReverseSequence', 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_stateful_scatter_unmapped_monad_boundary():
     """
     Feature: Array and math vmap rules
@@ -1865,6 +1965,7 @@ def test_stateful_scatter_unmapped_monad_boundary():
     np.testing.assert_array_equal(ref.asnumpy(), [11, 2, 23])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True,
                    reason='MedianGrad recreates the primitive with logical axis 0 after moving batch to front')
 def test_median_gradient_positive_axis_regression():
@@ -1879,6 +1980,7 @@ def test_median_gradient_positive_axis_regression():
           (t([3, 6]), 0), (t([2, 2], np.int64), 0)), [[0, 0, 10], [0, 0, 20]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_eager_preprocess_requires_primitive_argument():
     """
     Feature: Array and math vmap rules
@@ -1889,6 +1991,7 @@ def test_eager_preprocess_requires_primitive_argument():
         _eager_preprocess((t([1, 2]), 0), (t([1, 2]), None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='GatherD vmap compares an unmapped source batch axis None to an integer')
 def test_gatherd_broadcasts_unmapped_source():
     """

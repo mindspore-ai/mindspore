@@ -17,6 +17,7 @@ import mindspore as ms
 from mindspore.ops.function import math_func as math
 from mindspore.ops import tensor_method as tm
 from mindspore.ops import functional_overload as overload
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True, name='cpu_context')
@@ -41,6 +42,7 @@ def close(actual, expected, rtol=2e-5, atol=2e-6):
         np.testing.assert_allclose(actual.asnumpy(), expected, rtol=rtol, atol=atol, equal_nan=True)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('module,name,oracle', [
     ('math', 'negative', np.negative), ('math', 'positive', np.positive),
     ('math', 'exp2', np.exp2), ('math', 'i0', np.i0),
@@ -76,6 +78,7 @@ def test_unary_numeric_wrappers(module, name, oracle):
     close(getattr(math if module == 'math' else tm, name)(tensor(data)), oracle(data))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('module,name,oracle', [
     ('math', 'subtract', np.subtract), ('math', 'divide', np.divide),
     ('math', 'arctan2', np.arctan2), ('math', 'truncate_div', lambda a, b: np.trunc(a / b)),
@@ -101,6 +104,7 @@ def test_binary_numeric_wrappers(module, name, oracle):
     close(getattr(math if module == 'math' else tm, name)(tensor(left), tensor(right)), oracle(left, right))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,oracle', [('tensor_logical_and', np.logical_and),
                                       ('tensor_logical_or', np.logical_or),
                                       ('tensor_logical_xor', np.logical_xor)])
@@ -115,6 +119,7 @@ def test_logical_wrappers(name, oracle):
     close(tm.tensor_logical_not(left), [False, True, False])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 @pytest.mark.parametrize('name', ['exp2', 'deg2rad', 'rad2deg'])
 def test_float16_conversion_branches(dtype, name):
@@ -128,6 +133,7 @@ def test_float16_conversion_branches(dtype, name):
     close(getattr(math, name)(tensor(values, dtype)), getattr(np, name)(values), rtol=.002, atol=.001)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('weights,minlength', [(None, 0), (None, 7), ([.5, 1., 2., 3.], 0)])
 def test_bincount_weighted_and_padded(weights, minlength):
     """
@@ -141,6 +147,7 @@ def test_bincount_weighted_and_padded(weights, minlength):
     close(tm.tensor_bincount(tensor(values, np.int32), minlength=minlength), np.bincount(values, minlength=minlength))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('values,weights,minlength,error', [
     ([1, 2], None, 0, TypeError), (tensor([1, 2], np.int32), [1., 2.], 0, TypeError),
     (tensor([1, 2], np.int32), None, True, TypeError),
@@ -158,6 +165,7 @@ def test_bincount_validation(values, weights, minlength, error):
         math.bincount(values, weights, minlength)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bincount_empty_and_sign_and_scalar_math():
     """
     Feature: Bincount empty and sign and scalar math.
@@ -179,6 +187,7 @@ def test_bincount_empty_and_sign_and_scalar_math():
     close(math.float_power(2, tensor([1., 2.])), [2., 4.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,args,kwargs,error', [
     ('positive', ([1],), {}, TypeError), ('signbit', ([1],), {}, TypeError),
     ('sgn', ([1],), {}, TypeError), ('div', (tensor([1.]), 2), {'rounding_mode':'ceil'}, ValueError),
@@ -202,6 +211,7 @@ def test_math_rejects_invalid_public_arguments(name, args, kwargs, error):
         getattr(math, name)(*args, **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('frequency,analytic,correction,dtype', [
     (None, None, 1, np.float64), ([1, 2, 1], None, 1, np.float32),
     (None, [.5, 1., 2.], 1, np.float32), ([1, 2, 1], [.5, 1., 2.], 1, np.float32),
@@ -221,6 +231,7 @@ def test_covariance_weights_match_numpy(frequency, analytic, correction, dtype):
           np.cov(values, ddof=correction, fweights=frequency, aweights=analytic))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind,error', [('rank', ValueError), ('bool', TypeError),
                                       ('weight_rank', ValueError), ('weight_dtype', TypeError),
                                       ('weight_length', ValueError)])
@@ -240,6 +251,7 @@ def test_covariance_rejects_invalid_shape_and_weights(kind, error):
         math.cov(values, **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['block', 'dstack', 'cartesian', 'vander', 'row_stack', 'view_real'])
 def test_math_shape_construction(kind):
     """
@@ -265,6 +277,7 @@ def test_math_shape_construction(kind):
         close(math.view_as_real(tensor([1+2j, 3-4j], np.complex64)), [[1, 2], [3, -4]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n,prepend,append', [(1, [[0], [1]], None),
                          (1, None, [[8], [9]]), (1, [[0], [1]], [[8], [9]]), (1, None, None)])
 def test_difference_with_scalar_endpoints(n, prepend, append):
@@ -279,6 +292,7 @@ def test_difference_with_scalar_endpoints(n, prepend, append):
     close(math.diff(tensor(data), n=n, axis=1, **tensor_kwargs), np.diff(data, n=n, axis=1, **kwargs))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1, -1])
 @pytest.mark.parametrize('coordinates', ['none', 'vector', 'matrix'])
 def test_trapezoidal_integration(axis, coordinates):
@@ -297,6 +311,7 @@ def test_trapezoidal_integration(axis, coordinates):
           oracle(data, x=x, dx=.5, axis=axis))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, 1])
 def test_empty_trapezoid_removes_only_integrated_axis(axis):
     """
@@ -310,6 +325,7 @@ def test_empty_trapezoid_removes_only_integrated_axis(axis):
     close(math.trapz(data, tensor([]), dim=axis), np.zeros(shape[1-axis]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('y,x,dx,dim,error', [
     ([1, 2], None, 1., -1, TypeError), (tensor([1, 2]), None, 1, -1, TypeError),
     (tensor([1, 2]), None, 1., .5, TypeError), (tensor([1, 2]), None, 1., 2, ValueError),
@@ -325,6 +341,7 @@ def test_trapezoid_rejects_invalid_geometry(y, x, dx, dim, error):
         math.trapz(y, x, dx=dx, dim=dim)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['amin', 'amax'])
 def test_masked_extrema_match_numpy(name):
     """
@@ -343,6 +360,7 @@ def test_masked_extrema_match_numpy(name):
         getattr(math, name)(tensor(values), where=tensor(mask, np.bool_))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['var', 'std', 'var_mean', 'std_mean'])
 @pytest.mark.parametrize('axis,ddof,keepdims', [(None, 0, False), (1, 1, True)])
 def test_variance_reductions_match_numpy(name, axis, ddof, keepdims):
@@ -359,6 +377,7 @@ def test_variance_reductions_match_numpy(name, axis, ddof, keepdims):
     close(getattr(math, name)(tensor(data), axis=axis, ddof=ddof, keepdims=keepdims), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['quantile', 'nanquantile'])
 @pytest.mark.parametrize('q', [.5, [.25, .75]])
 def test_quantile_native_boundary_protocol(monkeypatch, name, q):
@@ -385,6 +404,7 @@ def test_quantile_native_boundary_protocol(monkeypatch, name, q):
     close(output, getattr(np, name)(values, q, axis=1, keepdims=True))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tril_indices', 'triu_indices'])
 @pytest.mark.parametrize('offset', [-1, 0, 2])
 def test_triangular_coordinate_construction(name, offset):
@@ -397,6 +417,7 @@ def test_triangular_coordinate_construction(name, offset):
     close(getattr(math, name)(3, 4, offset, dtype=ms.int32), np.array(oracle(3, offset, 4)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('p', [0, 1, 2, 3])
 def test_distance_and_complex_vector_dot(p):
     """
@@ -411,6 +432,7 @@ def test_distance_and_complex_vector_dot(p):
     close(math.vecdot(tensor(a, np.complex64), tensor(b, np.complex64)), np.sum(a.conj()*b, axis=-1))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['outer', 'mv', 'addmv', 'addmm', 'addbmm', 'baddbmm', 'inner'])
 def test_linear_algebra_composition(name):
     """
@@ -440,6 +462,7 @@ def test_linear_algebra_composition(name):
         close(getattr(math, name)(tensor(base), tensor(left), tensor(right), beta=2, alpha=3), 2*base+3*oracle)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['matrix_determinant', 'log_matrix_determinant', 'slogdet', 'matrix_power'])
 def test_matrix_determinant_and_powers(name):
     """
@@ -457,6 +480,7 @@ def test_matrix_determinant_and_powers(name):
     close(getattr(math, name)(*args), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,axis,keep', [('tensor_maxdim', 1, False), ('tensor_mindim', 0, True)])
 def test_tensor_dimension_extrema_value_index_order(name, axis, keep):
     """
@@ -474,6 +498,7 @@ def test_tensor_dimension_extrema_value_index_order(name, axis, keep):
     close(result, (expected_value, expected_index))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_any', 'reduce_tensor_any'])
 @pytest.mark.parametrize('axis', [None, 1])
 def test_tensor_any_default_and_explicit_axes(name, axis):
@@ -487,6 +512,7 @@ def test_tensor_any_default_and_explicit_axes(name, axis):
     close(getattr(tm, name)(tensor(data, np.bool_), axis, True), np.any(data, axis=axis, keepdims=True))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_max', 'tensor_min', 'tensor_prod', 'tensor_sum_ext',
                                 'deprecated_tensor_nansum', 'deprecated_tensor_count_nonzero'])
 def test_tensor_reduction_wrappers(name):
@@ -501,6 +527,7 @@ def test_tensor_reduction_wrappers(name):
     close(getattr(tm, name)(tensor(values)), oracle(values))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_to', 'tensor_expand_as', 'tensor_chunk', 'deprecated_tensor_argsort',
                                 'tensor_masked_select', 'tensor_tile', 'deprecated_tensor_tile',
                                 'deprecated_tensor_permute', 'deprecated_tensor_t', 'deprecated_tensor_unbind',
@@ -534,6 +561,7 @@ def test_tensor_shape_and_selection_wrappers(name):
     close(getattr(tm, name)(*args), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_matmul', 'deprecated_tensor_matmul', 'deprecated_tensor_mm',
                                 'deprecated_tensor_dot', 'deprecated_tensor_inverse'])
 def test_tensor_matrix_wrappers(name):
@@ -551,6 +579,7 @@ def test_tensor_matrix_wrappers(name):
     close(getattr(tm, name)(*args), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_div_deal_sequence', 'deprecated_tensor_sub', 'deprecated_tensor_sub_'])
 @pytest.mark.parametrize('sequence_side', [0, 1])
 def test_tensor_arithmetic_converts_sequence_operand(name, sequence_side):
@@ -564,6 +593,7 @@ def test_tensor_arithmetic_converts_sequence_operand(name, sequence_side):
     close(getattr(tm, name)(*args), [2., 2.] if name == 'tensor_div_deal_sequence' else [2., 3.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_isneginf', 'deprecated_tensor_isneginf'])
 def test_tensor_negative_infinity(name):
     """
@@ -574,6 +604,7 @@ def test_tensor_negative_infinity(name):
     close(getattr(tm, name)(tensor([-np.inf, -1., np.inf, np.nan])), [True, False, False, False])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_diag', 'deprecated_tensor_diag'])
 def test_tensor_diagonal_wrappers(name):
     """
@@ -587,6 +618,7 @@ def test_tensor_diagonal_wrappers(name):
             tm.tensor_diag(tensor([1., 2.]), 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['deprecated_tensor_var'])
 def test_tensor_variance_wrappers(name):
     """
@@ -603,6 +635,7 @@ def test_tensor_variance_wrappers(name):
                 tm.deprecated_tensor_var(tensor(values), **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode',
     [pytest.param('clip',
     marks=pytest.mark.xfail(strict=True,
@@ -622,6 +655,7 @@ def test_deprecated_take_matches_numpy(mode, axis):
           np.take(data, indices, axis=axis, mode=mode))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', [
     'tensor_repeat', 'tensor_scatter_add_empty', 'tensor_inplace_fill_scalar_empty',
     'tensor_inplace_fill_tensor_empty', 'tensor_inplace_fill_diagonal',
@@ -673,6 +707,7 @@ def test_cpu_placeholder_contracts(name):
         function(*args, **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,boundary', [
     ('grouped_dynamic_mx_quant', '_grouped_dynamic_mx_quant_instance'),
     ('__truediv__', '_div_instance'), ('xlogy', '_xlogy_instance'),
@@ -786,6 +821,7 @@ def test_overload_native_boundary_preserves_call_protocol(monkeypatch, name, bou
     close(output[0] if isinstance(output, tuple) else output, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,boundary,args,kwargs,expected', [
     ('tensor_clone', 'clone', (tensor([1., 2.]),), {}, [1., 2.]),
     ('tensor_logaddexp2', 'logaddexp2', (tensor([1., 2.]), tensor([2., 3.])), {}, np.logaddexp2([1., 2.], [2., 3.])),
@@ -813,6 +849,7 @@ def test_tensor_unavailable_cpu_native_boundary(monkeypatch, name, boundary, arg
     close(output, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_internal_placeholder_logging(caplog):
     """
     Feature: Internal placeholder logging.
@@ -826,6 +863,7 @@ def test_internal_placeholder_logging(caplog):
     assert 'place holder' in caplog.text and 'empty' in caplog.text
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,args,kwargs,error', [
     ('vander', ([1, 2],), {}, TypeError), ('vander', (tensor([[1, 2]]),), {}, ValueError),
     ('vander', (tensor([1, 2]), 1.5), {}, TypeError), ('vander', (tensor([1, 2]), 0), {}, ValueError),
@@ -865,6 +903,7 @@ def test_math_remaining_validation_branches(name, args, kwargs, error):
         getattr(math, name)(*args, **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('hard,axis', [(False, -2), (False, -1), (True, -1), (True, 0)])
 def test_gumbel_softmax_fixed_rng_numerical_transform(monkeypatch, hard, axis):
     """
@@ -895,6 +934,7 @@ def test_gumbel_softmax_fixed_rng_numerical_transform(monkeypatch, hard, axis):
     assert calls == [logits.shape]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('data,pivots', [(True, True), (True, False), (False, True), (False, False)])
 def test_lu_unpack_flags_preserve_factorization(data, pivots):
     """
@@ -917,6 +957,7 @@ def test_lu_unpack_flags_preserve_factorization(data, pivots):
         assert lower is None and upper is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('steps,tensor_limits', [(1, False), (4, False), (4, True)])
 def test_linear_and_logarithmic_spacing(steps, tensor_limits):
     """
@@ -930,6 +971,7 @@ def test_linear_and_logarithmic_spacing(steps, tensor_limits):
     close(math.logspace(start, end, steps, base=2), np.logspace(1., 3., steps, base=2))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('order', [0, 1, 2, 3])
 def test_polygamma_and_lgamma_literal_identities(order):
     # psi^(m)(1)=(-1)^(m+1) m! zeta(m+1); psi(1)=-EulerGamma.
@@ -944,6 +986,7 @@ def test_polygamma_and_lgamma_literal_identities(order):
     close(math.lgamma(tensor([1., 2., 3., 4.])), [0., 0., np.log(2), np.log(6)])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('side', ['left_scalar', 'right_scalar', 'left_broadcast', 'right_broadcast'])
 def test_zeta_scalar_cast_and_broadcast(side):
     """
@@ -963,6 +1006,7 @@ def test_zeta_scalar_cast_and_broadcast(side):
     close(math.zeta(left, right), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['addcdiv', 'logit', 'cosine', 'nansum', 'prod'])
 def test_miscellaneous_cpu_math(kind, monkeypatch):
     """
@@ -995,6 +1039,7 @@ def test_miscellaneous_cpu_math(kind, monkeypatch):
         close(math.prod(tensor([[1, 2], [3, 4]], np.int32), axis=1, keep_dims=True, dtype=ms.float32), [[2], [12]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_accumulate_lazy_native_factory_protocol(monkeypatch):
     """
     Feature: Accumulate lazy native factory protocol.
@@ -1021,6 +1066,7 @@ def test_accumulate_lazy_native_factory_protocol(monkeypatch):
     close(output, [4., 6.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fmin_native_boundary_protocol(monkeypatch):
     """
     Feature: Fmin native boundary protocol.
@@ -1038,6 +1084,7 @@ def test_fmin_native_boundary_protocol(monkeypatch):
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['bitwise_left_shift', 'bitwise_right_shift'])
 @pytest.mark.parametrize('side', ['left', 'right', 'tensor'])
 def test_bit_shifts_promote_scalar_integer(name, side):
@@ -1052,6 +1099,7 @@ def test_bit_shifts_promote_scalar_integer(name, side):
     close(getattr(math, name)(left, right), oracle(4 if side == 'left' else [4, 8], 1 if side == 'right' else [1, 2]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['bitwise_left_shift', 'bitwise_right_shift'])
 @pytest.mark.parametrize('left,right', [(1, 2), (1.5, tensor([1], np.int32)), (tensor([1], np.int32), 1.5)])
 def test_bit_shifts_reject_noninteger_scalars(name, left, right):
@@ -1064,6 +1112,7 @@ def test_bit_shifts_reject_noninteger_scalars(name, left, right):
         getattr(math, name)(left, right)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,args,kwargs,error', [
     ('arccosh', (tensor([2.]),), {}, None),
     ('float_power_ext', (tensor([1.]), 1j), {}, TypeError),
@@ -1100,6 +1149,7 @@ def test_additional_math_type_and_axis_boundaries(name, args, kwargs, error):
             getattr(math, name)(*args, **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['addmm', 'addbmm'])
 @pytest.mark.parametrize('attribute', ['alpha', 'beta'])
 def test_matrix_accumulation_rejects_nonscalar_scaling(name, attribute):
@@ -1113,6 +1163,7 @@ def test_matrix_accumulation_rejects_nonscalar_scaling(name, attribute):
         getattr(math, name)(values, values, values, **{attribute: 'bad'})
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['type', 'dtype', 'float_attribute', 'int_attribute'])
 def test_batched_matmul_accumulation_validation(kind):
     """
@@ -1129,6 +1180,7 @@ def test_batched_matmul_accumulation_validation(kind):
         math.baddbmm(values, left, right, **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind',
     ['input',
     'dtype',
@@ -1153,6 +1205,7 @@ def test_addmv_types_and_integer_scale_cast(kind):
                        tensor([1, 2], np.float64))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,axis,expected', [('tensor_argmax', 1, [2, 2]), ('tensor_argmin', 0, [0, 0, 0])])
 def test_tensor_arg_extrema(name, axis, expected):
     """
@@ -1163,6 +1216,7 @@ def test_tensor_arg_extrema(name, axis, expected):
     close(getattr(tm, name)(tensor([[1., 2., 3.], [4., 5., 6.]]), axis), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_clamp_scalar', 'tensor_clamp_tensor'])
 def test_tensor_clamping(name):
     """
@@ -1175,6 +1229,7 @@ def test_tensor_clamping(name):
     close(getattr(tm, name)(values, lower, upper), [0., 1., 2.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['isclose', 'nan_to_num', 'where', 'old_where', 'gcd',
                                 'take', 'hardshrink', 'new_ones', 'new_zeros', 'pixel_shuffle'])
 def test_remaining_tensor_cpu_wrappers(kind):
@@ -1209,6 +1264,7 @@ def test_remaining_tensor_cpu_wrappers(kind):
             1, 1, 2, 2, 2, 2).transpose(0, 1, 4, 2, 5, 3).reshape(1, 1, 4, 4))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_addbmm', 'deprecated_tensor_addbmm', 'tensor_addmm',
                                 'deprecated_tensor_addmm', 'deprecated_tensor_addmv'])
 def test_tensor_scaled_matrix_sum(name):
@@ -1227,6 +1283,7 @@ def test_tensor_scaled_matrix_sum(name):
         close(getattr(tm, name)(tensor(np.ones((2, 2))), tensor(a), tensor(b), beta=2, alpha=3), 2+3*(a@b))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['scalar', 'tensor', 'wrong_condition', 'wrong_shape'])
 def test_deprecated_select_scalar_conversion(kind):
     """
@@ -1246,6 +1303,7 @@ def test_deprecated_select_scalar_conversion(kind):
               [1., 4.]] if kind == 'wrong_shape' else [1., 4.] if kind == 'tensor' else [1., 3.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_xlogy'])
 @pytest.mark.parametrize('other', [2., tensor([1., 2.])])
 def test_tensor_xlogy_scalar_or_tensor(name, other):
@@ -1259,6 +1317,7 @@ def test_tensor_xlogy_scalar_or_tensor(name, other):
           if isinstance(other, float) else [0., 2*np.log(2)])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='tensor_unsqueeze placeholder returns None instead of the expanded tensor')
 def test_tensor_unsqueeze_returns_expanded_tensor():
@@ -1270,6 +1329,7 @@ def test_tensor_unsqueeze_returns_expanded_tensor():
     close(tm.tensor_unsqueeze(tensor([1., 2.]), 0), [[1., 2.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,boundary,args,kwargs,native_args,native_kwargs,expected', [
     ('tensor_gather_ext','gather_ext',(tensor([[1.,2.],[3.,4.]]),1,tensor([[1],[0]],np.int32)),{},None,{},[[2.],[3.]]),
     ('tensor_repeat_interleave_ext','repeat_interleave_ext',(tensor([1.,2.]),2,0),{'output_size':4},
@@ -1338,6 +1398,7 @@ def test_tensor_remaining_numeric_or_native_protocol(
     close(output, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['tensor_std', 'deprecated_tensor_std'])
 def test_tensor_std_variance_boundary_and_real_square_root(monkeypatch, name):
     """
@@ -1359,6 +1420,7 @@ def test_tensor_std_variance_boundary_and_real_square_root(monkeypatch, name):
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['deprecated_tensor_sub', 'deprecated_tensor_sub_'])
 def test_tensor_subtraction_of_sparse_coo(name):
     """
@@ -1371,6 +1433,7 @@ def test_tensor_subtraction_of_sparse_coo(name):
     close(getattr(tm, name)(tensor([[5.,6.],[7.,8.]]), sparse), [[5.,4.],[4.,8.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype,y', [(np.float32, 1), (np.int32, 1.), (np.float32, [])])
 def test_deprecated_select_rejects_scalar_dtype_mismatch(dtype, y):
     """
@@ -1382,6 +1445,7 @@ def test_deprecated_select_rejects_scalar_dtype_mismatch(dtype, y):
         tm.deprecated_tensor_select(tensor([1,2],dtype),tensor([True,False],np.bool_),y)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_deprecated_select_integer_scalar():
     """
     Feature: Deprecated select integer scalar.
@@ -1397,6 +1461,7 @@ def unique_with_mutable_flags(value, flag):
     return tm.deprecated_tensor_unique(value, return_inverse=flag)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unique_rejects_mutable_return_flags():
     """
     Feature: Unique rejects mutable return flags.
@@ -1407,6 +1472,7 @@ def test_unique_rejects_mutable_return_flags():
         unique_with_mutable_flags(tensor([1,1,2]), ms.mutable(True))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis',
     [0,
     pytest.param(1,
@@ -1435,6 +1501,7 @@ def test_trapezoid_lower_rank_coordinates(axis):
         close(math.trapz(tensor(np.array([1,3,5],np.int32)),dx=.5),3.)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axes', [0,1,([1],[0]),([-1],[0])])
 def test_tensor_dot_contraction_and_outer_product(axes):
     """
@@ -1447,6 +1514,7 @@ def test_tensor_dot_contraction_and_outer_product(axes):
     close(math.tensor_dot(tensor(left),tensor(right),axes),np.tensordot(left,right,axes))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axes,error', [(-1,ValueError),(3,ValueError),((0,),ValueError),
     (([0],[0,1]),ValueError),(([0,0],[0,1]),ValueError),(([2],[0]),ValueError),
     (([0,1,2],[0,1,2]),ValueError),(([0],[0]),ValueError),('bad',TypeError)])
@@ -1460,6 +1528,7 @@ def test_tensor_dot_rejects_invalid_contraction_axes(axes,error):
         math.tensor_dot(tensor(np.ones((2,3))),tensor(np.ones((3,4))),axes)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('left_dtype,right_dtype',[(np.int32,np.float32),(np.float32,np.int32),(np.float16,np.float32)])
 def test_tensor_dot_rejects_unsupported_or_different_dtypes(left_dtype,right_dtype):
     """
@@ -1471,6 +1540,7 @@ def test_tensor_dot_rejects_unsupported_or_different_dtypes(left_dtype,right_dty
         math.tensor_dot(tensor(np.ones((2,2)),left_dtype),tensor(np.ones((2,2)),right_dtype),1).asnumpy()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('labels,expected', [([0,26],'Aa'),([Ellipsis,1],'...B')])
 def test_einsum_sublist_converter(labels,expected):
     """
@@ -1488,6 +1558,7 @@ def test_einsum_sublist_converter(labels,expected):
         math._einsum_convert_sublist('i->',())
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('style',['equation','explicit_output','implicit_output','ellipsis'])
 def test_einsum_gpu_native_boundary_protocol(monkeypatch,style):
     """
@@ -1515,6 +1586,7 @@ def test_einsum_gpu_native_boundary_protocol(monkeypatch,style):
     assert len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('number,expected',[(0,'A'),(25,'Z'),(26,'a'),(51,'z'),(Ellipsis,'...')])
 def test_einsum_label_alphabet_boundaries(number,expected):
     """
@@ -1538,6 +1610,7 @@ def fixture_source_math():
     return module
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('order', [float('inf'),-float('inf'),'nuc','fro'])
 @pytest.mark.parametrize('dims', [(0,1),(1,0)])
 def test_repository_matrix_other_norm_axis_order(source_math,order,dims):
@@ -1551,6 +1624,7 @@ def test_repository_matrix_other_norm_axis_order(source_math,order,dims):
           np.linalg.norm(data,ord=order,axis=dims,keepdims=True))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_repository_matrix_other_norm_duplicate_axes(source_math):
     """
     Feature: Repository matrix other norm duplicate axes.
@@ -1562,6 +1636,7 @@ def test_repository_matrix_other_norm_duplicate_axes(source_math):
         source_math.norm(tensor([[1.,2.],[3.,4.]]),ord=float('inf'),dim=(0,0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('order', [0.,.5,1.5,tensor(1.5)])
 def test_fractional_and_tensor_vector_norm_orders(order):
     """
@@ -1574,6 +1649,7 @@ def test_fractional_and_tensor_vector_norm_orders(order):
     close(math.norm(tensor(values),ord=order,dim=0,keepdim=True),np.linalg.norm(values,ord=exponent,keepdims=True))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,kwargs,error',[
     ('norm',{'dim':[0]},TypeError),('norm',{'dim':(0,1,2)},ValueError),
     ('norm',{'dim':0,'ord':'fro'},TypeError),('norm',{'dim':(0,1),'ord':3},ValueError),
@@ -1594,6 +1670,7 @@ def test_norm_axis_and_order_validation(name,kwargs,error):
         getattr(math,name)(values,**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['norm','vector_norm','matrix_norm'])
 def test_norm_dtype_and_keep_dimensions(name):
     """
@@ -1608,6 +1685,7 @@ def test_norm_dtype_and_keep_dimensions(name):
     close(getattr(math,name)(tensor(values),dtype=ms.float64,**kwargs),expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('left,right,expected',[(ms.float32,ms.float16,ms.float32),(ms.float16,ms.float16,ms.float16)])
 def test_legacy_norm_dtype_resolution(left,right,expected):
     """
@@ -1621,6 +1699,7 @@ def test_legacy_norm_dtype_resolution(left,right,expected):
         math._check_dtype(ms.float16,ms.float64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shapes,transpose,expected',[
     (((2,3),(3,4)),False,(2,4)),(((2,3),(4,3)),True,(2,4)),
     (((3,),(3,4)),False,(4,)),(((),()),True,()),(((2,3),(3,)),True,(2,))])
@@ -1635,6 +1714,7 @@ def test_matmul_shape_remainder_helper(shapes,transpose,expected):
     assert math._infer_shape_rem(left,right,len(left),len(right),transpose)==expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,args,expected',[
     ('_check_linalg_norm_input',(None,None,3),((0,1,2),True)),
     ('_check_linalg_norm_input',(None,1,2),((0,1),False)),
@@ -1654,6 +1734,7 @@ def test_legacy_shape_helper_contracts(name,args,expected):
     assert getattr(math,name)(*args)==expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,inputs,kwargs,expected',[
     ('prod',[[1,2],[3,4]],{'axis':(1,),'keep_dims':True,'dtype':ms.float32},[[2],[12]]),
     ('nansum',[[True,False],[True,True]],{'axis':1},[1,2]),
@@ -1671,6 +1752,7 @@ def test_more_math_scalar_and_reduction_branches(name,inputs,kwargs,expected):
     close(getattr(math,name)(tensor(inputs,dtype),**kwargs),expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['fft','ifft'])
 @pytest.mark.parametrize('input_kind,kwargs,error',[
     ('list',{},TypeError),('bool',{},TypeError),('complex',{'n':0},ValueError),
@@ -1687,6 +1769,7 @@ def test_fft_public_input_and_size_validation(name,input_kind,kwargs,error):
         getattr(math,name)(x,**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape,center', [((8,),True),((2,8),True),((8,),False)])
 def test_stft_window_defaults_and_padding_native_protocol(monkeypatch,shape,center):
     """
@@ -1709,6 +1792,7 @@ def test_stft_window_defaults_and_padding_native_protocol(monkeypatch,shape,cent
     assert len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['var_mean','std_mean'])
 def test_variance_nonstandard_degrees_of_freedom(name):
     """
@@ -1722,6 +1806,7 @@ def test_variance_nonstandard_degrees_of_freedom(name):
     close(getattr(math,name)(tensor(values),axis=1,ddof=2,keepdims=True),(first,np.mean(values,axis=1,keepdims=True)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,args,kwargs,error',[
     ('is_complex',([1],),{},TypeError),('norm_ext',([1],),{},TypeError),
     ('inner',(tensor([1.,2.]),tensor([1.,2.,3.])),{},ValueError),
@@ -1742,6 +1827,7 @@ def test_final_public_validation_branches(name,args,kwargs,error):
         getattr(math,name)(*args,**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['_typecheck_input','_typecheck_input_dot'])
 @pytest.mark.parametrize('left,right',[(ms.float16,ms.float32),(ms.int32,ms.float32),(ms.float32,ms.int32)])
 def test_legacy_contraction_dtype_validators(name,left,right):
@@ -1755,6 +1841,7 @@ def test_legacy_contraction_dtype_validators(name,left,right):
     assert getattr(math,name)(ms.float32,ms.float32,'test_contraction') is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axes',[(0,1),(1,),4,0,(4,1),'bad'])
 def test_batch_dot_rejects_invalid_axes(axes):
     """
@@ -1766,6 +1853,7 @@ def test_batch_dot_rejects_invalid_axes(axes):
         math.batch_dot(tensor(np.ones((2,3,4))),tensor(np.ones((2,4,5))),axes)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_batch_dot_rank_and_batch_size_validation():
     """
     Feature: Batch dot rank and batch size validation.
@@ -1779,6 +1867,7 @@ def test_batch_dot_rank_and_batch_size_validation():
         math._check_batch_size(2,3,'batch_dot')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis',[(0,1),[0,-1],0])
 def test_count_nonzero_legacy_axis_validation(axis):
     """
@@ -1791,6 +1880,7 @@ def test_count_nonzero_legacy_axis_validation(axis):
         math._check_validate_axis([.5],'count_nonzero')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_norm_and_axis_private_validation_contracts():
     """
     Feature: Norm and axis private validation contracts.
@@ -1810,6 +1900,7 @@ def test_norm_and_axis_private_validation_contracts():
     assert math._maybe_wrap_dims_n([-1],0)==[0]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind',
     ['eps',
     'orgqr',
@@ -1876,6 +1967,7 @@ def test_remaining_cpu_mathematical_identities(kind):
         assert len(result)==3 and all(item is value for item in result)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['arccosh_ext','arcsin_ext','arctan_ext','arctan2_ext','arccos_ext','arcsinh_ext',
                                 'remainder_ext','mul_ext','mean_ext'])
 def test_accelerator_math_native_boundary_protocol(monkeypatch,name):
@@ -1912,6 +2004,7 @@ def test_accelerator_math_native_boundary_protocol(monkeypatch,name):
     assert len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scalar_side',['left','right'])
 def test_remainder_scalar_native_protocol(monkeypatch,scalar_side):
     """
@@ -1935,6 +2028,7 @@ def test_remainder_scalar_native_protocol(monkeypatch,scalar_side):
         math.remainder_ext(1,2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('p,seed',[(.5,None),(tensor([.25,.75]),7)])
 def test_bernoulli_rng_boundary_protocol(monkeypatch,p,seed):
     """
@@ -1962,6 +2056,7 @@ def test_bernoulli_rng_boundary_protocol(monkeypatch,p,seed):
         math.bernoulli(x,seed=.5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_deprecated_index_add_tensor_method():
     """
     Feature: Deprecated index add tensor method.
@@ -1974,6 +2069,7 @@ def test_deprecated_index_add_tensor_method():
                                        use_lock=True,check_index_bound=True),[[6.,8.],[3.,4.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AttributeError,
                    reason='tensor_inplace_masked_scatter calls missing functional.inplace_masked_scatter')
 def test_inplace_masked_scatter_returns_updated_tensor():
@@ -1985,6 +2081,7 @@ def test_inplace_masked_scatter_returns_updated_tensor():
     close(tm.tensor_inplace_masked_scatter(tensor([1.,2.]),tensor([False,True],np.bool_),tensor([3.])),[1.,3.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['diff_ext'])
 @pytest.mark.parametrize('prepend,append',[(tensor([0.]),None),(None,tensor([8.]))])
 def test_difference_optional_endpoint_helpers(name,prepend,append):
@@ -1999,6 +2096,7 @@ def test_difference_optional_endpoint_helpers(name,prepend,append):
           np.diff([0.,1.,3.,6.] if prepend is not None else [1.,3.,6.,8.]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('function',['fft','ifft'])
 def test_fft_explicit_resize_changes_transform_length(function):
     """
@@ -2011,6 +2109,7 @@ def test_fft_explicit_resize_changes_transform_length(function):
     close(getattr(math,function)(tensor(values,np.complex64),n=5),getattr(np.fft,function)(values,n=5))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fft_resize_equal_length_preserves_input_identity():
     """
     Feature: Fft resize equal length preserves input identity.
@@ -2022,6 +2121,7 @@ def test_fft_resize_equal_length_preserves_input_identity():
     assert result is values
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='as_strided uses bfloat16 byte strides on its temporary float32 array')
 def test_bfloat16_strided_view_uses_element_strides():
@@ -2037,6 +2137,7 @@ def test_bfloat16_strided_view_uses_element_strides():
     close(view.float(),[[1.,2.],[3.,4.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('order,dtype',[(.5,None),(.5,ms.float64)])
 def test_vector_norm_float64_native_boundary_cast_protocol(monkeypatch,order,dtype):
     """
@@ -2057,6 +2158,7 @@ def test_vector_norm_float64_native_boundary_cast_protocol(monkeypatch,order,dty
     assert result.dtype==ms.float64 and len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('order,dim',[(None,None),(1,0)])
 def test_linalg_norm_vector_dispatch_native_protocol(monkeypatch,order,dim):
     """
@@ -2077,6 +2179,7 @@ def test_linalg_norm_vector_dispatch_native_protocol(monkeypatch,order,dim):
     assert len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('transpose',[False,True])
 def test_ormqr_gpu_native_protocol(monkeypatch,transpose):
     """
@@ -2095,6 +2198,7 @@ def test_ormqr_gpu_native_protocol(monkeypatch,transpose):
     assert math.ormqr(packed,tau,other,left=False,transpose=transpose) is other and len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scalar_side',['left','right'])
 def test_mul_ext_scalar_dispatch(scalar_side):
     """
@@ -2106,6 +2210,7 @@ def test_mul_ext_scalar_dispatch(scalar_side):
     close(math.mul_ext(2.,x) if scalar_side=='left' else math.mul_ext(x,2.),[2.,4.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fft_equal_stride_axes_use_stable_permutation():
     """
     Feature: Fft equal stride axes use stable permutation.
@@ -2118,6 +2223,7 @@ def test_fft_equal_stride_axes_use_stable_permutation():
     assert permutation==[0,1,2]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AttributeError,
                    reason=(
                        'empty replacement combinations returns TensorPy without the .size property '
@@ -2132,6 +2238,7 @@ def test_empty_combinations_with_replacement():
     close(math.combinations(tensor([]),r=2,with_replacement=True),[])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_negative_infinity_math_wrapper():
     """
     Feature: Negative infinity math wrapper.
@@ -2141,6 +2248,7 @@ def test_negative_infinity_math_wrapper():
     close(math.isneginf(tensor([-np.inf,0.,np.inf])),[True,False,False])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype',[np.float16,np.float32])
 def test_rotated_iou_casts_query_before_native_boundary(monkeypatch,dtype):
     """
@@ -2164,6 +2272,7 @@ def test_rotated_iou_casts_query_before_native_boundary(monkeypatch,dtype):
     assert len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode',['iou','iof'])
 def test_box_overlap_cpu_identity_and_disjoint_boxes(mode):
     """
@@ -2176,6 +2285,7 @@ def test_box_overlap_cpu_identity_and_disjoint_boxes(mode):
     close(math.iou(anchors,query,mode),[[1.,0.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_repository_trapezoid_integer_input_cast(source_math):
     """
     Feature: Repository trapezoid integer input cast.
@@ -2185,6 +2295,7 @@ def test_repository_trapezoid_integer_input_cast(source_math):
     close(source_math.trapz(tensor([1,3,5],np.int32),dx=.5),3.)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fft_resize_unspecified_length_preserves_input():
     """
     Feature: Fft resize unspecified length preserves input.
@@ -2195,6 +2306,7 @@ def test_fft_resize_unspecified_length_preserves_input():
     assert math._resize_input(values,1,[0],[-1],[3]) is values
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('values,dim,index,expected',[
     ([2.,5.,8.],0,1,[5.]),([[2.,5.,8.]],1,2,[8.])])
 def test_legacy_nested_selection_helper(values,dim,index,expected):
@@ -2209,6 +2321,7 @@ def test_legacy_nested_selection_helper(values,dim,index,expected):
     assert selected==expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('probability',[0.,1.])
 def test_bernoulli_probability_extremes_use_real_cpu_kernel(probability):
     """

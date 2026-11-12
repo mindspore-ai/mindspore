@@ -27,6 +27,7 @@ from mindspore.ops._vmap import vmap_other_ops as O, vmap_debug_ops as Debug
 from mindspore.ops._vmap import vmap_image_ops as I, vmap_random_ops as R
 from mindspore.ops._vmap import vmap_convolution_ops as Conv
 from mindspore.ops._vmap import vmap_grad_math_ops as GradMath
+from tests.mark_utils import arg_mark
 
 
 def tensor(value, dtype=np.float32):
@@ -212,6 +213,7 @@ def numpy_optimizer_step(kind, values):
     return s
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind,name,order,slots,returned', OPTIMIZERS, ids=[item[0] for item in OPTIMIZERS])
 @pytest.mark.parametrize('mapped_scalars', [False, True])
 def test_optimizer_mapped_state_real_cpu_updates(
@@ -314,6 +316,7 @@ def test_optimizer_mapped_state_real_cpu_updates(
         assert_tensor(operands[key][0], expected[key])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['gradient_descent', 'proximal_gradient_descent', 'proximal_adagrad',
                                  'adam_with_amsgrad', 'adam_with_amsgrad_v2', 'sparse_adagrad', 'sparse_ftrl'])
 def test_optimizer_unmapped_state_real_cpu(monkeypatch, kind):
@@ -364,6 +367,7 @@ def test_optimizer_unmapped_state_real_cpu(monkeypatch, kind):
         assert_tensor(operands[key], expected[key])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['ftrl', 'adam', 'rmsprop', 'centered_rmsprop'])
 def test_optimizer_unmapped_dispatch_protocol(monkeypatch, kind):
     """
@@ -396,6 +400,7 @@ def test_optimizer_unmapped_dispatch_protocol(monkeypatch, kind):
     assert all(value is expected and dim is None for (value, dim), expected in zip(results, outputs))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['ftrl', 'adam', 'adagrad_da', 'centered_rmsprop', 'rmsprop', 'adam_with_amsgrad_v2'])
 def test_optimizer_with_defective_cpu_kernel_mapped_executor_protocol(monkeypatch, kind):
     """
@@ -450,6 +455,7 @@ def test_optimizer_with_defective_cpu_kernel_mapped_executor_protocol(monkeypatc
         assert_tensor(value, array)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=ValueError,
                    reason='PowerSign all-unmapped guard checks bdim pairs rather than their None axes')
 def test_power_sign_unmapped_state_expected_cpu():
@@ -470,6 +476,7 @@ def test_power_sign_unmapped_state_expected_cpu():
     assert_tensor(moment[0], expected_m)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('factory,name', [(O.get_identity_vmap_rule, 'Identity'), (O.get_load_vmap_rule, 'Load')])
 @pytest.mark.parametrize('dim', [None, 1])
 def test_identity_and_load_real_values(monkeypatch, factory, name, dim):
@@ -497,6 +504,7 @@ def test_identity_and_load_real_values(monkeypatch, factory, name, dim):
     assert_tensor(value, [[1., 2.], [3., 4.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['TupleGetItem', 'list_getitem'])
 def test_sequence_getitem_native_protocol(monkeypatch, name):
     """
@@ -517,6 +525,7 @@ def test_sequence_getitem_native_protocol(monkeypatch, name):
     assert result is inputs[1] and calls == [1]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['Partial', 'Switch'])
 @pytest.mark.parametrize('as_string', [False, True])
 def test_control_flow_exact_unmapped_protocol(monkeypatch, name, as_string):
@@ -547,6 +556,7 @@ def test_control_flow_exact_unmapped_protocol(monkeypatch, name, as_string):
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('as_string', [False, True])
 def test_print_graph_protocol_includes_each_axis_and_monad(monkeypatch, as_string):
     """
@@ -572,6 +582,7 @@ def test_print_graph_protocol_includes_each_axis_and_monad(monkeypatch, as_strin
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='Tile computes output batch axis before padding short multiples')
 def test_tile_short_multiples_preserve_unmentioned_dimensions():
@@ -586,6 +597,7 @@ def test_tile_short_multiples_preserve_unmentioned_dimensions():
     assert_tensor(value, np.tile(x, (1, 1, 2)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_concat_rejects_non_tuple_list_sequence():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -600,6 +612,7 @@ def test_concat_rejects_non_tuple_list_sequence():
         rule(OtherSequence(), (0, None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_gatherd_rejects_dynamic_dimension_before_native_dispatch():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -611,6 +624,7 @@ def test_gatherd_rejects_dynamic_dimension_before_native_dispatch():
             (tensor(0, np.int32), None), (tensor([[0, 1], [1, 0]], np.int32), 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_fills_missing_cpu_kernel_native_protocol(monkeypatch):
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -628,6 +642,7 @@ def test_unmapped_fills_missing_cpu_kernel_native_protocol(monkeypatch):
     assert value is output and axis is None and calls == [(data, 3.)]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_inplace_add_alpha_graph_executor_protocol(monkeypatch):
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -650,6 +665,7 @@ def test_inplace_add_alpha_graph_executor_protocol(monkeypatch):
     assert_tensor(variable, [[1., 2.], [3., 4.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['MinimumGrad', 'MaximumGrad'])
 @pytest.mark.xfail(strict=True, raises=TypeError,
                    reason='String extremum-gradient factory calls generated three-input wrapper with five arguments')
@@ -671,6 +687,7 @@ def test_extremum_gradient_string_constructor_real_cpu(name):
     assert_tensor(result[1][0], np.where(select, 0, g))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_multinomial_rejects_mapped_sample_count():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -682,6 +699,7 @@ def test_multinomial_rejects_mapped_sample_count():
             (tensor([[.3, .7], [.6, .4]]), 0), (2, 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('factory,prim,args', [
     (N.get_bce_with_logits_loss_vamp_rule, NN.BCEWithLogitsLoss(),
      [(tensor([[1., 2.], [3., 4.]]), 0)]*4+[(99, None)]),
@@ -700,6 +718,7 @@ def test_nn_invalid_configuration_stops_before_native(factory, prim, args):
         factory(prim, 2)(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_softmax_dynamic_axis_metadata_is_rejected(monkeypatch):
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -718,6 +737,7 @@ def test_softmax_dynamic_axis_metadata_is_rejected(monkeypatch):
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [0, 1])
 def test_log_softmax_shifted_physical_axis_real_numpy(dim):
     """
@@ -733,6 +753,7 @@ def test_log_softmax_shifted_physical_axis_real_numpy(dim):
     assert_tensor(value, np.moveaxis(expected, 0, dim))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=ValueError,
                    reason='Pdist CPU rejects the rank-three input emitted by its batching rule')
 def test_pdist_string_rule_real_cpu_batch_distances():
@@ -747,6 +768,7 @@ def test_pdist_string_rule_real_cpu_batch_distances():
     assert_tensor(value, [[5.], [5.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pdist_missing_batched_kernel_native_protocol(monkeypatch):
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -766,6 +788,7 @@ def test_pdist_missing_batched_kernel_native_protocol(monkeypatch):
     assert value is output and axis == 0 and len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_pad_and_lrn_preserve_none_axis_real_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -787,6 +810,7 @@ def test_unmapped_pad_and_lrn_preserve_none_axis_real_cpu():
     assert_tensor(value, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['mirror', 'mirror_grad', 'pad_v3'])
 def test_unmapped_variadic_padding_real_cpu(kind):
     """
@@ -814,6 +838,7 @@ def test_unmapped_variadic_padding_real_cpu(kind):
     assert_tensor(value, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_dense_and_logsoftmax_real_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -834,6 +859,7 @@ def test_unmapped_dense_and_logsoftmax_real_cpu():
     assert_tensor(value, np.exp(data)/np.exp(data).sum(axis=-1, keepdims=True))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_categorical_real_cpu_deterministic_support():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -848,6 +874,7 @@ def test_unmapped_categorical_real_cpu_deterministic_support():
     assert_tensor(value, [[0, 0, 0], [1, 1, 1]], ms.int64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bce_invalid_reduction_after_broadcast_preparation():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -861,6 +888,7 @@ def test_bce_invalid_reduction_after_broadcast_preparation():
             (tensor([1., 1., 1.]), None), (99, None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='KLDivLossGrad mean reduction includes the mapped batch dimension in its denominator')
 def test_kl_mean_gradient_string_factory_per_sample_expected_cpu():
@@ -877,6 +905,7 @@ def test_kl_mean_gradient_string_factory_per_sample_expected_cpu():
     assert_tensor(value, -2*target/3)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_kl_gradient_string_factory_rejects_integer_target_dtype():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -889,6 +918,7 @@ def test_kl_gradient_string_factory_rejects_integer_target_dtype():
             (tensor(np.ones((2, 3)), np.int32), 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_lrn_gradient_alpha_zero_analytic_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -906,6 +936,7 @@ def test_unmapped_lrn_gradient_alpha_zero_analytic_cpu():
     assert_tensor(value, sensitivity/2**.75)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bias_add_nhwc_single_channel_real_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -919,6 +950,7 @@ def test_bias_add_nhwc_single_channel_real_cpu():
     assert_tensor(value, data+2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=ValueError, reason='NHWC BiasAdd uses rank as its channel index')
 def test_bias_add_nhwc_distinct_channels_expected_cpu():
     """
@@ -933,6 +965,7 @@ def test_bias_add_nhwc_distinct_channels_expected_cpu():
     assert_tensor(value, data+[2., -3.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError, reason='NHWC BiasAddGrad reduces the channel axis too')
 def test_bias_add_gradient_nhwc_preserves_channels_expected_cpu():
     """
@@ -947,6 +980,7 @@ def test_bias_add_gradient_nhwc_preserves_channels_expected_cpu():
     assert_tensor(value, data.sum(axis=(1, 2, 3)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mapped', [False, True])
 def test_instance_norm_forward_complete_native_protocol(monkeypatch, mapped):
     """
@@ -977,6 +1011,7 @@ def test_instance_norm_forward_complete_native_protocol(monkeypatch, mapped):
                for (value, axis), expected in zip(result, outputs))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='ReverseSequence with mapped axis after sample batch returns transposed sample dimensions')
 def test_reverse_sequence_with_batch_after_sequence_real_cpu():
@@ -998,6 +1033,7 @@ def test_reverse_sequence_with_batch_after_sequence_real_cpu():
     assert_tensor(value, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_reverse_sequence_rejects_lengths_exceeding_sequence_extent():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1011,6 +1047,7 @@ def test_reverse_sequence_rejects_lengths_exceeding_sequence_extent():
             (tensor(np.moveaxis(data, 0, 2)), 2), (tensor(lengths, np.int32), 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fft_string_factory_mapped_input_real_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1023,14 +1060,25 @@ def test_fft_string_factory_mapped_input_real_cpu():
     assert_tensor(value, np.fft.fft(data), ms.complex64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape', [(2, 1, 1, 2, 2, 2), (2, 1, 1, 1, 2, 2, 2)])
-def test_adaptive_max_pool3d_high_rank_reshape_real_cpu(shape):
+def test_adaptive_max_pool3d_high_rank_reshape_real_cpu(shape, monkeypatch):
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
     Description: Check adaptive max pool3d high rank reshape real CPU.
     Expectation: All leading dimensions are reconstructed, each pooled value matches its maximum and argmax equals
         seven.
     """
+    real_reshape = N.F.reshape
+
+    def reshape_with_ready_shape(value, output_shape):
+        # Preserve the graph rule's shape-value dependency at this eager boundary.
+        # Materialize before CPU shape conversion, then forward the original Tensor.
+        if isinstance(output_shape, ms.Tensor):
+            output_shape.asnumpy()
+        return real_reshape(value, output_shape)
+
+    monkeypatch.setattr(N.F, 'reshape', reshape_with_ready_shape)
     data = np.arange(np.prod(shape), dtype=np.float32).reshape(shape)
     result = N.get_adaptive_max_pool3d_vmap_rule(P.AdaptiveMaxPool3D(), 2)(
         (tensor(data), 0), (tensor([1, 1, 1], np.int32), None))
@@ -1041,6 +1089,7 @@ def test_adaptive_max_pool3d_high_rank_reshape_real_cpu(shape):
     assert_tensor(indices, np.full(expected.shape, 7), ms.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('factory,prim,args', [
     (D.get_nll_loss_grad_vmap_rule, G.NLLLossGrad(),
      [(tensor(np.ones((2, 1, 3))), 0), (tensor([1., 2.]), 0),
@@ -1059,6 +1108,7 @@ def test_gradient_argument_rank_and_weight_contract(factory, prim, args):
         factory(prim, 2)(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('existing_batch', [False, True])
 def test_instance_norm_gradient_native_protocol(monkeypatch, existing_batch):
     """
@@ -1090,6 +1140,7 @@ def test_instance_norm_gradient_native_protocol(monkeypatch, existing_batch):
     assert all(value is expected and axis == 0 for (value, axis), expected in zip(result, outputs))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['max2d', 'avg3d', 'maxgrad2d',
     pytest.param('maxgrad3d', marks=pytest.mark.xfail(strict=True, raises=ValueError,
         reason='MaxPool3DGradGrad preprocessing forwards only y to a three-input primitive')),
@@ -1131,6 +1182,7 @@ def test_unmapped_pool_gradients_real_cpu(kind):
     assert_tensor(value, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_nll_gradient_real_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1144,6 +1196,7 @@ def test_unmapped_nll_gradient_real_cpu():
     assert_tensor(value, [[0., 0., -4.], [-3., 0., 0.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_average_pool2d_gradient_real_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1157,6 +1210,7 @@ def test_unmapped_average_pool2d_gradient_real_cpu():
     assert_tensor(value, np.full((1, 1, 2, 2), .75))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_max_pool3d_argmax_gradient_real_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1173,6 +1227,7 @@ def test_unmapped_max_pool3d_argmax_gradient_real_cpu():
     assert_tensor(value, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_layernorm_gradient_analytic_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1195,6 +1250,7 @@ def test_unmapped_layernorm_gradient_analytic_cpu():
         assert_tensor(actual, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_grid_sampler_gradient_bilinear_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1211,6 +1267,7 @@ def test_unmapped_grid_sampler_gradient_bilinear_cpu():
 
 
 # Private convolution dispatchers are exercised directly for unsupported-operation validation.
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('factory', [Conv._conv_transpose_vmap_rule, Conv._conv_backprop_filter_vmap_rule])  # pylint: disable=protected-access
 def test_convolution_internal_dispatch_rejects_unknown_operation(factory):
     """
@@ -1227,6 +1284,7 @@ def test_convolution_internal_dispatch_rejects_unknown_operation(factory):
         factory(prim, 2, data, weight, ((1, 1, 2, 2), None), ['UnknownConv', 1, 'NCHW'])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_one_hot_rejects_nonconstant_axis_metadata(monkeypatch):
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1245,6 +1303,7 @@ def test_one_hot_rejects_nonconstant_axis_metadata(monkeypatch):
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_index_add_rejects_mapped_updates_to_unmapped_reference():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1257,6 +1316,7 @@ def test_index_add_rejects_mapped_updates_to_unmapped_reference():
              (tensor([[3.], [4.]]), 0), UMonad())
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axes', [(0, None), (0, 1), (0, 0)])
 def test_index_add_aligns_real_updates_at_graph_executor_boundary(monkeypatch, axes):
     """
@@ -1286,6 +1346,7 @@ def test_index_add_aligns_real_updates_at_graph_executor_boundary(monkeypatch, a
     assert_tensor(data, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=TypeError, reason='tuple output fallback calls zip with keyword unpacking')
 def test_general_tuple_output_fallback_expected_values():
     """
@@ -1321,6 +1382,7 @@ def resize_native_graph_abi(monkeypatch, primitive, names, expected):
     return calls, attributes
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_resize_bilinear_gradient_identity_expected_cpu(monkeypatch):
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1340,6 +1402,7 @@ def test_resize_bilinear_gradient_identity_expected_cpu(monkeypatch):
     assert len(calls) == 1 and primitive.attrs == attributes
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_resize_linear_gradient_identity_expected_cpu(monkeypatch):
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts
@@ -1359,6 +1422,7 @@ def test_resize_linear_gradient_identity_expected_cpu(monkeypatch):
     assert len(calls) == 1 and primitive.attrs == attributes
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_crop_and_resize_full_images_expected_cpu():
     """
     Feature: Remaining vmap dispatch, mutation and numerical contracts

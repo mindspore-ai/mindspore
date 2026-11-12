@@ -18,6 +18,7 @@ import pytest
 
 import mindspore as ms
 from mindspore.ops.function import sparse_unary_func as sparse
+from tests.mark_utils import arg_mark
 
 
 CASES = [
@@ -60,6 +61,7 @@ def make_sparse(kind, values):
     return ms.COOTensor(ms.Tensor([[0, 3], [1, 0]], ms.int32), tensor, (3, 4))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['csr', 'coo'])
 @pytest.mark.parametrize('operation,oracle,values', CASES, ids=[case[0] for case in CASES])
 def test_sparse_unary_values_and_structure(kind, operation, oracle, values):
@@ -81,6 +83,7 @@ def test_sparse_unary_values_and_structure(kind, operation, oracle, values):
         np.testing.assert_array_equal(result.indptr.asnumpy(), [0, 1, 2, 2])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['csr', 'coo'])
 @pytest.mark.parametrize('operation', [case[0] for case in CASES])
 def test_sparse_unary_rejects_dense_input(kind, operation):

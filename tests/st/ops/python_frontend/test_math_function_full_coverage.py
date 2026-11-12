@@ -21,6 +21,7 @@ import pytest
 
 import mindspore as ms
 from mindspore.ops.function import math_func as math
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True, name='cpu_context')
@@ -32,6 +33,7 @@ def fixture_cpu_context():
     ms.set_context(**previous)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('k', [0, 1, 2, 3, -1, 5])
 @pytest.mark.parametrize('dims', [(0, 1), (1, 0), (-2, -1)])
 def test_rot90_direction_and_wrapped_turns(k, dims):
@@ -45,6 +47,7 @@ def test_rot90_direction_and_wrapped_turns(k, dims):
     np.testing.assert_array_equal(result.asnumpy(), np.rot90(array, k, dims))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind,k,dims,error', [
     ('list', 1, (0, 1), TypeError), ('tensor', 1.5, (0, 1), TypeError),
     ('tensor', 1, 'bad', TypeError), ('tensor', 1, (0,), ValueError),
@@ -62,6 +65,7 @@ def test_rot90_rejects_invalid_rotation_specification(kind, k, dims, error):
         math.rot90(value, k, dims)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('left,right', [
     (np.array(2, np.float32), np.array([1, -2], np.float32)),
     (np.array([1, -2], np.float32), np.array(2, np.float32)),
@@ -77,6 +81,7 @@ def test_kronecker_product_handles_scalar_and_unequal_ranks(left, right):
     np.testing.assert_array_equal(math.kron(ms.Tensor(left), ms.Tensor(right)).asnumpy(), np.kron(left, right))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('left,right', [(None, ms.Tensor([1.])), (ms.Tensor([1.]), None)])
 def test_kronecker_product_rejects_non_tensor_operands(left, right):
     """
@@ -88,6 +93,7 @@ def test_kronecker_product_rejects_non_tensor_operands(left, right):
         math.kron(left, right)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [1, 2, 3])
 def test_atleast_nd_preserves_values_and_inserts_axes(rank):
     """
@@ -104,6 +110,7 @@ def test_atleast_nd_preserves_values_and_inserts_axes(rank):
     np.testing.assert_array_equal(function(ms.Tensor(values[1])).asnumpy(), oracle(values[1]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('values', [[np.array(2, np.float32), np.array(3, np.float32)],
                                    [np.array([1, 2], np.float32), np.array([3, 4], np.float32)],
                                    [np.ones((2, 2), np.float32), np.zeros((1, 2), np.float32)]])
@@ -117,6 +124,7 @@ def test_vstack_normalizes_scalar_vector_and_matrix_inputs(values):
     np.testing.assert_array_equal(result.asnumpy(), np.vstack(values))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [None, (), [1, 2]])
 def test_vstack_requires_nonempty_tensor_sequence(value):
     """
@@ -128,6 +136,7 @@ def test_vstack_requires_nonempty_tensor_sequence(value):
         math.vstack(value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('replacement', [False, True])
 @pytest.mark.parametrize('r', [1, 2, 3, 4])
 def test_combinations_matches_lexicographic_enumeration(replacement, r):
@@ -143,6 +152,7 @@ def test_combinations_matches_lexicographic_enumeration(replacement, r):
     np.testing.assert_array_equal(result.asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value,r,error', [([1, 2], 2, TypeError),
                                         (ms.Tensor([[1, 2]]), 2, ValueError),
                                         (ms.Tensor([1, 2]), 1.5, TypeError)])
@@ -156,6 +166,7 @@ def test_combinations_rejects_wrong_input_rank_and_count_type(value, r, error):
         math.combinations(value, r)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('function', ['hann_window', 'kaiser_window'])
 @pytest.mark.parametrize('length', [0, 1, 4, 5])
 @pytest.mark.parametrize('periodic', [False, True])
@@ -174,6 +185,7 @@ def test_window_functions_match_numpy(function, length, periodic):
     np.testing.assert_allclose(result.asnumpy(), oracle, rtol=1e-6, atol=1e-7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('function', ['hann_window', 'kaiser_window'])
 @pytest.mark.parametrize('length,periodic,dtype,error', [('4', True, None, TypeError),
                                                       (-1, True, None, ValueError),
@@ -189,6 +201,7 @@ def test_window_functions_reject_invalid_arguments(function, length, periodic, d
         getattr(math, function)(length, periodic, dtype=dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape,dim,expected', [(None, None, ([2, 3, 4], [0, 1, 2])),
                                              ((5, -1), None, ([5, 4], [1, 2])),
                                              (None, (-1, 0), ([4, 2], [2, 0])),
@@ -203,6 +216,7 @@ def test_fft_shape_canonicalization_preserves_requested_axis_order(shape, dim, e
     assert math._canonicalize_fft_shape_and_dim(tensor, shape, dim) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape,dim,reason', [(None, (0, 0), 'unique'), ((2,), (0, 1), 'same length'),
                                            ((1, 2, 3, 4), None, 'dimensions'),
                                            ((0,), (1,), 'greater than 0'), (None, (3,), 'out of range')])
@@ -216,6 +230,7 @@ def test_fft_shape_canonicalization_rejects_inconsistent_dimensions(shape, dim, 
         math._canonicalize_fft_shape_and_dim(ms.Tensor(np.ones((2, 3, 4), np.complex64)), shape, dim)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape,dim,norm,name,expected_shape', [
     (None, None, None, 'FFTN', (1, 2, 3)),
     ((4,), (1,), 'ortho', 'IFFTN', (2, 4)),
@@ -241,6 +256,7 @@ def test_fft_input_preparation_resizes_and_tracks_metadata(shape, dim, norm, nam
         np.testing.assert_array_equal(result.input.asnumpy().reshape(2, 3), [[0, 1, 2], [3, 4, 5]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('input_kind,shape,dim,norm,name', [
     ('list', None, None, None, 'FFTN'), ('float', None, None, None, 'FFTN'),
     ('complex', None, None, None, 'RFFT'), ('complex', [2], None, None, 'FFTN'),
@@ -259,6 +275,7 @@ def test_fft_input_preparation_rejects_invalid_types(input_kind, shape, dim, nor
         math._check_fftwithsize_input(value, shape, dim, norm, name)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('left,right,expected', [((2, 3, 4), (1, 4, 5), (2,)),
                                                ((4, 5), (2, 3, 5, 6), (2, 3)),
                                                ((2, 1, 3, 4), (1, 5, 4, 6), (2, 5))])
@@ -271,6 +288,7 @@ def test_matmul_batch_shape_inference_broadcasts_only_leading_axes(left, right, 
     assert math._check_matmul_shapes(left, right, 'matmul') == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_matmul_batch_shape_inference_rejects_incompatible_batch_sizes():
     """
     Feature: Matmul batch shape inference rejects incompatible batch sizes.
@@ -281,6 +299,7 @@ def test_matmul_batch_shape_inference_rejects_incompatible_batch_sizes():
         math._check_matmul_shapes((2, 3, 4), (3, 4, 5), 'matmul')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape1,shape2,axes', [((2, 3), (2, 3), None),
                                            ((2, 3, 4), (2, 4, 5), (2, 1)),
                                            ((2, 3), (2, 3, 4), (1, 1)),
@@ -302,6 +321,7 @@ def test_batch_dot_matches_independent_numpy_contractions(shape1, shape2, axes):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=1e-5, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('function', ['fft', 'ifft', 'fft2', 'ifft2', 'fftn', 'ifftn'])
 @pytest.mark.parametrize('norm', [None, 'forward', 'ortho'])
 def test_fourier_transforms_match_numpy(function, norm):
@@ -317,6 +337,7 @@ def test_fourier_transforms_match_numpy(function, norm):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-5, atol=2e-5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape,dimension', [((2, 5), (0, 1)), ((3, 2), (1, 0)), ((2, 2), (0, 1))])
 def test_fftn_resizes_and_restores_noncanonical_axes(shape, dimension):
     """
@@ -330,6 +351,7 @@ def test_fftn_resizes_and_restores_noncanonical_axes(shape, dimension):
                                rtol=2e-5, atol=2e-5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('order', [None, 0, 1, 2, 3, -1, -2, float('inf'), float('-inf')])
 @pytest.mark.parametrize('keepdims', [False, True])
 def test_vector_norm_orders_match_numpy(order, keepdims):
@@ -344,6 +366,7 @@ def test_vector_norm_orders_match_numpy(order, keepdims):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-5, atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('order', ['fro', 'nuc', 1, -1, 2, -2, float('inf'), float('-inf')])
 def test_matrix_norm_orders_match_numpy(order):
     """
@@ -357,6 +380,7 @@ def test_matrix_norm_orders_match_numpy(order):
                                rtol=2e-5, atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dimension', [0, 1, -1])
 @pytest.mark.parametrize('use_coordinates', [False, True])
 def test_trapezoidal_integration_matches_numpy(dimension, use_coordinates):

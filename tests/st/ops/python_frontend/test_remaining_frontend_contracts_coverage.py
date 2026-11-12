@@ -19,6 +19,7 @@ from mindspore.ops.operations.manually_defined._inner import ScalarCast, TensorR
 from mindspore.ops.operations.manually_defined import ops_def
 from mindspore.ops.operations.reshard_ops import Reshard
 from mindspore.parallel.shard import Layout
+from tests.mark_utils import arg_mark
 
 registration = importlib.import_module('mindspore.ops.op_info_register')
 
@@ -31,6 +32,7 @@ def fixture_cpu_context():
     ms.set_context(**previous)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [ms.int32, ms.int64, ms.float32])
 def test_constant_range_uses_requested_dtype(dtype):
     """
@@ -43,6 +45,7 @@ def test_constant_range_uses_requested_dtype(dtype):
     np.testing.assert_array_equal(result.asnumpy(), [5, 3, 1, -1])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [2, 2.5])
 def test_scalar_argument_normalization_returns_a_scalar_tensor(value):
     """
@@ -55,6 +58,7 @@ def test_scalar_argument_normalization_returns_a_scalar_tensor(value):
     np.testing.assert_array_equal(result.asnumpy(), value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_optional_enum_and_negative_sequence_values():
     """
     Feature: Optional enum and negative sequence values.
@@ -65,6 +69,7 @@ def test_optional_enum_and_negative_sequence_values():
     assert arg_dtype_cast.normalize_int_sequence('Example', 'shape', (-2,)) == (-2,)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('constructor', [random_ops.Gamma, random_ops.Poisson])
 def test_random_frontend_rejects_unresolved_shape_value(constructor):
     """
@@ -80,6 +85,7 @@ def test_random_frontend_rejects_unresolved_shape_value(constructor):
         constructor().__infer__(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_registration_schema_checks_parameter_container_and_arity():
     """
     Feature: Registration schema checks parameter container and arity.
@@ -99,6 +105,7 @@ def test_registration_schema_checks_parameter_container_and_arity():
         custom.dtype_format(registration.DataType.F32_Default)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [False, True])
 def test_scalar_boolean_negation_is_a_python_boolean(value):
     """
@@ -109,6 +116,7 @@ def test_scalar_boolean_negation_is_a_python_boolean(value):
     assert bool_not()(value) is (not value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('constructor,args', [(control_ops.GeSwitch, (1, True)),
                                              (control_ops.Merge, ((1, 2),))])
 def test_graph_control_operators_reject_direct_python_execution(constructor, args):
@@ -121,6 +129,7 @@ def test_graph_control_operators_reject_direct_python_execution(constructor, arg
         constructor()(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_map_lookup_constructor_records_memory_side_effect_and_default_policy():
     """
     Feature: Map lookup constructor records memory side effect and default policy.
@@ -135,6 +144,7 @@ def test_map_lookup_constructor_records_memory_side_effect_and_default_policy():
     assert lookup.insert_default_value is False
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('system', ['Windows', 'Darwin', 'Linux'])
 def test_platform_reduction_registration_policy_is_isolated(monkeypatch, system):
     """
@@ -152,6 +162,7 @@ def test_platform_reduction_registration_policy_is_isolated(monkeypatch, system)
     assert calls == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_reshard_frontend_retains_layout_and_tensor_identity():
     """
     Feature: Reshard frontend retains layout and tensor identity.
@@ -165,6 +176,7 @@ def test_reshard_frontend_retains_layout_and_tensor_identity():
     assert operation(data) is data
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bfloat16_concat_constant_folding_preserves_dtype():
     """
     Feature: Bfloat16 concat constant folding preserves dtype.
@@ -177,6 +189,7 @@ def test_bfloat16_concat_constant_folding_preserves_dtype():
     np.testing.assert_array_equal(result.float().asnumpy(), [1., 2., 3., 4.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_legacy_scalar_cast_rejects_unsupported_destination_type():
     """
     Feature: Legacy scalar cast rejects unsupported destination type.
@@ -188,6 +201,7 @@ def test_legacy_scalar_cast_rejects_unsupported_destination_type():
         ScalarCast()(2, ms.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tensor_report_warns_about_unsupported_eager_execution(monkeypatch):
     """
     Feature: Tensor report warns about unsupported eager execution.

@@ -24,6 +24,7 @@ from mindspore.ops._vmap import vmap_array_ops as array_rules
 from mindspore.ops._vmap import vmap_nn_ops as nn_rules
 from mindspore.ops.primitive import Primitive
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -35,6 +36,7 @@ def cpu_pynative_context():
     ms.set_context(**previous)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape,target,expected_shape,expected_axes', [
     ((2, 3, 4), (2, 4), (2, 3, 4), ()),
     ((), (2, 3, 4), (1, 1, 1), (0, 1, 2)),
@@ -53,6 +55,7 @@ def test_front_batch_broadcast_shape_and_inserted_axes(shape, target, expected_s
     assert base._get_broadcasting_with_front_axis_additional_axis(shape, target) == expected_axes
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('destination,expected', [(0, (4, 2, 3)), (1, (2, 4, 3)),
                                                 (-1, (2, 3, 4)), (-3, (4, 2, 3))])
 def test_batch_broadcast_shape_inserts_axis_at_normalized_position(destination, expected):
@@ -64,6 +67,7 @@ def test_batch_broadcast_shape_inserts_axis_at_normalized_position(destination, 
     assert base._get_broadcast_shape((2, 3), destination, 4) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('destination', [-4, 3])
 def test_batch_broadcast_shape_rejects_out_of_range_axis(destination):
     """
@@ -75,6 +79,7 @@ def test_batch_broadcast_shape_rejects_out_of_range_axis(destination):
         base._get_broadcast_shape((2, 3), destination, 4)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('destination', [0, -1])
 def test_broadcast_scalar_to_batch(destination):
     """
@@ -86,6 +91,7 @@ def test_broadcast_scalar_to_batch(destination):
     np.testing.assert_array_equal(result.asnumpy(), [3.5, 3.5])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_broadcast_scalar_rejects_nonexistent_axis():
     """
     Feature: Vmap axis and broadcast boundaries
@@ -96,6 +102,7 @@ def test_broadcast_scalar_rejects_nonexistent_axis():
         base._broadcast_by_axis(3.5, 1, 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_broadcast_tensor_and_move_existing_batch_axis():
     """
     Feature: Vmap axis and broadcast boundaries
@@ -111,6 +118,7 @@ def test_broadcast_tensor_and_move_existing_batch_axis():
         base._bdim_at_any(result, 0, None, 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis,batch_axis,rank,expected', [
     (-1, 1, 4, 3), (0, 1, 4, 0), (1, -2, 4, 1),
     ((0, -1), 1, 4, (0, 3)), ((), 1, 4, (0, 2, 3)),
@@ -124,6 +132,7 @@ def test_reduce_batch_axis_excludes_mapped_dimension(axis, batch_axis, rank, exp
     assert base._get_reduce_batch_axis(axis, batch_axis, rank) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('batch_axis,reduce_axes,keep_dims,expected', [
     (2, (0, 1), False, 0), (2, (0, 3), False, 1), (2, 0, True, 2),
 ])
@@ -136,6 +145,7 @@ def test_reduce_output_batch_dimension_tracks_removed_axes(batch_axis, reduce_ax
     assert base._get_reduce_out_dim(batch_axis, reduce_axes, keep_dims) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value,expected', [(3, (3, None)), ((3, 4), ((3, None), (4, None)))])
 def test_bind_unmapped_outputs_preserves_tuple_structure(value, expected):
     """
@@ -146,6 +156,7 @@ def test_bind_unmapped_outputs_preserves_tuple_structure(value, expected):
     assert base.vmap_bind_all_none(value) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('x_axis,dy_axis', [(0, 0), (1, 0), (0, 1), (None, 0), (1, None)])
 def test_unary_gradient_rule_aligns_and_broadcasts_operands(x_axis, dy_axis):
     """
@@ -166,6 +177,7 @@ def test_unary_gradient_rule_aligns_and_broadcasts_operands(x_axis, dy_axis):
     np.testing.assert_allclose(np.moveaxis(result.asnumpy(), result_axis, 0), expected, rtol=1e-6, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['soft', 'hard'])
 @pytest.mark.parametrize('dy_axis', [0, 1])
 def test_shrink_gradient_rule_keeps_sensitivity_batch_alignment(kind, dy_axis):
@@ -186,6 +198,7 @@ def test_shrink_gradient_rule_keeps_sensitivity_batch_alignment(kind, dy_axis):
     np.testing.assert_array_equal(np.moveaxis(result.asnumpy(), result_axis, 0), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,factory', [('SoftShrinkGrad', nn_rules.get_softshrink_grad_vmap_rule),
                                         ('HShrinkGrad', nn_rules.get_hshrink_grad_vmap_rule)])
 def test_shrink_gradient_rule_rejects_incompatible_sample_shapes(name, factory):
@@ -200,6 +213,7 @@ def test_shrink_gradient_rule_rejects_incompatible_sample_shapes(name, factory):
              (ms.Tensor(np.ones((3, 2), np.float32)), 1), (0.75, None))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,factory', [('SoftShrink', nn_rules.get_softshrink_vmap_rule),
                                         ('HShrink', nn_rules.get_hshrink_vmap_rule)])
 def test_shrink_rule_retains_batch_axis_and_threshold_boundary(name, factory):
@@ -215,6 +229,7 @@ def test_shrink_rule_retains_batch_axis_and_threshold_boundary(name, factory):
     np.testing.assert_array_equal(result.asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cast_rule_preserves_axis_and_rejects_batched_dtype():
     """
     Feature: Vmap axis and broadcast boundaries

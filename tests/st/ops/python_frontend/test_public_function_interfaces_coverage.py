@@ -34,6 +34,7 @@ from mindspore.ops.function import linalg_func as l
 from mindspore.ops.function import spectral_func as s
 from mindspore.ops.function import debug_func as d
 from mindspore.ops.function import other_func as o
+from tests.mark_utils import arg_mark
 
 g = importlib.import_module('mindspore.ops.function.grad.grad_func')
 
@@ -72,6 +73,7 @@ def fixture_preserve_context():
     ms.set_context(mode=mode, device_target=device)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('call,exception', [
     (lambda: a.arange(t([1, 2]), 5), ValueError),
     (lambda: a._get_max_type('bad', 2, 1), TypeError),
@@ -141,6 +143,7 @@ def test_array_validation(call, exception):
         call()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis,flags,exception', [
     ((0, 'x'), (False, True, False), TypeError),
     (['x'], (False, False, True), TypeError),
@@ -156,6 +159,7 @@ def test_axis_type_validation(axis, flags, exception):
         a._check_axis_type(axis, *flags, 'coverage')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_axis_helpers_and_creation():
     """
     Feature: Axis helpers and creation.
@@ -180,6 +184,7 @@ def test_axis_helpers_and_creation():
     eq(a.dyn_shape(t([[1, 2]])), [1, 2])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n,chunks', [(0, 2), (2, 4), (8, 3), (6, 4), (6, 3)])
 def test_chunk_numerical(n, chunks):
     """
@@ -200,6 +205,7 @@ def test_chunk_numerical(n, chunks):
             eq(actual, value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='Fills has no CPU kernel in MS 2.12')
 @pytest.mark.parametrize('value', [2, 2., t(2)])
 def test_fills_numeric(value):
@@ -212,6 +218,7 @@ def test_fills_numeric(value):
     eq(a.fills(t([[1, 3], [4, 5]]), value), np.full((2, 2), 2))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_array_numeric_wrappers():
     """
     Feature: Array numeric wrappers.
@@ -249,6 +256,7 @@ def test_array_numeric_wrappers():
         eq(ops.concat(result), np.arange(n))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,expected', [('mul', [6, 3]), ('max', [3, 3]),
                          ('min', [2, 3]), ('div', [2/3, 3]), ('update', [3, 3])])
 def test_scatter_parameter_wrappers(name, expected):
@@ -263,6 +271,7 @@ def test_scatter_parameter_wrappers(name, expected):
     eq(x, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,expected', [('add', [5, 3]), ('sub', [-1, 3]),
                          ('mul', [6, 3]), ('div', [2/3, 3]), ('max', [3, 3]), ('min', [2, 3])])
 def test_scatter_nd_parameter_wrappers(name, expected):
@@ -277,6 +286,7 @@ def test_scatter_nd_parameter_wrappers(name, expected):
     eq(x, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,expected', [('mul', [6, 3]), ('max', [3, 3]), ('min', [2, 3])])
 def test_tensor_scatter_numeric(name, expected):
     """
@@ -290,6 +300,7 @@ def test_tensor_scatter_numeric(name, expected):
     eq(x, [2, 3])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kwargs,error', [({'window_length': 1.5}, TypeError), ({'window_length': -1}, ValueError),
     ({'window_length': 3, 'periodic': 1}, TypeError), ({'window_length': 3, 'alpha': 1}, TypeError),
     ({'window_length': 3, 'beta': 1}, TypeError), ({'window_length': 3, 'dtype': ms.int32}, TypeError)])
@@ -303,6 +314,7 @@ def test_hamming_validation(kwargs, error):
         a.hamming_window(**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_windows_numeric():
     """
     Feature: Windows numeric.
@@ -317,6 +329,7 @@ def test_windows_numeric():
     eq(s.bartlett_window(t(5, ms.int32), periodic=False), np.bartlett(5))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('call,error', [
     (lambda: c.clip_by_value(t([1])), ValueError), (lambda: c.clip_by_value(1, 0, 2), TypeError),
     (lambda: c.clip_by_value([1], 0, 2), TypeError), (lambda: c.clip_by_value(t([1]), 'bad', 2), TypeError),
@@ -334,6 +347,7 @@ def test_clip_validation(call, error):
         call()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_clip_numeric():
     """
     Feature: Clip numeric.
@@ -360,6 +374,7 @@ def test_clip_numeric():
     eq(result[1], [1.6])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('call,error', [(lambda:l.pinv([1]), TypeError), (lambda:l.pinv(t(1)), TypeError),
     (lambda:l.pinv(t([1])), ValueError), (lambda:l.qr(t([[1]]), 'invalid'), TypeError),
     (lambda:l._nd_transpose(t([1])), TypeError)])
@@ -373,6 +388,7 @@ def test_linalg_validation(call, error):
         call()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_linalg_numeric():
     """
     Feature: Linalg numeric.
@@ -393,6 +409,7 @@ def test_linalg_numeric():
         eq(q.T @ q, np.eye(2))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('args,error', [((1, t(1)), TypeError), (('dump', 1), TypeError),
     (('dump', t(1), 1), TypeError), (('dump', t(1), 'all'), ValueError), (('dump', t(1), 'bad'), ValueError)])
 def test_tensordump_validation(args, error):
@@ -405,6 +422,7 @@ def test_tensordump_validation(args, error):
         d.tensordump(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_other_functions_numeric():
     """
     Feature: Other functions numeric.
@@ -418,6 +436,7 @@ def test_other_functions_numeric():
     eq(add(t(3)), 5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('call,error', [
     (lambda:r.uniform((2,), t(0), t(1), dtype=ms.int64), TypeError),
     (lambda:r.rand(2, dtype=ms.int32), ValueError), (lambda:r.randn(2, dtype=ms.int32), ValueError),
@@ -446,6 +465,7 @@ def test_random_validation(call, error):
         call()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_random_shapes_and_support():
     """
     Feature: Random shapes and support.
@@ -493,6 +513,7 @@ def test_random_shapes_and_support():
         eq(out, [1] if np.ndim(data) == 1 else [[1], [0]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('call,error', [
     (lambda:g._check_duplicate_grad_position((0, 0)), ValueError),
     (lambda:g._convert_grad_position_type(('x',)), TypeError),
@@ -536,6 +557,7 @@ def auxiliary_three(x, y):
     return x * x + 3 * y, x + 7, y - 2
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_transforms_and_derivative():
     """
     Feature: Grad transforms and derivative.
@@ -557,6 +579,7 @@ def test_grad_transforms_and_derivative():
     eq(derivative, [4, 6])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['single', 'single_aux', 'multi', 'multi_aux', 'tuple_output'])
 def test_jvp_analytic(kind):
     """
@@ -593,6 +616,7 @@ def test_jvp_analytic(kind):
         eq(tangent[1], [10, 22])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_linearize_vjp_analytic():
     """
     Feature: Linearize vjp analytic.
@@ -613,6 +637,7 @@ def test_linearize_vjp_analytic():
     eq(backward(v)[0], [4, 12])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn', [g.jacfwd, g.jacrev])
 @pytest.mark.parametrize('case', ['single', 'two_inputs', 'two_outputs', 'aux', 'selected'])
 def test_jacobians_analytic(fn, case):
@@ -646,6 +671,7 @@ def test_jacobians_analytic(fn, case):
         eq(fn(polynomial, grad_position=1)(x, y), 3 * np.eye(2))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_vjp_protocol_and_gradient():
     """
     Feature: Custom vjp protocol and gradient.
@@ -671,6 +697,7 @@ def test_custom_vjp_protocol_and_gradient():
     eq(wrapped(t([2, 3])), [4, 9])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='ScalarToArray lacks __infer__ in MS 2.12 eager mode')
 def test_scalar_to_array_expected_numeric():
     """
@@ -682,6 +709,7 @@ def test_scalar_to_array_expected_numeric():
     eq(a.scalar_to_array(3.), 3.)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='MoveTo has no CPU kernel in MS 2.12')
 def test_move_to_expected_numeric():
     """
@@ -693,6 +721,7 @@ def test_move_to_expected_numeric():
     eq(o.move_to(t([1, 2]), 'CPU', True), [1, 2])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='Gamma has no CPU kernel in MS 2.12')
 def test_gamma_expected_numeric():
     """
@@ -705,6 +734,7 @@ def test_gamma_expected_numeric():
     assert out.shape == (2, 3) and np.all(out.asnumpy() >= 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [2, 2., t(2, ms.int32)])
 def test_fills_native_boundary_protocol(monkeypatch, value):
     """
@@ -729,6 +759,7 @@ def test_fills_native_boundary_protocol(monkeypatch, value):
         assert isinstance(actual, float) and actual == 2.
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_move_to_native_boundary_protocol(monkeypatch):
     """
     Feature: Move to native boundary protocol.
@@ -746,6 +777,7 @@ def test_move_to_native_boundary_protocol(monkeypatch):
     assert calls[0][1:] == ('CPU', False)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_gamma_native_boundary_protocol(monkeypatch):
     """
     Feature: Gamma native boundary protocol.
@@ -777,6 +809,7 @@ def test_gamma_native_boundary_protocol(monkeypatch):
     assert shape == (2, 3) and passed_alpha is alpha and passed_beta is beta
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=TypeError,
                    reason='repeat_interleave zero repeats constructs Tensor with reversed arguments in MS 2.12')
 def test_repeat_interleave_zero_expected_numeric():
@@ -790,6 +823,7 @@ def test_repeat_interleave_zero_expected_numeric():
     assert out.shape == (0,) and out.dtype == ms.float32
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn', [a.unique_ext, a.unique_consecutive])
 def test_mutable_unique_flags_rejected(fn, monkeypatch):
     """
@@ -819,6 +853,7 @@ def fixture_python_grad_wrappers(monkeypatch):
     monkeypatch.setattr(g, 'jit', direct_jit)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['single', 'single_aux', 'multi', 'multi_aux'])
 def test_jvp_python_wrapper_numeric(python_grad_wrappers, kind):
     """
@@ -830,6 +865,7 @@ def test_jvp_python_wrapper_numeric(python_grad_wrappers, kind):
     test_jvp_analytic(kind)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_linearize_python_wrapper_numeric(python_grad_wrappers):
     """
     Feature: Linearize python wrapper numeric.
@@ -840,6 +876,7 @@ def test_linearize_python_wrapper_numeric(python_grad_wrappers):
     test_linearize_vjp_analytic()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn', [g.jacfwd, g.jacrev])
 @pytest.mark.parametrize('case', ['single', 'two_inputs', 'two_outputs', 'aux', 'selected'])
 def test_jacobian_python_wrapper_numeric(python_grad_wrappers, fn, case):
@@ -852,6 +889,7 @@ def test_jacobian_python_wrapper_numeric(python_grad_wrappers, fn, case):
     test_jacobians_analytic(fn, case)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_grad_python_wrapper_rejection(python_grad_wrappers):
     """
     Feature: Grad python wrapper rejection.
@@ -866,6 +904,7 @@ def test_grad_python_wrapper_rejection(python_grad_wrappers):
             fn(square, has_aux=True)(t([2]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_derivative_tuple_analytic():
     """
     Feature: Derivative tuple analytic.
@@ -877,6 +916,7 @@ def test_derivative_tuple_analytic():
     eq(derivative, [7, 9])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='Poisson has no CPU kernel in MS 2.12')
 def test_poisson_expected_numeric():
     """
@@ -890,6 +930,7 @@ def test_poisson_expected_numeric():
     assert np.all(out.asnumpy() == np.floor(out.asnumpy()))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_poisson_native_boundary_protocol(monkeypatch):
     """
     Feature: Poisson native boundary protocol.
@@ -915,6 +956,7 @@ def test_poisson_native_boundary_protocol(monkeypatch):
     assert shape == (2, 3) and actual_mean is mean
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('call,error', [
     (lambda:a.full(2, 1), TypeError),
     (lambda:a.index_select(t([1]), 0, [0]), TypeError),
@@ -933,6 +975,7 @@ def test_remaining_validation(call, error):
         call()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_remaining_array_numeric():
     """
     Feature: Remaining array numeric.
@@ -947,6 +990,7 @@ def test_remaining_array_numeric():
     eq(l.pinv(t([[2., 0.], [0., 4.]]), atol=0., rtol=1e-6), [[.5, 0.], [0., .25]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unknown_shape_metadata_protocol(monkeypatch):
     """
     Feature: Unknown shape metadata protocol.
@@ -971,6 +1015,7 @@ def test_unknown_shape_metadata_protocol(monkeypatch):
     assert calls == [('dimension', shape)]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('repeats', [2, t([1, 2], ms.int64)])
 def test_repeat_interleave_ext_native_boundary(monkeypatch, repeats):
     """
@@ -989,6 +1034,7 @@ def test_repeat_interleave_ext_native_boundary(monkeypatch, repeats):
     assert calls[0][1] is repeats and calls[0][2:] == (0, 4)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_chunk_ext_native_boundary(monkeypatch):
     """
     Feature: Chunk ext native boundary.
@@ -1004,6 +1050,7 @@ def test_chunk_ext_native_boundary(monkeypatch):
     assert len(calls) == 1 and calls[0][0] is x and calls[0][1:] == (3, -1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn,attr', [(r.uniform_ext, 'uniform_ext_'), (r.uniform_, 'inplace_uniform_op')])
 @pytest.mark.parametrize('custom', [False, True])
 def test_uniform_ext_native_protocol(monkeypatch, fn, attr, custom):
@@ -1031,6 +1078,7 @@ def test_uniform_ext_native_protocol(monkeypatch, fn, attr, custom):
     eq(generator._offset, 12)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('like', [False, True])
 def test_randint_ext_native_protocol(monkeypatch, like):
     """
@@ -1067,6 +1115,7 @@ def _closed(function, name):
                     (cell.cell_contents for cell in function.__closure__)))[name]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn', [g.jacfwd, g.jacrev])
 @pytest.mark.parametrize('aux', [False, True])
 @pytest.mark.parametrize('multi', [False, True])
@@ -1117,6 +1166,7 @@ def test_jacobian_graph_helpers_direct_numeric(monkeypatch, python_grad_wrappers
         eq(auxiliary_helper(*inputs), [16, 24] if multi else [4, 9])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_vjp_graph_aux_helper_direct_numeric():
     """
     Feature: Vjp graph aux helper direct numeric.
@@ -1132,6 +1182,7 @@ def test_vjp_graph_aux_helper_direct_numeric():
     eq(backward(t([1, 2]))[0], [4, 12])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jacobian_postprocess_mismatch_validation():
     # Three reverse-mode output blocks cannot be distributed over two inputs.
     """
@@ -1145,6 +1196,7 @@ def test_jacobian_postprocess_mismatch_validation():
                            (((), 0), ((1,), 1), ((1,), 2), ((1,), 3)), (0, 1), 'reverse')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_linearize_list_vector_direct_wrapper(python_grad_wrappers):
     """
     Feature: Linearize list vector direct wrapper.
@@ -1156,6 +1208,7 @@ def test_linearize_list_vector_direct_wrapper(python_grad_wrappers):
     eq(linear([t([1, 2]), t([3, 4])]), [13, 24])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='BatchToSpaceNDV2 has no CPU kernel in MS 2.12')
 def test_batch_to_space_tensor_arguments_expected_numeric():
     """
@@ -1168,6 +1221,7 @@ def test_batch_to_space_tensor_arguments_expected_numeric():
                            t([[0, 0], [0, 0]], ms.int32)), [[[[1, 2], [3, 4]]]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_batch_to_space_tensor_native_protocol(monkeypatch):
     """
     Feature: Batch to space tensor native protocol.
@@ -1186,6 +1240,7 @@ def test_batch_to_space_tensor_native_protocol(monkeypatch):
     assert all(actual is expected for actual, expected in zip(calls[0], (x, blocks, crops)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_empty_slice_scatter_numeric():
     """
     Feature: Empty slice scatter numeric.
@@ -1195,6 +1250,7 @@ def test_empty_slice_scatter_numeric():
     eq(a.slice_scatter(t([1, 2]), t([]), start=0, end=0), [1, 2])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn', [g.jacfwd, g.jacrev])
 def test_jacobian_aux_graph_helper_rejection_direct(python_grad_wrappers, fn):
     """
@@ -1209,6 +1265,7 @@ def test_jacobian_aux_graph_helper_rejection_direct(python_grad_wrappers, fn):
         helper(t([2]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_seeded_random_stream_reproducibility_and_support():
     """
     Feature: Seeded random stream reproducibility and support.
@@ -1234,6 +1291,7 @@ def conditional_auxiliary(x):
     return x * x
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='Direct eager tuple-output graph helper loses tangent; compiled API is tested separately')
 def test_jvp_singleton_tuple_python_numeric(python_grad_wrappers):
@@ -1250,6 +1308,7 @@ def test_jvp_singleton_tuple_python_numeric(python_grad_wrappers):
     eq(tangent[0], [4, 12])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='Direct eager tuple-output graph helper loses tangent; compiled API is tested separately')
 def test_jacfwd_singleton_tuple_graph_helper_numeric(monkeypatch, python_grad_wrappers):
@@ -1271,6 +1330,7 @@ def test_jacfwd_singleton_tuple_graph_helper_numeric(monkeypatch, python_grad_wr
     eq(tangent[0], [4, 12])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_vjp_aux_shape_dependent_rejection_graph_helper():
     """
     Feature: Vjp aux shape dependent rejection graph helper.
@@ -1289,6 +1349,7 @@ def test_vjp_aux_shape_dependent_rejection_graph_helper():
         helper(t([2]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_check_tensor_container_validation():
     """
     Feature: Check tensor container validation.
@@ -1300,6 +1361,7 @@ def test_check_tensor_container_validation():
         g._check_tensor([t([1])])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_jvp_singleton_tuple_compiled_numeric():
     """
     Feature: Jvp singleton tuple compiled numeric.
@@ -1314,6 +1376,7 @@ def test_jvp_singleton_tuple_compiled_numeric():
     eq(tangent[0], [4, 12])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn', [
     g.jacfwd,
     pytest.param(g.jacrev, marks=pytest.mark.xfail(

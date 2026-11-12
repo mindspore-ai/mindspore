@@ -21,6 +21,7 @@ from mindspore.ops._grad_experimental import grad_sparse as gc
 from mindspore.ops._grad_experimental import grad_nn_ops as gn
 from mindspore.ops._grad_experimental import grad_implementations as gi
 from mindspore.ops._grad_experimental import taylor_rule as tr
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(autouse=True, scope='module')
@@ -50,6 +51,7 @@ def pair(actual, expected, dtype=ms.float32):
         check(a, e, dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['exp', 'log', 'sin', 'cos', 'tan'])
 def test_taylor_unary_third_derivative(name):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -77,6 +79,7 @@ def test_taylor_unary_third_derivative(name):
     check(result, np.stack([f, f1 * a, f2 * a * a + f1 * b, f3 * a**3 + 3 * f2 * a * b + f1 * c]), ms.float32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['mul', 'div', 'realdiv'])
 def test_taylor_binary(name):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -97,6 +100,7 @@ def test_taylor_binary(name):
     check(fn(t(3.0), t(2.0)), 6 if name == 'mul' else 1.5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('prim', [P.Add(), P.Sub(), 'Add'])
 def test_taylor_add_sub(prim):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -115,6 +119,7 @@ def test_taylor_add_sub(prim):
     check(tr._trans_scalar_inputs(t([1.0, 3.0]), 2.0)[1], [2.0, 0.0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_scalar_and_structure_bprops():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: Scalar and structure bprops.
@@ -141,6 +146,7 @@ def test_scalar_and_structure_bprops():
     assert result[1] == 0
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('adjoint', [True, False])
 @pytest.mark.parametrize('batch', [False, True])
@@ -172,6 +178,7 @@ def test_triangular_solve_rule(lower, adjoint, batch, complex_):
     pair(result, (da, db), dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('adjoint', [False, True])
 @pytest.mark.parametrize('batch', [False, True])
 def test_matrix_solve_rule(adjoint, batch):
@@ -188,6 +195,7 @@ def test_matrix_solve_rule(adjoint, batch):
     pair(gm.get_bprop_matrix_solve(M.MatrixSolve(adjoint=adjoint))(t(a), t(b), t(out), t(d)), (da, db))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('under', [True, False])
 @pytest.mark.parametrize('batch', [True, False])
 def test_least_squares_rule(under, batch):
@@ -234,6 +242,7 @@ def test_least_squares_rule(under, batch):
     check(got[2], 0, ms.float64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('upper', [True, False])
 @pytest.mark.parametrize('batch', [False, True])
 @pytest.mark.parametrize('dtype', [ms.float32, ms.float64])
@@ -263,6 +272,7 @@ def test_cholesky_solve_rule(upper, batch, dtype):
     )
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('keep', [False, True])
 def test_norm_and_nan_rules(keep):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -282,6 +292,7 @@ def test_norm_and_nan_rules(keep):
     assert gm.renew_dim((2, 3, 4), -1) == (0, 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [ms.float32, ms.int16, ms.int32, ms.int64])
 @pytest.mark.parametrize('dynamic', [False, True])
 def test_broadcast_gradient_reductions(dtype, dynamic):
@@ -307,6 +318,7 @@ def test_broadcast_gradient_reductions(dtype, dynamic):
     pair(gm.get_bprop_tensor_add(P.Add())(t([1, 2]), t([3, 4]), None, t([5, 6])), ([5, 6], [5, 6]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scalar', [True, False])
 def test_masked_fill_and_scatter_rules(scalar):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -329,6 +341,7 @@ def test_masked_fill_and_scatter_rules(scalar):
     check(got[2], [2, 7, 0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_index_fill_and_matrix_diagonals():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: Index fill and matrix diagonals.
@@ -351,6 +364,7 @@ def test_index_fill_and_matrix_diagonals():
         ga._raise_value_error('bad ', 'shape ', 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['max', 'min'])
 def test_tensor_scatter_extrema_ties(name):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -366,6 +380,7 @@ def test_tensor_scatter_extrema_ties(name):
     check(got[2], [3, 0] if name == 'max' else [3, 8])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8, ms.float32, ms.float64])
 def test_segment_rules(dtype):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -380,6 +395,7 @@ def test_segment_rules(dtype):
     check(got[0], [[3, 5], [3, 5], [3, 4]], dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('xshape,outshape', [((1, 3), (2, 3)), ((3,), (2, 3)), ((2, 3), (2, 3)), ((), (2, 3))])
 def test_expand_rule(xshape, outshape):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -398,6 +414,7 @@ def test_expand_rule(xshape, outshape):
     check(got[1], [0, 0], ms.int64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['scatter_nd_update', 'scatter_non_aliasing_add_update', 'scatter_update'])
 def test_scatter_update_rule(name):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -411,6 +428,7 @@ def test_scatter_update_rule(name):
     check(got[2], [[5, 7]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'axis,scalar',
     [
@@ -459,6 +477,7 @@ def test_sparse_gather_rule(axis, scalar):
         check(got[0], expect)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_embedding_unstack_random_and_unique_rules():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: Embedding unstack random and unique rules.
@@ -481,6 +500,7 @@ def test_embedding_unstack_random_and_unique_rules():
     assert ga.get_bprop_coalesce(None)(None, None, None, None, ds) is ds
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='UniqueGrad has no CPU kernel')
 def test_unique_rule_cpu_kernel_gap():
     """Feature: Numerical Python gradient and Taylor rules.
@@ -494,6 +514,7 @@ def test_unique_rule_cpu_kernel_gap():
     check(got[0], [5, 7, 5, 11], ms.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('small', [True, False])
 def test_scatter_add_axis_rule(small):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -510,6 +531,7 @@ def test_scatter_add_axis_rule(small):
     check(got[2], np.take_along_axis(d[: idx.shape[0]], idx, axis=1))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dims', [(2, 3), (1, 1), (2, 1), (1, 2), (2, 2, 3), (1, 1, 1), (2, 1, 1)])
 @pytest.mark.parametrize('align', [False, True])
 @pytest.mark.parametrize('tensor_size', [False, True])
@@ -539,11 +561,22 @@ def test_affinegrid_gpu_math_on_cpu(monkeypatch, dims, align, tensor_size):
         # This eager boundary adapter supplies the same exact shape values.
         real_shape = ga.shape_op
         monkeypatch.setattr(ga, 'shape_op', lambda value: t(real_shape(value), ms.int32))
+        real_reshape = ga.reshape
+
+        def reshape_with_ready_shape(value, shape):
+            # Direct eager rule calls need the graph executor's shape-value dependency.
+            # Wait for the producer; forward the original Tensor to the real kernel.
+            if isinstance(shape, Tensor):
+                shape.asnumpy()
+            return real_reshape(value, shape)
+
+        monkeypatch.setattr(ga, 'reshape', reshape_with_ready_shape)
     got = fn(theta, size, None, t(d))
     check(got[0], expected, ms.float32, atol=1e-4)
     assert isinstance(got, tuple) and len(got) == 2
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('division', [False, True])
 @pytest.mark.parametrize('broadcast', [False, True])
 def test_sparse_dense_cwise_rules(division, broadcast):
@@ -569,6 +602,7 @@ def test_sparse_dense_cwise_rules(division, broadcast):
     check(got[3], dd)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_softmax_rule():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: Sparse softmax rule.
@@ -583,6 +617,7 @@ def test_sparse_softmax_rule():
     check(got[1], expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('module', [gs, gc])
 def test_sparse_to_dense_and_dense_add_rules(module):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -604,6 +639,7 @@ def test_sparse_to_dense_and_dense_add_rules(module):
     check(got[3], d.asnumpy())
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['sum', 'sum_n', 'sqrt', 'sqrt_n', 'mean_n'])
 def test_sparse_segment_rules(kind):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -632,6 +668,7 @@ def test_sparse_segment_rules(kind):
     check(got[2], [0, 0, 0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('adj_s', [False, True])
 @pytest.mark.parametrize('adj_d', [False, True])
 def test_sparse_dense_matmul_rule(adj_s, adj_d):
@@ -658,6 +695,7 @@ def test_sparse_dense_matmul_rule(adj_s, adj_d):
     check(got[3], db)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_coo_csr_constructor_and_accessor_rules(monkeypatch):
     # Graph-only Make* primitives are represented by their real public eager constructors.
     """Feature: Numerical Python gradient and Taylor rules.
@@ -689,6 +727,7 @@ def test_coo_csr_constructor_and_accessor_rules(monkeypatch):
         assert got[1] == 0
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='CSR CPU arithmetic requires unavailable LLVM 12.0.1')
 @pytest.mark.parametrize('divide', [False, True])
 @pytest.mark.parametrize('column', [False, True])
@@ -716,6 +755,7 @@ def test_csr_elementwise_rules(divide, column, monkeypatch):
     check(got[4], dd)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='CSR CPU kernel requires unavailable LLVM 12.0.1')
 def test_csr_reduce_mv_and_conversion_rules():
     """Feature: Numerical Python gradient and Taylor rules.
@@ -738,6 +778,7 @@ def test_csr_reduce_mv_and_conversion_rules():
     check(got[0], [[2, 0, 3], [0, 5, 0]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_reorder_slice_fill_and_add_rules():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: Sparse reorder slice fill and add rules.
@@ -771,6 +812,7 @@ def test_sparse_reorder_slice_fill_and_add_rules():
     check(got[4], [7, 11])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'is_grad',
     [
@@ -809,6 +851,7 @@ def test_sparse_softmax_loss_rule(is_grad):
     check(got[1], [0, 0], ms.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['max', 'avg'])
 @pytest.mark.parametrize('overlap', [False, True])
 def test_fractional_pool_rule(name, overlap):
@@ -841,6 +884,7 @@ def test_fractional_pool_rule(name, overlap):
     pair(got, (expected,))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'dim',
     [
@@ -878,6 +922,7 @@ def test_fractional_fixed_pool_rule(dim):
     check(got[1], np.zeros(samples.shape))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_adaptive_and_average_pool_rules():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: Adaptive and average pool rules.
@@ -894,6 +939,7 @@ def test_adaptive_and_average_pool_rules():
     check(got[1], [0, 0, 0], ms.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='AvgPoolGradV1 has no CPU kernel')
 def test_average_pool_rule():
     """Feature: Numerical Python gradient and Taylor rules.
@@ -907,6 +953,7 @@ def test_average_pool_rule():
     pair(got, (np.array([[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]),))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('inverse', [False, True])
 @pytest.mark.parametrize('norm', ['backward', 'forward', 'ortho'])
 @pytest.mark.parametrize(
@@ -981,6 +1028,7 @@ def test_fft_rule(inverse, norm, real, onesided, shape, request):
     check(got[0], expected, dtype, atol=1e-4)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fft_shape_helpers():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: FFT shape helpers.
@@ -995,6 +1043,7 @@ def test_fft_shape_helpers():
     assert gm._norm_enum_to_string(7) == ''
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_csr_matrix_conversion_rules():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: CSR matrix conversion rules.
@@ -1023,6 +1072,7 @@ def test_csr_matrix_conversion_rules():
         check(actual, expected.asnumpy(), expected.dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=TypeError, reason='Eager ZerosLike does not accept sparse tensors')
 @pytest.mark.parametrize('kind', ['coo', 'csr'])
 def test_sparse_dense_shape_gradient_graph_boundary(kind):
@@ -1041,6 +1091,7 @@ def test_sparse_dense_shape_gradient_graph_boundary(kind):
     check(fn(obj, None, None)[0].values, [0, 0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
 @pytest.mark.parametrize('reverse', [False, True])
 @pytest.mark.parametrize('exclusive', [False, True])
@@ -1069,6 +1120,7 @@ def test_cumulative_logsumexp_rule(dtype, reverse, exclusive):
     check(got[0], expected, dtype, atol=0.012 if dtype == ms.float16 else 2e-5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scalar', [False, True])
 def test_euclidean_scalar_and_mvlgamma(scalar):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -1087,6 +1139,7 @@ def test_euclidean_scalar_and_mvlgamma(scalar):
         check(got[0], expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('align', [False, True])
 def test_resize_nearest_rule(align):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -1102,6 +1155,7 @@ def test_resize_nearest_rule(align):
     check(got[0], expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('accumulate', [0, 1])
 def test_index_put_broadcast_values(accumulate):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -1120,6 +1174,7 @@ def test_index_put_broadcast_values(accumulate):
     assert len(got[2]) == 2
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     strict=True,
     raises=AssertionError,
@@ -1139,6 +1194,7 @@ def test_affinegrid_size_gradient_contract(monkeypatch):
     assert isinstance(got[1], int) and got[1] == 0
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_scalar_pow_rule():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: Scalar pow rule.
@@ -1149,6 +1205,7 @@ def test_scalar_pow_rule():
     assert dy == pytest.approx(16 * math.log(2))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     not hasattr(np, 'cast'), strict=True, raises=AttributeError, reason='ScalarCast calls np.cast removed by NumPy 2'
 )
@@ -1162,6 +1219,7 @@ def test_scalar_cast_numpy_compatibility():
     assert got == (3.0, ms.float64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_least_squares_rejects_slow_gradient():
     """Feature: Numerical Python gradient and Taylor rules.
     Description: Least squares rejects slow gradient.
@@ -1172,6 +1230,7 @@ def test_least_squares_rejects_slow_gradient():
         fn(t([[2.0]]), t([[1.0]]), t(0.0, ms.float64), t([[0.5]]), t([[1.0]]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('accumulate', [0, 1])
 def test_index_put_partial_indices(accumulate):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -1186,6 +1245,7 @@ def test_index_put_partial_indices(accumulate):
     check(got[1], d.sum(0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [0, -1])
 def test_sparse_gather_vector_scalar_output(axis):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -1217,6 +1277,7 @@ def allocated_ascend_fixture():
         context.set_context(**previous)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 def test_ascend_depthwise_rule(allocated_ascend):
     """Feature: Numerical Python gradient and Taylor rules.
     Description: Ascend depthwise rule.
@@ -1230,6 +1291,7 @@ def test_ascend_depthwise_rule(allocated_ascend):
     pair(got, (np.array([[[[1, 3, 2], [4, 10, 6], [3, 7, 4]]]]), np.array([[[[8, 12], [20, 24]]]])), ms.float16)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 @pytest.mark.parametrize('align', [False, True])
 def test_ascend_parallel_resize_rule(allocated_ascend, align):
     """Feature: Numerical Python gradient and Taylor rules.
@@ -1244,6 +1306,7 @@ def test_ascend_parallel_resize_rule(allocated_ascend, align):
     assert got[1] == 0
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('align', [False, True])
 @pytest.mark.parametrize('dims', [(2, 3), (1, 1), (2, 2, 3)])
 def test_affinegrid_native_cpu_rule(align, dims):
@@ -1267,6 +1330,7 @@ def test_affinegrid_native_cpu_rule(align, dims):
     assert got[1] == 0
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     strict=True,
     raises=AssertionError,
@@ -1283,6 +1347,7 @@ def test_cumulative_logsumexp_axis_gradient_contract():
     check(got[1], 0, ms.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(
     strict=True, raises=AssertionError, reason='MaskedFill rule casts mask before constructing its zero cotangent'
 )
@@ -1298,6 +1363,7 @@ def test_masked_fill_mask_gradient_dtype():
     check(got[1], [False, False], ms.bool_)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('container', [tuple, list])
 @pytest.mark.xfail(
     strict=True, raises=AssertionError, reason='Ragged rule zeros enumerate pairs instead of split tensors'

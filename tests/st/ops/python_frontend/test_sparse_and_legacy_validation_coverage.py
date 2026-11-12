@@ -12,6 +12,7 @@ from mindspore.ops.function._add_attr_func import AddAttr
 from mindspore.ops._utils.arg_dtype_cast import scalar_to_tensor
 from mindspore.ops.operations import Abs
 from mindspore.ops.function import math_func
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -22,6 +23,7 @@ def cpu_context():
     ms.set_context(**previous)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_empty_coo_shape_special_case_accepts_empty_storage():
     """
     Feature: Sparse frontend and legacy reduction validation
@@ -31,6 +33,7 @@ def test_empty_coo_shape_special_case_accepts_empty_storage():
     assert _checkparam.check_coo_tensor_shape((0,), (0,), (2, 2)) is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [np.int64(3), np.float32(2), complex(1, 2)])
 def test_native_scalar_conversion_rejects_unsupported_scalar_types(value):
     """
@@ -42,6 +45,7 @@ def test_native_scalar_conversion_rejects_unsupported_scalar_types(value):
         scalar_to_tensor(value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_default_linalg_norm_order_forwards_complete_native_vector_protocol(monkeypatch):
     """
     Feature: Sparse frontend and legacy reduction validation
@@ -62,6 +66,7 @@ def test_default_linalg_norm_order_forwards_complete_native_vector_protocol(monk
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['primitive', 'non_callable'])
 def test_attribute_decorator_rejects_unsupported_function_kind(kind):
     """
@@ -83,6 +88,7 @@ def desc(shape, dtype='float32', storage='NCHW'):
     return {'shape': shape, 'ori_shape': shape, 'dtype': dtype, 'format': storage, 'ori_format': 'NCHW'}
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fold_gradient_reduce_rejects_integer_input_before_placeholder_creation():
     """
     Feature: Sparse frontend and legacy reduction validation
@@ -94,6 +100,7 @@ def test_fold_gradient_reduce_rejects_integer_input_before_placeholder_creation(
         legacy('batchnorm_fold2_grad_reduce').batchnorm_fold2_grad_reduce(invalid, invalid, {}, {})
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduce', [False, True])
 def test_correction_gradient_rejects_noncanonical_storage_format(reduce):
     """
@@ -110,6 +117,7 @@ def test_correction_gradient_rejects_noncanonical_storage_format(reduce):
             module.correction_mul_grad(data, data, statistic, statistic, data, data, 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fold_reduction_preserves_singleton_channel_alignment_in_real_llvm_graph():
     """
     Feature: Sparse frontend and legacy reduction validation
@@ -136,6 +144,7 @@ def test_fold_reduction_preserves_singleton_channel_alignment_in_real_llvm_graph
     np.testing.assert_array_equal(results[1].numpy(), [[[8], [62]]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=ModuleNotFoundError,
                    reason='CANN 9.1 moved the ND scheduler; legacy impl.bn_training_reduce import is absent')
 def test_legacy_nd_reduction_entry_resolves_the_real_sdk_scheduler(monkeypatch):

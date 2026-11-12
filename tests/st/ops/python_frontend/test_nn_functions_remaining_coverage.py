@@ -22,6 +22,7 @@ from mindspore import dataset
 from mindspore.ops.function import random_func
 from mindspore.ops.function import nn_func as nn
 from mindspore.ops.function import image_func as image
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True, name='cpu_context')
@@ -69,6 +70,7 @@ def adaptive_reference(array, size, maximum=False):
     return output
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 2, 3])
 @pytest.mark.parametrize('maximum', [False, True])
 def test_adaptive_pooling_numpy_bins(dim, maximum):
@@ -86,6 +88,7 @@ def test_adaptive_pooling_numpy_bins(dim, maximum):
     np.testing.assert_allclose(result.asnumpy(), adaptive_reference(a, (2,) * dim, maximum))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('maximum', [False, True])
 @pytest.mark.parametrize('case,error,reason', [
     ('rank', ValueError, '3 dim'), ('small', ValueError, 'greater or equal'),
@@ -115,6 +118,7 @@ def test_adaptive_1d_rejects_invalid_contract(maximum, case, error, reason):
         fn(tensor(np.ones(shape), dtype), size)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 2, 3])
 @pytest.mark.parametrize('include_pad', [False, True])
 def test_avg_pool_explicit_tuple_padding(dim, include_pad):
@@ -143,6 +147,7 @@ def test_avg_pool_explicit_tuple_padding(dim, include_pad):
     np.testing.assert_allclose(result.asnumpy(), out, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 2, 3])
 def test_avg_pool_rejects_non_tensor(dim):
     """
@@ -154,6 +159,7 @@ def test_avg_pool_rejects_non_tensor(dim):
         getattr(nn, 'avg_pool' + str(dim) + 'd')([1., 2.], 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn,value,expected', [
     ('_check_avgpool_2d_kernel_size', 2, (1, 2, 2)),
     ('_check_avgpool_2d_kernel_size', (2, 3), (1, 2, 3)),
@@ -170,6 +176,7 @@ def test_average_pool_parameter_normalization(fn, value, expected):
     assert getattr(nn, fn)(value) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn', ['_check_avgpool_2d_kernel_size', '_check_avgpool_2d_stride',
                                '_check_avgpool_2d_padding', '_check_avg_pool3d_padding'])
 @pytest.mark.parametrize('value,error', [('bad', TypeError), ((1,), ValueError)])
@@ -184,6 +191,7 @@ def test_average_pool_invalid_parameter(fn, value, error):
         getattr(nn, fn)(value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kwargs,error,reason', [
     ({'padding': ()}, ValueError, 'padding'), ({'padding': []}, TypeError, 'padding'),
     pytest.param({'stride': (1, 2)}, ValueError, 'stride', marks=pytest.mark.xfail(
@@ -198,6 +206,7 @@ def test_average_pool1d_invalid_padding_stride(kwargs, error, reason):
         nn.avg_pool1d(tensor(np.ones((1, 1, 4))), 2, **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 2, 3])
 @pytest.mark.parametrize('batched', [False, True])
 @pytest.mark.parametrize('explicit', ['none', 'empty', 'spatial', 'full'])
@@ -220,6 +229,7 @@ def test_unpool_scatter_matches_literal_indices(dim, batched, explicit):
     np.testing.assert_array_equal(result.asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim,value', [(1, []), (1, (1, 2, 3, 4)), (3, []), (3, (1, 2))])
 def test_unpool_rejects_output_size_container_and_rank(dim, value):
     """
@@ -234,6 +244,7 @@ def test_unpool_rejects_output_size_container_and_rank(dim, value):
                                                 tensor(np.zeros(shape), ms.int64), 2, output_size=value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [2, 3])
 @pytest.mark.parametrize('return_indices', [False, True])
 def test_max_pool_values_and_flattened_argmax(dim, return_indices):
@@ -252,6 +263,7 @@ def test_max_pool_values_and_flattened_argmax(dim, return_indices):
         np.testing.assert_array_equal(result.asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,shape', [('dropout', (2, 3)), ('dropout1d', (3, 4)),
                                      ('dropout1d', (2, 3, 4)), ('dropout2d', (2, 3, 2, 2)),
                                      ('dropout3d', (2, 3, 2, 2, 2))])
@@ -271,6 +283,7 @@ def test_dropout_endpoints_and_inference(name, shape, p, training):
         assert result is x
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('case,error,reason', [('p_type', TypeError, 'p'), ('p_range', ValueError, 'p'),
                                             ('input', TypeError, 'input'), ('rank', ValueError, 'shape'),
                                             ('training', TypeError, 'training')])
@@ -304,6 +317,7 @@ def multilinear_reference(a, size, align):
     return output
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim,mode', [(1, 'nearest'), (2, 'nearest'), (3, 'nearest'),
                                     (1, 'nearest-exact'), (2, 'nearest-exact')])
 @pytest.mark.parametrize('size_kind', ['tuple', 'scalar', 'list'])
@@ -323,6 +337,7 @@ def test_interpolate_nearest_coordinate_selection(dim, mode, size_kind):
     np.testing.assert_array_equal(nn.interpolate(tensor(a), size=size, mode=mode).asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim,mode', [(1, 'linear'), (2, 'bilinear'), (3, 'trilinear')])
 @pytest.mark.parametrize('align', [False, True])
 def test_interpolate_linear_separable_numpy(dim, mode, align):
@@ -337,6 +352,7 @@ def test_interpolate_linear_separable_numpy(dim, mode, align):
     np.testing.assert_allclose(result.asnumpy(), multilinear_reference(a, (5,) * dim, align), atol=3e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 2, 3])
 @pytest.mark.parametrize('scale', [False, True])
 def test_interpolate_area_uses_mean_bins(dim, scale):
@@ -351,6 +367,7 @@ def test_interpolate_area_uses_mean_bins(dim, scale):
     np.testing.assert_allclose(result.asnumpy(), adaptive_reference(a, (2,) * dim))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('align', [False, True])
 def test_interpolate_bicubic_preserves_constant_channels(align):
     """
@@ -365,6 +382,7 @@ def test_interpolate_bicubic_preserves_constant_channels(align):
     np.testing.assert_allclose(result.asnumpy(), np.broadcast_to(a[:, :, :1, :1], (1, 2, 5, 4)), atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode,dim,recompute', [('nearest', 1, True), ('nearest', 2, True),
                                              ('nearest', 3, False), ('trilinear', 3, False)])
 def test_interpolate_scale_factor_matches_integer_repeat(mode, dim, recompute):
@@ -385,6 +403,7 @@ def test_interpolate_scale_factor_matches_integer_repeat(mode, dim, recompute):
     np.testing.assert_allclose(result.asnumpy(), expected, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kwargs,error,reason', [
     ({'input': []}, TypeError, 'tensor'), ({'size': None}, ValueError, 'both empty'),
     ({'scale_factor': 2.}, ValueError, 'simultaneously'), ({'size': (2,)}, ValueError, 'spatial dimensions'),
@@ -405,6 +424,7 @@ def test_interpolate_rejects_conflicting_options(kwargs, error, reason):
         nn.interpolate(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank,value,expected', [(2, 3, (3, 3)), (3, .5, (.5, .5, .5))])
 def test_interpolate_dynamic_tuple_builder(rank, value, expected):
     """
@@ -415,6 +435,7 @@ def test_interpolate_dynamic_tuple_builder(rank, value, expected):
     assert nn._interploate_make_tuple(rank, value) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_interpolate_scale_size_conversion_floors_fractional_size():
     """
     Feature: Interpolate scale size conversion floors fractional size.
@@ -424,6 +445,7 @@ def test_interpolate_scale_size_conversion_floors_fractional_size():
     assert nn._interpolate_scale_factor_convert_size((2, 3, 5, 7), (1.5, .5)) == (7, 3)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'sum', 'mean', 'batchmean'])
 def test_kl_div_reductions_follow_numpy_definition(reduction):
     """
@@ -446,6 +468,7 @@ def test_kl_div_reductions_follow_numpy_definition(reduction):
     np.testing.assert_allclose(nn.kl_div(tensor(logits), tensor(labels), reduction).asnumpy(), expected, atol=2e-7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_kl_div_non_string_reduction_is_rejected():
     """
     Feature: Kl div non string reduction is rejected.
@@ -457,6 +480,7 @@ def test_kl_div_non_string_reduction_is_rejected():
         nn.kl_div(tensor([1.]), tensor([1.]), 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('method', ['bilinear', 'nearest'])
 def test_crop_resize_full_and_extrapolated_images(method):
     """
@@ -472,6 +496,7 @@ def test_crop_resize_full_and_extrapolated_images(method):
     np.testing.assert_array_equal(result.asnumpy(), np.concatenate([a, np.full_like(a, -9.)]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('case,error,reason', [
     ('image_type', TypeError, 'image.*tensor'), ('boxes_type', TypeError, 'boxes.*tensor'),
     ('indices_type', TypeError, 'box_indices.*tensor'), ('size_type', TypeError, 'tuple'),
@@ -502,6 +527,7 @@ def test_crop_resize_rejects_each_invalid_argument(case, error, reason):
         image.crop_and_resize(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [2, 3])
 @pytest.mark.parametrize('batched', [False, True])
 @pytest.mark.parametrize('return_indices', [False, True])
@@ -531,6 +557,7 @@ def test_fractional_pool_single_window_exact_maximum(dim, batched, return_indice
         np.testing.assert_array_equal(result.asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [2, 3])
 @pytest.mark.parametrize('kwargs,error,reason', [
     ({}, ValueError, 'output_size.*output_ratio'),
@@ -548,6 +575,7 @@ def test_fractional_pool_invalid_configuration(dim, kwargs, error, reason):
                                                         kernel_size=2, **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_fractional_pool3d_rejects_mismatched_random_sample_dtype():
     """
     Feature: Fractional pool3d rejects mismatched random sample dtype.
@@ -560,6 +588,7 @@ def test_fractional_pool3d_rejects_mismatched_random_sample_dtype():
                                 _random_samples=tensor([[[.2, .4, .6]]], ms.float64))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [1, 2, 3, 4, 5])
 @pytest.mark.parametrize('reduction', ['none', 'sum', 'mean'])
 @pytest.mark.parametrize('weighted', [False, True])
@@ -594,6 +623,7 @@ def test_nll_loss_nd_weighted_smoothed_numpy(rank, reduction, weighted):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-6, atol=5e-7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [1, 2, 4])
 @pytest.mark.parametrize('weighted', [False, True])
 @pytest.mark.parametrize('reduction', ['none', 'sum', 'mean'])
@@ -624,6 +654,7 @@ def test_cross_entropy_probability_targets_numpy(rank, weighted, reduction):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-6, atol=2e-7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'sum', 'mean'])
 def test_huber_and_l1_loss_broadcasting_numpy(reduction):
     """
@@ -645,6 +676,7 @@ def test_huber_and_l1_loss_broadcasting_numpy(reduction):
     np.testing.assert_allclose(nn.l1_loss(tensor(a), tensor(target), reduction).asnumpy(), l1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('p', [1, 2])
 @pytest.mark.parametrize('weighted', [False, True])
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
@@ -671,6 +703,7 @@ def test_multi_margin_loss_numpy_class_pairs(p, weighted, reduction):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('p', [1, 2])
 @pytest.mark.parametrize('swap', [False, True])
 @pytest.mark.parametrize('tensor_margin', [False, True])
@@ -705,6 +738,7 @@ def test_triplet_margin_native_boundary_protocol(p, swap, tensor_margin, monkeyp
     assert result is sentinel and calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('which', ['w_q', 'w_k', 'w_v', 'b_q', 'b_k', 'b_v'])
 def test_in_projection_rejects_wrong_weight_and_bias_shapes(which):
     """
@@ -734,6 +768,7 @@ def test_in_projection_rejects_wrong_weight_and_bias_shapes(which):
         nn._in_projection(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('route', ['self', 'kv', 'separate'])
 def test_packed_projection_with_bias_matches_numpy(route):
     """
@@ -753,6 +788,7 @@ def test_packed_projection_with_bias_matches_numpy(route):
         np.testing.assert_allclose(result.asnumpy(), a @ weight.T + bias, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('rank', [2, 3])
 def test_key_padding_mask_rank_validation(rank):
     """
@@ -766,6 +802,7 @@ def test_key_padding_mask_rank_validation(rank):
         nn._check_kpm_shape(rank, rank)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('query_rank', [2, 3])
 def test_attention_mask_rank_and_unbatched_head_shape(query_rank):
     """
@@ -807,6 +844,7 @@ def attention_extension_inputs():
     return params, (q[:, 0] + [.1, -.1], k[:, 0] + [.2, -.2], v[:, 0] + [.3, -.3])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('extension', ['bias', 'zero', 'static'])
 @pytest.mark.parametrize('mask', ['none', 'byte', 'float', 'padding'])
 @pytest.mark.parametrize('separate', [False, True])
@@ -850,6 +888,7 @@ def test_attention_bias_zero_static_extensions_numpy(extension, mask, separate):
     np.testing.assert_allclose(weights.asnumpy()[0], probability, atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('case,reason', [('static_k_width', 'static_k'), ('static_v_batch', 'static_v'),
                                      ('bias_static_k', 'bias_k.*static_k'), ('bias_static_v', 'bias_v.*static_v'),
                                      ('separate_kv', 'sequence length'), ('3d_mask', 'shape of.*attn_mask')])
@@ -875,6 +914,7 @@ def test_attention_extension_rejects_incompatible_shapes(case, reason):
         nn.multi_head_attention_forward(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=RuntimeError, reason='CPU Dropout rejects documented p=1 endpoint')
 def test_dropout_one_probability_documented_zero_output():
     """
@@ -885,6 +925,7 @@ def test_dropout_one_probability_documented_zero_output():
     np.testing.assert_array_equal(nn.dropout(tensor([1., 2.]), p=1.).asnumpy(), [0., 0.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=TypeError, reason='avg_pool1d validates stride as int before its tuple branch')
 def test_average_pool1d_documented_tuple_stride():
     """
@@ -895,6 +936,7 @@ def test_average_pool1d_documented_tuple_stride():
     np.testing.assert_array_equal(nn.avg_pool1d(tensor([[[1., 3., 5., 7.]]]), 2, stride=(2,)).asnumpy(), [[[2., 6.]]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,shape', [('dropout1d', (2, 3)), ('dropout1d', (2, 3, 4)),
                                      ('dropout2d', (2, 3, 2, 2)), ('dropout3d', (2, 3, 2, 2, 2))])
 def test_channel_dropout_one_probability_clears_input(name, shape):
@@ -906,6 +948,7 @@ def test_channel_dropout_one_probability_clears_input(name, shape):
     np.testing.assert_array_equal(getattr(nn, name)(tensor(np.ones(shape)), p=1.).asnumpy(), np.zeros(shape))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,shape', [('dropout1d', (64, 10)), ('dropout1d', (2, 64, 10)),
                                      ('dropout2d', (2, 64, 2, 5)), ('dropout3d', (2, 64, 2, 2, 5))])
 def test_channel_dropout_keeps_whole_channels_with_inverse_scaling(name, shape):
@@ -926,6 +969,7 @@ def test_channel_dropout_keeps_whole_channels_with_inverse_scaling(name, shape):
     assert set(np.unique(ratios)) == {0, 2}
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['constant', 'reflect', 'replicate', 'circular'])
 @pytest.mark.parametrize('container', ['tuple', 'list', 'tensor'])
 def test_pad_modes_match_numpy(mode, container):
@@ -945,6 +989,7 @@ def test_pad_modes_match_numpy(mode, container):
     np.testing.assert_array_equal(nn.pad(tensor(a), padding, mode=mode, **kwargs).asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('padding', [(), [], ms.Tensor([], ms.int64)])
 def test_pad_empty_padding_returns_original(padding):
     """
@@ -956,6 +1001,7 @@ def test_pad_empty_padding_returns_original(padding):
     assert nn.pad(x, padding) is x
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kwargs,error,reason', [
     ({'input_x': []}, TypeError, 'input_x'), ({'padding': (1,)}, ValueError, 'divisible'),
     ({'padding': 'aa'}, TypeError, 'paddings'), ({'padding': (1., 1)}, TypeError, 'value'),
@@ -973,6 +1019,7 @@ def test_pad_rejects_invalid_configuration(kwargs, error, reason):
         nn.pad(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape,container', [((2, 3), 'tuple'), ((1, 2, 3), 'list'), ((2, 3), 'tensor')])
 def test_internal_circular_pad_wraps_and_restores_rank(shape, container):
     """
@@ -987,6 +1034,7 @@ def test_internal_circular_pad_wraps_and_restores_rank(shape, container):
     np.testing.assert_array_equal(nn._circular_pad(tensor(a), padding).asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis,expected', [(-1, 2), (0, 0), (2, 2)])
 def test_flip_axis_normalization(axis, expected):
     """
@@ -997,6 +1045,7 @@ def test_flip_axis_normalization(axis, expected):
     assert nn._check_axis_in_range(axis, 3) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis,error', [('0', TypeError), (3, ValueError), (-4, ValueError)])
 def test_flip_axis_rejects_non_integer_or_out_of_range(axis, error):
     """
@@ -1009,6 +1058,7 @@ def test_flip_axis_rejects_non_integer_or_out_of_range(axis, error):
         nn._check_axis_in_range(axis, 3)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axes', [None, 1, (0, -3)])
 def test_flip_axes_rejects_missing_nonsequence_or_duplicate(axes):
     """
@@ -1021,6 +1071,7 @@ def test_flip_axes_rejects_missing_nonsequence_or_duplicate(axes):
         nn._check_axis_valid(axes, 3)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_flip_slice_helpers_and_tensor_validation():
     """
     Feature: Flip slice helpers and tensor validation.
@@ -1038,6 +1089,7 @@ def test_flip_slice_helpers_and_tensor_validation():
         nn._check_input_tensor('flip', tensor([1.]), [])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['softmax', 'softmin'])
 def test_softmax_and_softmin_cast_dtype_numpy(name):
     """
@@ -1057,6 +1109,7 @@ def test_softmax_and_softmin_cast_dtype_numpy(name):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_softmax_rejects_non_integer_axis():
     """
     Feature: Softmax rejects non integer axis.
@@ -1067,6 +1120,7 @@ def test_softmax_rejects_non_integer_axis():
         nn.softmax(tensor([1., 2.]), axis='0')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('beta,threshold', [(1, 20), (2, 1)])
 def test_softplus_beta_and_linear_threshold_numpy(beta, threshold):
     """
@@ -1080,6 +1134,7 @@ def test_softplus_beta_and_linear_threshold_numpy(beta, threshold):
     np.testing.assert_allclose(nn.softplus(tensor(a), beta, threshold).asnumpy(), expected, rtol=8e-7, atol=2e-7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_softplus_rejects_zero_beta():
     """
     Feature: Softplus rejects zero beta.
@@ -1090,6 +1145,7 @@ def test_softplus_rejects_zero_beta():
         nn.softplus(tensor([1.]), beta=0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_activation_wrappers_independent_elementwise_oracles():
     """
     Feature: Activation wrappers independent elementwise oracles.
@@ -1109,6 +1165,7 @@ def test_activation_wrappers_independent_elementwise_oracles():
     np.testing.assert_array_equal(nn.relu(x).asnumpy(), np.maximum(a, 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,kwargs,error,reason', [
     ('rrelu', {'upper': 'x'}, TypeError, 'upper'), ('rrelu', {'lower': 'x'}, TypeError, 'lower'),
     ('rrelu', {'lower': .5, 'upper': .1}, ValueError, 'upper'), ('rrelu', {'input': []}, TypeError, 'Tensor'),
@@ -1127,6 +1184,7 @@ def test_remaining_activation_and_margin_argument_checks(name, kwargs, error, re
         getattr(nn, name)(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis', [-1, 0])
 def test_glu_numpy_sigmoid_gate(axis):
     """
@@ -1139,6 +1197,7 @@ def test_glu_numpy_sigmoid_gate(axis):
     np.testing.assert_allclose(nn.glu(tensor(a), axis).asnumpy(), first / (1 + np.exp(-second)), atol=1e-7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_channel_shuffle_literal_channel_permutation():
     """
     Feature: Channel shuffle literal channel permutation.
@@ -1150,6 +1209,7 @@ def test_channel_shuffle_literal_channel_permutation():
     np.testing.assert_array_equal(nn.channel_shuffle(tensor(a), 2).asnumpy(), a[:, [0, 2, 1, 3]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 2])
 @pytest.mark.parametrize('norm', [1, 2])
 def test_lp_pool_numpy_window_norm(dim, norm):
@@ -1165,6 +1225,7 @@ def test_lp_pool_numpy_window_norm(dim, norm):
     np.testing.assert_allclose(result.asnumpy(), expected ** (1 / norm), rtol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 2])
 @pytest.mark.parametrize('norm,error', [('x', TypeError), (0, ValueError)])
 def test_lp_pool_rejects_invalid_norm(dim, norm, error):
@@ -1177,6 +1238,7 @@ def test_lp_pool_rejects_invalid_norm(dim, norm, error):
         getattr(nn, 'lp_pool' + str(dim) + 'd')(tensor(np.ones((1, 1) + (4,) * dim)), norm, 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kwargs,error,reason', [
     ({'mode': 'area'}, ValueError, 'mode'), ({'size': None}, ValueError, 'both empty'),
     ({'recompute_scale_factor': True}, ValueError, 'explicit.*size')])
@@ -1192,6 +1254,7 @@ def test_interpolate_ext_invalid_options_before_dispatch(kwargs, error, reason):
         nn.interpolate_ext(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [2, (2, 3), [2, 3]])
 def test_interpolate_ext_tuple_and_floor_size_helpers(value):
     """
@@ -1206,6 +1269,7 @@ def test_interpolate_ext_tuple_and_floor_size_helpers(value):
     assert nn._interpolate_ext_scale_factor_convert_size(x, (.5, 1.5)) == (1, 7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn', ['interpolate_ext', 'upsample'])
 def test_upsample_alias_and_ext_nearest_real_cpu(fn):
     """
@@ -1219,6 +1283,7 @@ def test_upsample_alias_and_ext_nearest_real_cpu(fn):
     np.testing.assert_array_equal(getattr(nn, fn)(tensor(a), **kwargs).asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_softmax_ext_dtype_and_axis_contract():
     """
     Feature: Softmax ext dtype and axis contract.
@@ -1234,6 +1299,7 @@ def test_softmax_ext_dtype_and_axis_contract():
         nn.softmax_ext(tensor(a), dim='x')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dense_shape_checks_reject_bias_broadcast_and_mismatched_batches():
     """
     Feature: Dense shape checks reject bias broadcast and mismatched batches.
@@ -1248,6 +1314,7 @@ def test_dense_shape_checks_reject_bias_broadcast_and_mismatched_batches():
         nn.check_dense_inputs_same_shape((2, 3), (3, 4))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_bidense_rejects_differing_bias_dtype():
     """
     Feature: Bidense rejects differing bias dtype.
@@ -1259,6 +1326,7 @@ def test_bidense_rejects_differing_bias_dtype():
                    tensor([1., 2.], ms.float64))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn,kwargs,reason', [
     ('pad_ext', {'mode': 'wrong'}, 'mode'), ('pad_ext', {'mode': 'reflect', 'value': 2}, 'value')])
 def test_pad_ext_rejects_invalid_nonconstant_mode_and_value(fn, kwargs, reason):
@@ -1271,6 +1339,7 @@ def test_pad_ext_rejects_invalid_nonconstant_mode_and_value(fn, kwargs, reason):
         getattr(nn, fn)(tensor([[1., 2.]]), (1, 1), **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pad_ext_circular_and_mirror_pad_numpy():
     """
     Feature: Pad ext circular and mirror pad numpy.
@@ -1285,6 +1354,7 @@ def test_pad_ext_circular_and_mirror_pad_numpy():
     np.testing.assert_array_equal(mirrored.asnumpy(), np.pad(a, ((1, 1), (1, 1)), mode='reflect'))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn', ['l1_loss', 'huber_loss'])
 def test_elementwise_loss_rejects_invalid_reduction(fn):
     """
@@ -1296,6 +1366,7 @@ def test_elementwise_loss_rejects_invalid_reduction(fn):
         getattr(nn, fn)(tensor([1.]), tensor([0.]), reduction='bad')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('case', ['input', 'target', 'reduction'])
 def test_mse_loss_invalid_inputs_and_reduction(case):
     """
@@ -1309,6 +1380,7 @@ def test_mse_loss_invalid_inputs_and_reduction(case):
         nn.mse_loss(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_loss_dtype_check_rejects_inconsistent_pair():
     """
     Feature: Loss dtype check rejects inconsistent pair.
@@ -1320,6 +1392,7 @@ def test_loss_dtype_check_rejects_inconsistent_pair():
         nn.check_input_dtype('prediction', tensor([1.]), 'target', tensor([1.], ms.float64), 'example')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('case,error,reason', [
     ('margin', TypeError, 'margin'), ('reduction', ValueError, 'reduction'),
     ('input', TypeError, 'first input'), ('target', TypeError, 'second input'),
@@ -1340,6 +1413,7 @@ def test_hinge_embedding_validator_contract(case, error, reason):
         nn._check_hinge_embedding_loss_type(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 2, 3])
 @pytest.mark.parametrize('case,error,reason', [('groups', ValueError, 'groups'), ('bias', TypeError, 'bias')])
 def test_convolution_rejects_groups_and_bias_contract(dim, case, error, reason):
@@ -1354,6 +1428,7 @@ def test_convolution_rejects_groups_and_bias_contract(dim, case, error, reason):
         getattr(nn, 'conv' + str(dim) + 'd')(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 2])
 def test_convolution_rejects_wrong_bias_size(dim):
     """
@@ -1366,6 +1441,7 @@ def test_convolution_rejects_wrong_bias_size(dim):
                                            tensor(np.ones((2, 2) + (1,) * dim)), bias=tensor([1.]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('case,error,reason', [
     ('input', ValueError, 'input.*3D'), ('weight', ValueError, 'weight.*3D'),
     ('padding_length', ValueError, 'padding'), ('padding_type', TypeError, 'padding')])
@@ -1382,6 +1458,7 @@ def test_conv1d_rejects_ranks_and_padding(case, error, reason):
         nn.conv1d(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [1, 3])
 def test_convolution_without_bias_preserves_identity_kernel(dim):
     """
@@ -1394,6 +1471,7 @@ def test_convolution_without_bias_preserves_identity_kernel(dim):
     np.testing.assert_array_equal(result.asnumpy(), a)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_convolution_iterable_parameter_rejects_incorrect_length():
     """
     Feature: Convolution iterable parameter rejects incorrect length.
@@ -1405,6 +1483,7 @@ def test_convolution_iterable_parameter_rejects_incorrect_length():
         nn._check_conv_iterable_lengths((1,), 2, 'stride')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('which', ['inputs', 'weight'])
 def test_conv3d_transpose_rejects_wrong_rank(which):
     """
@@ -1418,6 +1497,7 @@ def test_conv3d_transpose_rejects_wrong_rank(which):
         nn.conv3d_transpose(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
 def test_conv3d_transpose_singleton_kernel_scale(dtype):
     """
@@ -1430,6 +1510,7 @@ def test_conv3d_transpose_singleton_kernel_scale(dtype):
     np.testing.assert_array_equal(result.asnumpy(), a * 2)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skipif(os.environ.get('MS_NN_NATIVE_TARGET') != 'Ascend', reason='MultilabelMarginLoss has no CPU kernel')
 @pytest.mark.usefixtures('ascend_context')
 @pytest.mark.parametrize('reduction', ['none', 'sum', 'mean'])
@@ -1455,6 +1536,7 @@ def test_multilabel_margin_loss_literal_pairwise_margins(reduction):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kwargs,error,reason', [
     ({'input': []}, TypeError, 'Tensor'), ({'target': []}, TypeError, 'Tensor'),
     ({'weight': []}, TypeError, 'weight'), ({'label_smoothing': -1.}, ValueError, 'label_smoothing'),
@@ -1472,6 +1554,7 @@ def test_cross_entropy_ext_validation_before_unavailable_native_logsoftmax(kwarg
         nn.cross_entropy_ext(**args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'sum', 'mean'])
 @pytest.mark.parametrize('weighted', [False, True])
 def test_cross_entropy_probability_helper_uses_real_cpu_math(reduction, weighted):
@@ -1499,6 +1582,7 @@ def test_cross_entropy_probability_helper_uses_real_cpu_math(reduction, weighted
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('case', ['shape', 'reduction'])
 def test_cross_entropy_probability_helper_rejects_shape_and_reduction(case):
     """
@@ -1511,6 +1595,7 @@ def test_cross_entropy_probability_helper_rejects_shape_and_reduction(case):
                                             None, 'bad' if case == 'reduction' else 'none', 0., 1, 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=TypeError,
                    reason='CPU MaskedFill cannot combine float input and integer scalar fill in CE smoothing')
 def test_cross_entropy_class_helper_smoothed_expected_loss():
@@ -1524,6 +1609,7 @@ def test_cross_entropy_class_helper_smoothed_expected_loss():
     np.testing.assert_allclose(result.asnumpy(), 2.)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_nllloss_nd_rejects_mismatched_batch_size():
     """
     Feature: Nllloss nd rejects mismatched batch size.
@@ -1534,6 +1620,7 @@ def test_nllloss_nd_rejects_mismatched_batch_size():
         nn._nllloss_nd(tensor(np.ones((2, 3))), tensor([0], ms.int32))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_nll_loss_explicit_none_ignore_index_numpy():
     """
     Feature: Nll loss explicit none ignore index numpy.
@@ -1546,6 +1633,7 @@ def test_nll_loss_explicit_none_ignore_index_numpy():
     np.testing.assert_array_equal(result.asnumpy(), [3., 4.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_intopk_literal_membership_and_lrn_channel_window():
     """
     Feature: Intopk literal membership and lrn channel window.
@@ -1565,6 +1653,7 @@ def test_intopk_literal_membership_and_lrn_channel_window():
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'sum', 'mean'])
 def test_ctc_loss_enumerated_two_timestep_alignments(reduction):
     """
@@ -1581,6 +1670,7 @@ def test_ctc_loss_enumerated_two_timestep_alignments(reduction):
     assert log_alpha.shape == (1, 2, 3)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('merge', [False, True])
 def test_ctc_greedy_decoder_exact_path(merge):
     """
@@ -1609,6 +1699,7 @@ def fixture_ascend_context(cpu_context, preserve_random_state):
     ms.set_context(**previous)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skipif(os.environ.get('MS_NN_NATIVE_TARGET') != 'Ascend', reason='TripletMarginLoss has no CPU kernel')
 @pytest.mark.usefixtures('ascend_context')
 @pytest.mark.parametrize('p', [1, 2])
@@ -1637,6 +1728,7 @@ def test_ascend_triplet_margin_distance_and_swap_numpy(p, swap, tensor_margin):
     np.testing.assert_allclose(result.asnumpy(), expected, atol=3e-6)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skipif(os.environ.get('MS_NN_NATIVE_TARGET') != 'Ascend',
                    reason='LogSoftmaxExt has no registered CPU kernel')
 @pytest.mark.usefixtures('ascend_context')
@@ -1679,6 +1771,7 @@ def test_ascend_cross_entropy_ext_weighted_smoothing_numpy(rank, weighted, reduc
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=3e-5, atol=3e-6)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skipif(os.environ.get('MS_NN_NATIVE_TARGET') != 'Ascend',
                    reason='LogSoftmaxExt has no registered CPU kernel')
 @pytest.mark.usefixtures('ascend_context')
@@ -1694,6 +1787,7 @@ def test_ascend_cross_entropy_all_ignored_mean_is_nan(weighted):
     assert np.isnan(result.asnumpy())
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 def test_multilabel_margin_native_boundary_protocol(reduction, monkeypatch):
     """
@@ -1717,6 +1811,7 @@ def test_multilabel_margin_native_boundary_protocol(reduction, monkeypatch):
     assert calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,arguments,reason', [
     ('_check_pxiel_shuffle_valid', (3, 2), 'not divisible'),
     ('_check_pxiel_unshuffle_valid', (3, 4, 2), 'divisible'),
@@ -1731,6 +1826,7 @@ def test_pixel_reshape_validators_reject_incompatible_dimensions(name, arguments
         getattr(nn, name)(*arguments)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skipif(os.environ.get('MS_NN_NATIVE_TARGET') != 'Ascend',
                    reason='InplaceReLU has no registered CPU kernel')
 @pytest.mark.usefixtures('ascend_context')
@@ -1746,6 +1842,7 @@ def test_relu_inplace_mutates_tensor_and_returns_relu_values():
     np.testing.assert_array_equal(x.asnumpy(), [0., 0., 3.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_attention_dropout_scales_uniform_probabilities():
     """
     Feature: Attention dropout scales uniform probabilities.
@@ -1761,6 +1858,7 @@ def test_attention_dropout_scales_uniform_probabilities():
     np.testing.assert_array_equal(output.asnumpy(), probabilities)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='causal attention adds a bool triangular mask rather than masking future logits')
 def test_causal_attention_excludes_future_values():
@@ -1778,6 +1876,7 @@ def test_causal_attention_excludes_future_values():
     np.testing.assert_allclose(output.asnumpy(), expected, atol=1e-7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason='float attention mask adds bool padding as +1 rather than excluding padded positions')
 def test_float_attention_mask_combined_with_bool_padding_excludes_padding():
@@ -1795,6 +1894,7 @@ def test_float_attention_mask_combined_with_bool_padding_excludes_padding():
     np.testing.assert_allclose(output.asnumpy()[:, 0], np.broadcast_to(v[0], (2, 2)), atol=1e-7)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dim', [2, 3])
 def test_fractional_pool_integer_input_contract(dim):
     """
@@ -1812,6 +1912,7 @@ def test_fractional_pool_integer_input_contract(dim):
             nn.fractional_max_pool3d(tensor(np.ones((1, 1, 3, 3, 3)), ms.int32), 2, output_size=1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_adaptive_max_pool1d_rejects_non_tensor():
     """
     Feature: Adaptive max pool1d rejects non tensor.
@@ -1822,6 +1923,7 @@ def test_adaptive_max_pool1d_rejects_non_tensor():
         nn.adaptive_max_pool1d([], 1)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skipif(os.environ.get('MS_NN_NATIVE_TARGET') != 'Ascend', reason='Ascend dtype-specific validation')
 @pytest.mark.usefixtures('ascend_context')
 def test_ascend_adaptive_max_pool1d_requires_float16():
@@ -1837,6 +1939,7 @@ def test_ascend_adaptive_max_pool1d_requires_float16():
     np.testing.assert_array_equal(result.asnumpy(), [[[3., 5.]]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('fn',
     [ pytest.param('interpolate',
     marks=pytest.mark.xfail( strict=True,
@@ -1868,6 +1971,7 @@ def test_dynamic_rank_resize_uses_runtime_spatial_dimensions(fn, use_scale):
         ms.set_context(mode=previous)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pad_ext_empty_tuple_returns_original():
     """
     Feature: Pad ext empty tuple returns original.
@@ -1878,6 +1982,7 @@ def test_pad_ext_empty_tuple_returns_original():
     assert nn.pad_ext(x, ()) is x
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_interpolate_ext_mutable_parameters_preserve_exact_sizes():
     """
     Feature: Interpolate ext mutable parameters preserve exact sizes.
@@ -1892,6 +1997,7 @@ def test_interpolate_ext_mutable_parameters_preserve_exact_sizes():
     np.testing.assert_array_equal(result.asnumpy(), np.ones((1, 1, 6, 10)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=IndexError,
                    reason='NLLLoss scalar guard indexes shape[1] before checking rank')
 def test_nllloss_scalar_input_reports_value_error():

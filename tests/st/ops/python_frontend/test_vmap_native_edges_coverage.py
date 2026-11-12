@@ -17,6 +17,7 @@ from mindspore._c_expression import FormatEnum, ReductionEnum
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import nn_ops as NN, _grad_ops as G
 from mindspore.ops._vmap import vmap_base as B, vmap_nn_ops as N, vmap_grad_nn_ops as D
+from tests.mark_utils import arg_mark
 
 
 GRAPH_PREPROCESS = B.vmap_general_preprocess
@@ -101,6 +102,7 @@ def numpy_bn_gradient(x, dy, gamma, mean, variance, axis, training, epsilon):
     return dx, dgamma, dbeta
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('training', [False, True])
 @pytest.mark.parametrize('layout', [FormatEnum.NCHW,
     pytest.param(FormatEnum.NHWC, marks=pytest.mark.xfail(strict=True, raises=RuntimeError,
@@ -138,6 +140,7 @@ def finite_gradient(function, values, step=1e-4):
     return result
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('training', [False, True])
 @pytest.mark.parametrize('layout', [FormatEnum.NCHW, FormatEnum.NHWC])
 def test_unmapped_batchnorm_second_gradient_independent_finite_difference(training, layout):
@@ -203,6 +206,7 @@ def deformation_primitive(gradient=False):
         1, 1), **kwargs) if gradient else NN.DeformableOffsets(ksize=(1, 1), **kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_deformable_offsets_real_bilinear_cpu(monkeypatch):
     """
     Feature: Native normalization and deformation vmap edges
@@ -225,6 +229,7 @@ def test_unmapped_deformable_offsets_real_bilinear_cpu(monkeypatch):
     check(value, bilinear_deformation(x, offsets))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unmapped_deformable_offsets_gradient_finite_difference_cpu(monkeypatch):
     """
     Feature: Native normalization and deformation vmap edges
@@ -255,6 +260,7 @@ def test_unmapped_deformable_offsets_gradient_finite_difference_cpu(monkeypatch)
         check(actual, oracle, atol=8e-5, rtol=8e-5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', [
     pytest.param(ReductionEnum.NONE, marks=pytest.mark.xfail(strict=True, raises=AssertionError,
         reason='Unmapped SmoothL1LossGrad swaps prediction/target/dout before native dispatch')),
@@ -282,6 +288,7 @@ def test_unmapped_smooth_l1_gradient_nonuniform_sensitivity(reduction):
     check(value, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', [ReductionEnum.NONE, ReductionEnum.SUM, ReductionEnum.MEAN])
 def test_smooth_l1_direct_native_cpu_confirms_oracle_and_argument_order(reduction):
     """
@@ -298,6 +305,7 @@ def test_smooth_l1_direct_native_cpu_confirms_oracle_and_argument_order(reductio
     check(actual, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('gradient', [False, True])
 def test_original_lrn_primitive_rejects_rank_three_samples(gradient):
     """
@@ -314,6 +322,7 @@ def test_original_lrn_primitive_rejects_rank_three_samples(gradient):
             prim(x)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=KeyError,
                    reason='Real graph _VmapGeneralRule construction loses __input_0__ binding')
 def test_batchnorm_nhwc_real_graph_general_rule(monkeypatch):
@@ -352,6 +361,7 @@ def test_batchnorm_nhwc_real_graph_general_rule(monkeypatch):
         check(actual, np.stack([item[index] for item in expected]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_batchnorm_nhwc_general_executor_complete_protocol(monkeypatch):
     """
     Feature: Native normalization and deformation vmap edges
@@ -405,6 +415,7 @@ def ascend_context(isolated_cpu):
     ms.set_context(**previous)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard')
 @pytest.mark.skipif(os.environ.get('MS_VMAP_NATIVE_TARGET') != 'Ascend', reason='Explicit Ascend allocation required')
 @pytest.mark.usefixtures('ascend_context')
 @pytest.mark.parametrize('training', [

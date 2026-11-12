@@ -17,6 +17,7 @@ from mindspore.common import dtype
 from mindspore.ops._utils import arg_handler
 from mindspore.ops.composite import base, math_ops
 from mindspore.ops.composite.multitype_ops import setitem_impl, add_impl, zeros_like_impl
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -54,6 +55,7 @@ def close(actual,expected):
         np.testing.assert_allclose(actual.asnumpy(),expected,rtol=2e-5,atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('left,right,relation,expected',[
     (2,3,validator.NE,True),(2,2,validator.NE,False),
     (2,(1,3),validator.NOT_IN,True),(2,(1,2),validator.NOT_IN,False),
@@ -67,6 +69,7 @@ def test_remaining_binary_relations(left,right,relation,expected):
     assert validator._check_binary_rel(left,right,relation) is expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_invalid_range_relation_and_message_formatters():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -81,6 +84,7 @@ def test_invalid_range_relation_and_message_formatters():
     assert validator.max_(1,4,2)==4 and validator.min_(1,4,2)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value',[float('nan'),float('inf'),-float('inf')])
 def test_check_is_number_rejects_nonfinite(value):
     """
@@ -92,6 +96,7 @@ def test_check_is_number_rejects_nonfinite(value):
         validator.check_is_number(value,float,'value','finite_check')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_subclass_python_type_identity_and_additional_message():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -104,6 +109,7 @@ def test_subclass_python_type_identity_and_additional_message():
         validator.check_subclass('kind',str,(float,int),'python_type','custom detail')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('left,right,mix,error',[
     (dtype.float32,dtype.float32,False,None),
     (dtype.TensorType(dtype.float32),dtype.float32,True,None),
@@ -127,6 +133,7 @@ def test_scalar_tensor_dtype_mixing(left,right,mix,error):
             args,(dtype.float32,dtype.float64),'mix',allow_mix=mix) is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,args,error',[
     ('check_reduce_shape',((2,3),(2,),0,'reduce','input','output'),ValueError),
     ('check_astype_dtype',('imaginary128',),TypeError),
@@ -144,6 +151,7 @@ def test_remaining_shape_dtype_validation(name,args,error):
         getattr(validator,name)(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_check_type_support_uses_device_specific_policy(monkeypatch):
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -163,6 +171,7 @@ def test_check_type_support_uses_device_specific_policy(monkeypatch):
     assert calls==['device_target','device_target']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name',['to_dilations','to_output_padding'])
 @pytest.mark.parametrize('values',[(1,1,2,3),[1,1,2,3]])
 def test_four_dimensional_convolution_arguments_select_spatial_values(name,values):
@@ -174,6 +183,7 @@ def test_four_dimensional_convolution_arguments_select_spatial_values(name,value
     assert getattr(arg_handler,name)('convolution','argument',values)==(2,3)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scaler_class',[amp.StaticLossScaler,amp.DynamicLossScaler])
 @pytest.mark.parametrize('container',['tensor','tuple','list'])
 def test_loss_scaler_real_cpu_scale_unscale(scaler_class,container):
@@ -196,6 +206,7 @@ def test_loss_scaler_real_cpu_scale_unscale(scaler_class,container):
         close(scaler.scale_value,8.)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scaler_class',[amp.StaticLossScaler,amp.DynamicLossScaler])
 @pytest.mark.parametrize('value,error',[(0,ValueError),(.5,ValueError),('eight',TypeError),(True,TypeError)])
 def test_loss_scaler_initial_scale_validation(scaler_class,value,error):
@@ -211,6 +222,7 @@ def test_loss_scaler_initial_scale_validation(scaler_class,value,error):
             scaler_class(value,2,2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name',['scale','unscale','adjust'])
 def test_loss_scaler_abstract_method_contract(name):
     """
@@ -222,6 +234,7 @@ def test_loss_scaler_abstract_method_contract(name):
         getattr(amp.LossScaler,name)(None,t([1.]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('bad',[False,True])
 def test_amp_all_finite_public_graph_api_and_direct_body(bad):
     """
@@ -237,6 +250,7 @@ def test_amp_all_finite_public_graph_api_and_direct_body(bad):
     close(amp._overflow(values[0]),int(bad))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_amp_scale_maps_direct_bodies_use_real_cpu_math():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -249,6 +263,7 @@ def test_amp_scale_maps_direct_bodies_use_real_cpu_math():
     close(amp._grad_unscale_map.__wrapped__(scale,values),([.25,.5],[.75]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('target,version,rank,conf,backend,jit,expected',[
     ('CPU',True,False,None,'',{},False),
     ('Ascend',False,False,None,'',{},False),
@@ -361,6 +376,7 @@ def fixture_device_boundaries(monkeypatch):
     return configuration,calls,state
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('scenario',['invalid_target','negative_id','ps_reset',
                          'initialized','fresh','existing','conflict'])
 def test_device_selection_native_protocol(device_boundaries,scenario):
@@ -404,6 +420,7 @@ def test_device_selection_native_protocol(device_boundaries,scenario):
             assert config.calls==[('is_device_enable',),('get_device_target',),('get_device_id',)]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('enabled,hccl,compiler,expected_hccl,expected_compiler',[
     (True,'strict','1','strict','1'),(True,'bad','bad','true','1'),
     (True,None,None,'true','1'),(False,'strict','1',None,None),
@@ -440,6 +457,7 @@ def test_determinism_environment_policy_native_protocol(
     assert config.calls==[('is_deterministic_configured',),('set_deterministic',enabled)]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cast',[None,ms.float64])
 def test_composite_matmul_real_cpu(cast):
     """
@@ -454,6 +472,7 @@ def test_composite_matmul_real_cpu(cast):
     assert result.dtype==(ms.float32 if cast is None else cast)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('bad',[False,True])
 def test_amp_allfinite_native_flag_boundary_and_real_boolean_inversion(monkeypatch,bad):
     """
@@ -472,6 +491,7 @@ def test_amp_allfinite_native_flag_boundary_and_real_boolean_inversion(monkeypat
     assert len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('bad',[False,True])
 @pytest.mark.parametrize('target',['classic','saturation'])
 def test_amp_npu_float_status_direct_body_protocol(monkeypatch,bad,target):
@@ -511,6 +531,7 @@ def test_amp_npu_float_status_direct_body_protocol(monkeypatch,bad,target):
     assert [item[0] for item in calls if item[0] in ('get','clear')]==['get','clear']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_amp_gpu_overflow_status_native_protocol(monkeypatch):
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -532,6 +553,7 @@ def test_amp_gpu_overflow_status_native_protocol(monkeypatch):
     assert amp._overflow(x) is output and len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('constructor,flag',[
     (base.GradOperation,'sens_param'),(base.GradOperation,'get_by_position'),
     (base._Grad,'get_by_position'),(base._Grad,'get_by_list'),(base._Grad,'sens_param'),
@@ -558,6 +580,7 @@ class WeightedQuadratic(ms.nn.Cell):
         return self.weight*x*x
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('constructor',[base.GradOperation,base._Grad])
 @pytest.mark.parametrize('style',['position','weights','ordinary'])
 def test_real_cpu_gradient_closures_and_graph_cache(constructor,style):
@@ -601,6 +624,7 @@ def test_real_cpu_gradient_closures_and_graph_cache(constructor,style):
         ms.set_context(mode=previous)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('constructor',[base.GradOperation,base._Grad])
 @pytest.mark.parametrize('inner',[False,True])
 def test_gradient_rejected_inside_real_no_grad_context(constructor,inner):
@@ -622,6 +646,7 @@ def test_gradient_rejected_inside_real_no_grad_context(constructor,inner):
     assert base._pynative_executor.enable_grad()==before
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_gradient_forward_requires_callable():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -632,6 +657,7 @@ def test_gradient_forward_requires_callable():
         base._pynative_func_grad_forward(3,t(1.))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('style',['ordinary','weights','position'])
 def test_real_cpu_eager_gradient_closures(style):
     """
@@ -656,6 +682,7 @@ def scalar_auxiliary_error(x):
     return x*x
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_aux_gradient_requires_multiple_outputs():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -666,6 +693,7 @@ def test_aux_gradient_requires_multiple_outputs():
         base._Grad(has_aux=True)(scalar_auxiliary_error)(t(2.))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_gradient_output_identifiers_preserve_tensor_identity():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -681,6 +709,7 @@ def test_gradient_output_identifiers_preserve_tensor_identity():
         base._combine_with_ids(None,None,())
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_multitype_graph_rejects_array_and_invalid_registration_type():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -696,6 +725,7 @@ def test_multitype_graph_rejects_array_and_invalid_registration_type():
     assert graph.entries==[]  # pylint: disable=use-implicit-booleaness-not-comparison
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_map_with_bound_operation_real_cpu():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -710,6 +740,7 @@ def test_map_with_bound_operation_real_cpu():
     close(mapping((t([1.,2.]),t([3.]))),([1.,4.],[9.]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,index,value',[
     pytest.param(*case,marks=pytest.mark.xfail(strict=True,raises=TypeError,
                  reason=('boost setitem wrapper accepts sequence values but its Python fast helper '
@@ -770,6 +801,7 @@ def square_for_transform(x):
     return x*x
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_taylor_real_cpu_graph_cache_and_original_body():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -784,6 +816,7 @@ def test_taylor_real_cpu_graph_cache_and_original_body():
     close(transformed.__wrapped__(values),[4.,4.,2.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_vmap_real_cpu_graph_api_and_original_body():
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -797,6 +830,7 @@ def test_vmap_real_cpu_graph_api_and_original_body():
     close(mapped.__wrapped__(t([1.,2.,3.])),[1.,4.,9.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind',['UMonad','IOMonad'])
 def test_real_monad_identity_contracts(kind):
     # Instantiate native monads only in the identity-contract test.
@@ -820,6 +854,7 @@ def fixture_actual_map_tensor():
     return MapParameter(key_tensor=t([1],ms.int32),value_tensor=t([[2.,3.]]),default_value='zeros')._map_tensor
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_map_tensor_backprop_identity_contracts(actual_map_tensor):
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -830,6 +865,7 @@ def test_map_tensor_backprop_identity_contracts(actual_map_tensor):
     assert add_impl._map_tensor_add_backward(actual_map_tensor,actual_map_tensor) is actual_map_tensor
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_map_setitem_native_put_protocol(monkeypatch,actual_map_tensor):
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -847,6 +883,7 @@ def test_map_setitem_native_put_protocol(monkeypatch,actual_map_tensor):
     assert len(calls)==1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_zeros_like_dictionary_real_leaves_native_make_dict_protocol(monkeypatch):
     """
     Feature: Runtime validation, mixed precision and composite helpers
@@ -870,6 +907,7 @@ def test_zeros_like_dictionary_real_leaves_native_make_dict_protocol(monkeypatch
     assert result['count']==0 and result['rate']==0. and isinstance(result['rate'],float)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_row_tensor_add_zero_native_protocol(monkeypatch):
     # Native sparse storage is needed only for this protocol case.
     """
@@ -891,6 +929,7 @@ def test_row_tensor_add_zero_native_protocol(monkeypatch):
     close(row.values,[[2.,3.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True,raises=AttributeError,
                    reason=('tuple + COO backward helper misspells check_coo_tensor_input_length '
                            'as heck_coo_tensor_input_length'))
@@ -907,6 +946,7 @@ def test_tuple_cootensor_addition_has_correct_sparse_sum():
     close(result.to_dense(),[[2.,0.],[0.,3.]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True,raises=TypeError,
                    reason=('backward addition registered for None,None evaluates None + None '
                            'instead of preserving the absent gradient'))
@@ -920,6 +960,7 @@ def test_backward_absent_gradients_remain_none():
     assert add_impl._add_nonetensor_tensor(None,None) is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind',['list','dict'])
 def test_sequence_setitem_native_boundary_protocol(monkeypatch,kind):
     """
@@ -947,6 +988,7 @@ def test_sequence_setitem_native_boundary_protocol(monkeypatch,kind):
     assert result[index] is replacement
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True,raises=AssertionError,
                    reason=('zeros_like_leaf dispatch matches Bool as Number first and returns '
                            'integer 0 instead of bool False'))

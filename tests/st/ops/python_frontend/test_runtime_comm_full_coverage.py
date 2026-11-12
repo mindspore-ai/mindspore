@@ -25,6 +25,7 @@ from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.ops.operations import comm_ops as O
 from mindspore.ops.function import comm_func as F
 from mindspore.ops._grad_experimental import grad_comm_ops as G
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(autouse=True, scope='module', name='cpu_context')
@@ -79,6 +80,7 @@ def fixture_isolated_context():
     return ctx
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('method,value,error', [
     ('set_mode', 9, ValueError), ('set_jit_syntax_level', 9, ValueError),
     ('set_debug_level', 9, ValueError), ('set_memory_optimize_level', 'bad', ValueError),
@@ -112,6 +114,7 @@ def test_context_validation(isolated_context, method, value, error):
         getattr(isolated_context, method)(value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_context_valid_storage_and_properties(isolated_context, monkeypatch):
     """
     Feature: Context valid storage and properties.
@@ -157,6 +160,7 @@ def test_context_valid_storage_and_properties(isolated_context, monkeypatch):
         _ = ctx._context_handle
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_context_files_and_switch_stack(monkeypatch, tmp_path):
     """
     Feature: Context files and switch stack.
@@ -185,6 +189,7 @@ def test_context_files_and_switch_stack(monkeypatch, tmp_path):
     assert len(stack.context_stack) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_context_json_and_memory(isolated_context, monkeypatch, tmp_path):
     """
     Feature: Context json and memory.
@@ -229,6 +234,7 @@ def test_context_json_and_memory(isolated_context, monkeypatch, tmp_path):
     assert ctx._check_speedup_config_str_value('pp_1f1b_overlap', False) == ''
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_context_public_validation(monkeypatch, isolated_context):
     """
     Feature: Context public validation.
@@ -260,6 +266,7 @@ def fixture_comm_environment(monkeypatch):
     monkeypatch.setattr(O, 'get_group_size', lambda group: 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_comm_primitive_inference(comm_environment):
     """
     Feature: Comm primitive inference.
@@ -318,6 +325,7 @@ def test_comm_primitive_inference(comm_environment):
         O.BatchISendIRecv(['isend'], [])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_comm_serialization_and_validation(monkeypatch):
     """
     Feature: Comm serialization and validation.
@@ -366,6 +374,7 @@ def test_comm_serialization_and_validation(monkeypatch):
             F._check_tensor_list([other, other], t([1]), 2)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_comm_inplace_and_handles(monkeypatch):
     """
     Feature: Comm inplace and handles.
@@ -496,6 +505,7 @@ def assert_gradient_endpoint(endpoints, kind, arguments, attrs, name, payloads):
     assert all(not other.calls for _, _, other in endpoints if other is not endpoint)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('op,expected', [('sum',[8,12]), ('prod',[4,4]), ('max',[0,12])])
 def test_all_reduce_gradient_protocol_and_local_math(grad_boundary, op, expected):
     """
@@ -515,6 +525,7 @@ def test_all_reduce_gradient_protocol_and_local_math(grad_boundary, op, expected
     assert sum(len(item.calls) for _, _, item in endpoints) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_local_virtual_gradients(grad_boundary):
     """
     Feature: Local virtual gradients.
@@ -556,6 +567,7 @@ def test_local_virtual_gradients(grad_boundary):
     assert grad_boundary[0] == []
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mean', [False,True])
 def test_all_gather_gradient_protocol(grad_boundary, mean):
     """
@@ -576,6 +588,7 @@ def test_all_gather_gradient_protocol(grad_boundary, mean):
         G.get_bprop_all_gather(subject(rank_size=0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mean,mirror,shard,add', [(a,b,c,d) for a in [False,True]
                          for b,c,d in [(True,False,False),(True,True,False),(True,True,True),(False,False,False)]])
 def test_mini_all_gather_gradient(grad_boundary,monkeypatch,mean,mirror,shard,add):
@@ -603,6 +616,7 @@ def test_mini_all_gather_gradient(grad_boundary,monkeypatch,mean,mirror,shard,ad
         check(z, [1, 2] if shard else [1, 2, 3, 4])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mean,mirror',[(False,False),(True,False),(False,True),(True,True)])
 def test_mirror_mini_gradient(grad_boundary,mean,mirror):
     """
@@ -627,6 +641,7 @@ def test_mirror_mini_gradient(grad_boundary,mean,mirror):
                              [[4, 6]] if mirror else [])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mean,with_mirror,mirror',[(a,b,c)
                          for a in [False,True] for b in [False,True] for c in [False,True]])
 def test_micro_all_gather_gradient(grad_boundary,mean,with_mirror,mirror):
@@ -654,6 +669,7 @@ def test_micro_all_gather_gradient(grad_boundary,mean,with_mirror,mirror):
         assert endpoints == []
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mean,dev_num',[(False,1),(False,2),(True,2)])
 def test_mirror_dense_gradient(grad_boundary,mean,dev_num):
     """
@@ -675,6 +691,7 @@ def test_mirror_dense_gradient(grad_boundary,mean,dev_num):
                                  {'fusion': 7, 'parameter': 'weight'}, 'grad_mirrorforward', [[3, 4]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('text', ['(1)', '(bad,2)', '(1,2', '1,2)'])
 def test_log_invalid_vlog(text):
     """
@@ -685,6 +702,7 @@ def test_log_invalid_vlog(text):
     assert L.parse_vlog_level(text) == (False,())
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_log_validation_and_directories(monkeypatch,tmp_path):
     """
     Feature: Log validation and directories.
@@ -720,6 +738,7 @@ def test_log_validation_and_directories(monkeypatch,tmp_path):
     assert (tmp_path/'created').is_dir()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_log_formatter_rollover_and_config(monkeypatch,tmp_path):
     """
     Feature: Log formatter rollover and config.
@@ -763,6 +782,7 @@ def test_log_formatter_rollover_and_config(monkeypatch,tmp_path):
         handler.close()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('env,expected', [({},'0'), ({'MS_NODE_ID':'3'},'3'),
     ({'OMPI_COMM_WORLD_RANK':'2'},'2'), ({'RANK_ID':'1'},'1')])
 def test_log_rank_env(monkeypatch,env,expected):
@@ -778,6 +798,7 @@ def test_log_rank_env(monkeypatch,env,expected):
     assert L._get_rank_id()==expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_log_rank_conflict_and_stack(monkeypatch):
     """
     Feature: Log rank conflict and stack.
@@ -795,6 +816,7 @@ def test_log_rank_conflict_and_stack(monkeypatch):
     assert action(lambda x:x+1)(2)==3
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_process_group_validation_and_boundary(monkeypatch):
     """
     Feature: Process group validation and boundary.
@@ -833,6 +855,7 @@ def test_process_group_validation_and_boundary(monkeypatch):
     assert error.value.code==0
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_group_query_and_creation_failures(monkeypatch):
     """
     Feature: Group query and creation failures.
@@ -865,6 +888,7 @@ def test_group_query_and_creation_failures(monkeypatch):
     assert requested[0][0].startswith('hccl_2_')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_all_to_all_v_c_request(monkeypatch):
     """
     Feature: All to all v c request.
@@ -891,6 +915,7 @@ def test_all_to_all_v_c_request(monkeypatch):
         F.all_to_all_v_c(output,input_,[1,1,1,1])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sparse_reduction_and_mirror_protocol(grad_boundary,monkeypatch):
     """
     Feature: Sparse reduction and mirror protocol.
@@ -932,6 +957,7 @@ def test_sparse_reduction_and_mirror_protocol(grad_boundary,monkeypatch):
         check(dz,np.zeros((2,2)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_send_receive_gradient_requests(grad_boundary,monkeypatch):
     """
     Feature: Send receive gradient requests.
@@ -976,6 +1002,7 @@ def test_send_receive_gradient_requests(grad_boundary,monkeypatch):
         assert requests[-1]==('Send',13,1,'back',O.GlobalComm.WORLD_COMM_GROUP)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_reduce_and_collective_gradient_requests(grad_boundary,monkeypatch):
     """
     Feature: Reduce and collective gradient requests.
@@ -1009,6 +1036,7 @@ def test_reduce_and_collective_gradient_requests(grad_boundary,monkeypatch):
         assert endpoints[-1].calls==[dout]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_host_and_scatter_gradient_requests(grad_boundary,monkeypatch):
     """
     Feature: Host and scatter gradient requests.
@@ -1057,6 +1085,7 @@ class MatrixEndpoint(UnaryEndpoint):
         return self.response
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_variable_size_gradient_requests(grad_boundary,monkeypatch):
     """
     Feature: Variable size gradient requests.
@@ -1110,6 +1139,7 @@ def test_variable_size_gradient_requests(grad_boundary,monkeypatch):
         assert requests[-1]==expected and endpoints[-1].calls==[(dout,send)]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_neighbor_gradient_requests(grad_boundary,monkeypatch):
     """
     Feature: Neighbor gradient requests.
@@ -1141,6 +1171,7 @@ def test_neighbor_gradient_requests(grad_boundary,monkeypatch):
     assert all(ep.calls==[dout] for ep in endpoints)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_virtual_assign_communication_cast(grad_boundary):
     """
     Feature: Virtual assign communication cast.
@@ -1165,6 +1196,7 @@ def test_virtual_assign_communication_cast(grad_boundary):
                              '_grad_accumulation_shard_gradforward', [[3, 4]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True,raises=NameError,
                    reason='Product all_to_all_v_c refers to undefined size helper and communication endpoint')
 def test_all_to_all_v_c_valid_input_missing_helper_reproducer(monkeypatch):
@@ -1194,6 +1226,7 @@ def test_all_to_all_v_c_valid_input_missing_helper_reproducer(monkeypatch):
     assert len(requests) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind',['all_gather','mirror','micro_gather','micro_mirror'])
 @pytest.mark.parametrize('dump_path',[False,True])
 def test_gradient_norm_monitoring(grad_boundary,monkeypatch,tmp_path,capsys,kind,dump_path):
@@ -1257,6 +1290,7 @@ def test_gradient_norm_monitoring(grad_boundary,monkeypatch,tmp_path,capsys,kind
                                  'grad_mirrorforward', [[[3, 4], [0, 0]]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_squared_norm_disabled(grad_boundary,monkeypatch):
     """
     Feature: Squared norm disabled.
@@ -1268,6 +1302,7 @@ def test_squared_norm_disabled(grad_boundary,monkeypatch):
         G.get_squared_device_local_norm_param()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dev_num,mean,opt_shard',[(1,False,False),(2,False,False),(2,True,True)])
 def test_mirror_micro_assignment_and_optimizer(grad_boundary,monkeypatch,dev_num,mean,opt_shard):
     """
@@ -1296,6 +1331,7 @@ def test_mirror_micro_assignment_and_optimizer(grad_boundary,monkeypatch,dev_num
                              'grad_mirrorforward', [[3, 5]] if dev_num > 1 else [])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,args',[
     ('all_gather_into_tensor_uneven',(None,None)), ('reduce_scatter_tensor_uneven',(None,None)),
     ('reduce',(None,0)), ('batch_isend_irecv',([],)), ('scatter_tensor',(None,None)),
@@ -1317,6 +1353,7 @@ def test_public_comm_noninplace_guards(monkeypatch,name,args):
         getattr(F,name)(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_comm_additional_argument_validation(monkeypatch):
     """
     Feature: Comm additional argument validation.
@@ -1355,6 +1392,7 @@ def test_comm_additional_argument_validation(monkeypatch):
         F.batch_isend_irecv([second])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_batch_point_to_point_request(monkeypatch):
     """
     Feature: Batch point to point request.
@@ -1375,6 +1413,7 @@ def test_batch_point_to_point_request(monkeypatch):
     assert calls[0][0]==[a,b] and calls[0][1:]==(F.GlobalComm.WORLD_COMM_GROUP,[F.TYPE_ISEND,F.TYPE_IRECV],[1,0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_context_default_import_failure_restores_singletons(monkeypatch):
     """
     Feature: Context default import failure restores singletons.
@@ -1396,6 +1435,7 @@ def test_context_default_import_failure_restores_singletons(monkeypatch):
     assert C._context() is ctx
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_context_deterministic_env_boundary(isolated_context,monkeypatch):
     """
     Feature: Context deterministic env boundary.
@@ -1417,6 +1457,7 @@ def test_context_deterministic_env_boundary(isolated_context,monkeypatch):
     assert isolated_context.get_param(C.ms_ctx_param.deterministic)=='ON'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_context_public_attribute_and_enum_storage(isolated_context,monkeypatch):
     """
     Feature: Context public attribute and enum storage.
@@ -1435,6 +1476,7 @@ def test_context_public_attribute_and_enum_storage(isolated_context,monkeypatch)
     assert isolated_context.gpu_config=={}
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_remaining_local_helpers(monkeypatch,isolated_context,comm_environment):
     """
     Feature: Remaining local helpers.
@@ -1467,6 +1509,7 @@ def test_remaining_local_helpers(monkeypatch,isolated_context,comm_environment):
     assert filename and line>0 and stack is None and name
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_all_to_all_noninplace_reshape_protocol(monkeypatch):
     """
     Feature: All to all noninplace reshape protocol.
@@ -1491,6 +1534,7 @@ def test_all_to_all_noninplace_reshape_protocol(monkeypatch):
     assert calls[0][1:]==(F.GlobalComm.WORLD_COMM_GROUP,[2,1],[2,1],2,False,False)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_mirror_micro_sparse_gradient(grad_boundary):
     """
     Feature: Mirror micro sparse gradient.
@@ -1506,6 +1550,7 @@ def test_mirror_micro_sparse_gradient(grad_boundary):
     check(z,[[3,4],[5,6]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_store_scheduler_and_url_protocol_with_native_boundary(monkeypatch):
     """
     Feature: Store scheduler and url protocol with native boundary.
@@ -1536,6 +1581,7 @@ def test_store_scheduler_and_url_protocol_with_native_boundary(monkeypatch):
     assert requests[0][4].host=='127.0.0.1' and requests[0][4].port==12345
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True,raises=AssertionError,
                    reason='Product _clear_handler removes while iterating and leaves every second handler')
 def test_clear_all_log_handlers_reproducer():

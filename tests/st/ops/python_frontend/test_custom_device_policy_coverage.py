@@ -8,6 +8,7 @@ import pytest
 from mindspore import context, float32
 from mindspore.ops import deprecated
 from mindspore.ops.operations import array_ops, nn_ops, custom_ops
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(name='ascend_policy')
@@ -24,6 +25,7 @@ def ascend_policy_fixture(monkeypatch):
     assert original('device_target') == target
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('constructor', [array_ops.SpaceToBatchND, deprecated.BatchToSpaceND])
 def test_ascend_space_batch_policy_requires_two_spatial_axes(ascend_policy, constructor):
     """Feature: Frontend device capability policy and custom SDK callbacks.
@@ -36,6 +38,7 @@ def test_ascend_space_batch_policy_requires_two_spatial_axes(ascend_policy, cons
     assert operation.block_shape == [2, 3]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('constructor', [nn_ops.Conv3D, nn_ops.Conv3DTranspose])
 def test_ascend_convolution_policy_rejects_multiple_groups(ascend_policy, constructor):
     """Feature: Frontend device capability policy and custom SDK callbacks.
@@ -48,6 +51,7 @@ def test_ascend_convolution_policy_rejects_multiple_groups(ascend_policy, constr
     assert constructor(out_channel=4, kernel_size=3, group=1, **options).group == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('supported', [False, True])
 def test_allfinite_software_capability_policy(ascend_policy, monkeypatch, supported):
     """Feature: Frontend device capability policy and custom SDK callbacks.
@@ -94,6 +98,7 @@ def statement_expression(data):
     return builder.get()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'callback,kind', [(elementwise_expression, 'tvm_compute'), (statement_expression, 'ir_builder')]
 )

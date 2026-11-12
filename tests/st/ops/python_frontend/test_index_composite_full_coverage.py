@@ -16,6 +16,7 @@ from mindspore import ops
 from mindspore.common import dtype as dt
 from mindspore.ops.composite.multitype_ops import _compile_utils as cu
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as co
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(autouse=True)
@@ -47,6 +48,7 @@ def np_index(index):
     return index
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index',
     [
@@ -97,6 +99,7 @@ def test_view_getitem_matches_numpy(index, request):
     equal(cu._tensor_getitem(tensor(array), index), expected, ms.float32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index,error,message',
     [
@@ -117,6 +120,7 @@ def test_view_getitem_invalid_index(index, error, message):
         cu._tensor_getitem(tensor(np.zeros((3, 4))), index)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index', [0, slice(None)])
 def test_scalar_view_index_rejected(index):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -129,6 +133,7 @@ def test_scalar_view_index_rejected(index):
         cu._tensor_setitem(tensor(2), index, 5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_view_index_metadata_and_scalar_slice():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: View index metadata and scalar slice.
@@ -161,6 +166,7 @@ def test_view_index_metadata_and_scalar_slice():
     assert cu._wrap_index_to_tuple([None] * 32) == ([None] * 32,)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index', [False])
 def test_view_false_setitem_noop(index):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -172,6 +178,7 @@ def test_view_false_setitem_noop(index):
     equal(source, np.arange(6).reshape(2, 3))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_view_setitem_rejects_non_numeric_value_and_invalid_index():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: View setitem rejects non numeric value and invalid index.
@@ -185,6 +192,7 @@ def test_view_setitem_rejects_non_numeric_value_and_invalid_index():
         cu._tensor_setitem(tensor([1, 2]), 'bad', 4)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index', [-1, slice(1, 3), (slice(None), 1), (tensor(1, ms.int32),)])
 @pytest.mark.xfail(strict=True, reason='CPU view inplace_copy does not update the original Tensor storage')
 def test_cpu_view_setitem_updates_original_storage(index):
@@ -201,6 +209,7 @@ def test_cpu_view_setitem_updates_original_storage(index):
     equal(source, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name,index',
     [
@@ -226,6 +235,7 @@ def test_legacy_single_axis_getitem(name, index):
     equal(getattr(cu, name)(tensor(array), index), array[idx])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name,index,message',
     [
@@ -247,6 +257,7 @@ def test_legacy_getitem_errors(name, index, message):
         getattr(cu, name)(tensor(np.zeros((3, 4))), index)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index,expected,dtype',
     [
@@ -264,6 +275,7 @@ def test_list_index_conversion(index, expected, dtype):
     equal(cu._convert_list_index_to_tensor(index), expected, dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_misc_index_shape_helpers():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Misc index shape helpers.
@@ -292,6 +304,7 @@ def test_misc_index_shape_helpers():
     equal(cu.handle_empty_tensor((0, 3), tensor([1], ms.int32)), np.empty((0, 3)), ms.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index', [tensor(1, ms.int32), tensor([-1, 0], ms.int64), tensor([True, False, True], ms.bool_)]
 )
@@ -313,6 +326,7 @@ def test_legacy_tensor_setitem(index, kind):
     equal(getattr(cu, 'tensor_setitem_by_tensor_with_' + kind)(tensor(array), index, value_arg), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index', [0, -1])
 @pytest.mark.parametrize('kind', ['number', 'tensor', 'sequence'])
 def test_legacy_number_setitem(index, kind):
@@ -332,6 +346,7 @@ def test_legacy_number_setitem(index, kind):
     )
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [7, tensor([3, 4, 5, 6]), [3, 4, 5, 6], (3, 4, 5, 6)])
 def test_ellipsis_bool_and_list_setitem(value):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -347,6 +362,7 @@ def test_ellipsis_bool_and_list_setitem(value):
     equal(cu.tensor_setitem_by_list(tensor(array), [0, 2], tensor(9)), [[9] * 4, [4, 5, 6, 7], [9] * 4])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_parameter_scatter_updates_mutate_parameter():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Parameter scatter updates mutate parameter.
@@ -362,6 +378,7 @@ def test_parameter_scatter_updates_mutate_parameter():
         equal(source, [[1, 2], [8, 8]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index', [tensor([True, False, True], ms.bool_), tensor([False] * 3, ms.bool_)])
 def test_bool_mask_assignment_broadcasts_selected_rows(index):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -374,6 +391,7 @@ def test_bool_mask_assignment_broadcasts_selected_rows(index):
     equal(cu.handle_setitem_by_bool_tensor(tensor(array), index, tensor([20, 21, 22, 23])), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'value,dtype',
     [
@@ -398,6 +416,7 @@ def test_sequence_updates_promote_and_stack(value, dtype):
     )
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name,operation',
     [
@@ -421,6 +440,7 @@ def test_arithmetic_helpers_accept_sequences(name, operation):
         equal(getattr(cu, name)([2, 3], tensor([3, 2])), operation([2, 3], [3, 2]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_scalar_item_and_itemset_contracts():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Scalar item and itemset contracts.
@@ -448,6 +468,7 @@ def test_scalar_item_and_itemset_contracts():
             fn(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_constexpr_scalar_shape_and_type_contracts():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Constexpr scalar shape and type contracts.
@@ -521,6 +542,7 @@ def test_constexpr_scalar_shape_and_type_contracts():
         co.generate_padding_shape((2, 3), 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'sequence,dim,expected',
     [
@@ -544,6 +566,7 @@ def test_sequence_to_index_boolean_and_negative_indices(sequence, dim, expected)
         equal(result, expected, ms.bool_ if dim is None else ms.int64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sequence_to_index_rejects_boolean_shape_mismatch():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Sequence to index rejects boolean shape mismatch.
@@ -553,6 +576,7 @@ def test_sequence_to_index_rejects_boolean_shape_mismatch():
         co.sequence_to_index([True], 3)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index,shape', [(slice(1, 3), (3,)), (slice(None, None, 2), (3, 2)), (slice(2, 0, -1), (3, 2))]
 )
@@ -567,6 +591,7 @@ def test_slice2indices_cartesian_coordinates(index, shape):
     equal(co.slice2indices(index, shape), coordinates, ms.int64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_empty_slice_indices_and_scalar_updates_shapes():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Empty slice indices and scalar updates shapes.
@@ -581,6 +606,7 @@ def test_empty_slice_indices_and_scalar_updates_shapes():
         equal(co.convert_scalar_to_tensor((4, 3), ms.float32, indices, 7, op_type), np.full(expected_shape, 7))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_index_type_position_classification():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Index type position classification.
@@ -595,6 +621,7 @@ def test_index_type_position_classification():
         co.get_pos_of_indexes_types((dt.Ellipsis_(), dt.Ellipsis_()), 'getitem')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index',
     [
@@ -618,6 +645,7 @@ def test_generated_mixed_indices_select_numpy_values(index):
     assert result.dtype == ms.int64
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_generated_indices_empty_and_invalid_tensor_dtype():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Generated indices empty and invalid tensor dtype.
@@ -634,6 +662,7 @@ def test_generated_indices_empty_and_invalid_tensor_dtype():
     )
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_format_and_multi_dim_index_tensor_broadcasting():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Format and multi dim index tensor broadcasting.
@@ -662,6 +691,7 @@ def test_format_and_multi_dim_index_tensor_broadcasting():
         cu._transform_ellipsis_to_slice(source, (1, 1, 1), 'getitem')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index',
     [
@@ -695,6 +725,7 @@ def test_remove_expanded_dimensions_preserves_assignment_shape(index):
         np.testing.assert_array_equal(actual, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_remove_expanded_dimensions_invalid_and_membership():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Remove expanded dimensions invalid and membership.
@@ -722,6 +753,7 @@ def test_remove_expanded_dimensions_invalid_and_membership():
         cu.check_indices(3, tensor([0], ms.int32), 'raise')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index', [0, Ellipsis, None, True, ()])
 def test_view_setitem_contiguous_storage(index):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -738,6 +770,7 @@ def test_view_setitem_contiguous_storage(index):
     equal(source, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='_scalar_to_tensor calls tensor-only ops.dtype on a Python scalar')
 def test_scalar_to_tensor_accepts_python_integer():
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -747,6 +780,7 @@ def test_scalar_to_tensor_accepts_python_integer():
     equal(cu._scalar_to_tensor(3), 3, ms.int64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'kind,arg,index,expected',
     [
@@ -771,6 +805,7 @@ def test_data_transfer_ops_numerical(kind, arg, index, expected):
     equal(cu.data_update_by_ops(kind, arg, source, index, source, value), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_data_transfer_unknown_raises_and_parameter_scatter():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Data transfer unknown raises and parameter scatter.
@@ -793,6 +828,7 @@ def test_data_transfer_unknown_raises_and_parameter_scatter():
         cu.data_update((cu.ValueTransferType.kRaiseIndexError,), ((5, 2),), tensor([1]), None)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'kind,arg,index,value,expected',
     [
@@ -821,6 +857,7 @@ def test_data_transfer_control_operations(kind, arg, index, value, expected):
     equal(cu.data_update((kind,), (arg,), tensor(np.arange(6).reshape(2, 3)), index, value), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'kinds,args,value,expected',
     [
@@ -856,6 +893,7 @@ def test_value_transfer_cast_broadcast_reshape_scatter(kinds, args, value, expec
     equal(cu.value_update(kinds, args, tensor(np.zeros((2, 3))), value), expected, ms.float32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_value_transfer_rejects_unknown_kind():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Value transfer rejects unknown kind.
@@ -865,6 +903,7 @@ def test_value_transfer_rejects_unknown_kind():
         cu.value_update((cu.ValueTransferType.kUnknown,), (None,), tensor([1]), tensor([2]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'where,initial', [(True, None), (None, 3), (tensor([[True, False, True]], ms.bool_), 2), (False, tensor(3))]
 )
@@ -884,6 +923,7 @@ def test_reduce_helper_initial_and_where(where, initial):
     equal(cu.reduce_(tensor(array), ops.ReduceMax(), ops.maximum, axis=1, initial=initial, where=where), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_reduce_helper_rejects_invalid_initial_and_mask_without_identity():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Reduce helper rejects invalid initial and mask without identity.
@@ -920,6 +960,7 @@ _ARITHMETIC = [
 ]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mod,name,left,right,expected', _ARITHMETIC)
 def test_multitype_scalar_operations(monkeypatch, mod, name, left, right, expected):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -957,6 +998,7 @@ def test_multitype_scalar_operations(monkeypatch, mod, name, left, right, expect
         assert calls == [(left, right)]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'mod,op,names',
     [
@@ -1053,6 +1095,7 @@ def test_multitype_tensor_and_sequence_arithmetic(mod, op, names):
         equal(getattr(module(mod), name)(left, right), op(np_index(left), np_index(right)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'mod,names,op',
     [
@@ -1083,6 +1126,7 @@ def test_multitype_bitwise_tensor_operations(mod, names, op):
         equal(getattr(module(mod), name)(left, right), op(np_index(left), np_index(right)), ms.int32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['_list_mul_scalar', '_scalar_mul_list', '_tuple_mul_scalar', '_scalar_mul_tuple'])
 @pytest.mark.parametrize('count', [-1, 0, 3, 1.5])
 def test_multitype_sequence_repetition(name, count):
@@ -1102,6 +1146,7 @@ def test_multitype_sequence_repetition(name, count):
         assert type(result) is type(sequence)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'mod,op,names',
     [
@@ -1190,6 +1235,7 @@ def test_multitype_comparisons(monkeypatch, mod, op, names):
             assert bool(getattr(module(mod), name)(left, right)) == op(left, right)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'mod,name,expected',
     [
@@ -1215,6 +1261,7 @@ def test_multitype_tensor_comparisons(mod, name, expected):
     equal(getattr(module(mod), name)(left, right), expected, ms.bool_)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mod', ['in', 'not_in'])
 def test_multitype_membership(monkeypatch, mod):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -1257,6 +1304,7 @@ def test_multitype_membership(monkeypatch, mod):
     assert dict_calls == [('a', {'a': 1})]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_multitype_logical_unary_and_none_contracts(monkeypatch):
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Multitype logical unary and none contracts.
@@ -1323,6 +1371,7 @@ def test_multitype_logical_unary_and_none_contracts(monkeypatch):
         assert getattr(module(mod), name)(None, None) is expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index',
     [
@@ -1372,6 +1421,7 @@ def test_process_dim_real_views_and_remaining_index_contract(index):
         assert remaining[0] is index
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index',
     [
@@ -1428,6 +1478,7 @@ def test_inplace_index_native_boundary_receives_views_indices_value(monkeypatch,
     equal(source, np.arange(12).reshape(3, 4))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_index_preparation_errors_before_native_boundary():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Index preparation errors before native boundary.
@@ -1443,6 +1494,7 @@ def test_index_preparation_errors_before_native_boundary():
         cu._process_dim_in_multi_dim_index(source, source, 'bad', 0, 1, 0, (), 0, False)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index', [([0, 2],), (np.array([0, 2], np.int8),), ((0, 2),), (slice(None), tensor([0, 2], ms.int32))]
 )
@@ -1461,6 +1513,7 @@ def test_multi_dim_preparation_converts_sequence_dtype(index):
     assert remaining[-1].dtype in (ms.int32, ms.int64)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'mod,name,index,boost',
     [
@@ -1485,6 +1538,7 @@ def test_getitem_tensor_dispatch_real_values(monkeypatch, mod, name, index, boos
     equal(getattr(module(mod), name)(tensor(array), index), array[np_index(index)])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name,index,value',
     [
@@ -1523,6 +1577,7 @@ def test_setitem_dispatch_legacy_values(monkeypatch, name, index, value):
     equal(getattr(module('setitem'), name)(tensor(array), index, value), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['number', 'tensor', 'tuple', 'list'])
 @pytest.mark.parametrize(
     'index',
@@ -1559,6 +1614,7 @@ def test_tuple_dispatch_copy_slice_real_values(monkeypatch, kind, index):
     equal(cu.tensor_itemset_by_tuple_with_tensor(tensor(array), index, tensor(value)), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('step', [1, 2])
 def test_slice_setitem_native_metadata_boundary_and_real_updates(monkeypatch, step):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -1585,6 +1641,7 @@ def test_slice_setitem_native_metadata_boundary_and_real_updates(monkeypatch, st
     assert calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_slice_setitem_empty_metadata_preserves_input(monkeypatch):
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Slice setitem empty metadata preserves input.
@@ -1606,6 +1663,7 @@ def test_slice_setitem_empty_metadata_preserves_input(monkeypatch):
     assert calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name,container,index,expected',
     [
@@ -1627,6 +1685,7 @@ def test_getitem_python_container_dispatch(name, container, index, expected):
     assert getattr(module('getitem'), name)(container, index) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'suffix,value',
     [
@@ -1659,6 +1718,7 @@ def test_list_setitem_actual_primitive(suffix, value):
     assert source == [1, 2, 3]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'step,message', [(None, 'can only assign'), (1, 'can only assign'), (2, 'extended slice'), (-1, 'extended slice')]
 )
@@ -1671,6 +1731,7 @@ def test_list_slice_requires_iterable(step, message):
         module('setitem')._list_slice_setitem_with_number([1, 2, 3], slice(None, None, step), 9)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index',
     [
@@ -1715,6 +1776,7 @@ def test_copy_native_boundary_receives_correct_view(monkeypatch, index):
     equal(source, array)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('src_shape', [(1, 1, 3), (1, 3), (3,), (), (2, 3)])
 def test_do_copy_strips_only_leading_unit_dimensions(monkeypatch, src_shape):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -1739,6 +1801,7 @@ def test_do_copy_strips_only_leading_unit_dimensions(monkeypatch, src_shape):
     equal(calls[0][1], source.asnumpy().reshape(shape))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index', [([0, 2],), (np.array([0, 2], np.int8),), (slice(None), [0, 2]), ()])
 def test_setitem_sequence_preparation_native_boundary(monkeypatch, index):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -1771,6 +1834,7 @@ def test_setitem_sequence_preparation_native_boundary(monkeypatch, index):
         assert calls[0][1] == ()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_update_and_gather_transfer_use_actual_broadcast_indices():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: List update and gather transfer use actual broadcast indices.
@@ -1802,6 +1866,7 @@ def test_list_update_and_gather_transfer_use_actual_broadcast_indices():
     )
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name,container', [('_tuple_getitem_by_slice', (1, 2, 3, 4)), ('_list_getitem_by_slice', [1, 2, 3, 4])]
 )
@@ -1826,6 +1891,7 @@ def test_dynamic_sequence_slice_compiler_predicate_boundary(monkeypatch, name, c
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'mod,name,left,right,expected',
     [
@@ -1899,6 +1965,7 @@ def test_none_and_dtype_comparison_dispatch(mod, name, left, right, expected):
     assert getattr(module(mod), name)(left, right) is expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'mod,name,op',
     [
@@ -1928,6 +1995,7 @@ def test_default_arithmetic_dispatch_and_zero_division(mod, name, op):
             getattr(module(mod), name)(7, 0)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [3, 1.5])
 def test_ones_and_zeros_like_scalars(value):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -1951,6 +2019,7 @@ def test_ones_and_zeros_like_scalars(value):
     assert module('zeros_like').zeros_like(3) == 0
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='_zeros_like_dict passes dict_keys to sequence-only MakeDict primitive')
 def test_zeros_like_dictionary_preserves_keys_and_typed_values():
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -1964,6 +2033,7 @@ def test_zeros_like_dictionary_preserves_keys_and_typed_values():
     assert type(result['count']) is int and type(result['ratio']) is float and type(result['enabled']) is bool
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_coo_arithmetic_helpers_preserve_sparse_structure():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: COO arithmetic helpers preserve sparse structure.
@@ -1998,6 +2068,7 @@ def test_coo_arithmetic_helpers_preserve_sparse_structure():
         equal(result.values, expected, ms.float32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [3, 1.5])
 def test_ones_like_scalar_retains_python_numeric_type(value, request):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2017,6 +2088,7 @@ def test_ones_like_scalar_retains_python_numeric_type(value, request):
     assert actual == type(value)(1) and type(actual) is type(value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['ones_like', 'zeros_like'])
 def test_coo_like_graph_constructor_boundary(monkeypatch, kind):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2041,6 +2113,7 @@ def test_coo_like_graph_constructor_boundary(monkeypatch, kind):
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'scenario',
     [
@@ -2116,6 +2189,7 @@ def test_tuple_setitem_compiler_metadata_contract_and_real_scatter(monkeypatch, 
         assert calls == ['bool', 'pre', 'index']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name,index,value',
     [
@@ -2146,6 +2220,7 @@ def test_setitem_boost_contiguous_views_update_real_storage(monkeypatch, name, i
     equal(getattr(module('setitem'), name)(tensor(array), index, value), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['tensor', 'number', 'list', 'tuple'])
 def test_slice_dispatch_legacy_native_metadata_boundary(monkeypatch, kind):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2180,6 +2255,7 @@ def test_slice_dispatch_legacy_native_metadata_boundary(monkeypatch, kind):
     assert calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dynamic_scalar_compiler_predicate_then_actual_tensor_add(monkeypatch):
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Dynamic scalar compiler predicate then actual tensor add.
@@ -2198,6 +2274,7 @@ def test_dynamic_scalar_compiler_predicate_then_actual_tensor_add(monkeypatch):
     assert calls == [3]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_unknown_shape_copy_compiler_predicate_boundary(monkeypatch):
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Unknown shape copy compiler predicate boundary.
@@ -2219,6 +2296,7 @@ def test_unknown_shape_copy_compiler_predicate_boundary(monkeypatch):
     assert calls == [(2,)]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('for_setitem', [False, True])
 def test_mutable_sequence_compiler_predicate_rejects_index(monkeypatch, for_setitem):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2244,6 +2322,7 @@ def test_mutable_sequence_compiler_predicate_rejects_index(monkeypatch, for_seti
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['_list_mul_scalar', '_scalar_mul_list', '_tuple_mul_scalar', '_scalar_mul_tuple'])
 def test_dynamic_sequence_repetition_native_kernel(monkeypatch, name):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2266,6 +2345,7 @@ def test_dynamic_sequence_repetition_native_kernel(monkeypatch, name):
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mod,kind', [('in', 'tuple'), ('in', 'list'), ('not_in', 'tuple'), ('not_in', 'list')])
 def test_dynamic_membership_native_kernel(monkeypatch, mod, kind):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2287,6 +2367,7 @@ def test_dynamic_membership_native_kernel(monkeypatch, mod, kind):
     assert len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_list_tensor_index_graph_primitive_receives_python_integer(monkeypatch):
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: List tensor index graph primitive receives python integer.
@@ -2308,6 +2389,7 @@ def test_list_tensor_index_graph_primitive_receives_python_integer(monkeypatch):
     assert result[0] == 1 and result[1] is value and result[2] == 3 and calls == [1]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'index',
     [
@@ -2335,6 +2417,7 @@ def test_itemset_tuple_mixed_indices_execute_real_scatter(index):
     equal(cu.tensor_itemset_by_tuple_with_tensor(tensor(array), index, tensor(9)), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('empty', [False, True])
 def test_tuple_getitem_graph_metadata_boundary(monkeypatch, empty):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2364,6 +2447,7 @@ def test_tuple_getitem_graph_metadata_boundary(monkeypatch, empty):
     assert calls == ['bool', 'getitem']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'function,index', [('tensor_index_by_list', [slice(None), 1]), ('tensor_setitem_by_list', [slice(None), 1])]
 )
@@ -2406,6 +2490,7 @@ def test_list_mixed_index_graph_tuple_boundary(monkeypatch, function, index):
         assert calls == ['bool', 'pre']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_empty_bool_tensor_and_separated_advanced_indices():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Empty bool tensor and separated advanced indices.
@@ -2421,6 +2506,7 @@ def test_empty_bool_tensor_and_separated_advanced_indices():
     equal(value, np.full((2, 2), 9))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'kind,order',
     [
@@ -2481,6 +2567,7 @@ def test_sparse_backward_add_graph_constructor_boundary(monkeypatch, kind, order
         equal(result.indptr, indptr.asnumpy())
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='_add_tuple_cootensor misspells check_coo_tensor_input_length')
 def test_tuple_cootensor_backward_add_accepts_valid_components():
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2494,6 +2581,7 @@ def test_tuple_cootensor_backward_add_accepts_valid_components():
     equal(result.values, [5])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, reason='_add_nonetensor_tensor attempts unsupported None + None')
 def test_none_backward_add_preserves_absent_gradient():
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2503,6 +2591,7 @@ def test_none_backward_add_preserves_absent_gradient():
     assert module('add')._add_nonetensor_tensor(None, None) is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['list', 'tuple'])
 def test_dynamic_sequence_add_real_native_kernel(monkeypatch, kind):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2524,6 +2613,7 @@ def test_dynamic_sequence_add_real_native_kernel(monkeypatch, kind):
     assert result == left + right and type(result) is type(left) and len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_addn_backward_real_tensors():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Addn backward real tensors.
@@ -2532,6 +2622,7 @@ def test_addn_backward_real_tensors():
     equal(module('add')._add_addn(tensor([1, 3]), tensor([2, 4])), [3, 7])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('index', [True, False, tensor([0, 2], ms.int64), (slice(None), tensor([1, 3], ms.int32))])
 def test_index_native_boundary_preserves_prepared_data_and_arguments(monkeypatch, index):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2563,6 +2654,7 @@ def test_index_native_boundary_preserves_prepared_data_and_arguments(monkeypatch
     assert calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['tuple', 'list'])
 def test_static_sequence_slice_native_metagraph_boundary(monkeypatch, kind):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2585,6 +2677,7 @@ def test_static_sequence_slice_native_metagraph_boundary(monkeypatch, kind):
     assert calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['tuple', 'list', 'tensor'])
 @pytest.mark.parametrize('dynamic', [False, True])
 def test_list_slice_assignment_native_metagraph_boundary(monkeypatch, kind, dynamic):
@@ -2630,6 +2723,7 @@ def test_list_slice_assignment_native_metagraph_boundary(monkeypatch, kind, dyna
     assert result == [8, 9, 3] and source == [1, 2, 3] and calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'mod,name,args,expected',
     [
@@ -2662,6 +2756,7 @@ def test_csr_arithmetic_real_values(mod, name, args, expected):
     equal(result.values, expected, ms.float32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_nested_object_tensor_conversion_rejects_unsupported_elements():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Nested object tensor conversion rejects unsupported elements.
@@ -2671,6 +2766,7 @@ def test_nested_object_tensor_conversion_rejects_unsupported_elements():
         co.make_tensor([[object()]])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_itemset_full_coordinate_and_leading_unit_broadcast():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Itemset full coordinate and leading unit broadcast.
@@ -2684,6 +2780,7 @@ def test_itemset_full_coordinate_and_leading_unit_broadcast():
     equal(cu.tensor_setitem_by_bool(tensor(np.zeros((2, 3))), True, value), array)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['coo', 'csr'])
 @pytest.mark.parametrize('operation', ['add', 'sub'])
 def test_sparse_binary_helpers_validate_shapes_before_native_operation(kind, operation):
@@ -2702,6 +2799,7 @@ def test_sparse_binary_helpers_validate_shapes_before_native_operation(kind, ope
         getattr(module(operation), '_' + operation + '_' + kind + 'tensor')(left, right)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_empty_bool_tensor_removes_all_updates():
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Empty bool tensor removes all updates.
@@ -2714,6 +2812,7 @@ def test_empty_bool_tensor_removes_all_updates():
     equal(actual_value, 9)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['tensor', 'tuple', 'list'])
 def test_legacy_boolean_number_dispatch_broadcasts_values(monkeypatch, kind):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2729,6 +2828,7 @@ def test_legacy_boolean_number_dispatch_broadcasts_values(monkeypatch, kind):
     )
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['ones_like', 'zeros_like'])
 def test_csr_like_graph_constructor_boundary(monkeypatch, kind):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2752,6 +2852,7 @@ def test_csr_like_graph_constructor_boundary(monkeypatch, kind):
     equal(result.values, [1, 1] if kind == 'ones_like' else [0, 0], ms.float32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_dynamic_zero_sequence_real_native_kernel(monkeypatch):
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Dynamic zero sequence real native kernel.
@@ -2772,6 +2873,7 @@ def test_dynamic_zero_sequence_real_native_kernel(monkeypatch):
     assert result == [0, 0] and type(result) is list and len(calls) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['slice', 'tuple'])
 def test_legacy_getitem_dispatch_native_metagraph_boundary(monkeypatch, kind):
     """Feature: Tensor indexing and multitype composite dispatch.
@@ -2801,6 +2903,7 @@ def test_legacy_getitem_dispatch_native_metagraph_boundary(monkeypatch, kind):
     assert calls == (['getitem'] if kind == 'slice' else ['bool', 'getitem'])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_empty_list_index_compiler_dynamic_dimension_error(monkeypatch):
     """Feature: Tensor indexing and multitype composite dispatch.
     Description: Empty list index compiler dynamic dimension error.
@@ -2820,6 +2923,7 @@ def test_empty_list_index_compiler_dynamic_dimension_error(monkeypatch):
     assert calls == [2, 3]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['coo', 'csr'])
 @pytest.mark.parametrize('operation', ['add', 'sub'])
 def test_sparse_binary_helpers_real_cpu_values(kind, operation):
@@ -2844,6 +2948,7 @@ def test_sparse_binary_helpers_real_cpu_values(kind, operation):
         equal(result.indptr, [0, 1, 2])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'mod,name,primitive,scalar',
     [
@@ -2886,6 +2991,7 @@ def test_augassign_native_primitive_constructor_and_argument_boundary(monkeypatc
     assert calls == ['construct', 'invoke']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'name,primitive,scalar_side',
     [
@@ -2915,6 +3021,7 @@ def test_remainder_native_primitive_dispatch_boundary(monkeypatch, name, primiti
     assert calls == [True]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kind', ['list', 'tuple', 'dict'])
 def test_static_collection_add_native_metagraph_boundary(monkeypatch, kind):
     """Feature: Tensor indexing and multitype composite dispatch.

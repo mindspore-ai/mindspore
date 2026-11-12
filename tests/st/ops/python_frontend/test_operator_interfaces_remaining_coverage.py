@@ -37,6 +37,7 @@ from mindspore.ops.operations import inner_ops as inner
 from mindspore.ops.operations import debug_ops as debug
 from mindspore.ops.operations import image_ops as image
 from mindspore.ops.operations import sparse_ops as sparse
+from tests.mark_utils import arg_mark
 
 F32, F16, I32, I64 = [dt.TensorType(t) for t in (dt.float32, dt.float16, dt.int32, dt.int64)]
 
@@ -68,6 +69,7 @@ def fixture_custom_state(monkeypatch, tmp_path):
     yield
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('n', range(1, 11))
 @pytest.mark.parametrize('out,dout,tail', [(11, 13, (11, 13)), ((11, 12), (13, 14), (11, 12, 13, 14))])
 def test_custom_gradient_argument_protocol(n, out, dout, tail):
@@ -86,6 +88,7 @@ def test_custom_gradient_argument_protocol(n, out, dout, tail):
     assert seen == [inputs + tail]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_gradient_registry_absent_and_mixed_outputs():
     """
     Feature: Custom gradient registry absent and mixed outputs.
@@ -99,6 +102,7 @@ def test_custom_gradient_registry_absent_and_mixed_outputs():
     assert grad.get_outs(1, (2, 3)) == (1, 2, 3)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_registry_dispatch_and_missing_key():
     """
     Feature: Registry dispatch and missing key.
@@ -126,6 +130,7 @@ def test_registry_dispatch_and_missing_key():
         functions.get(8)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_embedding_cache_contracts():
     """
     Feature: Embedding cache contracts.
@@ -159,6 +164,7 @@ def test_embedding_cache_contracts():
         assign.check_dtype(dt.string, F32)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('bidirectional,hidden_shape,out',
                          [(False, [2, 3, 4], (5, 3, 4)), (True, [4, 3, 4], (5, 3, 8))])
 def test_gru_shape_dtype(bidirectional, hidden_shape, out):
@@ -181,6 +187,7 @@ def test_gru_shape_dtype(bidirectional, hidden_shape, out):
             op.infer_shape(x, h, [100], lengths)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name', ['GRUV2', 'LSTMV2', 'CudnnGRU'])
 def test_recurrent_constructor_validation(name):
     """
@@ -197,6 +204,7 @@ def test_recurrent_constructor_validation(name):
             cls(*args)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_optimizer_inference_contracts():
     """
     Feature: Optimizer inference contracts.
@@ -233,6 +241,7 @@ def test_optimizer_inference_contracts():
     assert eod.n_pos == 8 and eod.n_step == [1, 2]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_sequence_python_values():
     """
     Feature: Sequence python values.
@@ -269,6 +278,7 @@ def test_sequence_python_values():
         seq.SequenceUnstack(0, '3')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('axis,keep,expected', [((), False, []), ([], True, [1, 1, 1]), (-1, False, [2, 3]),
                                               ((0, -1), True, [1, 3, 1]), ([1, 1], False, [2, 4])])
 def test_reduce_shape(axis, keep, expected):
@@ -281,6 +291,7 @@ def test_reduce_shape(axis, keep, expected):
     assert math._infer_shape_reduce([2, 3, 4], axis, keep, 'ReduceMax') == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,expected', [('ReduceMax', [4, 8]), ('ReduceMin', [1, 2]),
     ('ReduceProd', [4, 16]), ('ReduceMean', [2.5, 5]), ('ReduceAll', [True, True]), ('ReduceAny', [True, True])])
 def test_reduce_constant_folding(name, expected):
@@ -300,6 +311,7 @@ def test_reduce_constant_folding(name, expected):
     assert op.infer_value(value, ()).shape == ()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_math_binary_dtype_and_constants():
     """
     Feature: Math binary dtype and constants.
@@ -345,6 +357,7 @@ def test_math_binary_dtype_and_constants():
         nms.infer_shape([4, 6])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls,kwargs,attrs', [
     (math.Einsum, {'equation':'ij,jk->ik'}, {'equation':'ij,jk->ik'}),
     (math.Quantile, {'keep_dims':None, 'ignore_nan':None}, {'dim':10000, 'keep_dims':False, 'ignore_nan':False}),
@@ -376,6 +389,7 @@ def test_constructor_attribute_contracts(cls, kwargs, attrs):
         assert getattr(op, key) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls,kwargs', [
     (math.Einsum, {'equation':3}), (math.Einsum, {'equation':'a->b->c'}),
     (math.Bernoulli, {'seed':-2}), (math.Renorm, {'p':0, 'dim':0, 'maxnorm':1.0}),
@@ -398,6 +412,7 @@ def test_invalid_constructor_contracts(cls, kwargs):
         cls(**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=pytest.fail.Exception,
                    reason='SparseMatrixSparseMatMul validates adjoint_b twice and omits adjoint_a')
 def test_sparse_adjoint_a_requires_boolean():
@@ -410,6 +425,7 @@ def test_sparse_adjoint_a_requires_boolean():
         sparse.SparseMatrixSparseMatMul(adjoint_a=1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('parts', [[], ['BAD'], ['VALUE_ROWIDS'], ['FIRST_DIM_SIZE'],
                                   ['FIRST_DIM_SIZE', 'ROW_SPLITS'], ['ROW_SPLITS', 'VALUE_ROWIDS'], [1]])
 def test_ragged_partition_validation(parts):
@@ -422,6 +438,7 @@ def test_ragged_partition_validation(parts):
         sparse.RaggedTensorToTensor(parts)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('parts,n', [(['ROW_SPLITS'], 1), (['FIRST_DIM_SIZE', 'VALUE_ROWIDS', 'VALUE_ROWIDS'], 3)])
 def test_ragged_partition_count(parts, n):
     """
@@ -432,6 +449,7 @@ def test_ragged_partition_count(parts, n):
     assert sparse.RaggedTensorToTensor(parts).num_row_partition_tensors == n
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_array_constant_folding_and_fill():
     """
     Feature: Array constant folding and fill.
@@ -470,6 +488,7 @@ def test_array_constant_folding_and_fill():
             inverse.__infer__(abstract(shape, typ, (1, 0)))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_scatter_validation_and_dynamic_shapes():
     """
     Feature: Scatter validation and dynamic shapes.
@@ -508,6 +527,7 @@ def test_scatter_validation_and_dynamic_shapes():
     assert tensor._check_shape([2], [3]) is False
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_batch_space_stack_helpers():
     """
     Feature: Batch space stack helpers.
@@ -534,6 +554,7 @@ def test_batch_space_stack_helpers():
     assert [array.HammingWindow(dtype=t).dtype for t in (dt.float16, dt.float32, dt.float64)] == [1, 0, 11]
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value,opts,expected', [
     (3, {}, (3, 3)), ((2, 3), {'ret_four':True}, (1, 1, 2, 3)),
     ((1, 1, 2, 3), {'allow_four':True}, (2, 3)),
@@ -549,6 +570,7 @@ def test_nn_dimension_normalization(value, opts, expected):
     assert nn._check_positive_int_or_tuple('kernel_size', value, 'Conv2D', **opts) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [(1,), (1, 2, 3), (1, 1, 2, 3), (0, 2), (True, 2)])
 def test_nn_dimension_rejection(value):
     """
@@ -560,6 +582,7 @@ def test_nn_dimension_rejection(value):
         nn._check_positive_int_or_tuple('kernel_size', value, 'Conv2D')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_nn_shape_helpers():
     """
     Feature: Nn shape helpers.
@@ -575,6 +598,7 @@ def test_nn_shape_helpers():
     assert nn._deconv_output_length(4, 1, 2, 1) == 8
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode,shape,expected', [('valid', [2, 3, 6, 8], [2, 3, 2, 3]),
     ('same', [2, 3, 6, 8], [2, 3, 3, 4]), ('valid', [2, 3, -1, 8], [2, 3, -1, 3]),
     ('same', [2, 3, 6, -1], [2, 3, 3, -1])])
@@ -597,6 +621,7 @@ def test_pool_python_inference(mode, shape, expected):
             op.infer_shape([2, 3, 0, 0])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kwargs,expected', [({'stride':1, 'dilation':1}, (1, 1, 1, 1)),
     ({'stride':(2, 3), 'dilation':(1, 2)}, (1, 1, 2, 3)),
     ({'stride':(1, 1, 2, 3), 'dilation':(1, 1, 1, 2)}, (1, 1, 2, 3))])
@@ -610,6 +635,7 @@ def test_dilation_constructor(kwargs, expected):
     assert op.stride == expected and op.pad_mode == 'SAME'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('kwargs', [{'stride':1, 'dilation':1, 'data_format':'NHWC'},
     {'stride':(2, 1, 1, 1), 'dilation':1}, {'stride':(1, 2, 3), 'dilation':1},
     {'stride':0, 'dilation':1}, {'stride':256, 'dilation':1}, {'stride':(1, 256), 'dilation':1},
@@ -624,6 +650,7 @@ def test_dilation_validation(kwargs):
         nn.Dilation2D(**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_nn_loss_and_depthwise_inference():
     """
     Feature: Nn loss and depthwise inference.
@@ -645,6 +672,7 @@ def test_nn_loss_and_depthwise_inference():
         conv.infer_shape([2, 3, 5, 5], [2, 3, 3, 3])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls,kwargs,attrs', [
     (nn.MaxUnpool2D, {'ksize':2, 'data_format':'NHWC'}, {'ksize':(1, 2, 2, 1), 'strides':(1, 2, 2, 1)}),
     (nn.MaxUnpool3D, {'ksize':2, 'data_format':'NDHWC'}, {'ksize':(1, 2, 2, 2, 1)}),
@@ -674,6 +702,7 @@ def test_nn_constructor_protocols(cls, kwargs, attrs):
         assert getattr(op, key) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls,kwargs', [
     (nn.FusedBatchNorm, {}), (nn.FusedBatchNormEx, {}),
     (nn.Conv2D, {'out_channel':4, 'kernel_size':3, 'data_format':'NHWC'}),
@@ -698,6 +727,7 @@ def test_nn_constructor_errors(cls, kwargs):
         cls(**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_deprecated_alias_attributes_and_identity():
     """
     Feature: Deprecated alias attributes and identity.
@@ -719,6 +749,7 @@ def test_deprecated_alias_attributes_and_identity():
             cls(data_format='NHWC')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_primitive_attribute_lifecycle_and_strategy():
     """
     Feature: Primitive attribute lifecycle and strategy.
@@ -764,6 +795,7 @@ def test_primitive_attribute_lifecycle_and_strategy():
     assert cloned is not checker and cloned.input_names == ['input_x', 'max_num', 'offset']
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_primitive_constexpr_and_nested_variables():
     """
     Feature: Primitive constexpr and nested variables.
@@ -790,6 +822,7 @@ def test_primitive_constexpr_and_nested_variables():
     assert prim._check_contains_variable(F32, empty) is True
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_primitive_cache_identity_and_graph_compile(monkeypatch):
     """
     Feature: Primitive cache identity and graph compile.
@@ -818,6 +851,7 @@ def infer_same_type(dtype):
     return dtype
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_pyfunc_inference(custom_state):
     """
     Feature: Custom pyfunc inference.
@@ -853,6 +887,7 @@ def test_custom_pyfunc_inference(custom_state):
     assert ext.__infer__(abstract([2])) == {'shape': (2,), 'dtype': F32, 'value': None}
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('func,kind,error', [(3, 'pyfunc', TypeError), (numpy_increment, 'invalid', ValueError),
     (numpy_increment, 'hybrid', TypeError), (3, 'tbe', TypeError), ('symbol', 'aicpu', ValueError)])
 def test_custom_function_validation(custom_state, func, kind, error):
@@ -865,6 +900,7 @@ def test_custom_function_validation(custom_state, func, kind, error):
         custom.Custom(func, (2,), dt.float32, kind)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_metadata_protocol(custom_state, monkeypatch):
     """
     Feature: Custom metadata protocol.
@@ -907,6 +943,7 @@ def test_custom_metadata_protocol(custom_state, monkeypatch):
     assert result['async_flag'] is False and result['partial_flag'] is True and result['kernel'] == 'protocol_entry'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('suffix,cuda_version,expected_extra', [('.cpp', None, []), ('.cc', None, []),
     ('.cu', 'Cuda compilation tools, release 11.8, V11.8.89', ['arch=compute_80,code=sm_80']),
     ('.cu', 'Cuda compilation tools, release 10.0, V10.0.130', [])])
@@ -951,6 +988,7 @@ def test_aot_compile_command_protocol(custom_state, monkeypatch, tmp_path, suffi
     assert custom._compile_aot(str(source)) == path and len(commands) == 1
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_paths_and_builder_protocol(custom_state, monkeypatch, tmp_path):
     """
     Feature: Custom paths and builder protocol.
@@ -1006,6 +1044,7 @@ def test_custom_paths_and_builder_protocol(custom_state, monkeypatch, tmp_path):
         context.set_context(mode=context.PYNATIVE_MODE)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_debug_inference_and_summary_validation(tmp_path):
     """
     Feature: Debug inference and summary validation.
@@ -1041,6 +1080,7 @@ def test_debug_inference_and_summary_validation(tmp_path):
         dump(str(tmp_path / 'invalid'), 1)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AssertionError,
                    reason=(
                        'Xdivy Python constant folding computes 0/0 as NaN although Xdivy specifies '
@@ -1057,6 +1097,7 @@ def test_xdivy_zero_numerator_constant_contract():
     np.testing.assert_array_equal(value.asnumpy(), [0.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_aot_placeholders_and_targets(custom_state, tmp_path):
     """
     Feature: Custom aot placeholders and targets.
@@ -1085,6 +1126,7 @@ def test_custom_aot_placeholders_and_targets(custom_state, tmp_path):
     assert op.primitive_target == 'CPU'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('remove_race', [False, True])
 def test_custom_tbe_source_fallback(custom_state, tmp_path, monkeypatch, remove_race):
     """
@@ -1121,6 +1163,7 @@ def test_custom_tbe_source_fallback(custom_state, tmp_path, monkeypatch, remove_
     assert 'interface_tbe_fixture' not in sys.modules
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_hybrid_analysis_and_autodiff(custom_state):
     """
     Feature: Custom hybrid analysis and autodiff.
@@ -1154,6 +1197,7 @@ def test_custom_hybrid_analysis_and_autodiff(custom_state):
     assert no_backward.bprop is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_builder_generation_and_import_protocol(custom_state, monkeypatch, tmp_path):
     """
     Feature: Custom builder generation and import protocol.
@@ -1212,6 +1256,7 @@ def test_custom_builder_generation_and_import_protocol(custom_state, monkeypatch
             sys.modules[key] = value
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_builder_load_external_compiler_protocol(custom_state, monkeypatch, tmp_path):
     """
     Feature: Custom builder load external compiler protocol.
@@ -1250,6 +1295,7 @@ def test_custom_builder_load_external_compiler_protocol(custom_state, monkeypatc
             sys.modules['protocol_extension'] = old
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('annotation,expected', [(Tensor,'tensor'), (int,'int'), (float,'float'), (bool,'bool'),
     (list[Tensor],'list_tensor'), (list[int],'list_int'), (list[float],'list_float'), (list[bool],'list_bool'),
     (tuple[Tensor, ...],'tuple_tensor'), (tuple[int, ...],'tuple_int'), (tuple[float, ...],'tuple_float'),
@@ -1263,6 +1309,7 @@ def test_custom_typed_abi_mapping(annotation, expected):
     assert custom._map_type_to_spec(annotation) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_typed_abi_unsupported():
     """
     Feature: Custom typed abi unsupported.
@@ -1279,6 +1326,7 @@ def cached_relu_graph(value):
     return cache._get_cache_prim(nn.ReLU)()(value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_primitive_cache_real_graph_execution():
     """
     Feature: Primitive cache real graph execution.
@@ -1288,6 +1336,7 @@ def test_primitive_cache_real_graph_execution():
     np.testing.assert_array_equal(cached_relu_graph(Tensor([-2., 0., 3.], dt.float32)).asnumpy(), [0., 0., 3.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_builder_ascend_flags_without_device(custom_state, monkeypatch, tmp_path):
     """
     Feature: Builder ascend flags without device.
@@ -1303,6 +1352,7 @@ def test_builder_ascend_flags_without_device(custom_state, monkeypatch, tmp_path
     assert context.get_context('device_target') == 'CPU'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('cls,kwargs', [
     (nn.Conv2D, {'out_channel':4, 'kernel_size':3, 'pad':1}),
     (nn.Conv2DBackpropInput, {'out_channel':4, 'kernel_size':3, 'pad':1}),
@@ -1328,6 +1378,7 @@ def test_nn_remaining_pad_and_group_errors(cls, kwargs):
         cls(**kwargs)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_pool_argmax_and_remaining_dynamic_axes(monkeypatch):
     """
     Feature: Pool argmax and remaining dynamic axes.
@@ -1374,6 +1425,7 @@ def test_pool_argmax_and_remaining_dynamic_axes(monkeypatch):
         assert reducer(value, 1) is reduction_result
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_primitive_signatures_layouts_and_argument_registration():
     """
     Feature: Primitive signatures layouts and argument registration.
@@ -1411,6 +1463,7 @@ def test_primitive_signatures_layouts_and_argument_registration():
     assert prim._check_contains_variable([F32], {None:3}) is True
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_debug_security_build_boundary(monkeypatch):
     """
     Feature: Debug security build boundary.
@@ -1424,6 +1477,7 @@ def test_debug_security_build_boundary(monkeypatch):
             cls()
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_debug_morph_class_dispatch_and_hook_warning():
     """
     Feature: Debug morph class dispatch and hook warning.
@@ -1441,6 +1495,7 @@ def test_debug_morph_class_dispatch_and_hook_warning():
     assert debug.HookBackward(gradient_hook, cell_id='legacy_cell').cell_id == 'legacy_cell'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_environment_and_compiler_failure_boundaries(custom_state, monkeypatch, tmp_path):
     """
     Feature: Custom environment and compiler failure boundaries.
@@ -1486,6 +1541,7 @@ def test_custom_environment_and_compiler_failure_boundaries(custom_state, monkey
             custom._CustomExt('entry', shape, dtype).__infer__(abstract([2]))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_callable_registration_and_fake_output(custom_state, monkeypatch):
     """
     Feature: Custom callable registration and fake output.
@@ -1523,6 +1579,7 @@ def test_custom_callable_registration_and_fake_output(custom_state, monkeypatch)
     op._generate_get_worspace_size_func_by_types(['aclTensor*'])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=AttributeError,
                    reason='Custom._auto_infer scalar fallback reads .dtype although Python scalars have no dtype')
 def test_custom_auto_infer_python_scalar(custom_state):
@@ -1538,6 +1595,7 @@ def test_custom_auto_infer_python_scalar(custom_state):
     assert shape == (1,) and dtype == dt.int64 and value.item() == 2
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_backward_infer_callback_protocol(custom_state):
     """
     Feature: Custom backward infer callback protocol.
@@ -1564,6 +1622,7 @@ def test_custom_backward_infer_callback_protocol(custom_state):
     assert custom.Custom(eleven_inputs, (2,), dt.float32, 'hybrid').bprop is None
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_registration_failure_protocol(custom_state, monkeypatch, tmp_path):
     """
     Feature: Custom registration failure protocol.
@@ -1588,6 +1647,7 @@ def test_custom_registration_failure_protocol(custom_state, monkeypatch, tmp_pat
     assert op.uniq_name == 'Custom_JsonName_' + str(tmp_path / 'lib.so') + ':entry'
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_primitive_place_parallel_mode_rejection():
     """
     Feature: Primitive place parallel mode rejection.
@@ -1604,6 +1664,7 @@ def test_primitive_place_parallel_mode_rejection():
         context.set_auto_parallel_context(parallel_mode=old)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_crop_resize_grad_rejects_non_numeric_type():
     """
     Feature: Crop resize grad rejects non numeric type.
@@ -1614,6 +1675,7 @@ def test_crop_resize_grad_rejects_non_numeric_type():
         image.CropAndResizeGradImage(dt.string)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_elimination_extension_protocol(custom_state):
     """
     Feature: Custom elimination extension protocol.
@@ -1628,6 +1690,7 @@ def test_custom_elimination_extension_protocol(custom_state):
     assert op(value) is value
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_custom_multiple_return_analysis_warning(custom_state):
     """
     Feature: Custom multiple return analysis warning.
@@ -1645,6 +1708,7 @@ def test_custom_multiple_return_analysis_warning(custom_state):
     np.testing.assert_array_equal(op.func(np.array([-1., 2.], np.float32)), [1., -2.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=pytest.fail.Exception,
                    reason=(
                        'Primitive._check_shard_strategy guards uniformity with if not is_layout, '

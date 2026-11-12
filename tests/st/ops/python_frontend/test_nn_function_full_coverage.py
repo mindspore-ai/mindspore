@@ -20,6 +20,7 @@ import pytest
 
 import mindspore as ms
 from mindspore.ops.function import nn_func as nn
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True, name='cpu_context')
@@ -67,6 +68,7 @@ def attention_inputs(projection='qkv', unbatched=False):
     return params, (q, k, v)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('projection', ['self', 'kv', 'qkv', 'separate'])
 @pytest.mark.parametrize('unbatched', [False, True])
 @pytest.mark.parametrize('mask_kind', ['none', 'bool', 'float', 'padding', 'combined'])
@@ -114,6 +116,7 @@ def test_multihead_attention_matches_independent_scaled_dot_product(projection, 
     np.testing.assert_allclose(result_weights.asnumpy(), expected_weights, rtol=2e-5, atol=2e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('case,reason', [
     ('embed', 'embed_dim'), ('heads', 'num_heads'), ('missing_packed', 'in_proj_weight'),
     ('missing_q', 'q_proj_weight'), ('missing_k', 'k_proj_weight'), ('missing_v', 'v_proj_weight'),
@@ -159,6 +162,7 @@ def test_multihead_attention_rejects_inconsistent_configuration(case, reason):
         nn.multi_head_attention_forward(**params)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('ranks,expected', [((3, 3, 3), True), ((2, 2, 2), False)])
 def test_attention_rank_validation_accepts_consistent_inputs(ranks, expected):
     """
@@ -169,6 +173,7 @@ def test_attention_rank_validation_accepts_consistent_inputs(ranks, expected):
     assert nn._check_qkv_shape(*ranks) is expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('ranks', [(3, 2, 3), (2, 2, 3), (1, 1, 1)])
 def test_attention_rank_validation_rejects_inconsistent_inputs(ranks):
     """
@@ -180,6 +185,7 @@ def test_attention_rank_validation_rejects_inconsistent_inputs(ranks):
         nn._check_qkv_shape(*ranks)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('padding,dim,expected', [((1,), 1, (1, 1)),
                                                 ([1, 2], 2, (1, 1, 2, 2)),
                                                 ((1, 2, 3), 3, (1, 1, 2, 2, 3, 3))])
@@ -192,6 +198,7 @@ def test_convolution_padding_duplicates_each_spatial_dimension(padding, dim, exp
     assert nn._manipulate_padding(padding, dim) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('padding,dim,error', [('bad', 2, TypeError), ((1,), 2, ValueError)])
 def test_convolution_padding_rejects_wrong_container_and_length(padding, dim, error):
     """
@@ -203,6 +210,7 @@ def test_convolution_padding_rejects_wrong_container_and_length(padding, dim, er
         nn._manipulate_padding(padding, dim)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value,expected', [(2, (1, 2)), ((3,), (1, 3)), ([4], (1, 4))])
 def test_conv1d_parameter_normalization(value, expected):
     """
@@ -213,6 +221,7 @@ def test_conv1d_parameter_normalization(value, expected):
     assert nn._dim_manipulation(value, 'stride') == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [0, (0,), (1, 2), 'bad'])
 def test_conv1d_parameter_normalization_rejects_invalid_values(value):
     """
@@ -224,6 +233,7 @@ def test_conv1d_parameter_normalization_rejects_invalid_values(value):
         nn._dim_manipulation(value, 'stride')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value,error', [(2, ValueError), ((1, 2), ValueError), ((1,), ValueError), ('1', TypeError)])
 def test_same_padding_rejects_strided_convolution(value, error):
     """
@@ -235,6 +245,7 @@ def test_same_padding_rejects_strided_convolution(value, error):
         nn._check_stride_when_same_mode(value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('shape,padding,expected', [((1, 2, 3), None, ()),
                                                   ((2, 3, 4), (6, 7), (1, 2, 6, 7)),
                                                   ((1, 2, 3, 4), (1, 2, 6, 7), (1, 2, 6, 7))])
@@ -247,6 +258,7 @@ def test_max_unpool_output_shape_normalization(shape, padding, expected):
     assert nn._normalize_max_unpool2d_output_size(shape, padding) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value', [[6, 7], (6,)])
 def test_max_unpool_output_shape_rejects_invalid_size(value):
     """
@@ -258,6 +270,7 @@ def test_max_unpool_output_shape_rejects_invalid_size(value):
         nn._normalize_max_unpool2d_output_size((1, 2, 3, 4), value)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dilation,kernel,expected', [((1, 1), (3, 3), (False, (1, 1), (1, 1))),
                                                     ((1, 1), (2, 4), (True, (0, 1), (1, 2))),
                                                     ((2, 1), (2, 3), (False, (1, 1), (1, 1)))])
@@ -271,6 +284,7 @@ def test_same_padding_computation_handles_even_kernels(dilation, kernel, expecte
     assert nn._get_pad_info(dilation, weight) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('left,right,expected', [((0, 1), (1, 2), ((0, 1, 0, 1), (0, 1))),
                                                ((2, 1), (1, 1), ((0, 0, -1, 0), (1, 1)))])
 def test_asymmetric_padding_separates_crop_and_symmetric_components(left, right, expected):
@@ -282,6 +296,7 @@ def test_asymmetric_padding_separates_crop_and_symmetric_components(left, right,
     assert nn._get_pad_nd_info(left, right) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('alpha', [0.2, 1, 2])
 def test_leaky_relu_handles_slopes_above_and_below_one(alpha):
     """
@@ -294,6 +309,7 @@ def test_leaky_relu_handles_slopes_above_and_below_one(alpha):
     np.testing.assert_allclose(result.asnumpy(), np.where(data < 0, alpha * data, data), rtol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_threshold_and_hardtanh_boundaries():
     """
     Feature: Threshold and hardtanh boundaries.
@@ -305,6 +321,7 @@ def test_threshold_and_hardtanh_boundaries():
     np.testing.assert_array_equal(nn.hardtanh(ms.Tensor(data), -0.5, 1.5).asnumpy(), [-0.5, -0.5, 0.5, 1.5])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 @pytest.mark.parametrize('margin', [0, 0.5])
 @pytest.mark.parametrize('integer_inputs', [False, True])
@@ -327,6 +344,7 @@ def test_cosine_embedding_loss_matches_geometric_definition(reduction, margin, i
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('margin,error', [(-1.5, ValueError), (1.5, ValueError), ('bad', TypeError)])
 def test_cosine_embedding_loss_rejects_invalid_margin(margin, error):
     """
@@ -338,6 +356,7 @@ def test_cosine_embedding_loss_rejects_invalid_margin(margin, error):
         nn.cosine_embedding_loss(ms.Tensor([[1., 0.]]), ms.Tensor([[1., 0.]]), ms.Tensor([1]), margin)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 def test_hinge_embedding_loss_uses_label_sign(reduction):
     """
@@ -355,6 +374,7 @@ def test_hinge_embedding_loss_uses_label_sign(reduction):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('full', [False, True])
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 def test_gaussian_nll_loss_broadcasts_row_variance(full, reduction):
@@ -378,6 +398,7 @@ def test_gaussian_nll_loss_broadcasts_row_variance(full, reduction):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=1e-6, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('argument,value,error', [('x', [1], TypeError), ('target', [1], TypeError),
                                                 ('var', [1], TypeError), ('full', 1, TypeError),
                                                 ('eps', 0.0, ValueError), ('reduction', 'bad', ValueError)])
@@ -393,6 +414,7 @@ def test_gaussian_nll_loss_rejects_invalid_argument_contracts(argument, value, e
         nn.gaussian_nll_loss(**params)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 @pytest.mark.parametrize('weighted', [False, True])
 def test_multilabel_soft_margin_loss_matches_binary_cross_entropy(reduction, weighted):
@@ -417,6 +439,7 @@ def test_multilabel_soft_margin_loss_matches_binary_cross_entropy(reduction, wei
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=1e-6, atol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 @pytest.mark.parametrize('dtype', [np.float32, np.int32])
 def test_mse_loss_casts_integer_inputs_and_applies_reduction(reduction, dtype):
@@ -436,6 +459,7 @@ def test_mse_loss_casts_integer_inputs_and_applies_reduction(reduction, dtype):
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=1e-6)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('dimension', [1, 2, 3])
 @pytest.mark.parametrize('groups', [1, 2])
 @pytest.mark.parametrize('padding,stride', [(0, 1), (1, 2)])
@@ -466,6 +490,7 @@ def test_convolution_wrappers_match_direct_cross_correlation(dimension, groups, 
     np.testing.assert_allclose(result.asnumpy(), expected, rtol=2e-5, atol=2e-5)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('name,factor', [('pixel_shuffle', 2), ('pixel_unshuffle', 2)])
 def test_pixel_rearrangement_preserves_element_positions(name, factor):
     """
@@ -483,6 +508,7 @@ def test_pixel_rearrangement_preserves_element_positions(name, factor):
     np.testing.assert_array_equal(getattr(nn, name)(ms.Tensor(data), factor).asnumpy(), expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_hinge_embedding_loss_requires_floating_target_dtype():
     """
     Feature: Hinge embedding loss requires floating target dtype.

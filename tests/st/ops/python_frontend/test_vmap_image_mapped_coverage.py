@@ -15,6 +15,7 @@ from mindspore.common.generator import default_generator
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _grad_ops as G, image_ops as IMG
 from mindspore.ops._vmap import vmap_image_ops as I
+from tests.mark_utils import arg_mark
 
 
 def tensor(value, dtype=np.float32):
@@ -134,6 +135,7 @@ def crop_inputs():
     return images, boxes, indices
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_real_public_vmap_bilinear_gradient_both_mapped():
     """
     Feature: Mapped image vmap rules and native ABI
@@ -155,6 +157,7 @@ def test_real_public_vmap_bilinear_gradient_both_mapped():
     check(result, bilinear_gradient_reference(gradient, image.shape, half_pixel=True))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_real_public_vmap_crop_all_tensor_operands_mapped():
     """
     Feature: Mapped image vmap rules and native ABI
@@ -176,6 +179,7 @@ def test_real_public_vmap_crop_all_tensor_operands_mapped():
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=TypeError,
                    reason=('Registered Linear1DGrad getter requires an extra '
                            'coordinate_transformation_mode_bdim argument'))
@@ -282,6 +286,7 @@ def observe_native(monkeypatch, primitive, expected_arrays, expected_scalars, ex
     return calls
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_cpp_flat_adapter_ignores_first_and_stops_at_first_mapped_argument():
     """
     Feature: Mapped image vmap rules and native ABI
@@ -302,6 +307,7 @@ def test_cpp_flat_adapter_ignores_first_and_stops_at_first_mapped_argument():
     check(result, [7.])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('align,half_pixel', [(True, False), (False, False), (False, True)])
 @pytest.mark.parametrize('gradient_axis,image_axis', [(0, 0), (1, 2), (None, 1)])
 def test_original_bilinear_gradient_cpu_native_abi(monkeypatch, cpp_ordered_eager_frontend,
@@ -327,6 +333,7 @@ def test_original_bilinear_gradient_cpu_native_abi(monkeypatch, cpp_ordered_eage
     check(value, bilinear_gradient_reference(actual_gradient, image.shape, align, half_pixel))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', ['align_corners', 'half_pixel'])
 @pytest.mark.parametrize('gradient_axis,image_axis', [(0, 0), (1, 2), (None, 1)])
 def test_original_linear_gradient_cpu_native_abi(monkeypatch, cpp_ordered_eager_frontend,
@@ -355,6 +362,7 @@ def test_original_linear_gradient_cpu_native_abi(monkeypatch, cpp_ordered_eager_
     check(value, linear_gradient_reference(actual_gradient, image.shape[-1], mode))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('method,size', [('bilinear', (2, 3)), ('nearest', (1, 2))])
 @pytest.mark.parametrize('image_axis,boxes_axis,indices_axis', [(0, 0, 0), (1, 1, 1), (None, 0, 0), (0, None, 0)])
 def test_original_crop_cpu_native_abi(monkeypatch, cpp_ordered_eager_frontend,
@@ -385,6 +393,7 @@ def test_original_crop_cpu_native_abi(monkeypatch, cpp_ordered_eager_frontend,
     check(value, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_original_crop_rejects_mapped_crop_size(cpp_ordered_eager_frontend):
     """
     Feature: Mapped image vmap rules and native ABI
@@ -397,6 +406,7 @@ def test_original_crop_rejects_mapped_crop_size(cpp_ordered_eager_frontend):
         rule((tensor(images), 0), (tensor(boxes), 0), (tensor(indices, np.int32), 0), ((2, 3), 0))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=ValueError,
                    reason='Missing prim makes actual C++ all-unmapped branch call the grad bdim tuple')
 def test_real_public_bilinear_first_only_mapped():
@@ -425,6 +435,7 @@ def test_real_public_bilinear_first_only_mapped():
     check(result, bilinear_gradient_reference(gradient, image.shape, half_pixel=True))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.xfail(strict=True, raises=ValueError,
                    reason='Missing prim makes actual C++ all-unmapped branch call the images bdim tuple')
 def test_real_public_crop_first_only_mapped():
@@ -455,6 +466,7 @@ def test_real_public_crop_first_only_mapped():
     check(result, expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('operation', ['bilinear', 'linear', 'crop'])
 @pytest.mark.xfail(strict=True, raises=ValueError,
                    reason=('Image closure omits prim; real C++ all-unmapped branch attempts '

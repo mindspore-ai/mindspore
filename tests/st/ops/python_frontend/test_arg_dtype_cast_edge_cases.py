@@ -21,6 +21,7 @@ import pytest
 import mindspore as ms
 from mindspore.ops._utils import arg_dtype_cast as cast
 from mindspore.ops._utils import arg_handler as handler
+from tests.mark_utils import arg_mark
 
 
 @pytest.fixture(scope='module', autouse=True)
@@ -32,6 +33,7 @@ def cpu_pynative_context():
     ms.set_context(**previous)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'data,target,expected',
     [
@@ -54,6 +56,7 @@ def test_type_cast_scalar_and_sequence(data, target, expected):
     assert type(result) is type(expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'target,expected',
     [
@@ -71,6 +74,7 @@ def test_type_cast_int32_tensor_to_sequence(target, expected):
     assert type(result) is type(expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('data,dtype', [(True, ms.bool_), (3, ms.int32), (1.5, ms.float32)])
 def test_type_cast_scalar_to_tensor_chooses_dtype(data, dtype):
     """Feature: Operator argument dtype conversion and normalization.
@@ -83,6 +87,7 @@ def test_type_cast_scalar_to_tensor_chooses_dtype(data, dtype):
     assert result.asnumpy().item() == data
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('data', [(2, -3), [2, -3]])
 def test_type_cast_sequence_to_tensor_preserves_values(data):
     """Feature: Operator argument dtype conversion and normalization.
@@ -94,6 +99,7 @@ def test_type_cast_sequence_to_tensor_preserves_values(data):
     np.testing.assert_array_equal(result.asnumpy(), [2, -3])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'data,dtype,target,expected',
     [
@@ -113,6 +119,7 @@ def test_type_cast_tensor_to_python_number(data, dtype, target, expected):
     assert type(result) is type(expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'data,target',
     [
@@ -131,6 +138,7 @@ def test_type_cast_rejects_unsupported_conversions(data, target):
         cast.do_type_cast(data, target, 'TestOp')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('to_tuple', [True, False])
 def test_normalize_int_sequence_converts_scalar_tensors(to_tuple):
     """Feature: Operator argument dtype conversion and normalization.
@@ -145,6 +153,7 @@ def test_normalize_int_sequence_converts_scalar_tensors(to_tuple):
     assert type(result) is (tuple if to_tuple else list)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_normalize_int_sequence_leaves_invalid_elements_for_parser():
     """Feature: Operator argument dtype conversion and normalization.
     Description: Normalize int sequence leaves invalid elements for parser.
@@ -154,6 +163,7 @@ def test_normalize_int_sequence_leaves_invalid_elements_for_parser():
     assert cast.normalize_int_sequence('Reshape', 'shape', data) is data
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_normalize_int_sequence_rejects_floating_tensor():
     """Feature: Operator argument dtype conversion and normalization.
     Description: Normalize int sequence rejects floating tensor.
@@ -163,6 +173,7 @@ def test_normalize_int_sequence_rejects_floating_tensor():
         cast.normalize_int_sequence('Reshape', 'shape', [ms.Tensor(1.5, ms.float32)])
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'dtype,integral,floating',
     [
@@ -183,6 +194,7 @@ def test_numeric_dtype_categories_do_not_accept_bool_or_complex(dtype, integral,
     assert cast.is_floating_point_mstype(dtype) is floating
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'data,target,expected',
     [
@@ -200,6 +212,7 @@ def test_argument_instance_check_handles_bool_and_unknown_type(data, target, exp
     assert cast.is_instance_of(data, target) is expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize(
     'convert',
     [
@@ -221,6 +234,7 @@ def test_argument_handlers_reject_non_numeric_values(convert):
         convert('TestOp', 'size', 'invalid')
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('value,expected', [(3, (3, 3)), ((1, 1, 2, 3), (2, 3)), ([2, 3], [2, 3])])
 def test_rate_handler_extracts_spatial_dimensions(value, expected):
     """Feature: Operator argument dtype conversion and normalization.
@@ -230,6 +244,7 @@ def test_rate_handler_extracts_spatial_dimensions(value, expected):
     assert handler.to_rates('ExtractImagePatches', 'rates', value) == expected
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_generator_handler_only_converts_integer_arguments():
     """Feature: Operator argument dtype conversion and normalization.
     Description: Generator handler only converts integer arguments.
@@ -244,6 +259,7 @@ def test_generator_handler_only_converts_integer_arguments():
     assert result[2] is tensor
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('data,dtype,expected', [(2, ms.int32, 2), (1.5, ms.float32, 1.5), (True, ms.bool_, True)])
 def test_scalar_tensor_handler_preserves_python_scalar_type(data, dtype, expected):
     """Feature: Operator argument dtype conversion and normalization.
@@ -255,6 +271,7 @@ def test_scalar_tensor_handler_preserves_python_scalar_type(data, dtype, expecte
     assert type(result) is type(expected)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_scalar_tensor_handler_rejects_non_scalar_tensor():
     """Feature: Operator argument dtype conversion and normalization.
     Description: Scalar tensor handler rejects non scalar tensor.
@@ -264,6 +281,7 @@ def test_scalar_tensor_handler_rejects_non_scalar_tensor():
         handler._scalar_tensor_to_scalar('TestOp', 'value', ms.Tensor([2], ms.int32))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_scalar_tensor_handler_rejects_complex_tensor():
     """Feature: Operator argument dtype conversion and normalization.
     Description: Scalar tensor handler rejects complex tensor.
@@ -273,6 +291,7 @@ def test_scalar_tensor_handler_rejects_complex_tensor():
         handler._scalar_tensor_to_scalar('TestOp', 'value', ms.Tensor(1 + 2j, ms.complex64))
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_scalar_tensor_handler_passes_python_scalars_through():
     """Feature: Operator argument dtype conversion and normalization.
     Description: Scalar tensor handler passes python scalars through.
@@ -281,6 +300,7 @@ def test_scalar_tensor_handler_passes_python_scalars_through():
     assert handler._scalar_tensor_to_scalar('TestOp', 'value', 1.5) == 1.5
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 def test_tensor_to_number_converts_integer_tensor_to_float():
     """Feature: Operator argument dtype conversion and normalization.
     Description: Tensor to number converts integer tensor to float.
