@@ -14,9 +14,10 @@
 # ============================================================================
 """model"""
 import numpy as np
+from mindspore import ops
+from tests.st.mindscience.mindsponge.mindsponge.common.tensor_utils import concat_features
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
-import mindspore.numpy as mnp
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.tensor import Tensor
@@ -176,7 +177,7 @@ class MegaFold(nn.Cell):
         """construct"""
         preprocess_1d = self.preprocess_1d(target_feat)
         preprocess_msa = self.preprocess_msa(msa_feat)
-        msa_activations = mnp.expand_dims(preprocess_1d, axis=0) + preprocess_msa
+        msa_activations = ops.expand_dims(preprocess_1d, axis=0) + preprocess_msa
         left_single = self.left_single(target_feat)
         right_single = self.right_single(target_feat)
         pair_activations = P.ExpandDims()(left_single, 1) + P.ExpandDims()(right_single, 0)
@@ -188,13 +189,13 @@ class MegaFold(nn.Cell):
 
         if self.recycle_features:
             prev_msa_first_row = self.prev_msa_first_row_norm(prev_msa_first_row)
-            msa_activations = mnp.concatenate(
-                (mnp.expand_dims(prev_msa_first_row + msa_activations[0, ...], 0), msa_activations[1:, ...]), 0)
+            msa_activations = concat_features(
+                (ops.expand_dims(prev_msa_first_row + msa_activations[0, ...], 0), msa_activations[1:, ...]), 0)
             pair_activations += self.prev_pair_norm(prev_pair)
 
         if self.max_relative_feature:
             offset = P.ExpandDims()(residue_index, 1) - P.ExpandDims()(residue_index, 0)
-            rel_pos = self.one_hot(mnp.clip(offset + self.max_relative_feature, 0, 2 * self.max_relative_feature))
+            rel_pos = self.one_hot(ops.clamp(offset + self.max_relative_feature, 0, 2 * self.max_relative_feature))
             pair_activations += self.pair_activations(rel_pos)
 
         template_pair_representation = 0
@@ -205,7 +206,7 @@ class MegaFold(nn.Cell):
             pair_activations += template_pair_representation
         extra_msa = F.depend(extra_msa, pair_activations)
         msa_1hot = self.extra_msa_one_hot(extra_msa)
-        extra_msa_feat = mnp.concatenate((msa_1hot, extra_has_deletion[..., None], extra_deletion_value[..., None]),
+        extra_msa_feat = concat_features((msa_1hot, extra_has_deletion[..., None], extra_deletion_value[..., None]),
                                          axis=-1)
         extra_msa_activations = self.extra_msa_activations(extra_msa_feat)
         extra_msa_norm = P.ExpandDims()(P.MatMul(transpose_a=True)(extra_msa_mask, extra_msa_mask), -1)
@@ -220,16 +221,16 @@ class MegaFold(nn.Cell):
             inputs = (template_aatype, template_all_atom_positions, template_all_atom_masks, self.chi_atom_indices,
                       self.chi_angles_mask, self.mirror_psi_mask, self.chi_pi_periodic, self.indices0, self.indices1)
             torsion_angles_sin_cos, alt_torsion_angles_sin_cos, torsion_angles_mask = atom37_to_torsion_angles(inputs)
-            template_features = mnp.concatenate([aatype_one_hot,
-                                                 mnp.reshape(torsion_angles_sin_cos, [num_templ, num_res, 14]),
-                                                 mnp.reshape(alt_torsion_angles_sin_cos, [num_templ, num_res, 14]),
+            template_features = concat_features([aatype_one_hot,
+                                                 ops.reshape(torsion_angles_sin_cos, [num_templ, num_res, 14]),
+                                                 ops.reshape(alt_torsion_angles_sin_cos, [num_templ, num_res, 14]),
                                                  torsion_angles_mask], axis=-1)
             template_activations = self.template_single_embedding(template_features)
             template_activations = self.relu(template_activations)
             template_activations = self.template_projection(template_activations)
-            msa_activations = mnp.concatenate([msa_activations, template_activations], axis=0)
+            msa_activations = concat_features([msa_activations, template_activations], axis=0)
             torsion_angle_mask = torsion_angles_mask[:, :, 2]
-            msa_mask = mnp.concatenate([msa_mask, torsion_angle_mask], axis=0)
+            msa_mask = concat_features([msa_mask, torsion_angle_mask], axis=0)
         msa_mask_norm = P.ExpandDims()(P.MatMul(transpose_a=True)(msa_mask, msa_mask), -1)
         self.idx_evoformer_block = self.idx_evoformer_block * 0
         while self.idx_evoformer_block < self.evoformer_num_block_eval:

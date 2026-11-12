@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.run_check import run_check
 from mindspore import common, dataset, mindrecord, train, log, amp, device_manager
-from mindspore import profiler, communication, numpy, parallel, hal, runtime, device_context
+from mindspore import profiler, communication, parallel, hal, runtime, device_context
 from mindspore.common import *
 from mindspore.common import _tensor_docs, bool, int, float
 del _tensor_docs

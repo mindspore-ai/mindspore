@@ -226,28 +226,6 @@ def test_unsqueeze():
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
           card_mark='onecard')
-def test_infer_out_shape():
-    """
-    Feature: _infer_out_shape func
-    Description: Verify the result of _infer_out_shape
-    Expectation: success
-    """
-    from mindspore.numpy.utils_const import _infer_out_shape
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.func = _infer_out_shape
-
-        def construct(self, *shape):
-            return self.func(*shape)
-
-    net = Net()
-    assert net((5,), (6, 1), (7, 1, 5), (8, 1, 6, 1)) == (8, 7, 6, 5)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard')
 def test_tensor_bool():
     """
     Feature: tensor_bool func
@@ -268,28 +246,6 @@ def test_tensor_bool():
     net = Net()
     x2 = net(x)
     assert bool(x2) is True
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard')
-def test_canonicalize_axis():
-    """
-    Feature: _canonicalize_axis func
-    Description: Verify the result of _canonicalize_axis
-    Expectation: success
-    """
-    from mindspore.numpy.utils_const import _canonicalize_axis
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.func = _canonicalize_axis
-
-        def construct(self, axis, ndim):
-            return self.func(axis, ndim)
-
-    net = Net()
-    assert net(0, 2) == 0
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',

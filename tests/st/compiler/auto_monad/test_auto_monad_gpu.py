@@ -17,7 +17,6 @@ import re
 import numpy as np
 import mindspore as ms
 import mindspore.ops.operations as P
-import mindspore.numpy as msnp
 from mindspore.nn import Cell
 from mindspore.nn import ReLU, BatchNorm2d, Conv2d
 from mindspore import context, Tensor
@@ -305,7 +304,7 @@ def test_cycle_parameter_binding():
         def construct(self, state):
             duration = self.zero
             while duration < 2:
-                for n in msnp.arange(3):
+                for n in ms.ops.arange(3, dtype=ms.int32):
                     samples = (state[n])
                     x = self.actor_list[n](samples)
                     print(x)

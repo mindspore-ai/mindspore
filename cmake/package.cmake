@@ -356,7 +356,6 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/_extends
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/parallel
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/mindrecord
-        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/numpy
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/train
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/boost
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/common

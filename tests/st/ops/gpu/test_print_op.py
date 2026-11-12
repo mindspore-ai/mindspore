@@ -20,7 +20,7 @@ import pytest
 
 from mindspore import Tensor, jit
 import mindspore.nn as nn
-import mindspore.numpy as ms_np
+from mindspore import ops, int32
 from mindspore.ops import operations as P
 import mindspore.context as context
 import mindspore as ms
@@ -261,8 +261,8 @@ def test_print_tensor():
             self.shape = P.Shape()
 
         def construct(self, x, y, z):
-            rand_axis = ms_np.randint(1, 3, (3,))
-            axis = ms_np.unique(rand_axis)
+            rand_axis = ops.randint(1, 3, (3,), dtype=int32)
+            axis = ops.unique(rand_axis)[0]
             print("the input y is:", y)
             print("the input z is:", z)
             print("the input z is:", z, " the shape of x:", self.shape(x))

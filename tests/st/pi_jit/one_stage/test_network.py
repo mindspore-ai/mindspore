@@ -18,7 +18,7 @@ import numpy as onp
 import mindspore.nn as nn
 from mindspore.common.initializer import Normal
 from mindspore import context, Tensor, jit
-from mindspore import numpy as np
+import numpy as np
 from ..share.utils import match_array, pi_jit_with_config
 from tests.mark_utils import arg_mark
 

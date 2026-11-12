@@ -3,7 +3,7 @@ mindspore.ops.repeat_interleave
 
 .. py:function:: mindspore.ops.repeat_interleave(input, repeats, axis=None)
 
-    在指定轴上复制输入tensor的元素，类似 :func:`mindspore.numpy.repeat`。
+    在指定轴上复制输入tensor的元素，类似 ``numpy.repeat``。
 
     .. warning::
         2.9.0（不含）之后版本非兼容性变更：`axis` 将改为 `dim`。

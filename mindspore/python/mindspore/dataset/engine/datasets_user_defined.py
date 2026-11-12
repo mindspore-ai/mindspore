@@ -1041,7 +1041,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             self.num_parallel_workers = 1
             logger.warning(
                 "Input 'source' of 'GeneratorDataset' includes network computing operators like in mindspore.nn, "
-                "mindspore.ops, mindspore.numpy module and etc, which do not support multi-thread compiling, recommend"
+                "mindspore.ops modules, which do not support multi-thread compiling, recommend"
                 " to replace it with python implemented operator like numpy etc. Here decrease 'num_parallel_workers' "
                 "into 1.")
 

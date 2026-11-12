@@ -2,7 +2,7 @@ repeat_interleave:
   description: |
     repeat_interleave(input, repeats, dim=None, *, output_size=None) -> Tensor
     
-    Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat`.
+    Repeat elements of a tensor along an axis, like ``numpy.repeat``.
 
     Args:
         input (Tensor): The input tensor.

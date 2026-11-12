@@ -3,7 +3,7 @@ from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops.operations.math_ops import Median
 from mindspore import Tensor, jit, context
-import mindspore.numpy as ms_np
+from mindspore import ops, int32
 from ..share.utils import allclose_nparray
 
 
@@ -18,8 +18,8 @@ class MedianDynamicRankNet(Cell):
 
     def construct(self, input_x):
         n = 8
-        axis = ms_np.randint(1, n, (n - 1,))
-        random_axis = ms_np.unique(axis)
+        axis = ops.randint(1, n, (n - 1,), dtype=int32)
+        random_axis = ops.unique(axis)[0]
         x = self.reducesum(input_x, random_axis)
         ms_y, ms_indices = self.median(x)
         return ms_y, ms_indices

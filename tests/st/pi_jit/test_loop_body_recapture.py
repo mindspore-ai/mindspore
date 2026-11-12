@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 import mindspore as ms
 from mindspore import Tensor, ops, jit
-from mindspore import numpy as np
 import mindspore.nn as nn
 from mindspore.common import dtype as mstype
 import mindspore.dataset as ds
@@ -66,10 +65,10 @@ def test001():
                 result = result + a
         return result
     fn = pi_jit_with_config(func, jit_config=jit_config)
-    x1 = np.randn((2,4))
+    x1 = ops.randn((2,4))
     expect = func(x1)
     got = fn(x1)
-    allclose = np.isclose(expect,got).all()
+    allclose = ops.isclose(expect,got).all()
     jcr = get_code_extra(fn.__wrapped__)
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == 0
@@ -95,10 +94,10 @@ def test002():
             result = result + 1
         return result
     fn = pi_jit_with_config(func, jit_config=jit_config)
-    x1 = np.randn((2,4))
+    x1 = ops.randn((2,4))
     expect = func(x1)
     got = fn(x1)
-    allclose = np.isclose(expect,got).all()
+    allclose = ops.isclose(expect,got).all()
     jcr = get_code_extra(fn.__wrapped__)
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == 0
@@ -123,10 +122,10 @@ def test003():
                 result = result + 2
         return result
     fn = pi_jit_with_config(func, jit_config=jit_config)
-    x1 = np.randn((2,4))
+    x1 = ops.randn((2,4))
     expect = func(x1)
     got = fn(x1)
-    allclose = np.isclose(expect,got).all()
+    allclose = ops.isclose(expect,got).all()
     jcr = get_code_extra(fn.__wrapped__)
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == 0
@@ -153,10 +152,10 @@ def test004():
                 result = result + 2
         return result
     fn = pi_jit_with_config(func, jit_config=jit_config)
-    x1 = np.randn((2,4))
+    x1 = ops.randn((2,4))
     expect = func(x1)
     got = fn(x1)
-    allclose = np.isclose(expect,got).all()
+    allclose = ops.isclose(expect,got).all()
     jcr = get_code_extra(fn.__wrapped__)
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == 0
@@ -183,10 +182,10 @@ def test005():
                 result = result + 2
         return result
     fn = pi_jit_with_config(func, jit_config=jit_config)
-    x1 = np.randn((2,4))
+    x1 = ops.randn((2,4))
     expect = func(x1)
     got = fn(x1)
-    allclose = np.isclose(expect,got).all()
+    allclose = ops.isclose(expect,got).all()
     jcr = get_code_extra(fn.__wrapped__)
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == 0
@@ -208,15 +207,15 @@ def test006():
             if i[0,0] > 1:
                 result = result + 1
         return result
-    x1 = np.randn((2,4))
-    x2 = np.randn((2,4))
-    x3 = np.randn((2,4))
-    x4 = np.randn((2,4))
+    x1 = ops.randn((2,4))
+    x2 = ops.randn((2,4))
+    x3 = ops.randn((2,4))
+    x4 = ops.randn((2,4))
     tensor_list=[x1,x2,x3,x4]
     fn = pi_jit_with_config(func, jit_config=jit_config)
     expect = func(tensor_list)
     got = fn(tensor_list)
-    allclose = np.isclose(expect,got).all()
+    allclose = ops.isclose(expect,got).all()
     jcr = get_code_extra(fn.__wrapped__)
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == 0
@@ -238,15 +237,15 @@ def test007():
             if i[0,0] > 1:
                 result = result + 1
         return result
-    x1 = np.randn((2,4))
-    x2 = np.randn((3,4))
-    x3 = np.randn((4,3))
-    x4 = np.randn((5,3))
+    x1 = ops.randn((2,4))
+    x2 = ops.randn((3,4))
+    x3 = ops.randn((4,3))
+    x4 = ops.randn((5,3))
     tensor_list=[x1,x2,x3,x4]
     fn = pi_jit_with_config(func, jit_config=jit_config)
     expect = func(tensor_list)
     got = fn(tensor_list)
-    allclose = np.isclose(expect,got).all()
+    allclose = ops.isclose(expect,got).all()
     jcr = get_code_extra(fn.__wrapped__)
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == 0
@@ -272,10 +271,10 @@ def test008():
             i += 1
         return result
     fn = pi_jit_with_config(func, jit_config=jit_config)
-    x1 = np.randn((2,4))
+    x1 = ops.randn((2,4))
     expect = func(x1)
     got = fn(x1)
-    allclose = np.isclose(expect,got).all()
+    allclose = ops.isclose(expect,got).all()
     jcr = get_code_extra(fn.__wrapped__)
     assert jcr['stat'] == 'GRAPH_CALLABLE'
     assert jcr['break_count_'] == 0
@@ -300,7 +299,7 @@ def test_loop_recapture_for_range_tensor_recreation():
             out = out - z
         return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -326,7 +325,7 @@ def test_loop_recapture_iterate_list_tensor_recreation():
             z = Tensor(x.asnumpy() * 1)
         return z
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -352,7 +351,7 @@ def test_loop_recapture_enumerate_list_tensor_recreation():
             x = Tensor(x.asnumpy() * 1)
         return x
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -384,7 +383,7 @@ def test_loop_recapture_call_method_inside_loop():
                 out = ops.add(out, z)
             return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_net = LoopWithHelper()
     pynative_result = pynative_net(input_x)
 
@@ -425,7 +424,7 @@ def test_loop_recapture_nested_jitted_method():
                 out = out + z
             return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_net = LoopWithNestedJit()
     pynative_result = pynative_net(input_x)
     jit_net = LoopWithNestedJit()
@@ -457,7 +456,7 @@ def test_loop_recapture_while_loop_tensor_recreation():
             i += 1
         return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -484,7 +483,7 @@ def test_loop_recapture_nested_for_loops_tensor_recreation():
                 out = out + z
         return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -512,7 +511,7 @@ def test_loop_recapture_nested_for_loops_reassign_input():
                 out = out + z
         return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -540,7 +539,7 @@ def test_loop_recapture_nested_for_loops_tensor_addition():
                 out = out + z
         return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -569,7 +568,7 @@ def test_loop_recapture_while_outer_for_inner():
             i += 1
         return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -598,7 +597,7 @@ def test_loop_recapture_for_outer_while_inner():
                 j += 1
         return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -629,7 +628,7 @@ def test_loop_recapture_nested_while_reassign_input():
             i += 1
         return out
 
-    input_x = np.randn((2, 3))
+    input_x = ops.randn((2, 3))
     pynative_result = func(input_x)
     jit_func = pi_jit_with_config(func, jit_config=jit_config)
     jit_result = jit_func(input_x)
@@ -1007,7 +1006,7 @@ def test_loop_recapture_train_with_pijit_loop_optimize():
     class Network(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.param = ms.Parameter(Tensor(np.ones((32, 32)), dtype=ms.float32), name='test_param')
+            self.param = ms.Parameter(Tensor(ops.ones((32, 32)), dtype=ms.float32), name='test_param')
 
         @jit(capture_mode='bytecode')
         def construct(self, x):

@@ -17,7 +17,6 @@ from mindspore.common import ParameterTuple, mutable
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 import mindspore.context as context
-import mindspore.numpy as mnp
 import mindspore.ops.functional as F
 from tests.mark_utils import arg_mark
 
@@ -84,7 +83,7 @@ def test_value_depend_infer():
     net = EyeNet()
     input_dyn = Tensor(shape=[3, None], dtype=ms.float32)
     net.set_inputs(input_dyn)
-    x = Tensor(mnp.ones([3, 3]), dtype=ms.float32)
+    x = Tensor(ops.ones((3, 3), ms.float32), dtype=ms.float32)
     out = net(x).asnumpy()
     assert out.shape == (64, 64)
 
@@ -284,7 +283,7 @@ def test_cpu_any_type_empty_tuple():
 
         def construct(self, sample, target):
             preduction = self.model(sample)
-            loss = mnp.sum(preduction) - target
+            loss = ops.sum(preduction) - target
             return loss
 
     class TrainStepNet(nn.Cell):

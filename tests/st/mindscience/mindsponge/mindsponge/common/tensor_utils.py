@@ -1,0 +1,35 @@
+# Copyright 2026 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+"""Tensor utilities for the floating point features in the folding model."""
+from mindspore import float16, float32, float64, ops
+
+
+def concat_features(features, axis=0):
+    """Concatenate model features, promoting only mixed float16/float32/float64 inputs.
+
+    Same-dtype inputs (including integer masks) keep their dtype. Mixed inputs
+    involving other dtypes raise TypeError; this is not a general NumPy promotion helper.
+    """
+    dtype = features[0].dtype
+    for feature in features:
+        if feature.dtype != dtype:
+            # Model features use float16/32/64. Same-dtype masks also pass through.
+            if dtype not in (float16, float32, float64) or feature.dtype not in (float16, float32, float64):
+                raise TypeError("Mixed feature dtypes must be floating point.")
+            if dtype == float64 or feature.dtype == float64:
+                dtype = float64
+            else:
+                dtype = float32
+    return ops.concat(tuple(ops.cast(feature, dtype) for feature in features), axis)

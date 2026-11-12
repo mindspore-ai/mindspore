@@ -1,6 +1,6 @@
 repeat_interleave_tensor:
     description: |
-        Repeat elements of a tensor along an axis, like :func:`mindspore.numpy.repeat`.
+        Repeat elements of a tensor along an axis, like ``numpy.repeat``.
 
         Args:
             input (Tensor): The tensor to repeat values for. Must be of type: float16,

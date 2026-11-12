@@ -16,7 +16,6 @@
 """math_ops vmap impl."""
 from __future__ import absolute_import
 
-import mindspore.numpy as mnp
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import auto_generate as gen
@@ -370,7 +369,7 @@ def get_broadcast_to_vmap_rule(prim, axis_size):
             return result
 
         x, dim = operand_bdim
-        x = mnp.moveaxis(x, dim, 0)
+        x = F.moveaxis(x, dim, 0)
         x_shape = F.shape(x)
         shape, shape_dim = shape_bdim
         if shape_dim is not None:
@@ -400,11 +399,11 @@ def get_inplace_ops_vmap_rule(prim, axis_size):
         if x_dim is None:
             x = _broadcast_by_axis(x, -1, axis_size)
         else:
-            x = mnp.moveaxis(x, x_dim, -1)
+            x = F.moveaxis(x, x_dim, -1)
         if v_dim is None:
             v = _broadcast_by_axis(v, -1, axis_size)
         else:
-            v = mnp.moveaxis(v, v_dim, -1)
+            v = F.moveaxis(v, v_dim, -1)
         out = prim(x, v)
         return out, out.ndim - 1
 
@@ -554,7 +553,7 @@ def get_index_add_vmap_rule(prim, axis_size):
         if y_dim is None:
             y = _broadcast_by_axis(y, x_dim, axis_size)
         else:
-            y = mnp.moveaxis(y, y_dim, x_dim)
+            y = F.moveaxis(y, y_dim, x_dim)
         out = op(x, indices, y, u_monad)
         return out, x_dim
 
@@ -647,14 +646,14 @@ def get_renorm_rule(prim, axis_size):
         if batch_dim <= origin_axis:
             actual_axis = origin_axis + 1
             des_dim = actual_axis - 1
-            x = mnp.moveaxis(x, src_dim, des_dim)
+            x = F.moveaxis(x, src_dim, des_dim)
             from_shape = F.shape(x)
             to_shape = from_shape[:actual_axis - 1] + \
                        (from_shape[actual_axis - 1] * from_shape[actual_axis],) + from_shape[actual_axis + 1:]
         else:
             actual_axis = origin_axis
             des_dim = actual_axis + 1
-            x = mnp.moveaxis(x, src_dim, des_dim)
+            x = F.moveaxis(x, src_dim, des_dim)
             from_shape = F.shape(x)
             to_shape = from_shape[:actual_axis] + \
                        (from_shape[actual_axis] * from_shape[actual_axis + 1],) + from_shape[actual_axis + 2:]
@@ -662,7 +661,7 @@ def get_renorm_rule(prim, axis_size):
         op = P.Renorm(int(pnorm), origin_axis, maxnorm)
         out = op(x)
         out = F.reshape(out, from_shape)
-        out = mnp.moveaxis(out, des_dim, src_dim)
+        out = F.moveaxis(out, des_dim, src_dim)
         return out, batch_dim
 
     return vmap_rule
@@ -911,7 +910,7 @@ def get_isclose_vmap_rule(prim, axis_size):
         if y_dim is None:
             y = _broadcast_by_axis(y, x_dim, axis_size)
         else:
-            y = mnp.moveaxis(y, y_dim, x_dim)
+            y = F.moveaxis(y, y_dim, x_dim)
 
         out = prim(x, y, rtol, atol, equal_nan)
         return out, x_dim

@@ -16,7 +16,6 @@
 """The vmap implement of grad operator corresponding to math_ops."""
 from __future__ import absolute_import
 
-import mindspore.numpy as mnp
 from mindspore.ops import functional as F
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops.operations import _grad_ops as G
@@ -260,7 +259,7 @@ def get_logit_grad_vmap_rule(prim_func, axis_size):
             out_dim = x_dim
         # This branch means (x_dim is not None) and (grad_dim is not None).
         else:
-            grad = mnp.moveaxis(grad, grad_dim, x_dim)
+            grad = F.moveaxis(grad, grad_dim, x_dim)
             out_dim = x_dim
         out = prim_func(grad, x, eps)
         return out, out_dim

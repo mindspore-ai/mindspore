@@ -394,7 +394,7 @@ def test_pynative_jit_with_dynamic_shape():
 
     @jit()
     def test(x):
-        return ms.numpy.unique(x, return_inverse=True)
+        return ms.ops.unique(x.reshape(-1))
 
     x = Tensor([[1, 1, 2], [3, 3, 5]], ms.int32)
     output = test(x)

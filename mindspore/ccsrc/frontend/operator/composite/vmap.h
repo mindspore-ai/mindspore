@@ -31,7 +31,7 @@ using InputsAbstractList = std::vector<std::vector<abstract::AbstractBasePtr>>;
 constexpr int64_t kValIndex = 0;
 constexpr int64_t kDimIndex = 1;
 constexpr char kVmapFunctionModelName[] = "mindspore.ops._vmap";
-constexpr char kNumpyModelName[] = "mindspore.numpy";
+constexpr char kVmapFunctionalModelName[] = "mindspore.ops.functional";
 class VmapMatchOutAxis : public MetaFuncGraph {
  public:
   explicit VmapMatchOutAxis(const std::string &name) : MetaFuncGraph(name), fg_(std::make_shared<FuncGraph>()) {}

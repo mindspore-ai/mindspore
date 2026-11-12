@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, nn, context
-from mindspore.numpy import correlate
+from mindspore.ops.auto_generate import correlate
 
 context.set_context(jit_level='O0')
 
@@ -28,7 +28,7 @@ class CorrelateNet(nn.Cell):
         self.correlate = correlate
 
     def construct(self, a, v):
-        return self.correlate(a, v, mode='full')
+        return self.correlate(a, v, 'full')
 
 
 class CorrelateGradNet(nn.Cell):
@@ -73,7 +73,7 @@ def correlate_backward_func(a, v, dout):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_correlate_normal(mode):
     """
-    Feature: numpy.correlate
+    Feature: mindspore.ops.auto_generate.correlate
     Description: test function correlate forward and backward.
     Expectation: success
     """
@@ -102,7 +102,7 @@ def test_ops_correlate_normal(mode):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_correlate_forward_dynamic_shape(mode):
     """
-    Feature: numpy.correlate
+    Feature: mindspore.ops.auto_generate.correlate
     Description: test function correlate forward with dynamic shape.
     Expectation: success
     """
@@ -131,7 +131,7 @@ def test_ops_correlate_forward_dynamic_shape(mode):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_correlate_forward_dynamic_rank(mode):
     """
-    Feature: numpy.correlate
+    Feature: mindspore.ops.auto_generate.correlate
     Description: test function correlate forward with dynamic rank.
     Expectation: success
     """
@@ -160,7 +160,7 @@ def test_ops_correlate_forward_dynamic_rank(mode):
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_correlate_backward_dynamic_shape(mode):
     """
-    Feature: numpy.correlate
+    Feature: mindspore.ops.auto_generate.correlate
     Description: test function correlate backward with dynamic shape.
     Expectation: success
     """
@@ -198,7 +198,7 @@ def test_ops_correlate_backward_dynamic_shape(mode):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_correlate_backward_dynamic_rank(mode):
     """
-    Feature: numpy.correlate
+    Feature: mindspore.ops.auto_generate.correlate
     Description: test function correlate backward with dynamic rank.
     Expectation: success
     """

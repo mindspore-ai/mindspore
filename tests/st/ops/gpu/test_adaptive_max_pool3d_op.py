@@ -24,7 +24,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 from mindspore.ops.functional import vmap
-import mindspore.numpy as ms_np
+from mindspore import ops, int32
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -59,8 +59,8 @@ class RankDynamicNet(nn.Cell):
         self.reduce = P.ReduceSum(keep_dims=False)
 
     def construct(self, x, output_size):
-        rand_axis = ms_np.randint(1, 3, (2,))
-        axis = ms_np.unique(rand_axis)
+        rand_axis = ops.randint(1, 3, (2,), dtype=int32)
+        axis = ops.unique(rand_axis)[0]
         in_x = self.reduce(x, axis)
         out = self.adaptive_max_pool3d(in_x, output_size)
         return out, in_x

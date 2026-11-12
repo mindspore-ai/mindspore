@@ -1120,7 +1120,7 @@ def check_generator_dataset(method):
 
         # check used variable and function document whether contain computing operator
         check_doc = check_source_function(source)
-        check_list = ['mindspore.nn', 'mindspore.ops', 'mindspore.numpy', 'mindspore.compression']
+        check_list = ['mindspore.nn', 'mindspore.ops', 'mindspore.compression']
         for item in check_list:
             if item in check_doc:
                 setattr(self, 'operator_mixed', True)
@@ -1506,7 +1506,7 @@ def check_map(method):
             try:
                 var = ins.getclosurevars(operations)
                 operations_doc = ins.getsource(operations)
-                check_list = ['mindspore.nn', 'mindspore.ops', 'mindspore.numpy', 'mindspore.compression']
+                check_list = ['mindspore.nn', 'mindspore.ops', 'mindspore.compression']
                 check_doc = str(var) + operations_doc
                 for item in check_list:
                     if item in check_doc:

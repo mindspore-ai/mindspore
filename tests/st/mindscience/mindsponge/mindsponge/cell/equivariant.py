@@ -16,8 +16,8 @@
 import numpy as np
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
-import mindspore.numpy as mnp
 import mindspore.ops as ops
+from tests.st.mindscience.mindsponge.mindsponge.common.tensor_utils import concat_features
 from mindspore import Parameter
 from mindspore.common.tensor import Tensor
 from tests.st.mindscience.mindsponge.mindsponge.common.geometry import apply_to_point, invert_point
@@ -75,27 +75,27 @@ class InvariantPointAttention(nn.Cell):
 
         # Construct scalar queries of shape:
         q_scalar = self.q_scalar(inputs_1d)
-        q_scalar = mnp.reshape(q_scalar, [num_residues, num_head, num_scalar_qk])
+        q_scalar = ops.reshape(q_scalar, [num_residues, num_head, num_scalar_qk])
 
         # Construct scalar keys/values of shape:
         kv_scalar = self.kv_scalar(inputs_1d)
-        kv_scalar = mnp.reshape(kv_scalar, [num_residues, num_head, num_scalar_v + num_scalar_qk])
-        k_scalar, v_scalar = mnp.split(kv_scalar, [num_scalar_qk], axis=-1)
+        kv_scalar = ops.reshape(kv_scalar, [num_residues, num_head, num_scalar_v + num_scalar_qk])
+        k_scalar, v_scalar = ops.tensor_split(kv_scalar, [num_scalar_qk], axis=-1)
 
         # Construct query points of shape:
         # First construct query points in local frame.
         q_point_local = self.q_point_local(inputs_1d)
 
-        q_point_local = mnp.split(q_point_local, 3, axis=-1)
+        q_point_local = ops.Split(axis=-1, output_num=3)(q_point_local)
         q_point_local = (ops.Squeeze()(q_point_local[0]), ops.Squeeze()(q_point_local[1]),
                          ops.Squeeze()(q_point_local[2]))
         # Project query points into global frame.
         q_point_global = apply_to_point(rotation, translation, q_point_local, 1)
 
         # Reshape query point for later use.
-        q_point0 = mnp.reshape(q_point_global[0], (num_residues, num_head, num_point_qk))
-        q_point1 = mnp.reshape(q_point_global[1], (num_residues, num_head, num_point_qk))
-        q_point2 = mnp.reshape(q_point_global[2], (num_residues, num_head, num_point_qk))
+        q_point0 = ops.reshape(q_point_global[0], (num_residues, num_head, num_point_qk))
+        q_point1 = ops.reshape(q_point_global[1], (num_residues, num_head, num_point_qk))
+        q_point2 = ops.reshape(q_point_global[2], (num_residues, num_head, num_point_qk))
 
         # Construct key and value points.
         # Key points have shape [num_residues, num_head, num_point_qk]
@@ -104,64 +104,64 @@ class InvariantPointAttention(nn.Cell):
         # Construct key and value points in local frame.
         kv_point_local = self.kv_point_local(inputs_1d)
 
-        kv_point_local = mnp.split(kv_point_local, 3, axis=-1)
+        kv_point_local = ops.Split(axis=-1, output_num=3)(kv_point_local)
         kv_point_local = (ops.Squeeze()(kv_point_local[0]), ops.Squeeze()(kv_point_local[1]),
                           ops.Squeeze()(kv_point_local[2]))
         # Project key and value points into global frame.
         kv_point_global = apply_to_point(rotation, translation, kv_point_local, 1)
 
-        kv_point_global0 = mnp.reshape(kv_point_global[0], (num_residues, num_head, (num_point_qk + num_point_v)))
-        kv_point_global1 = mnp.reshape(kv_point_global[1], (num_residues, num_head, (num_point_qk + num_point_v)))
-        kv_point_global2 = mnp.reshape(kv_point_global[2], (num_residues, num_head, (num_point_qk + num_point_v)))
+        kv_point_global0 = ops.reshape(kv_point_global[0], (num_residues, num_head, (num_point_qk + num_point_v)))
+        kv_point_global1 = ops.reshape(kv_point_global[1], (num_residues, num_head, (num_point_qk + num_point_v)))
+        kv_point_global2 = ops.reshape(kv_point_global[2], (num_residues, num_head, (num_point_qk + num_point_v)))
 
         # Split key and value points.
-        k_point0, v_point0 = mnp.split(kv_point_global0, [num_point_qk], axis=-1)
-        k_point1, v_point1 = mnp.split(kv_point_global1, [num_point_qk], axis=-1)
-        k_point2, v_point2 = mnp.split(kv_point_global2, [num_point_qk], axis=-1)
+        k_point0, v_point0 = ops.tensor_split(kv_point_global0, [num_point_qk], axis=-1)
+        k_point1, v_point1 = ops.tensor_split(kv_point_global1, [num_point_qk], axis=-1)
+        k_point2, v_point2 = ops.tensor_split(kv_point_global2, [num_point_qk], axis=-1)
 
         trainable_point_weights = self.soft_plus(self.trainable_point_weights)
-        point_weights = self.point_weights * mnp.expand_dims(trainable_point_weights, axis=1)
+        point_weights = self.point_weights * ops.expand_dims(trainable_point_weights, axis=1)
 
-        v_point = [mnp.swapaxes(v_point0, -2, -3), mnp.swapaxes(v_point1, -2, -3), mnp.swapaxes(v_point2, -2, -3)]
-        q_point = [mnp.swapaxes(q_point0, -2, -3), mnp.swapaxes(q_point1, -2, -3), mnp.swapaxes(q_point2, -2, -3)]
-        k_point = [mnp.swapaxes(k_point0, -2, -3), mnp.swapaxes(k_point1, -2, -3), mnp.swapaxes(k_point2, -2, -3)]
+        v_point = [ops.swapaxes(v_point0, -2, -3), ops.swapaxes(v_point1, -2, -3), ops.swapaxes(v_point2, -2, -3)]
+        q_point = [ops.swapaxes(q_point0, -2, -3), ops.swapaxes(q_point1, -2, -3), ops.swapaxes(q_point2, -2, -3)]
+        k_point = [ops.swapaxes(k_point0, -2, -3), ops.swapaxes(k_point1, -2, -3), ops.swapaxes(k_point2, -2, -3)]
 
-        dist2 = mnp.square(ops.expand_dims(q_point[0], 2) - ops.expand_dims(k_point[0], 1)) + \
-                mnp.square(ops.expand_dims(q_point[1], 2) - ops.expand_dims(k_point[1], 1)) + \
-                mnp.square(ops.expand_dims(q_point[2], 2) - ops.expand_dims(k_point[2], 1))
+        dist2 = ops.square(ops.expand_dims(q_point[0], 2) - ops.expand_dims(k_point[0], 1)) + \
+                ops.square(ops.expand_dims(q_point[1], 2) - ops.expand_dims(k_point[1], 1)) + \
+                ops.square(ops.expand_dims(q_point[2], 2) - ops.expand_dims(k_point[2], 1))
 
-        attn_qk_point = -0.5 * mnp.sum(ops.expand_dims(ops.expand_dims(point_weights, 1), 1) * dist2, axis=-1)
+        attn_qk_point = -0.5 * ops.sum(ops.expand_dims(ops.expand_dims(point_weights, 1), 1) * dist2, dim=-1)
 
-        v = mnp.swapaxes(v_scalar, -2, -3)
-        q = mnp.swapaxes(self.scalar_weights * q_scalar, -2, -3)
-        k = mnp.swapaxes(k_scalar, -2, -3)
-        attn_qk_scalar = ops.matmul(q, mnp.swapaxes(k, -2, -1))
+        v = ops.swapaxes(v_scalar, -2, -3)
+        q = ops.swapaxes(self.scalar_weights * q_scalar, -2, -3)
+        k = ops.swapaxes(k_scalar, -2, -3)
+        attn_qk_scalar = ops.matmul(q, ops.swapaxes(k, -2, -1))
         attn_logits = attn_qk_scalar + attn_qk_point
 
         attention_2d = self.attention_2d(inputs_2d)
-        attention_2d = mnp.transpose(attention_2d, [2, 0, 1])
+        attention_2d = ops.transpose(attention_2d, [2, 0, 1])
         attention_2d = self.attention_2d_weights * attention_2d
 
         attn_logits += attention_2d
 
-        mask_2d = mask * mnp.swapaxes(mask, -1, -2)
+        mask_2d = mask * ops.swapaxes(mask, -1, -2)
         attn_logits -= 50 * (1. - mask_2d)
 
         attn = self.soft_max(attn_logits)
 
         result_scalar = ops.matmul(attn, v)
 
-        result_point_global = [mnp.swapaxes(mnp.sum(attn[:, :, :, None] * v_point[0][:, None, :, :], axis=-2), -2, -3),
-                               mnp.swapaxes(mnp.sum(attn[:, :, :, None] * v_point[1][:, None, :, :], axis=-2), -2, -3),
-                               mnp.swapaxes(mnp.sum(attn[:, :, :, None] * v_point[2][:, None, :, :], axis=-2), -2, -3)
+        result_point_global = [ops.swapaxes(ops.sum(attn[:, :, :, None] * v_point[0][:, None, :, :], dim=-2), -2, -3),
+                               ops.swapaxes(ops.sum(attn[:, :, :, None] * v_point[1][:, None, :, :], dim=-2), -2, -3),
+                               ops.swapaxes(ops.sum(attn[:, :, :, None] * v_point[2][:, None, :, :], dim=-2), -2, -3)
                                ]
 
-        result_point_global = [mnp.reshape(result_point_global[0], [num_residues, num_head * num_point_v]),
-                               mnp.reshape(result_point_global[1], [num_residues, num_head * num_point_v]),
-                               mnp.reshape(result_point_global[2], [num_residues, num_head * num_point_v])]
-        result_scalar = mnp.swapaxes(result_scalar, -2, -3)
+        result_point_global = [ops.reshape(result_point_global[0], [num_residues, num_head * num_point_v]),
+                               ops.reshape(result_point_global[1], [num_residues, num_head * num_point_v]),
+                               ops.reshape(result_point_global[2], [num_residues, num_head * num_point_v])]
+        result_scalar = ops.swapaxes(result_scalar, -2, -3)
 
-        result_scalar = mnp.reshape(result_scalar, [num_residues, num_head * num_scalar_v])
+        result_scalar = ops.reshape(result_scalar, [num_residues, num_head * num_scalar_v])
 
         result_point_local = invert_point(result_point_global, rotation, translation, 1)
 
@@ -170,16 +170,16 @@ class InvariantPointAttention(nn.Cell):
         output_feature21 = result_point_local[1]
         output_feature22 = result_point_local[2]
 
-        output_feature3 = mnp.sqrt(self._dist_epsilon +
-                                   mnp.square(result_point_local[0]) +
-                                   mnp.square(result_point_local[1]) +
-                                   mnp.square(result_point_local[2]))
+        output_feature3 = ops.sqrt(self._dist_epsilon +
+                                   ops.square(result_point_local[0]) +
+                                   ops.square(result_point_local[1]) +
+                                   ops.square(result_point_local[2]))
 
-        result_attention_over_2d = ops.matmul(mnp.swapaxes(attn, 0, 1), inputs_2d)
+        result_attention_over_2d = ops.matmul(ops.swapaxes(attn, 0, 1), inputs_2d)
         num_out = num_head * result_attention_over_2d.shape[-1]
-        output_feature4 = mnp.reshape(result_attention_over_2d, [num_residues, num_out])
+        output_feature4 = ops.reshape(result_attention_over_2d, [num_residues, num_out])
 
-        final_act = mnp.concatenate([output_feature1, output_feature20, output_feature21,
+        final_act = concat_features([output_feature1, output_feature20, output_feature21,
                                      output_feature22, output_feature3, output_feature4], axis=-1)
         final_result = self.output_projection(final_act)
         return final_result

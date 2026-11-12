@@ -66,8 +66,8 @@ class AnchorGenerator(nn.Cell):
 
     def create_grid_offsets(self, size, stride, offset):
         grid_height, grid_width = size[0], size[1]
-        shifts_x = ms.numpy.arange(offset * stride, grid_width * stride, step=stride, dtype=ms.float32)
-        shifts_y = ms.numpy.arange(offset * stride, grid_height * stride, step=stride, dtype=ms.float32)
+        shifts_x = ms.ops.arange(offset * stride, grid_width * stride, step=stride, dtype=ms.float32)
+        shifts_y = ms.ops.arange(offset * stride, grid_height * stride, step=stride, dtype=ms.float32)
         # shift_x, shift_y = ops.meshgrid((shifts_x, shifts_y))
         shift_x, shift_y = ops.meshgrid(shifts_x, shifts_y)
         shift_x = ops.reshape(shift_x, (-1,))

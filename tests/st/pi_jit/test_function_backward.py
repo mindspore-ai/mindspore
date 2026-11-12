@@ -1,5 +1,6 @@
 import pytest 
-from mindspore import numpy as np
+import numpy as np
+from mindspore import dtype as mstype
 from mindspore import Tensor, jit, context
 import mindspore.ops as ops
 from .share.utils import match_array
@@ -36,9 +37,9 @@ def ms_grad_func(x, y, z):
 
 
 tensor_params = [
-    (Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1], [2.1, 1.2, 3.3]], dtype=np.float32),
+    (Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1], [2.1, 1.2, 3.3]], dtype=mstype.float32),
      Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3],
-             [2.1, 1.2, 3.3]], dtype=np.float32),
+             [2.1, 1.2, 3.3]], dtype=mstype.float32),
      Tensor(np.array([1.0], np.float32)))
 ]
 

@@ -299,7 +299,6 @@
 "mindspore/tests/st/golden_stick/test_offload.py"                                                       "protected-access"
 "mindspore/tests/st/profiler/test_ascend_profiler_with_offline_analyse.py"                              "protected-access"
 "mindspore/tests/ut/python/optimizer/test_auto_grad.py"                                                 "broad-except"
-"mindspore/tests/st/numpy_native/test_array_ops.py"                                                     "useless-super-delegation"
 "mindspore/tests/ut/python/pynative_mode/test_stop_gradient.py"                                         "useless-super-delegation"
 "mindspore/tests/ut/python/mindir/test_mindir_export.py"                                                "no-else-return"
 "mindspore/tests/"                                                                                      "c-extension-no-member"
