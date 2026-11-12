@@ -392,8 +392,7 @@ def _parallel_check():
     if context.get_auto_parallel_context("parallel_mode") == "stand_alone":
         raise RuntimeError("Stand alone mode is not supported to apply adasum.")
     if context.get_auto_parallel_context("parallel_mode") in ["data_parallel", "hybrid_parallel"]:
-        logger.warning("For data parallel mode or hybrid parallel mode, "
-                       "it is recommended to using mindspore.boost to enable adasum.")
+        logger.warning("AdaSum is recommended for semi auto parallel or auto parallel mode.")
     if context.get_auto_parallel_context("enable_parallel_optimizer"):
         raise RuntimeError("Currently, the optimizer shard is not supported with applying adasum.")
     if context.get_auto_parallel_context("pipeline_stages") > 1:
@@ -423,8 +422,7 @@ class AdaSumByGradWrapCell(Cell):
         This interface is deprecated and will be removed after version 2.9.0.
 
     Note:
-        - It is recommended to using AdaSumByGradWrapCell in semi auto parallel or auto parallel mode. In data parallel
-          mode, we recommend to using mindspore.boost to applying AdaSum.
+        - AdaSumByGradWrapCell is recommended in semi auto parallel or auto parallel mode.
         - When using AdaSum, the number of training cards needs to be a power of 2 and at least 16 cards are required.
           Currently, the optimizer sharding and pipeline parallel is not supported when using AdaSum.
 
@@ -498,7 +496,6 @@ class AdaSumByDeltaWeightWrapCell(Cell):
         When using AdaSum, the number of training cards needs to be a power of 2 and at least 16 cards are required.
         Currently, the optimizer sharding and pipeline parallel are not supported when using AdaSum.
         It is recommended to using AdaSumByDeltaWeightWrapCell in semi auto parallel or auto parallel mode.
-        In data parallel mode, we recommend to using mindspore.boost to applying AdaSum.
 
     Args:
         optimizer (Union[Cell]): Optimizer for updating the weights. The construct function of the optimizer

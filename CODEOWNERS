@@ -117,7 +117,6 @@
 /mindspore/python/mindspore/_extends/graph_kernel/ @gaoxiong1
 /mindspore/python/mindspore/_extends/parallel_compile/ @gaoxiong1
 /mindspore/python/mindspore/_extends/remote/ @gaoxiong1
-/mindspore/python/mindspore/boost/ @limingqi107
 /mindspore/python/mindspore/common/ @hz893
 /mindspore/python/mindspore/communication/ @zhangyinxia
 /mindspore/python/mindspore/custom_compiler/ @limingqi107

@@ -29,7 +29,7 @@ from mindspore.nn.wrap.loss_scale import _TrainGradAccuWithLossScaleCell
 from mindspore.ops import functional as F
 from mindspore.parallel._utils import _get_pipeline_stages
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager
-from mindspore import boost, context
+from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops import Primitive
 from mindspore.ops import auto_generate as gen
@@ -614,7 +614,7 @@ def _check_kwargs(key_words):
         loss_scale_manager = key_words['loss_scale_manager']
         if loss_scale_manager:
             validator.check_value_type('loss_scale_manager', loss_scale_manager,
-                                       [LossScaleManager, boost.GroupLossScaleManager])
+                                       [LossScaleManager])
 
 
 def _check_level(level, boost_level):
@@ -623,13 +623,8 @@ def _check_level(level, boost_level):
         raise TypeError(f"The argument `level` must be a string in ['O0', 'O1', 'O2', 'O3', 'auto'],"
                         f"but got type {type(level)}.")
     validator.check('level', level, "", ['O0', 'O1', 'O2', 'O3', 'auto'], validator.IN)
-    validator.check('boost_level', boost_level, "", ['O0', 'O1', 'O2'], validator.IN)
-
-    enable_boost = False
-    if boost_level in ["O1", "O2"]:
-        enable_boost = True
-
-    return level, enable_boost
+    if boost_level != "O0":
+        raise ValueError("Boost training has been retired; only boost_level='O0' is supported.")
 
 
 def _add_loss_network(network, loss_fn, cast_model_type):
@@ -711,16 +706,7 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             Property of `keep_batchnorm_fp32`, `cast_model_type` and `loss_scale_manager` determined by `level`
             setting may be overwritten by settings in `kwargs`.
 
-        boost_level (str, optional): Option for argument `level` in `mindspore.boost` , level for boost mode
-            training. Supports ['O0', 'O1', 'O2']. Default: ``'O0'`` .
-
-            - 'O0': Do not change.
-            - 'O1': Enable the boost mode, the performance is improved by about 20%, and
-              the accuracy is the same as the original accuracy.
-            - 'O2': Enable the boost mode, the performance is improved by about 30%, and
-              the accuracy is reduced by less than 3%.
-
-            If 'O1' or 'O2' mode is set, the boost related library will take effect automatically.
+        boost_level (str, optional): Compatibility option. Only ``"O0"`` (Boost disabled) is supported.
 
         \*\*kwargs:
 
@@ -747,10 +733,10 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
         >>> amp_level="O3"
         >>> net = amp.build_train_network(network, net_opt, net_loss, amp_level)
     """
-    validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt,
+    validator.check_value_type('optimizer', optimizer, (nn.Optimizer,
                                                         nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell))
 
-    level, enable_boost = _check_level(level, boost_level)
+    _check_level(level, boost_level)
 
     _check_kwargs(kwargs)
     config = dict(_config_level.get(level), **kwargs)
@@ -774,17 +760,12 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
             if _get_pipeline_stages() > 1 or _is_grad_accumulation(network):
                 network = _TrainGradAccuWithLossScaleCell(network, optimizer,
                                                           scale_sense=update_cell).set_train()
-            elif enable_boost:
-                network = boost.BoostTrainOneStepWithLossScaleCell(network, optimizer,
-                                                                   scale_sense=update_cell).set_train()
             else:
                 network = nn.TrainOneStepWithLossScaleCell(network, optimizer,
                                                            scale_sense=update_cell).set_train()
             return network
     if _get_pipeline_stages() > 1 or _is_grad_accumulation(network):
         network = _TrainGradAccuStepCell(network, optimizer).set_train()
-    elif enable_boost:
-        network = boost.BoostTrainOneStepCell(network, optimizer, loss_scale).set_train()
     else:
         network = nn.TrainOneStepCell(network, optimizer, loss_scale).set_train()
     return network

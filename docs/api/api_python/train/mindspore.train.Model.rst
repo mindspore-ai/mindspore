@@ -25,17 +25,7 @@
 
           通过 `kwargs` 设置 `keep_batchnorm_fp32` ，可修改BatchNorm的精度策略， `keep_batchnorm_fp32` 必须为bool类型；通过 `kwargs` 设置 `loss_scale_manager` ，可修改损失缩放策略，`loss_scale_manager` 必须为 :class:`mindspore.amp.LossScaleManager` 的子类。
 
-        - **boost_level** (str，可选) - `mindspore.boost` 的可选参数，为boost模式训练等级。支持["O0", "O1", "O2"]。默认值： ``"O0"`` 。
-
-          - "O0"：不变化。
-          - "O1"：启用boost模式，性能将提升约20%，准确率保持不变。
-          - "O2"：启用boost模式，性能将提升约30%，准确率下降小于3%。
-
-          如果想自行配置boost模式，可以将 `boost_config_dict` 设置为 `boost.py`。
-
-          为使 `boost_level` 功能生效，必须配置优化器 `optimizer`，同时至少需要设置评估网络 `eval_network` 或评估指标 `metric` 中的一项（也可两项都配置）。
-
-          注意：当前默认开启的优化仅适用部分网络，并非所有网络都能获得相同收益。建议在Ascend平台的图模式下开启boost模式，同时为了获取更好的加速效果，请参考 :class:`mindspore.boost.AutoBoost` 配置boost_config_dict。
+        - **boost_level** (str，可选) - 兼容参数，仅支持默认值 ``"O0"``（禁用 Boost）。
 
     .. py:method:: build(train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, sink_mode=True)
 
