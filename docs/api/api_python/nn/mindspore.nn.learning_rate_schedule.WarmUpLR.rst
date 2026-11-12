@@ -1,7 +1,7 @@
-mindspore.nn.WarmUpLR
-======================
+mindspore.nn.learning_rate_schedule.WarmUpLR
+============================================
 
-.. py:class:: mindspore.nn.WarmUpLR(learning_rate, warmup_steps)
+.. py:class:: mindspore.nn.learning_rate_schedule.WarmUpLR(learning_rate, warmup_steps)
 
     预热学习率。
 

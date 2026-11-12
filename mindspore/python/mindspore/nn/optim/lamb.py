@@ -232,7 +232,7 @@ class Lamb(Optimizer):
         >>> optim = nn.Lamb(params=net.trainable_params(), learning_rate=0.1)
         >>>
         >>> #2) Use parameter groups and set different values
-        >>> poly_decay_lr = nn.PolynomialDecayLR(learning_rate=0.1, end_learning_rate=0.01,
+        >>> poly_decay_lr = nn.learning_rate_schedule.PolynomialDecayLR(learning_rate=0.1, end_learning_rate=0.01,
         ...                                                    decay_steps=4, power = 0.5)
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
         >>> no_conv_params = list(filter(lambda x: 'conv' not in x.name, net.trainable_params()))

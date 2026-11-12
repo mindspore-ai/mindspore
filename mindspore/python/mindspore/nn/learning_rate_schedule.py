@@ -109,7 +109,7 @@ class ExponentialDecayLR(LearningRateSchedule):
         >>> decay_rate = 0.9
         >>> decay_steps = 4
         >>> global_step = Tensor(2, mindspore.int32)
-        >>> exponential_decay_lr = nn.ExponentialDecayLR(learning_rate, decay_rate, decay_steps)
+        >>> exponential_decay_lr = nn.learning_rate_schedule.ExponentialDecayLR(learning_rate, decay_rate, decay_steps)
         >>> lr = exponential_decay_lr(global_step)
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
@@ -183,7 +183,8 @@ class NaturalExpDecayLR(LearningRateSchedule):
         >>> decay_rate = 0.9
         >>> decay_steps = 4
         >>> global_step = Tensor(2, mindspore.int32)
-        >>> natural_exp_decay_lr = nn.NaturalExpDecayLR(learning_rate, decay_rate, decay_steps, True)
+        >>> natural_exp_decay_lr = nn.learning_rate_schedule.NaturalExpDecayLR(
+        ...     learning_rate, decay_rate, decay_steps, True)
         >>> lr = natural_exp_decay_lr(global_step)
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
@@ -260,7 +261,7 @@ class InverseDecayLR(LearningRateSchedule):
         >>> decay_rate = 0.9
         >>> decay_steps = 4
         >>> global_step = Tensor(2, mindspore.int32)
-        >>> inverse_decay_lr = nn.InverseDecayLR(learning_rate, decay_rate, decay_steps, True)
+        >>> inverse_decay_lr = nn.learning_rate_schedule.InverseDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> lr = inverse_decay_lr(global_step)
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
@@ -414,7 +415,8 @@ class PolynomialDecayLR(LearningRateSchedule):
         >>> decay_steps = 4
         >>> power = 0.5
         >>> global_step = Tensor(2, mindspore.int32)
-        >>> polynomial_decay_lr = nn.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
+        >>> polynomial_decay_lr = nn.learning_rate_schedule.PolynomialDecayLR(
+        ...     learning_rate, end_learning_rate, decay_steps, power)
         >>> lr = polynomial_decay_lr(global_step)
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)
@@ -502,7 +504,7 @@ class WarmUpLR(LearningRateSchedule):
         >>> learning_rate = 0.1
         >>> warmup_steps = 2
         >>> global_step = Tensor(2, mindspore.int32)
-        >>> warmup_lr = nn.WarmUpLR(learning_rate, warmup_steps)
+        >>> warmup_lr = nn.learning_rate_schedule.WarmUpLR(learning_rate, warmup_steps)
         >>> lr = warmup_lr(global_step)
         >>> net = nn.Dense(2, 3)
         >>> optim = nn.SGD(net.trainable_params(), learning_rate=lr)

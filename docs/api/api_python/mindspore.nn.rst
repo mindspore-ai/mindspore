@@ -331,44 +331,29 @@ LearningRateSchedule类
     :template: classtemplate.rst
 
     mindspore.nn.CosineDecayLR
-    mindspore.nn.ExponentialDecayLR
-    mindspore.nn.InverseDecayLR
-    mindspore.nn.NaturalExpDecayLR
-    mindspore.nn.PolynomialDecayLR
-    mindspore.nn.WarmUpLR
+    mindspore.nn.learning_rate_schedule.ExponentialDecayLR
+    mindspore.nn.learning_rate_schedule.InverseDecayLR
+    mindspore.nn.learning_rate_schedule.NaturalExpDecayLR
+    mindspore.nn.learning_rate_schedule.PolynomialDecayLR
+    mindspore.nn.learning_rate_schedule.WarmUpLR
 
-Dynamic LR函数
-^^^^^^^^^^^^^^
+预先生成学习率序列
+^^^^^^^^^^^^^^^^^^
 
-本模块中的动态学习率都是function，调用function并将结果传递给优化器。在训练过程中，优化器将result[current step]作为当前学习率。
+旧 ``mindspore.nn.dynamic_lr`` 模块及其七个学习率生成函数已移除。
+优化器仍支持列表、一维 Tensor 和 ``LearningRateSchedule`` 实例作为动态学习率。
+可自行计算序列，再将其传给优化器。例如，以下序列每两个 step 更新一次学习率：
 
 .. code-block::
 
     import mindspore.nn as nn
 
-    min_lr = 0.01
-    max_lr = 0.1
-    total_step = 6
-    step_per_epoch = 1
-    decay_epoch = 4
+    net = nn.Dense(2, 3)
+    learning_rates = [0.1, 0.1, 0.05, 0.05, 0.01, 0.01]
+    optim = nn.Momentum(net.trainable_params(), learning_rate=learning_rates, momentum=0.9)
 
-    lr= nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
-
-    net = Net()
-    optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
-
-.. mscnplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.cosine_decay_lr
-    mindspore.nn.exponential_decay_lr
-    mindspore.nn.inverse_decay_lr
-    mindspore.nn.natural_exp_decay_lr
-    mindspore.nn.piecewise_constant_lr
-    mindspore.nn.polynomial_decay_lr
-    mindspore.nn.warmup_lr
+序列长度需要覆盖训练实际消费的步数。使用 ``LearningRateSchedule`` 改写旧函数时，
+应逐步核对学习率、衰减边界和数据类型；旧函数中的 epoch 参数与调度器的 step 参数不能直接等同。
 
 图像处理层
 -----------

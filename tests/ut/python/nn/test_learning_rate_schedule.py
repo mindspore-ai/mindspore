@@ -15,7 +15,7 @@
 """ Test Dynamic Learning Rate """
 import pytest
 
-from mindspore import Tensor
+from mindspore import Tensor, nn
 from mindspore.nn import learning_rate_schedule as lr_schedules
 from mindspore.graph.api import _cell_graph_executor
 import mindspore.common.dtype as mstype
@@ -30,6 +30,20 @@ min_lr = 0.01
 max_lr = 0.1
 power = 0.5
 global_step = Tensor(2, mstype.int32)
+
+
+@pytest.mark.parametrize("name", ["ExponentialDecayLR", "InverseDecayLR", "NaturalExpDecayLR",
+                                  "PolynomialDecayLR", "WarmUpLR"])
+def test_schedule_module_exports(name):
+    """
+    Feature: Learning rate schedule exports.
+    Description: Check the defining module and the top-level nn namespace.
+    Expectation: The five schedules remain available in their module, and nn still exports CosineDecayLR.
+    """
+    assert not hasattr(nn, name) and name not in nn.__all__
+    assert nn.CosineDecayLR is lr_schedules.CosineDecayLR
+    assert "CosineDecayLR" in nn.__all__
+    assert name in dir(nn.learning_rate_schedule) and name in lr_schedules.__all__
 
 
 class TestInit:

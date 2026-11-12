@@ -333,45 +333,29 @@ as input to get the current learning rate.
     :template: classtemplate.rst
 
     mindspore.nn.CosineDecayLR
-    mindspore.nn.ExponentialDecayLR
-    mindspore.nn.InverseDecayLR
-    mindspore.nn.NaturalExpDecayLR
-    mindspore.nn.PolynomialDecayLR
-    mindspore.nn.WarmUpLR
+    mindspore.nn.learning_rate_schedule.ExponentialDecayLR
+    mindspore.nn.learning_rate_schedule.InverseDecayLR
+    mindspore.nn.learning_rate_schedule.NaturalExpDecayLR
+    mindspore.nn.learning_rate_schedule.PolynomialDecayLR
+    mindspore.nn.learning_rate_schedule.WarmUpLR
 
-Dynamic LR Function
-^^^^^^^^^^^^^^^^^^^
+Precomputed learning-rate sequences
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The dynamic learning rates in this module are all functions. Call the function and pass the result to an optimizer.
-During the training process, the optimizer takes result[current step] as current learning rate.
+The legacy ``mindspore.nn.dynamic_lr`` module and its seven learning-rate generation functions have been removed.
+Optimizers still accept lists, one-dimensional Tensors and ``LearningRateSchedule`` instances as dynamic learning rates.
+Compute the sequence explicitly and pass it to the optimizer. For example, this sequence changes every two steps:
 
 .. code-block::
 
     import mindspore.nn as nn
 
-    min_lr = 0.01
-    max_lr = 0.1
-    total_step = 6
-    step_per_epoch = 1
-    decay_epoch = 4
+    net = nn.Dense(2, 3)
+    learning_rates = [0.1, 0.1, 0.05, 0.05, 0.01, 0.01]
+    optim = nn.Momentum(net.trainable_params(), learning_rate=learning_rates, momentum=0.9)
 
-    lr= nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
-
-    net = Net()
-    optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
-
-.. msplatformautosummary::
-    :toctree: nn
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.nn.cosine_decay_lr
-    mindspore.nn.exponential_decay_lr
-    mindspore.nn.inverse_decay_lr
-    mindspore.nn.natural_exp_decay_lr
-    mindspore.nn.piecewise_constant_lr
-    mindspore.nn.polynomial_decay_lr
-    mindspore.nn.warmup_lr
+The sequence must cover all steps consumed by training. When migrating to ``LearningRateSchedule``, check each value,
+decay boundary and dtype. Epoch parameters of the old functions are not interchangeable with step-based schedule parameters.
 
 Image Processing Layer
 ----------------------
