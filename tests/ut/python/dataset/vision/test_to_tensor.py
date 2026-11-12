@@ -20,6 +20,7 @@ import os
 import pytest
 from PIL import Image
 
+from mindspore.dataset.transforms import TypeCast
 import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
@@ -435,7 +436,7 @@ def test_to_tensor_operation_01():
     # ToTensor pipeline mode, output_type=ms.uint8
     output_type = ms.uint8
     ds1 = ds.ImageFolderDataset(DATA_DIR_1)
-    transforms = [vision.Decode(), vision.ToType(np.float64), vision.ToTensor(output_type=output_type)]
+    transforms = [vision.Decode(), TypeCast(np.float64), vision.ToTensor(output_type=output_type)]
     ds1 = ds1.map(input_columns=["image"], operations=transforms)
     for data1 in ds1.create_dict_iterator(output_numpy=True):
         assert data1["image"].dtype == "uint8"

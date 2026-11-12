@@ -203,47 +203,8 @@ def test_eager_hwc2chw():
                        channel_swapped[2], channel_swapped[0])
 
 
-def test_eager_pad_c():
-    """
-    Feature: Pad op
-    Description: Test eager support for Pad Cpp implementation
-    Expectation: Output image size info from op is correct
-    """
-    img = cv2.imread("../data/dataset/apple.jpg")
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
-
-    img = vision.Resize(size=(32, 32))(img)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
-    shape_org = img.shape
-
-    pad = 4
-    img = vision.Pad(padding=pad)(img)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
-    shape_padded = img.shape
-
-    assert shape_padded == (
-        shape_org[0] + 2 * pad, shape_org[1] + 2 * pad, shape_org[2])
 
 
-def test_eager_pad_py():
-    """
-    Feature: Pad op
-    Description: Test eager support for Pad Python implementation
-    Expectation: Output image size info from op is correct
-    """
-    img = Image.open("../data/dataset/apple.jpg").convert("RGB")
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
-
-    img = vision.Resize(size=(32, 32))(img)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
-    size = img.size
-
-    pad = 4
-    img = vision.Pad(padding=pad)(img)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
-    size_padded = img.size
-
-    assert size_padded == (size[0] + 2 * pad, size[1] + 2 * pad)
 
 
 
@@ -300,17 +261,6 @@ def test_eager_exceptions_normalize():
             e)
 
 
-def test_eager_exceptions_pad():
-    """
-    Feature: Pad
-    Description: Test Pad with invalid input of string
-    Expectation: Raise TypeError
-    """
-    try:
-        img = "../data/dataset/apple.jpg"
-        _ = vision.Pad(padding=4)(img)
-    except TypeError as e:
-        assert "Input should be NumPy or PIL image, got <class 'str'>." in str(e)
 
 
 
@@ -335,22 +285,6 @@ def test_eager_invalid_image_hwc2chw():
 
 
 
-def test_eager_invalid_image_pad():
-    """
-    Feature: Pad op
-    Description: Exception eager support test for Pad op with invalid image input type
-    Expectation: Error input image is detected
-    """
-
-    def test_config(my_input, error_type, error_msg):
-        with pytest.raises(error_type) as error_info:
-            _ = vision.Pad(padding=10)(my_input)
-        assert error_msg in str(error_info.value)
-
-    my_input = np.random.randn(64, 32, 3).astype(np.int32).tolist()
-    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
-    test_config(Tensor(my_input), TypeError,
-                "Input should be NumPy or PIL image, got <class 'mindspore.common.tensor.Tensor'>.")
 
 
 def test_eager_invalid_image_randomcrop():
@@ -383,20 +317,4 @@ def test_eager_invalid_image_randomhorizontalflip():
 
     img = cv2.imread("../data/dataset/apple.jpg")
     my_input = img.tolist()
-    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
-
-
-def test_eager_invalid_image_randomsolarize():
-    """
-    Feature: RandomSolarize op
-    Description: Exception eager support test for RandomSolarize op with invalid image input type
-    Expectation: Error input image is detected
-    """
-
-    def test_config(my_input, error_type, error_msg):
-        with pytest.raises(error_type) as error_info:
-            _ = vision.RandomSolarize(threshold=(0, 120))(my_input)
-        assert error_msg in str(error_info.value)
-
-    my_input = np.random.randint(0, 255, (500, 600, 3)).astype(np.uint8).tolist()
     test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")

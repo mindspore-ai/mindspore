@@ -75,54 +75,21 @@ API样例中常用的导入模块如下：
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.vision.AdjustGamma
-    mindspore.dataset.vision.AutoAugment
-    mindspore.dataset.vision.BoundingBoxAugment
     mindspore.dataset.vision.CenterCrop
-    mindspore.dataset.vision.Crop
-    mindspore.dataset.vision.CutMixBatch
     mindspore.dataset.vision.Decode
-    mindspore.dataset.vision.DecodeVideo
-    mindspore.dataset.vision.Erase
-    mindspore.dataset.vision.FiveCrop
-    mindspore.dataset.vision.Grayscale
     mindspore.dataset.vision.HWC2CHW
-    mindspore.dataset.vision.LinearTransformation
-    mindspore.dataset.vision.MixUp
-    mindspore.dataset.vision.MixUpBatch
     mindspore.dataset.vision.Normalize
-    mindspore.dataset.vision.NormalizePad
-    mindspore.dataset.vision.Pad
-    mindspore.dataset.vision.Perspective
-    mindspore.dataset.vision.Posterize
-    mindspore.dataset.vision.RandAugment
     mindspore.dataset.vision.RandomColorAdjust
     mindspore.dataset.vision.RandomCrop
     mindspore.dataset.vision.RandomCropDecodeResize
-    mindspore.dataset.vision.RandomCropWithBBox
-    mindspore.dataset.vision.RandomErasing
-    mindspore.dataset.vision.RandomGrayscale
     mindspore.dataset.vision.RandomHorizontalFlip
-    mindspore.dataset.vision.RandomHorizontalFlipWithBBox
-    mindspore.dataset.vision.RandomLighting
-    mindspore.dataset.vision.RandomPerspective
-    mindspore.dataset.vision.RandomPosterize
     mindspore.dataset.vision.RandomResizedCrop
-    mindspore.dataset.vision.RandomResizedCropWithBBox
-    mindspore.dataset.vision.RandomResizeWithBBox
-    mindspore.dataset.vision.RandomSolarize
     mindspore.dataset.vision.RandomVerticalFlip
-    mindspore.dataset.vision.RandomVerticalFlipWithBBox
     mindspore.dataset.vision.Rescale
     mindspore.dataset.vision.Resize
-    mindspore.dataset.vision.ResizeWithBBox
-    mindspore.dataset.vision.Solarize
-    mindspore.dataset.vision.TenCrop
     mindspore.dataset.vision.ToNumpy
     mindspore.dataset.vision.ToPIL
     mindspore.dataset.vision.ToTensor
-    mindspore.dataset.vision.ToType
-    mindspore.dataset.vision.TrivialAugmentWide
 
 工具
 ^^^^^
@@ -132,23 +99,10 @@ API样例中常用的导入模块如下：
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.vision.AutoAugmentPolicy
     mindspore.dataset.vision.ImageReadMode
     mindspore.dataset.vision.Border
     mindspore.dataset.vision.ImageBatchFormat
     mindspore.dataset.vision.Inter
-    mindspore.dataset.vision.VideoDecoder
-    mindspore.dataset.vision.encode_jpeg
-    mindspore.dataset.vision.encode_png
-    mindspore.dataset.vision.get_image_num_channels
-    mindspore.dataset.vision.get_image_size
-    mindspore.dataset.vision.read_file
-    mindspore.dataset.vision.read_image
-    mindspore.dataset.vision.read_video
-    mindspore.dataset.vision.read_video_timestamps
-    mindspore.dataset.vision.write_file
-    mindspore.dataset.vision.write_jpeg
-    mindspore.dataset.vision.write_png
 
 文本
 -----

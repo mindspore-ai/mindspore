@@ -18,6 +18,7 @@ Test Python Multiprocessing with AutoTuning
 import numpy as np
 
 import mindspore.dataset as ds
+import mindspore.dataset.transforms as transforms
 import mindspore.dataset.vision as vision
 from mindspore.dataset.vision import Inter
 
@@ -38,7 +39,7 @@ def create_mixed_map_dataset(batch_size=32, repeat_size=1, num_parallel_workers=
     # Define dataset
     cifar10_ds = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=num_samples)
 
-    cifar10_ds = cifar10_ds.map(operations=[vision.ToType(np.int32)], input_columns="label",
+    cifar10_ds = cifar10_ds.map(operations=[transforms.TypeCast(np.int32)], input_columns="label",
                                 num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
 
     # Map with operations: Pyfunc + C Ops + Pyfunc
@@ -65,7 +66,7 @@ def create_per_batch_map_dataset(batch_size=32, repeat_size=1, num_parallel_work
     # Define dataset
     cifar100_ds = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_samples=num_samples)
 
-    cifar100_ds = cifar100_ds.map(operations=[vision.ToType(np.int32)], input_columns="fine_label")
+    cifar100_ds = cifar100_ds.map(operations=[transforms.TypeCast(np.int32)], input_columns="fine_label")
 
     cifar100_ds = cifar100_ds.map(operations=[lambda z: z], input_columns="image")
 

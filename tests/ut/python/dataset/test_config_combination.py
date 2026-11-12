@@ -83,7 +83,7 @@ def run_imagefolder_pyop_pipeline(python_multiprocessing=False, num_epoch=2):
     # Apply map ops with Python implemented ops
     data = data.map(operations=[(lambda x: x + 1)], input_columns=["image"],
                     python_multiprocessing=python_multiprocessing)
-    data = data.map(operations=[vision.RandomErasing(0.6, value='random')], input_columns=["image"],
+    data = data.map(operations=[lambda image: image.copy()], input_columns=["image"],
                     python_multiprocessing=python_multiprocessing)
 
     # Create and execute iterator

@@ -38,7 +38,6 @@
 #include "minddata/dataset/vision/kernels/posterize_op.h"
 #include "minddata/dataset/vision/kernels/resize_cubic_op.h"
 #include "minddata/dataset/vision/kernels/sharpness_op.h"
-#include "minddata/dataset/vision/kernels/solarize_op.h"
 #include "minddata/dataset/general/kernels/data_utils.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_symbol.h"

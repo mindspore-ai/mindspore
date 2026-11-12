@@ -15,7 +15,6 @@
 """
 This is the test for op input consistency
 """
-import os
 import copy
 import numpy as np
 from PIL import Image
@@ -67,8 +66,6 @@ def test_vision_transform_input_consistency():
     data4_copy = copy.deepcopy(data4)
     data5 = Image.open("../data/dataset/apple.jpg")
     data5_copy = copy.deepcopy(data5)
-    data6 = np.array(Image.open("../data/dataset/apple.jpg"))
-    data6_copy = copy.deepcopy(data6)
 
     def check_result_any(output, inputs, inputs_copy):
         assert (inputs == inputs_copy).all()
@@ -78,56 +75,20 @@ def test_vision_transform_input_consistency():
         assert (inputs == inputs_copy).all()
         assert not np.array_equal(output, inputs_copy)
 
-    def check_result2(output, inputs, inputs_copy):
-        assert (np.array(inputs) == np.array(inputs_copy)).all()
-        assert not np.array_equal(output, inputs_copy)
 
     data = np.random.randint(0, 256, (20, 20, 3)) / 255.0
     data = data.astype(np.float32)
     data_copy = copy.deepcopy(data)
 
 
-    out = vision.AdjustGamma(gamma=0.1, gain=1.0)(data2_copy)
-    check_result_any(out, data2, data2_copy)
-
-
-
-
-
-    out = vision.AutoAugment()(data1_copy)
-    assert (data1 == data1_copy).all()
-    assert out.shape == (100, 100, 3)
-
-
     out = vision.CenterCrop(1)(data2_copy)
     check_result_any(out, data2, data2_copy)
 
-
-    out = vision.Crop((0, 0), 1)(data2_copy)
-    check_result_any(out, data2, data2_copy)
-
-    data = np.random.randint(0, 255, (3, 3, 10, 10)).astype(np.uint8)
-    data_copy = copy.deepcopy(data)
-    label = np.array([[0, 1], [1, 0], [1, 0]])
-    out = vision.CutMixBatch(vision.ImageBatchFormat.NCHW, 1.0, 1.0)(data_copy, label)
-    check_result(out, data, data_copy)
 
     assert (data1 == data1_copy).all()
 
     out = vision.Decode()(data4_copy)
     check_result(out, data4, data4_copy)
-
-
-    out = vision.Erase(0, 0, 2, 1)(data2_copy)
-    check_result_any(out, data2, data2_copy)
-
-    out = vision.FiveCrop(2)(data5_copy)
-    check_result2(out, data5, data5_copy)
-
-
-    out = vision.Grayscale(3)(data5_copy)
-    check_result2(out, data5, data5_copy)
-
 
 
     out = vision.HWC2CHW()(data2_copy)
@@ -136,44 +97,9 @@ def test_vision_transform_input_consistency():
 
     data = np.random.randn(10, 10, 3)
     data_copy = copy.deepcopy(data)
-    transformation_matrix = np.random.randn(300, 300)
-    mean_vector = np.random.randn(300,)
-    out = vision.LinearTransformation(transformation_matrix=transformation_matrix, mean_vector=mean_vector)(data_copy)
-    check_result_any(out, data, data_copy)
-
-    label = np.array([[0, 1]])
-    out = vision.MixUp(batch_size=2, alpha=0.2, is_single=False)(data1_copy, label)
-    check_result(out, data1, data1_copy)
-
-    data = np.random.randint(0, 255, (2, 10, 10, 3)).astype(np.uint8)
-    data_copy = copy.deepcopy(data)
-    label = np.array([[0, 1], [1, 0]])
-    out = vision.MixUpBatch(1)(data_copy, label)
-    check_result(out, data, data_copy)
 
     out = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0])(data1_copy)
     check_result_any(out, data1, data1_copy)
-
-    out = vision.NormalizePad(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0], dtype="float32")(data1_copy)
-    check_result(out, data1, data1_copy)
-
-    out = vision.Pad([100, 100, 100, 100])(data1_copy)
-    check_result(out, data1, data1_copy)
-
-
-    start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
-    end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
-    out = vision.Perspective(start_points, end_points, Inter.BILINEAR)(data1_copy)
-    check_result_any(out, data1, data1_copy)
-
-    out = vision.Posterize(4)(data1_copy)
-    check_result_any(out, data1, data1_copy)
-
-    out = vision.RandAugment(interpolation=Inter.BILINEAR, fill_value=255)(data5_copy)
-    check_result_any(out, np.array(data5), np.array(data5_copy))
-
-
-
 
 
     out = vision.RandomColorAdjust(brightness=(0.5, 1), contrast=(0.4, 1), saturation=(0.3, 1))(data1_copy)
@@ -186,77 +112,22 @@ def test_vision_transform_input_consistency():
                                         interpolation=Inter.BILINEAR, max_attempts=1)(data4_copy)
     check_result(out, data4, data4_copy)
 
-    data = copy.deepcopy(data6_copy.astype(np.float32))
-    func_data = data
-    func_bboxes = np.array([[0, 0, data.shape[1], data.shape[0]]], dtype=data.dtype)
-    func_data_copy = copy.deepcopy(func_data)
-    out = vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])(func_data_copy, func_bboxes)
-    check_result(out, func_data, func_data_copy)
-
 
     data = np.random.randint(254, 255, size=(3, 100, 100)).astype(np.uint8)
     data_copy = copy.deepcopy(data)
-    out = vision.RandomErasing(prob=1.0, max_attempts=1)(data_copy)
-    check_result_any(out, data, data_copy)
-
-    out = vision.RandomGrayscale(1.0)(data5_copy)
-    check_result2(out, data5, data5_copy)
 
     out = vision.RandomHorizontalFlip(1.0)(data1_copy)
     check_result_any(out, data1, data1_copy)
 
-    data = copy.deepcopy(data6_copy.astype(np.float32))
-    func_data = data
-    func_bboxes = np.array([[0, 0, data.shape[1], data.shape[0]]], dtype=data.dtype)
-    func_data_copy = copy.deepcopy(func_data)
-    out = vision.RandomHorizontalFlipWithBBox(1)(func_data_copy, func_bboxes)
-    check_result(out, func_data, func_data_copy)
-
-
-    out = vision.RandomLighting(0.1)(data5_copy)
-    check_result2(out, data5, data5_copy)
-
-    out = vision.RandomPerspective(prob=1.0)(data5_copy)
-    check_result2(out, data5, data5_copy)
-
-    out = vision.RandomPosterize(1)(data5_copy)
-    check_result_any(out, np.array(data5), np.array(data5_copy))
 
     out = vision.RandomResizedCrop(size=(50, 75), scale=(0.25, 0.5), interpolation=Inter.BILINEAR)(data1_copy)
     check_result(out, data1, data1_copy)
 
-    data = copy.deepcopy(data6_copy.astype(np.float32))
-    func_data = data
-    func_bboxes = np.array([[0, 0, data.shape[1], data.shape[0]]], dtype=data.dtype)
-    func_data_copy = copy.deepcopy(func_data)
-    out = vision.RandomResizedCropWithBBox((256, 512), (0.5, 0.5), (0.5, 0.5))(func_data_copy, func_bboxes)
-    check_result(out, func_data, func_data_copy)
-
-
-    data = copy.deepcopy(data6_copy.astype(np.float32))
-    func_data = data
-    func_bboxes = np.array([[0, 0, data.shape[1], data.shape[0]]], dtype=data.dtype)
-    func_data_copy = copy.deepcopy(func_data)
-    out = vision.RandomResizeWithBBox(100)(func_data_copy, func_bboxes)
-    check_result(out, func_data, func_data_copy)
-
-
-
-
-    out = vision.RandomSolarize(threshold=(1, 10))(data1_copy)
-    check_result_any(out, data1, data1_copy)
 
     data = np.array([[0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((2, 3))
     data_copy = copy.deepcopy(data)
     out = vision.RandomVerticalFlip(1.0)(data_copy)
     check_result_any(out, data, data_copy)
-
-    data = copy.deepcopy(data6_copy.astype(np.float32))
-    func_data = data
-    func_bboxes = np.array([[0, 0, data.shape[1], data.shape[0]]], dtype=data.dtype)
-    func_data_copy = copy.deepcopy(func_data)
-    out = vision.RandomVerticalFlipWithBBox(1)(func_data_copy, func_bboxes)
-    check_result(out, func_data, func_data_copy)
 
     out = vision.Rescale(1.0 / 255.0, -1.0)(data1_copy)
     check_result_any(out, data1, data1_copy)
@@ -264,22 +135,6 @@ def test_vision_transform_input_consistency():
     out = vision.Resize([5, 5], Inter.BICUBIC)(data1_copy)
     check_result(out, data1, data1_copy)
 
-
-    data = copy.deepcopy(data6_copy.astype(np.float32))
-    func_data = data
-    func_bboxes = np.array([[0, 0, data.shape[1], data.shape[0]]], dtype=data.dtype)
-    func_data_copy = copy.deepcopy(func_data)
-    out = vision.ResizeWithBBox(100)(func_data_copy, func_bboxes)
-    check_result(out, func_data, func_data_copy)
-
-
-
-
-    out = vision.Solarize(threshold=(1, 10))(data1_copy)
-    check_result_any(out, data1, data1_copy)
-
-    out = vision.TenCrop(size=200)(data5_copy)
-    check_result2(out, data5, data5_copy)
 
     out = vision.ToNumpy()(data5_copy)
     assert (np.array(data5_copy) == np.array(data5)).all()
@@ -293,36 +148,9 @@ def test_vision_transform_input_consistency():
 
     data = np.array([2.71606445312564e-03, 6.3476562564e-03]).astype(np.float64)
     data_copy = copy.deepcopy(data)
-    out = vision.ToType(np.float32)(data_copy)
+    out = transforms.TypeCast(np.float32)(data_copy)
     check_result_any(out, data, data_copy)
 
-    out = vision.TrivialAugmentWide()(data1_copy)
-    check_result_any(out, data1, data1_copy)
-
-
-
-    out = vision.encode_jpeg(data1_copy)
-    check_result(out, data1, data1_copy)
-
-    out = vision.encode_png(data1_copy)
-    check_result(out, data1, data1_copy)
-
-    data = np.array([1, 2, 3]).astype(np.uint8)
-    data_copy = copy.deepcopy(data)
-    filename = "./test_write_file.txt"
-    vision.write_file(filename, data_copy)
-    os.remove(filename)
-    assert (data == data_copy).all()
-
-    filename = "../test_write_jpeg.jpeg"
-    vision.write_jpeg(filename, data1_copy)
-    os.remove(filename)
-    assert (data1 == data1_copy).all()
-
-    filename = "../test_write_png.png"
-    vision.write_png(filename, data1_copy)
-    os.remove(filename)
-    assert (data1 == data1_copy).all()
 
     ds.config.set_seed(seed)
 

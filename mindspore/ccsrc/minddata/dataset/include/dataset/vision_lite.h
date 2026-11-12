@@ -66,39 +66,6 @@ class DATASET_API CenterCrop final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Crop an image based on location and crop size.
-class DATASET_API Crop final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}.
-  /// \param[in] size Size of the cropped area.
-  ///     If the size is a single value, a squared crop of size (size, size) is returned.
-  ///     If the size has 2 values, it should be (height, width).
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto crop_op = vision::Crop({0, 0}, {32, 32});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, crop_op},  // operations
-  ///                            {"image"});            // input columns
-  /// \endcode
-  Crop(const std::vector<int32_t> &coordinates, const std::vector<int32_t> &size);
-
-  /// \brief Destructor.
-  ~Crop() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 /// \brief Decode the input image in RGB mode.
 class DATASET_API Decode final : public TensorTransform {
  public:
@@ -184,52 +151,6 @@ class DATASET_API Normalize final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Pad the image according to padding parameters.
-class DATASET_API Pad final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] padding A vector representing the number of pixels to pad the image.
-  ///    If the vector has one value, it pads all sides of the image with that value.
-  ///    If the vector has two values, it pads left and right with the first and
-  ///    top and bottom with the second value.
-  ///    If the vector has four values, it pads left, top, right, and bottom with
-  ///    those values respectively.
-  /// \param[in] fill_value A vector representing the pixel intensity of the borders. Only valid if the
-  ///    padding_mode is BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
-  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
-  /// \param[in] padding_mode The method of padding (default=BorderType.kConstant).
-  ///    Can be any of
-  ///    [BorderType.kConstant, BorderType.kEdge, BorderType.kReflect, BorderType.kSymmetric]
-  ///    - BorderType.kConstant, means it fills the border with constant values
-  ///    - BorderType.kEdge, means it pads with the last value on the edge
-  ///    - BorderType.kReflect, means it reflects the values on the edge omitting the last value of edge
-  ///    - BorderType.kSymmetric, means it reflects the values on the edge repeating the last value of edge
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto pad_op = vision::Pad({10, 10, 10, 10}, {255, 255, 255});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, pad_op},  // operations
-  ///                            {"image"});           // input columns
-  /// \endcode
-  explicit Pad(const std::vector<int32_t> &padding, const std::vector<uint8_t> &fill_value = {0},
-               BorderType padding_mode = BorderType::kConstant);
-
-  /// \brief Destructor.
-  ~Pad() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
 
  private:
   struct Data;

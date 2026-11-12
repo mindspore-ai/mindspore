@@ -73,7 +73,6 @@ SET(DE_UT_SRCS
         c_api_text_vocab_test.cc
         c_api_text_test.cc
         c_api_transforms_test.cc
-        c_api_vision_a_to_q_test.cc
         c_api_vision_random_test.cc
         c_api_vision_r_to_z_test.cc
         center_crop_op_test.cc
@@ -86,7 +85,6 @@ SET(DE_UT_SRCS
         concatenate_op_test.cc
         connector_test.cc
         csv_op_test.cc
-        cutmix_batch_op_test.cc
         cyclic_array_test.cc
         data_helper_test.cc
         datatype_test.cc
@@ -108,10 +106,8 @@ SET(DE_UT_SRCS
         map_op_test.cc
         memory_pool_test.cc
         mind_record_op_test.cc
-        mixup_batch_op_test.cc
         normalize_op_test.cc
         optimization_pass_test.cc
-        pad_op_test.cc
         path_test.cc
         perf_data_test.cc
         profiler_test.cc
@@ -121,16 +117,10 @@ SET(DE_UT_SRCS
         random_crop_and_resize_with_bbox_op_test.cc
         random_crop_decode_resize_op_test.cc
         random_crop_op_test.cc
-        random_crop_with_bbox_op_test.cc
         random_horizontal_flip_op_test.cc
-        random_horizontal_flip_with_bbox_test.cc
-        random_resize_with_bbox_op_test.cc
-        random_solarize_op_test.cc
         random_vertical_flip_op_test.cc
-        random_vertical_flip_with_bbox_op_test.cc
         rescale_op_test.cc
         resize_op_test.cc
-        resize_with_bbox_op_test.cc
         rgba_to_bgr_op_test.cc
         rgba_to_rgb_op_test.cc
         schema_test.cc
@@ -138,7 +128,6 @@ SET(DE_UT_SRCS
         skip_pushdown_optimization_pass_test.cc
         slice_op_test.cc
         sliding_window_op_test.cc
-        solarize_op_test.cc
         stand_alone_samplers_test.cc
         status_test.cc
         storage_container_test.cc
