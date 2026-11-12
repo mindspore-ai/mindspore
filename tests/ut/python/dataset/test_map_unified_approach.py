@@ -44,7 +44,7 @@ MIX_OP_ADJUSTGAMMA_NAME3 = "AdjustGammaOperation"
 
 # Other op constants
 PYFUNC_NAME = "FuncWrapper"
-COMPOSE_NAME = "Compose"
+COMPOSE_NAME = "_Compose"
 TONUMPY_NAME = "ToNumpy"
 
 

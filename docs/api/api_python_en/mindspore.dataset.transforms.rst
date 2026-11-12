@@ -6,19 +6,15 @@ General
 
 .. automodule:: mindspore.dataset.transforms
 
-    mindspore.dataset.transforms.Compose
-    mindspore.dataset.transforms.Concatenate
-    mindspore.dataset.transforms.Duplicate
-    mindspore.dataset.transforms.Fill
-    mindspore.dataset.transforms.Mask
-    mindspore.dataset.transforms.OneHot
-    mindspore.dataset.transforms.PadEnd
-    mindspore.dataset.transforms.RandomApply
-    mindspore.dataset.transforms.RandomChoice
-    mindspore.dataset.transforms.RandomOrder
-    mindspore.dataset.transforms.Slice
+Transforms
+^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: dataset_transforms
+    :nosignatures:
+    :template: classtemplate_dataset.rst
+
     mindspore.dataset.transforms.TypeCast
-    mindspore.dataset.transforms.Unique
 
 Utilities
 ^^^^^^^^^^
@@ -28,7 +24,6 @@ Utilities
     :nosignatures:
     :template: classtemplate_dataset.rst
 
-    mindspore.dataset.transforms.Relational
 
 Vision
 -------

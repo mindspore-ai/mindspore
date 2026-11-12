@@ -744,9 +744,6 @@ def check_cocodataset(method):
 
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
 
-        sampler = param_dict.get('sampler')
-        if sampler is not None and isinstance(sampler, samplers.PKSampler):
-            raise ValueError("CocoDataset doesn't support PKSampler.")
         check_sampler_shuffle_shard_options(param_dict)
 
         cache = param_dict.get('cache')
@@ -788,9 +785,6 @@ def check_celebadataset(method):
 
         check_sampler_shuffle_shard_options(param_dict)
 
-        sampler = param_dict.get('sampler')
-        if sampler is not None and isinstance(sampler, samplers.PKSampler):
-            raise ValueError("CelebADataset doesn't support PKSampler.")
 
         cache = param_dict.get('cache')
         check_cache_option(cache)
@@ -1044,8 +1038,6 @@ def check_generator_dataset(method):
 
         sampler = param_dict.get("sampler")
         if sampler is not None:
-            if isinstance(sampler, samplers.PKSampler):
-                raise ValueError("GeneratorDataset doesn't support PKSampler.")
             if not isinstance(sampler, samplers.BuiltinSampler):
                 try:
                     iter(sampler)

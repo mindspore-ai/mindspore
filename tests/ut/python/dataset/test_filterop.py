@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Dataset filtering regression tests."""
 import numpy as np
 
 import mindspore.dataset as ds
@@ -94,9 +95,9 @@ def test_filter_by_generator_with_repeat():
         ret_data.append(item["data"])
     assert num_iter == 44
     for i in range(4):
-        for ii, _ in enumerate(expected_rs):
+        for ii, expected in enumerate(expected_rs):
             index = i * len(expected_rs) + ii
-            assert ret_data[index] == expected_rs[ii]
+            assert ret_data[index] == expected
 
 
 def test_filter_by_generator_with_repeat_after():
@@ -116,9 +117,9 @@ def test_filter_by_generator_with_repeat_after():
         ret_data.append(item["data"])
     assert num_iter == 44
     for i in range(4):
-        for ii, _ in enumerate(expected_rs):
+        for ii, expected in enumerate(expected_rs):
             index = i * len(expected_rs) + ii
-            assert ret_data[index] == expected_rs[ii]
+            assert ret_data[index] == expected
 
 
 def filter_func_batch(data):
@@ -582,32 +583,6 @@ def test_filter_by_generator_get_dataset_size():
     assert data_sie == num_iter
 
 
-def test_filter_with_pull_mode():
-    """
-    Feature: Filter op
-    Description: Test Filter op to support pull mode
-    Expectation: Output is equal to the expected output
-    """
-    original_debug_mode = ds.config.get_debug_mode()
-    ds.config.set_debug_mode(True)
-    dataset = ds.GeneratorDataset(generator_1d, ["data"])
-    dataset = dataset.filter(predicate=filter_func_shuffle_after, num_parallel_workers=4)
-    data_sie = dataset.get_dataset_size()
-
-    num_iter = 0
-    num_epochs = 2
-    ret = []
-    iterator = dataset.create_dict_iterator(num_epochs=num_epochs)
-    for _ in range(num_epochs):
-        for item in iterator:
-            num_iter += 1
-            ret.append(item['data'].asnumpy())
-    assert data_sie * num_epochs == num_iter
-    assert ret[0] == 0
-    assert ret[20] == 20
-    ds.config.set_debug_mode(original_debug_mode)
-
-
 if __name__ == '__main__':
     test_diff_predicate_func()
     test_filte_case_dataset_cifar10()
@@ -630,4 +605,3 @@ if __name__ == '__main__':
     test_filter_by_generator_with_zip_after()
     test_filter_by_generator_Partial()
     test_filter_by_generator_get_dataset_size()
-    test_filter_with_pull_mode()

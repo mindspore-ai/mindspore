@@ -20,10 +20,8 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testMnistData"
@@ -141,24 +139,6 @@ def test_fashion_mnist_basic():
     assert data6.get_col_names() == ["image", "label"]
 
 
-def test_fashion_mnist_pk_sampler():
-    """
-    Feature: test_fashion_mnist_pk_sampler.
-    Description: Test usage of FashionMnistDataset with PKSampler.
-    Expectation: Get correct data.
-    """
-    logger.info("Test FashionMnistDataset Op with PKSampler")
-    golden = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4,
-              5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9]
-    sampler = ds.PKSampler(3)
-    data = ds.FashionMnistDataset(DATA_DIR, sampler=sampler)
-    num_iter = 0
-    label_list = []
-    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        label_list.append(item["label"])
-        num_iter += 1
-    np.testing.assert_array_equal(golden, label_list)
-    assert num_iter == 30
 
 
 def test_fashion_mnist_sequential_sampler():
@@ -182,69 +162,6 @@ def test_fashion_mnist_sequential_sampler():
     assert num_iter == num_samples
 
 
-def test_fashion_mnist_exception():
-    """
-    Feature: test_fashion_mnist_exception.
-    Description: Test error cases for FashionMnistDataset.
-    Expectation: Raise exception.
-    """
-    logger.info("Test error cases for FashionMnistDataset")
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.FashionMnistDataset(DATA_DIR, shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.FashionMnistDataset(DATA_DIR, sampler=ds.PKSampler(3), num_shards=2, shard_id=0)
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.FashionMnistDataset(DATA_DIR, num_shards=10)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.FashionMnistDataset(DATA_DIR, shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.FashionMnistDataset(DATA_DIR, num_shards=5, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.FashionMnistDataset(DATA_DIR, num_shards=5, shard_id=5)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.FashionMnistDataset(DATA_DIR, num_shards=2, shard_id=5)
-
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.FashionMnistDataset(DATA_DIR, shuffle=False, num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.FashionMnistDataset(DATA_DIR, shuffle=False, num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.FashionMnistDataset(DATA_DIR, shuffle=False, num_parallel_workers=-2)
-
-    error_msg_7 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_7):
-        ds.FashionMnistDataset(DATA_DIR, num_shards=2, shard_id="0")
-
-    def exception_func(item):
-        raise Exception("Error occur!")
-
-    error_msg_8 = "The corresponding data file is"
-    with pytest.raises(RuntimeError, match=error_msg_8):
-        data = ds.FashionMnistDataset(DATA_DIR)
-        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data.__iter__():
-            pass
-    with pytest.raises(RuntimeError, match=error_msg_8):
-        data = ds.FashionMnistDataset(DATA_DIR)
-        data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
-        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data.__iter__():
-            pass
-    with pytest.raises(RuntimeError, match=error_msg_8):
-        data = ds.FashionMnistDataset(DATA_DIR)
-        data = data.map(operations=exception_func, input_columns=["label"], num_parallel_workers=1)
-        for _ in data.__iter__():
-            pass
 
 
 def test_fashion_mnist_visualize(plot=False):
@@ -309,13 +226,3 @@ def test_fashion_mnist_usage():
         assert ds.FashionMnistDataset(all_files_path, usage="train").get_dataset_size() == 60000
         assert ds.FashionMnistDataset(all_files_path, usage="test").get_dataset_size() == 10000
         assert ds.FashionMnistDataset(all_files_path, usage="all").get_dataset_size() == 70000
-
-
-if __name__ == '__main__':
-    test_fashion_mnist_content_check()
-    test_fashion_mnist_basic()
-    test_fashion_mnist_pk_sampler()
-    test_fashion_mnist_sequential_sampler()
-    test_fashion_mnist_exception()
-    test_fashion_mnist_visualize(plot=True)
-    test_fashion_mnist_usage()

@@ -20,27 +20,27 @@ import random
 import re
 import subprocess
 import time
-
 import psutil
 import pytest
 import numpy as np
 from PIL import Image
-
 import mindspore
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
+from mindspore.dataset.core.config import _get_enable_shared_mem, _set_enable_shared_mem
+from mindspore.dataset.core.config import _get_prefetch_size
 import mindspore.dataset.engine.iterators as it
-from mindspore.dataset import PKSampler
 from mindspore import ops
 from mindspore import log as logger
 from mindspore import Tensor
 from mindspore.dataset import vision
-from mindspore.dataset import transforms
-from mindspore.dataset.vision import Border
 from mindspore.dataset.vision import Inter
 from mindspore.dataset.callback import DSCallback
-
 from util import config_get_set_seed, save_and_check_dict
+
+
+
+
 
 
 DATA_DIR="../data/dataset/testImageNetData/train/class1"
@@ -250,404 +250,8 @@ class UserPyOp:
         self.step_num = step_num
 
 
-def dataset_call_c_transforms_func(sampler, shard_id=0):
-    """
-    All of c_transforms and sampler
-    Returns:
-    """
 
-    def filter_func_ge(_, label):
-        if label[0] > 20:
-            return False
-        return True
 
-    crop_height = 300
-    crop_width = 300
-    target_height = 200
-    target_width = 200
-    interpolation_mode = Inter.BILINEAR
-    scalelb = 0.5
-    scaleub = 200.5
-    aspectlb = 200.5
-    aspectub = 200.5
-    targetheight = 100
-    targetwidth = 100
-    interpolation = Inter.BILINEAR
-    maxiter = 100
-    skipcount = 5
-    takecount = 3
-    repeatcount = 10
-    num_parallel_workers = 2
-    l1 = []
-
-    op1 = UserPyOp()
-    cb1 = UserCallback(op1)
-    dataset = ds.GeneratorDataset(custom_dataset, column_names=["image", "label"], sampler=sampler,
-                                  num_parallel_workers=num_parallel_workers)
-    dataset = dataset.map(operations=op1, callbacks=cb1)
-
-    beforesize = 0
-    for data in dataset.create_dict_iterator(output_numpy=True):
-        l1.append(data['image'])
-        beforesize += 1
-    l1.clear()
-
-    # Reduce use case execution time
-    if isinstance(sampler, (ds.Sampler, ds.SequentialSampler, ds.WeightedRandomSampler)):
-        return
-
-    dataset = dataset.skip(count=skipcount)
-    aftersize = 0
-    for data in dataset.create_dict_iterator(output_numpy=True):
-        aftersize += 1
-    assert (beforesize - aftersize) == skipcount
-
-    prepend_tensor = np.array([4, 2], dtype=global_type)
-    append_tensor = np.array([9, 10], dtype=global_type)
-    concatenate_op = transforms.Concatenate(0, prepend_tensor, append_tensor)
-    fill_op = transforms.Fill(-3)
-    dataset = dataset.map(input_columns=["image"], operations=fill_op)
-
-    dataset = dataset.map(input_columns=["label"], operations=concatenate_op)
-    dataset = dataset.map(input_columns="label", operations=transforms.Slice(slice(0, 3)))
-
-    dataset = dataset.filter(predicate=filter_func_ge, input_columns=["image", "label"], num_parallel_workers=2)
-    aftersize = 0
-    for data in dataset.create_dict_iterator(output_numpy=True):
-        aftersize += 1
-
-    padded_samples = [{'image': np.zeros((2, 3, 3), np.uint8), 'label': np.zeros((1), global_type)}]
-    padded_ds = ds.PaddedDataset(padded_samples)
-    dataset = dataset + padded_ds
-    testsampler = ds.DistributedSampler(num_shards=2, shard_id=shard_id, shuffle=False, num_samples=None)
-    dataset.use_sampler(testsampler)
-
-    randomcrop_op = vision.RandomCrop((crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                       fill_value=(1, 1, 0), padding_mode=Border.CONSTANT)
-    dataset = dataset.map(input_columns=["image"], operations=randomcrop_op, num_parallel_workers=2)
-
-    randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                       fill_value=(1, 1, 0), padding_mode=Border.CONSTANT)
-    dataset = dataset.map(input_columns=["image"], operations=randomcrop_op, num_parallel_workers=2)
-
-    randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                       fill_value=(1, 1, 0), padding_mode=Border.EDGE)
-    dataset = dataset.map(input_columns=["image"], operations=randomcrop_op, num_parallel_workers=2)
-
-    randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                       fill_value=(1, 1, 0), padding_mode=Border.REFLECT)
-    dataset = dataset.map(input_columns=["image"], operations=randomcrop_op, num_parallel_workers=2)
-
-    randomcrop_op = vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                       fill_value=(1, 1, 0), padding_mode=Border.SYMMETRIC)
-    dataset = dataset.map(input_columns=["image"], operations=randomcrop_op, num_parallel_workers=2)
-
-    dataset = dataset.apply(apply_func)
-
-    resize_op = vision.Resize((target_height, target_width), interpolation_mode)
-    dataset = dataset.map(input_columns=["image"], operations=resize_op, num_parallel_workers=2)
-
-    randomcropandresize_op = vision.RandomResizedCrop((targetheight, targetwidth), (scalelb, scaleub),
-                                                       (aspectlb, aspectub), interpolation, maxiter)
-    dataset = dataset.map(input_columns=["image"], operations=randomcropandresize_op, num_parallel_workers=2)
-
-    # num_classes = dataset.num_classes()
-    num_classes = 57
-    one_hot_encode = transforms.OneHot(num_classes)
-    dataset = dataset.map(input_columns="label", operations=one_hot_encode, num_parallel_workers=2)
-
-    pad_shape = [100, 100, 4]
-    pad_value = -1
-    dataset = dataset.map(input_columns=["image"], operations=transforms.PadEnd(pad_shape, pad_value))
-
-    dataset = dataset.take(count=takecount)
-    aftersize = 0
-    for data in dataset.create_dict_iterator(output_numpy=True):
-        aftersize += 1
-    assert aftersize == takecount
-
-    dataset = dataset.shuffle(2)
-
-    dataset = dataset.batch(batch_size=add_one_by_epoch, drop_remainder=True, num_parallel_workers=2,
-                            input_columns=["image"], per_batch_map=invert_sign_per_batch_multi_col)
-
-    dataset = dataset.repeat(repeatcount)
-    unique_op = transforms.Unique()
-    dataset = dataset.map(operations=unique_op, input_columns='image',
-                          output_columns=['image', 'image_idx', 'image_cnt'],
-                          num_parallel_workers=2)
-    dataset = dataset.project(columns=['image', 'image_idx', 'image_cnt'])
-
-    column_names = ["image"]
-    bucket_boundaries = [1, 2, 3]
-    bucket_batch_sizes = [3, 3, 2, 2]
-    dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes)
-    dataset = dataset.map(input_columns=["image"], operations=transforms.Mask(transforms.Relational.EQ, 255))
-    for data in dataset.create_dict_iterator(output_numpy=True):
-        l1.append(data['image'])
-    l1.clear()
-
-    dataset_1 = ds.GeneratorDataset(custom_dataset, column_names=["image", "label"], sampler=sampler,
-                                    num_parallel_workers=num_parallel_workers)
-    input_columns = ['image', 'label']
-    output_columns = ['a', 'b']
-    dataset_1 = dataset_1.rename(input_columns, output_columns)
-    dataset_2 = ds.GeneratorDataset(custom_dataset, column_names=["image", "label"], sampler=sampler,
-                                    num_parallel_workers=num_parallel_workers)
-    dataset_zip = ds.zip((dataset_1, dataset_2))
-    for data in dataset_zip.create_dict_iterator(output_numpy=True):
-        l1.append(data['image'])
-    l1.clear()
-
-    dataset = ds.GeneratorDataset(custom_dataset, column_names=["image", "label"], sampler=sampler,
-                                  num_parallel_workers=num_parallel_workers)
-
-    randomrotation_op = vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1))
-    dataset = dataset.map(input_columns='image', operations=randomrotation_op, num_parallel_workers=2)
-
-    randomrotation_op = vision.RandomSharpness((0.1, 1.9))
-    dataset = dataset.map(input_columns='image', operations=randomrotation_op, num_parallel_workers=2)
-
-    randomrotation_op = vision.RandomColor((0.1, 1.9))
-    dataset = dataset.map(input_columns='image', operations=randomrotation_op, num_parallel_workers=2)
-
-    randomrotation_op = vision.RandomPosterize((1, 8))
-    dataset = dataset.map(input_columns='image', operations=randomrotation_op, num_parallel_workers=2)
-
-    randomrotation_op = vision.RandomSolarize((0, 255))
-    dataset = dataset.map(input_columns='image', operations=randomrotation_op, num_parallel_workers=2)
-
-    pad_op = vision.AutoContrast(cutoff=10.0, ignore=[10, 20])
-    dataset = dataset.map(input_columns='image', operations=pad_op, num_parallel_workers=2)
-
-    pad_op = vision.Equalize()
-    dataset = dataset.map(input_columns='image', operations=pad_op, num_parallel_workers=2)
-
-    pad_op = vision.Invert()
-    dataset = dataset.map(input_columns='image', operations=pad_op, num_parallel_workers=2)
-
-    op_list = [
-        vision.CenterCrop(1)
-    ]
-    operations = transforms.Compose(op_list)
-    dataset = dataset.map(input_columns=["image"], operations=operations, num_parallel_workers=2)
-
-    randomcoloradjust_op = vision.RandomColorAdjust(brightness=(1.0, 1.0), contrast=(1, 1), saturation=(1, 1),
-                                                     hue=(0, 0))
-    dataset = dataset.map(input_columns='image', operations=randomcoloradjust_op, num_parallel_workers=2)
-
-    op_list = [
-        vision.HWC2CHW(),
-        vision.Pad(padding=(2, 2), padding_mode=Border.CONSTANT)
-    ]
-    operations = transforms.RandomApply(op_list)
-    dataset = dataset.map(input_columns=["image"], operations=operations, num_parallel_workers=2)
-
-    op_list = [
-        vision.Pad(padding=(2, 2), padding_mode=Border.EDGE),
-        vision.Pad(padding=(2, 2), padding_mode=Border.REFLECT)
-    ]
-    operations = transforms.RandomChoice(op_list)
-    dataset = dataset.map(input_columns=["image"], operations=operations, num_parallel_workers=2)
-
-    pad_op = vision.Pad(padding=(2, 2), padding_mode=Border.SYMMETRIC)
-    dataset = dataset.map(input_columns='image', operations=pad_op, num_parallel_workers=2)
-
-    randomresize_op = vision.RandomResize((15, 15))
-    dataset = dataset.map(input_columns='image', operations=randomresize_op, num_parallel_workers=2)
-
-    randomrotation_op = vision.RandomRotation(degrees=(0, 125), resample=Inter.BILINEAR, expand=False,
-                                               center=(6, 6), fill_value=1)
-    dataset = dataset.map(input_columns='image', operations=randomrotation_op, num_parallel_workers=2)
-
-    randomrotation_op = vision.RandomRotation(degrees=(0, 125), resample=Inter.NEAREST, expand=False,
-                                               center=(6, 6), fill_value=1)
-    dataset = dataset.map(input_columns='image', operations=randomrotation_op, num_parallel_workers=2)
-
-    randomrotation_op = vision.RandomRotation(degrees=(0, 125), resample=Inter.BICUBIC, expand=False,
-                                               center=(6, 6), fill_value=1)
-    dataset = dataset.map(input_columns='image', operations=randomrotation_op, num_parallel_workers=2)
-
-    typecast_op = transforms.TypeCast(data_type=mstype.int8)
-    dataset = dataset.map(input_columns='image', operations=typecast_op, num_parallel_workers=2)
-
-    columns_to_project = ["image", "label"]
-    dataset = dataset.project(columns=columns_to_project)
-
-    dataset = dataset.shuffle(2)
-
-    dataset = dataset.repeat(repeatcount)
-    for data in dataset.create_dict_iterator(output_numpy=True):
-        l1.append(data['image'])
-    l1.clear()
-
-    dataset.device_que()
-
-    dataset.create_tuple_iterator()
-
-    dict_iterator = dataset.create_dict_iterator(output_numpy=True)
-    for data in dict_iterator:
-        l1.append(list(data))
-    l1.clear()
-
-    output_shape_list = dataset.output_shapes()
-    for data_shape in output_shape_list:
-        l1.append(data_shape)
-    l1.clear()
-
-    output_type_list = dataset.output_types()
-    for data_type in output_type_list:
-        l1.append(data_type)
-    l1.clear()
-
-    dataset.get_batch_size()
-
-    dataset.get_repeat_count()
-
-    dataset.num_classes()
-
-    dataset.reset()
-
-
-def dataset_call_py_transforms_func(sampler, sampler_num):
-    """
-    All of py_transforms and sampler
-    Returns:
-    """
-    crop_height = 100
-    crop_width = 50
-    target_height = 200
-    target_width = 200
-    scalelb = 0.5
-    scaleub = 200.5
-    aspectlb = 200.5
-    aspectub = 200.5
-    targetheight = 100
-    targetwidth = 100
-    interpolation = Inter.BILINEAR
-    maxiter = 100
-    transformation_matrix = np.ones([432, 432])
-    mean_vector = np.ones([432])
-    num_parallel_workers = 2
-    l1 = []
-
-    dataset = ds.GeneratorDataset(custom_dataset, column_names=["image", "label"], sampler=sampler,
-                                  num_parallel_workers=2)  # ,python_multiprocessing=True)
-
-    dataset_num = 0
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        dataset_num += 1
-    assert dataset_num == sampler_num
-
-    # Reduce use case execution time
-    if isinstance(sampler, (ds.Sampler, ds.SequentialSampler, ds.WeightedRandomSampler)):
-        return
-
-    op_list = [vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                  fill_value=(1, 1, 0), padding_mode=Border.CONSTANT),
-               vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                  fill_value=(1, 1, 0), padding_mode=Border.EDGE),
-               vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                  fill_value=(1, 1, 0), padding_mode=Border.REFLECT),
-               vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                  fill_value=(1, 1, 0), padding_mode=Border.SYMMETRIC),
-               vision.RandomHorizontalFlip(),
-               vision.RandomVerticalFlip(),
-               vision.Grayscale(3),
-               vision.RandomGrayscale(0.3),
-               vision.RandomPerspective(distortion_scale=0.5, prob=0.1, interpolation=Inter.BICUBIC),
-               vision.RandomPerspective(distortion_scale=0.5, prob=0.1, interpolation=Inter.NEAREST),
-               vision.RandomPerspective(distortion_scale=0.5, prob=0.1, interpolation=Inter.BILINEAR),
-               vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-               vision.RandomSharpness((0.1, 1.9)),
-               vision.RandomColor((0.1, 1.9)),
-               vision.RandomResizedCrop((targetheight, targetwidth), (scalelb, scaleub),
-                                         (aspectlb, aspectub), interpolation, maxiter),
-               vision.AutoContrast(cutoff=10.0, ignore=[10, 20]),
-               vision.Equalize(),
-               vision.Invert()
-               ]
-
-    operations = transforms.Compose([vision.ToPIL(),
-                                  vision.UniformAugment(transforms=op_list),
-                                  vision.Resize((224, 224)),
-                                  vision.ToTensor()])
-
-    dataset = dataset.map(operations=operations, input_columns=["image"], num_parallel_workers=2,
-                          python_multiprocessing=True)
-    dataset = dataset.shuffle(2)
-
-    dataset = dataset.batch(batch_size=add_one_by_batch_num, drop_remainder=True, num_parallel_workers=2,
-                            input_columns=["image"], per_batch_map=invert_sign_per_batch_multi_col)
-
-    dataset = dataset.repeat(10)
-    for data in dataset.create_dict_iterator(output_numpy=True):
-        l1.append(data['image'])
-    l1.clear()
-
-    dataset_1 = ds.GeneratorDataset(custom_dataset, column_names=["image", "label"], sampler=sampler,
-                                    num_parallel_workers=num_parallel_workers)
-    transform_list = [
-        vision.Resize((target_height, target_width)),
-        vision.CenterCrop(1),
-    ]
-    op_list_1 = [
-        vision.ToPIL(),
-        vision.Resize((target_height, target_width)),
-        vision.CenterCrop(1),
-        vision.Pad(padding=(2, 2), padding_mode=Border.CONSTANT),
-        vision.Pad(padding=(2, 2), padding_mode=Border.EDGE),
-        vision.Pad(padding=(2, 2), padding_mode=Border.REFLECT),
-        vision.Pad(padding=(2, 2), padding_mode=Border.SYMMETRIC),
-        vision.RandomColorAdjust(brightness=(1.0, 1.0), contrast=(1, 1), saturation=(1, 1),
-                                  hue=(0, 0)),
-        vision.RandomRotation(degrees=(0, 125), resample=Inter.BILINEAR, expand=False,
-                               center=(6, 6), fill_value=1),
-        vision.RandomRotation(degrees=(0, 125), resample=Inter.NEAREST, expand=False,
-                               center=(6, 6), fill_value=1),
-        vision.RandomRotation(degrees=(0, 125), resample=Inter.BICUBIC, expand=False,
-                               center=(6, 6), fill_value=1),
-        transforms.RandomChoice(transform_list),
-        transforms.RandomApply(transform_list, prob=0.5),
-        transforms.RandomOrder(transform_list),
-        vision.Resize(12, interpolation),
-        vision.ToTensor(),
-        vision.RandomErasing(prob=0.5, scale=(0.02, 0.33), ratio=(0.3, 3.3), value=0, inplace=False,
-                              max_attempts=10),
-        vision.LinearTransformation(transformation_matrix, mean_vector)
-    ]
-    operations_1 = transforms.Compose(op_list_1)
-    dataset_1 = dataset_1.map(operations=operations_1, input_columns=["image"], num_parallel_workers=2,
-                              python_multiprocessing=True)
-    dataset_1 = dataset_1.shuffle(2)
-
-    dataset_1 = dataset_1.padded_batch(batch_size=add_one_by_epoch, drop_remainder=True, num_parallel_workers=2,
-                                       pad_info={"image": (None, 7)})
-
-    dataset_1 = dataset_1.repeat(10)
-    for data in dataset_1.create_dict_iterator(output_numpy=True):
-        l1.append(data['image'])
-    l1.clear()
-
-    dataset_2 = ds.GeneratorDataset(custom_dataset, column_names=["image", "label"], sampler=sampler,
-                                    num_parallel_workers=num_parallel_workers)
-    op_list_2 = [
-        vision.ToPIL(),
-        vision.FiveCrop(size=(2, 2)),
-        vision.TenCrop(size=(2, 2)),
-        lambda images: np.stack([vision.ToTensor()(image) for image in images]),
-        vision.ToType(np.float32),
-        vision.ToPIL(),
-    ]
-    operations_2 = transforms.Compose(op_list_2)
-    dataset_2.map(operations=operations_2, input_columns=["image"], num_parallel_workers=2)
-    column_names = ["image"]
-    bucket_boundaries = [1, 2, 3]
-    bucket_batch_sizes = [3, 3, 2, 2]
-    dataset.bucket_batch_by_length(column_names, bucket_boundaries, bucket_batch_sizes)
-    for data in dataset_2.create_dict_iterator(output_numpy=True):
-        l1.append(data["image"])
-    l1.clear()
 
 
 class Iterable:
@@ -679,7 +283,7 @@ def dataset_create_dict_iterator(data, num_epochs, init_mem=0):
 
     data_init_memory_difference = data_memory - init_mem  # >1000M
 
-    original_prefetch_size = ds.config.get_prefetch_size()
+    original_prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(1)
     try:
         dataset = ds.GeneratorDataset(source=data, column_names=["data", "label"], shuffle=False)
@@ -1119,7 +723,7 @@ def test_generator_14():
     it._cleanup()  # pylint: disable=W0212
 
     # Reduce memory needed by reducing queue size
-    prefetch_original = ds.config.get_prefetch_size()
+    prefetch_original = _get_prefetch_size()
     ds.config.set_prefetch_size(1)
 
     source = [(np.array([x]),) for x in range(256)]
@@ -1145,7 +749,7 @@ def test_generator_15():
     logger.info("Test 1D Generator MP : 0 - 63")
 
     ## Reduce memory needed by reducing queue size
-    prefetch_original = ds.config.get_prefetch_size()
+    prefetch_original = _get_prefetch_size()
     ds.config.set_prefetch_size(1)
 
     sampler = list(range(256))
@@ -1215,8 +819,8 @@ def test_generator_18():
     logger.info("Test map column order when input_columns is None.")
 
     # Reduce shm usage by disabling this optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
 
     # apply dataset operations
     data1 = ds.GeneratorDataset(generator_mc(2048), ["col0", "col1"], python_multiprocessing=True)
@@ -1241,7 +845,7 @@ def test_generator_18():
         np.testing.assert_array_equal(item["out0"], golden)
         i += 1
 
-    ds.config.set_enable_shared_mem(mem_original)
+    _set_enable_shared_mem(mem_original)
 
 
 def test_generator_19():
@@ -3341,7 +2945,7 @@ def test_release_generator_dataset_iter(num_epochs):
     # Exclude first-use runtime allocations from the RSS baseline.
     dataset_create_dict_iterator(
         [[np.ones(16, dtype=np.int64) for _ in range(5)] for _ in range(2)], num_epochs=-1)
-    original_prefetch_size = ds.config.get_prefetch_size()
+    original_prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(1)
     try:
         init_memory = psutil.Process(os.getpid()).memory_info().rss / 1024 / 1024
@@ -3446,31 +3050,6 @@ def test_generator_dataset_getitem_success_other_sampler(num_samples, shuffle):
     ds.config.set_seed(origin_seed)
 
 
-def test_generator_dataset_getitem_success_sampler():
-    """
-    Feature: GeneratorDataset random access
-    Description: Test combinations of GeneratorDataset parameters [shuffle/sampler]
-    Expectation: SUCCESS
-    """
-    small_dataset = DatasetGeneratorSmall()
-    origin_seed = ds.config.get_seed()
-    ds.config.set_seed(200)
-
-    weights = [0.9, 0.01, 0.4, 0.8, 0.1, 0.3]
-    sampler = ds.WeightedRandomSampler(weights, 4)
-    dataset = ds.GeneratorDataset(small_dataset, column_names=["col1"], shuffle=None, sampler=sampler)
-    index = 0
-    for item in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        assert item == dataset[index]
-        index += 1
-    ds.config.set_seed(origin_seed)
-
-    # Test the source dataset is a list object.
-    dataset = ds.GeneratorDataset([1, 2, 3, 4, 5], column_names=["col1"], shuffle=False)
-    index = 0
-    for item in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        assert item[0] == dataset[index]
-        index += 1
 
 
 def test_generator_dataset_getitem_schema():
@@ -3554,16 +3133,13 @@ class SimpleDataset:
         return len(self.data)
 
 
-@pytest.mark.parametrize("debug_mode", (False, True))
-def test_generator_with_batch_sampler(debug_mode):
+def test_generator_with_batch_sampler():
     """
     Feature: BatchSampler
     Description: Test GeneratorDataset with batch_sampler
     Expectation: Result is as expected
     """
 
-    original_mode = ds.config.get_debug_mode()
-    ds.config.set_debug_mode(debug_mode)
 
     dataset = ds.GeneratorDataset(SimpleDataset(), column_names=["data"], batch_sampler=SimpleBatchSampler())
 
@@ -3577,7 +3153,6 @@ def test_generator_with_batch_sampler(debug_mode):
     for i, data in enumerate(dataset.create_dict_iterator(output_numpy=True, num_epochs=1)):
         np.testing.assert_array_equal(data["data"], np.array(expected_res[i], dtype=np.int32))
 
-    ds.config.set_debug_mode(original_mode)
 
 
 def test_generator_with_batch_sampler_and_split():
@@ -3595,16 +3170,13 @@ def test_generator_with_batch_sampler_and_split():
         np.testing.assert_array_equal(data["data"], np.array(expected_res[i], dtype=np.int32))
 
 
-@pytest.mark.parametrize("debug_mode", (False, True))
-def test_generator_with_collate_fn(debug_mode):
+def test_generator_with_collate_fn():
     """
     Feature: BatchSampler
     Description: Test GeneratorDataset with batch_sampler and collate_fn
     Expectation: Result is as expected
     """
 
-    original_mode = ds.config.get_debug_mode()
-    ds.config.set_debug_mode(debug_mode)
 
     class DictDataset:
         def __init__(self):
@@ -3628,7 +3200,6 @@ def test_generator_with_collate_fn(debug_mode):
         np.testing.assert_array_equal(data["data"], np.array(expected_res[i], dtype=np.int32))
         np.testing.assert_array_equal(data["label"], np.array(1))
 
-    ds.config.set_debug_mode(original_mode)
 
 
 def test_generator_with_batch_sampler_in_recovery_mode():
@@ -3827,27 +3398,6 @@ def test_generator_dataset_with_parallel_convert_exception():
     ds.config.set_iterator_mode(parallel_convert=False)
 
 
-def test_generator_dataset_debug_mode():
-    """
-    Feature: GeneratorDataset random access
-    Description: Test GeneratorDataset on debug_mode
-    Expectation: SUCCESS
-    """
-    small_dataset = DatasetGeneratorSmall()
-    origin_seed = ds.config.get_seed()
-
-    ds.config.set_debug_mode(True)
-    ds.config.set_seed(200)
-    dataset = ds.GeneratorDataset(small_dataset, column_names=["col1"], shuffle=False, num_samples=None,
-                                  num_shards=4, shard_id=3)
-    index = 0
-    for item in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        assert item == dataset[index]
-        index += 1
-    ds.config.set_seed(origin_seed)
-    ds.config.set_debug_mode(False)
-
-
 def test_perf_do_copy_parameter():
     """
     Feature: Performance comparison of the do_copy parameter
@@ -3872,185 +3422,28 @@ def test_perf_do_copy_parameter():
     assert do_copy_false_time < do_copy_true_time
 
 
-def test_generatordataset_do_not_support_pk_Sampler():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with PKSampler
-    Expectation: Raise RuntimeError that PKSampler does not currently support
-    """
-
-    sequence_data = [1, 2, 3, 4, 5, 6]
-
-    class MyDataset:
-        def __init__(self, sequence_data):
-            self.sequence_data = sequence_data
-
-        def __getitem__(self, index):
-            return self.sequence_data[index], self.sequence_data[index]
-
-        def __len__(self):
-            return len(self.sequence_data)
-
-    with pytest.raises(ValueError) as info:
-        my_dataset = ds.GeneratorDataset(MyDataset(sequence_data), column_names=['data', 'label'],
-                                         sampler=PKSampler(10))
-        iterator = my_dataset.create_dict_iterator()
-        for item in iterator:
-            print(item)
-    assert "GeneratorDataset doesn't support PKSampler" in str(info)
-
-    with pytest.raises(RuntimeError) as info:
-        my_dataset = ds.GeneratorDataset(MyDataset(sequence_data), column_names=['data', 'label'])
-        sampler = PKSampler(10)
-        my_dataset.add_sampler(sampler)
-        iterator = my_dataset.create_dict_iterator()
-        for item in iterator:
-            print(item)
-    assert "GeneratorDataset doesn't support PKSampler" in str(info)
 
 
-def test_generatordataset_with_distributed_sampler_01():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with distributed sampler
-    Expectation: Success
-    """
-
-    sampler = ds.DistributedSampler(2, 1)
-    dataset_call_c_transforms_func(sampler=sampler)
 
 
-def test_generatordataset_with_distributed_sampler_02():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with distributed sampler
-    Expectation: Success
-    """
-
-    sampler = ds.DistributedSampler(2, 1, num_samples=100, offset=1)
-    dataset_call_py_transforms_func(sampler=sampler, sampler_num=10)
 
 
-def test_func_generator_with_random_sampler():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with random sampler
-    Expectation: Success
-    """
-    sampler = ds.RandomSampler(True, 15)
-    dataset_call_py_transforms_func(sampler=sampler, sampler_num=15)
 
 
-def test_func_generator_with_sequential_sampler_01():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with sequential sampler
-    Expectation: Success
-    """
-    sampler = ds.SequentialSampler()
-    dataset_call_c_transforms_func(sampler=sampler)
 
 
-def test_func_generator_with_sequential_sampler_02():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with sequential sampler
-    Expectation: Success
-    """
-    sampler = ds.SequentialSampler(start_index=2, num_samples=100)
-    dataset_call_py_transforms_func(sampler=sampler, sampler_num=18)
 
 
-def test_func_generator_with_weight_random_sampler_01():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with weight random sampler
-    Expectation: Success
-    """
-    weights = [0.9, 0.01]
-    sampler = ds.WeightedRandomSampler(weights, 15, True)
-    dataset_call_c_transforms_func(sampler=sampler)
 
 
-def test_func_generator_with_weight_random_sampler_02():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with weight random sampler
-    Expectation: Success
-    """
-    weights = [0.9, 0.01]
-    sampler = ds.WeightedRandomSampler(weights, 15, True)
-    dataset_call_py_transforms_func(sampler=sampler, sampler_num=15)
 
 
-def test_func_generator_with_subset_random_sampler_01():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with subset random sampler
-    Expectation: Success
-    """
-    indices = [0, 1, 2, 3, 7, 9, 10, 11, 12]
-    sampler = ds.SubsetRandomSampler(indices)
-    dataset_call_c_transforms_func(sampler=sampler)
 
 
-def test_func_generator_with_subset_random_sampler_02():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with subset random sampler
-    Expectation: Success
-    """
-    indices = [3, 12, 19]
-    sampler = ds.SubsetRandomSampler(indices)
-    dataset_call_py_transforms_func(sampler=sampler, sampler_num=3)
 
 
-def test_func_generator_with_udf_sampler_01():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with udf sampler
-    Expectation: Success
-    """
-    class MySampler(ds.Sampler):
-        '''test'''
-
-        def __init__(self):
-            super().__init__()
-            # at this stage, self.dataset_size and self.num_samples are not yet known
-            self.cnt = 0
-            self.num_samples = 100
-
-        def __iter__(self):  # first epoch, all 0, second epoch all 1, third all 2 etc.. ...
-            return iter([self.cnt for i in range(self.num_samples)])
-
-        def reset(self):
-            self.cnt = (self.cnt + 1) % self.dataset_size
-
-    dataset_call_c_transforms_func(sampler=MySampler())
 
 
-def test_func_generator_with_udf_sampler_02():
-    """
-    Feature: Test GeneratorDataset with Sampler
-    Description: Testing GeneratorDataset with udf sampler
-    Expectation: Success
-    """
-    class MySampler(ds.Sampler):
-        '''test'''
-
-        def __init__(self):
-            super().__init__()
-            # at this stage, self.dataset_size and self.num_samples are not yet known
-            self.cnt = 0
-            self.num_samples = 20
-
-        def __iter__(self):  # first epoch, all 0, second epoch all 1, third all 2 etc.. ...
-            return iter([self.cnt for i in range(self.num_samples)])
-
-        def reset(self):
-            self.cnt = (self.cnt + 1) % self.dataset_size
-
-    dataset_call_py_transforms_func(sampler=MySampler(), sampler_num=20)
 
 
 def test_func_generator_with_memory_usage_check():
@@ -4093,102 +3486,179 @@ def test_func_generator_with_memory_usage_check():
     assert end_init_memory_difference < 3
 
 
-if __name__ == "__main__":
-    test_generator_0()
-    test_generator_1()
-    test_generator_2()
-    test_generator_3()
-    test_generator_4()
-    test_generator_5()
-    test_generator_6()
-    test_generator_7()
-    test_generator_8()
-    test_generator_9()
-    test_generator_10()
-    test_generator_11()
-    test_generator_12()
-    test_generator_13()
-    test_generator_14()
-    test_generator_15()
-    test_generator_16()
-    test_generator_17()
-    test_generator_18()
-    test_generator_19()
-    test_generator_20()
-    test_generator_error_1()
-    test_generator_error_2()
-    test_generator_error_4()
-    test_generator_sequential_sampler()
-    test_generator_random_sampler()
-    test_generator_distributed_sampler()
-    test_generator_num_samples()
-    test_generator_num_samples_underflow()
-    test_generator_schema()
-    test_generator_dataset_size_0()
-    test_generator_dataset_size_1()
-    test_generator_dataset_size_2()
-    test_generator_dataset_size_3()
-    test_generator_dataset_size_4()
-    test_generator_dataset_size_5()
-    test_explicit_deepcopy()
-    test_func_generator_dataset_005()
-    test_func_generator_dataset_with_zip_source()
-    test_generator_mixed_operator()
-    test_generator_single_input_0()
-    test_generator_single_input_1()
-    test_generator_single_input_2()
-    test_generator_single_input_3()
-    test_generator_single_input_4()
-    test_generator_single_input_5()
-    test_generator_single_input_6()
-    test_generator_one_dimensional_numpy_input()
-    test_generator_with_seed_5489_when_dist()
-    test_generator_with_set_seed_when_dist()
-    test_generator_with_single_numpy()
-    test_generator_with_single_numpy_with_next()
-    test_generator_with_single_numpy_with_yield()
-    test_generator_traceback()
-    test_generator_split_with_yield()
-    test_generator_split_with_getitem()
-    test_generator_split_with_next()
-    test_generator_with_next_and_dataset_size_when_iter()
-    test_generator_multiprocessing_with_fixed_handle()
-    test_generator_with_dynamic_shared_queue()
-    test_generator_shared_queue_reuse_with_fixed_shape()
-    test_generator_shared_queue_reuse_with_dynamic_shape()
-    test_generator_shared_queue_reuse_with_empty_numpy()
-    test_generator_with_invalid_max_row_size()
-    test_generator_with_generator_object_iterated_multi_times()
-    test_generator_with_seed_and_multiprocessing_mode()
-    test_release_generator_dataset_iter(1)
-    test_generator_dataset_getitem_success_distributed_sampler(None, True)
-    test_generator_dataset_getitem_success_other_sampler(None, True)
-    test_generator_dataset_getitem_success_sampler()
-    test_generator_dataset_getitem_schema()
-    test_generator_dataset_getitem_two_level_pipeline()
-    test_generator_dataset_getitem_exception()
-    test_generator_with_batch_sampler(False)
-    test_generator_with_batch_sampler_and_split()
-    test_generator_with_collate_fn(False)
-    test_generator_with_batch_sampler_in_recovery_mode()
-    test_generator_batch_sampler_exclusive_with_other_param({"num_samples": 1})
-    test_generator_invalid_batch_sampler()
-    test_generator_invalid_collate_fn()
-    test_generator_dataset_with_parallel_convert()
-    test_generator_dataset_with_parallel_convert_break()
-    test_generator_dataset_with_parallel_convert_exception()
-    test_generator_dataset_debug_mode()
-    test_perf_do_copy_parameter()
-    test_generatordataset_do_not_support_PKSampler()
-    test_generatordataset_with_distributed_sampler_01()
-    test_generatordataset_with_distributed_sampler_02()
-    test_func_generator_with_random_sampler()
-    test_func_generator_with_sequential_sampler_01()
-    test_func_generator_with_sequential_sampler_02()
-    test_func_generator_with_weight_random_sampler_01()
-    test_func_generator_with_weight_random_sampler_02()
-    test_func_generator_with_subset_random_sampler_01()
-    test_func_generator_with_subset_random_sampler_02()
-    test_func_generator_with_udf_sampler_01()
-    test_func_generator_with_udf_sampler_02()
-    test_func_generator_with_memory_usage_check()
+def dataset_call_py_transforms_func(sampler, sampler_num):
+    """
+    All of py_transforms and sampler
+    Returns:
+    """
+    unused_crop_height = 100
+    unused_crop_width = 50
+    unused_target_height = 200
+    unused_target_width = 200
+    unused_scalelb = 0.5
+    unused_scaleub = 200.5
+    unused_aspectlb = 200.5
+    unused_aspectub = 200.5
+    unused_targetheight = 100
+    unused_targetwidth = 100
+    unused_interpolation = Inter.BILINEAR
+    unused_maxiter = 100
+    unused_transformation_matrix = np.ones([432, 432])
+    unused_mean_vector = np.ones([432])
+    unused_num_parallel_workers = 2
+    unused_l1 = []
+
+    dataset = ds.GeneratorDataset(custom_dataset, column_names=["image", "label"], sampler=sampler,
+                                  num_parallel_workers=2)  # ,python_multiprocessing=True)
+
+    dataset_num = 0
+    for _ in dataset.create_dict_iterator(output_numpy=True):
+        dataset_num += 1
+    assert dataset_num == sampler_num
+
+
+
+def dataset_call_c_transforms_func(sampler, shard_id=0):
+    """
+    All of c_transforms and sampler
+    Returns:
+    """
+
+
+    unused_crop_height = 300
+    unused_crop_width = 300
+    unused_target_height = 200
+    unused_target_width = 200
+    unused_interpolation_mode = Inter.BILINEAR
+    unused_scalelb = 0.5
+    unused_scaleub = 200.5
+    unused_aspectlb = 200.5
+    unused_aspectub = 200.5
+    unused_targetheight = 100
+    unused_targetwidth = 100
+    unused_interpolation = Inter.BILINEAR
+    unused_maxiter = 100
+    unused_skipcount = 5
+    unused_takecount = 3
+    unused_repeatcount = 10
+    num_parallel_workers = 2
+    l1 = []
+
+    op1 = UserPyOp()
+    cb1 = UserCallback(op1)
+    dataset = ds.GeneratorDataset(custom_dataset, column_names=["image", "label"], sampler=sampler,
+                                  num_parallel_workers=num_parallel_workers)
+    dataset = dataset.map(operations=op1, callbacks=cb1)
+
+    beforesize = 0
+    for data in dataset.create_dict_iterator(output_numpy=True):
+        l1.append(data['image'])
+        beforesize += 1
+    l1.clear()
+
+
+
+def test_generatordataset_with_distributed_sampler_01():
+    """
+    Feature: Test GeneratorDataset with Sampler
+    Description: Testing GeneratorDataset with distributed sampler
+    Expectation: Success
+    """
+
+    sampler = ds.DistributedSampler(2, 1)
+    dataset_call_c_transforms_func(sampler=sampler)
+
+
+
+def test_generatordataset_with_distributed_sampler_02():
+    """
+    Feature: Test GeneratorDataset with Sampler
+    Description: Testing GeneratorDataset with distributed sampler
+    Expectation: Success
+    """
+
+    sampler = ds.DistributedSampler(2, 1, num_samples=100, offset=1)
+    dataset_call_py_transforms_func(sampler=sampler, sampler_num=10)
+
+
+
+def test_func_generator_with_random_sampler():
+    """
+    Feature: Test GeneratorDataset with Sampler
+    Description: Testing GeneratorDataset with random sampler
+    Expectation: Success
+    """
+    sampler = ds.RandomSampler(True, 15)
+    dataset_call_py_transforms_func(sampler=sampler, sampler_num=15)
+
+
+
+def test_func_generator_with_sequential_sampler_01():
+    """
+    Feature: Test GeneratorDataset with Sampler
+    Description: Testing GeneratorDataset with sequential sampler
+    Expectation: Success
+    """
+    sampler = ds.SequentialSampler()
+    dataset_call_c_transforms_func(sampler=sampler)
+
+
+
+def test_func_generator_with_sequential_sampler_02():
+    """
+    Feature: Test GeneratorDataset with Sampler
+    Description: Testing GeneratorDataset with sequential sampler
+    Expectation: Success
+    """
+    sampler = ds.SequentialSampler(start_index=2, num_samples=100)
+    dataset_call_py_transforms_func(sampler=sampler, sampler_num=18)
+
+
+
+def test_func_generator_with_udf_sampler_01():
+    """
+    Feature: Test GeneratorDataset with Sampler
+    Description: Testing GeneratorDataset with udf sampler
+    Expectation: Success
+    """
+    class MySampler(ds.Sampler):
+        '''test'''
+
+        def __init__(self):
+            super().__init__()
+            # at this stage, self.dataset_size and self.num_samples are not yet known
+            self.cnt = 0
+            self.num_samples = 100
+
+        def __iter__(self):  # first epoch, all 0, second epoch all 1, third all 2 etc.. ...
+            return iter([self.cnt for i in range(self.num_samples)])
+
+        def reset(self):
+            self.cnt = (self.cnt + 1) % self.dataset_size
+
+    dataset_call_c_transforms_func(sampler=MySampler())
+
+
+
+def test_func_generator_with_udf_sampler_02():
+    """
+    Feature: Test GeneratorDataset with Sampler
+    Description: Testing GeneratorDataset with udf sampler
+    Expectation: Success
+    """
+    class MySampler(ds.Sampler):
+        '''test'''
+
+        def __init__(self):
+            super().__init__()
+            # at this stage, self.dataset_size and self.num_samples are not yet known
+            self.cnt = 0
+            self.num_samples = 20
+
+        def __iter__(self):  # first epoch, all 0, second epoch all 1, third all 2 etc.. ...
+            return iter([self.cnt for i in range(self.num_samples)])
+
+        def reset(self):
+            self.cnt = (self.cnt + 1) % self.dataset_size
+
+    dataset_call_py_transforms_func(sampler=MySampler(), sampler_num=20)

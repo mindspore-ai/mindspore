@@ -21,10 +21,7 @@ import pytest
 
 import mindspore as ms
 import mindspore.dataset as ds
-import mindspore.dataset.transforms
 import mindspore.dataset.vision.transforms as vision
-from mindspore import log as logger
-from util import save_and_check_md5_pil
 
 GENERATE_GOLDEN = False
 
@@ -34,55 +31,8 @@ TEST_DATA_DATASET_FUNC ="../data/dataset/"
 DATA_DIR_1 = os.path.join(TEST_DATA_DATASET_FUNC, "testImageNetData", "train")
 
 
-def test_to_pil_01():
-    """
-    Feature: ToPIL op
-    Description: Test ToPIL op with md5 comparison where input is already PIL image
-    Expectation: Passes the md5 check test
-    """
-    logger.info("test_to_pil_01")
-
-    # Generate dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    transforms = [
-        vision.Decode(True),
-        # If input is already PIL image.
-        vision.ToPIL(),
-        vision.CenterCrop(375),
-        vision.ToTensor()
-    ]
-    transform = mindspore.dataset.transforms.Compose(transforms)
-    data1 = data1.map(operations=transform, input_columns=["image"])
-
-    # Compare with expected md5 from images
-    filename = "to_pil_01_result.npz"
-    save_and_check_md5_pil(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_to_pil_02():
-    """
-    Feature: ToPIL op
-    Description: Test ToPIL op with md5 comparison where input is not a PIL image
-    Expectation: Passes the md5 check test
-    """
-    logger.info("test_to_pil_02")
-
-    # Generate dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    transforms = [
-        # If input type is not PIL.
-        vision.ToPIL(),
-        vision.CenterCrop(375),
-        vision.ToTensor()
-    ]
-    transform = mindspore.dataset.transforms.Compose(transforms)
-    data1 = data1.map(operations=decode_op, input_columns=["image"])
-    data1 = data1.map(operations=transform, input_columns=["image"])
-
-    # Compare with expected md5 from images
-    filename = "to_pil_02_result.npz"
-    save_and_check_md5_pil(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
 def test_to_pil_invalid_type():
@@ -212,12 +162,3 @@ def test_to_pil_operation_01():
     # ToPIL operation: Passing extra parameters
     with pytest.raises(TypeError, match="takes 1 positional argument but 2 were given"):
         vision.ToPIL(True)
-
-
-if __name__ == "__main__":
-    test_to_pil_01()
-    test_to_pil_02()
-    test_to_pil_invalid_type()
-    test_to_pil_invalid_shape()
-    test_to_pil_invalid_dtype()
-    test_to_pil_operation_01()

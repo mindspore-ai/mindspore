@@ -1015,7 +1015,6 @@ class CocoDataset(MappableDataset, VisionBaseDataset):
         - When the parameter `extra_metadata` is set to ``True``, use the rename operation to remove the prefix
           `_meta-` from the additional data column `_meta-filename`.
           Otherwise, this additional data column will not appear in the rows returned by the iteration.
-        - Not support :class:`mindspore.dataset.PKSampler` for `sampler` parameter yet.
         - The parameters `num_samples` , `shuffle` , `num_shards` , `shard_id` can be used to control the sampler
           used in the dataset, and their effects when combined with parameter `sampler` are as follows.
 

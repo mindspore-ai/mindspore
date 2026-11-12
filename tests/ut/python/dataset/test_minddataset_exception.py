@@ -14,6 +14,7 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Dataset regression coverage for minddataset exception."""
 import os
 
 import numpy as np
@@ -111,9 +112,9 @@ def test_invalid_mindrecord():
     Expectation: Exception is raised as expected
     """
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    with open(file_name, 'w') as f:
+    with open(file_name, 'w', encoding="utf-8") as f:
         f.write('just for test')
-    with open(file_name + '.db', 'w') as f:
+    with open(file_name + '.db', 'w', encoding="utf-8") as f:
         f.write('just for test')
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
@@ -145,42 +146,8 @@ def test_minddataset_lack_db():
     os.remove(file_name)
 
 
-def test_cv_minddataset_pk_sample_error_class_column():
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    create_cv_mindrecord(file_name, 1)
-    columns_list = ["data", "file_name", "label"]
-    num_readers = 4
-    sampler = ds.PKSampler(5, None, True, 'no_exist_column')
-    with pytest.raises(RuntimeError, match="Invalid data, 'class_column': no_exist_column can not found "
-                                           "in fields of mindrecord files. Please check 'class_column' in PKSampler"):
-        data_set = ds.MindDataset(
-            file_name, columns_list, num_readers, sampler=sampler)
-        num_iter = 0
-        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
-            num_iter += 1
-    os.remove(file_name)
-    os.remove("{}.db".format(file_name))
 
 
-def test_cv_minddataset_pk_sample_exclusive_shuffle():
-    """
-    Feature: MindDataset
-    Description: Test MindDataset by specifying sampler and shuffle at the same time
-    Expectation: Exception is raised as expected
-    """
-    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
-    create_cv_mindrecord(file_name, 1)
-    columns_list = ["data", "file_name", "label"]
-    num_readers = 4
-    sampler = ds.PKSampler(2)
-    with pytest.raises(Exception, match="sampler and shuffle cannot be specified at the same time."):
-        data_set = ds.MindDataset(file_name, columns_list, num_readers,
-                                  sampler=sampler, shuffle=False)
-        num_iter = 0
-        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
-            num_iter += 1
-    os.remove(file_name)
-    os.remove("{}.db".format(file_name))
 
 
 def test_cv_minddataset_reader_different_schema():
@@ -259,9 +226,9 @@ def test_minddataset_invalidate_num_shards():
         os.remove(file_name)
         os.remove("{}.db".format(file_name))
         raise error
-    else:
-        os.remove(file_name)
-        os.remove("{}.db".format(file_name))
+
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
 
 
 def test_minddataset_invalidate_shard_id():
@@ -287,9 +254,9 @@ def test_minddataset_invalidate_shard_id():
         os.remove(file_name)
         os.remove("{}.db".format(file_name))
         raise error
-    else:
-        os.remove(file_name)
-        os.remove("{}.db".format(file_name))
+
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
 
 
 def test_minddataset_shard_id_bigger_than_num_shard():
@@ -329,9 +296,9 @@ def test_minddataset_shard_id_bigger_than_num_shard():
         os.remove(file_name)
         os.remove("{}.db".format(file_name))
         raise error
-    else:
-        os.remove(file_name)
-        os.remove("{}.db".format(file_name))
+
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
 
 
 def test_cv_minddataset_partition_num_samples_equals_0():
@@ -363,9 +330,9 @@ def test_cv_minddataset_partition_num_samples_equals_0():
         os.remove(file_name)
         os.remove("{}.db".format(file_name))
         raise error
-    else:
-        os.remove(file_name)
-        os.remove("{}.db".format(file_name))
+
+    os.remove(file_name)
+    os.remove("{}.db".format(file_name))
 
 
 def test_mindrecord_exception():
@@ -852,29 +819,3 @@ def test_write_with_invalid_float_type(cleanup_tmp_file):
         writer.commit()
     assert "has stopped abnormally. Please check the above log" in str(err) or \
            "Parallel write worker error, please check the above log" in str(err)
-
-
-if __name__ == '__main__':
-    test_cv_lack_json()
-    test_cv_lack_mindrecord()
-    test_invalid_mindrecord()
-    test_minddataset_lack_db()
-    test_cv_minddataset_pk_sample_error_class_column()
-    test_cv_minddataset_pk_sample_exclusive_shuffle()
-    test_cv_minddataset_reader_different_schema()
-    test_cv_minddataset_reader_different_page_size()
-    test_minddataset_invalidate_num_shards()
-    test_minddataset_invalidate_shard_id()
-    test_minddataset_shard_id_bigger_than_num_shard()
-    test_cv_minddataset_partition_num_samples_equals_0()
-    test_mindrecord_exception()
-    test_rename_exception_01()
-    test_rename_exception_02()
-    test_rename_exception_03()
-    test_rename_exception_04()
-    test_rename_exception_05()
-    test_rename_exception_06()
-    test_rename_exception_07()
-    test_rename_exception_08()
-    test_rename_exception_09()
-    test_write_with_invalid_float_type(cleanup_tmp_file)

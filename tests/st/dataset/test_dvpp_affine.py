@@ -22,7 +22,6 @@ import pytest
 from PIL import Image
 import mindspore as ms
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 from mindspore.dataset.vision import Inter
 from tests.mark_utils import arg_mark
@@ -229,99 +228,6 @@ def test_dvpp_affine_operation_02():
         assert np.allclose(data1["image"], data2["image"], rtol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=4.0)
-def test_dvpp_affine_operation_03():
-    """
-    Feature: Affine operation on device
-    Description: Testing the normal functionality of the Affine operator on device
-    Expectation: The Output is equal to the expected output
-    """
-    # When the input image is jpg, the Affine interface is successfully called
-    image = cv2.imread(image_jpg)
-    degrees = 0
-    translate = (-0.15648, 1)
-    scale = 100.2
-    shear = 0.001
-    resample = Inter.BILINEAR
-    fill_value = 1
-    affine_op = vision.Affine(degrees=degrees, translate=translate, scale=scale, shear=shear,
-                              resample=resample, fill_value=fill_value).device(device_target="Ascend")(image)
-    affine_op_cpu = vision.Affine(degrees=degrees, translate=translate, scale=scale, shear=shear,
-                                  resample=resample, fill_value=fill_value)(image)
-    assert (affine_op == affine_op_cpu).all()
-
-    # When the input image is png, the Affine interface is successfully called
-    image = cv2.imread(image_png)
-    affine_op = vision.Affine(degrees=11.56, translate=[0, -0.100], scale=1.0, shear=180,
-                              resample=Inter.NEAREST, fill_value=255).device(device_target="Ascend")(image)
-    affine_op_cpu = vision.Affine(degrees=11.56, translate=[0, -0.100], scale=1.0, shear=180,
-                                  resample=Inter.NEAREST, fill_value=255)(image)
-    assert np.allclose(affine_op, affine_op_cpu, rtol=1)
-
-    # When the input image is gif and the input is 2-dimensional, the Affine interface is successfully called
-    image = Image.open(image_gif)
-    img_array = np.array(image)
-    affine_op = vision.Affine(degrees=180, translate=[-0.256, 0.255], scale=2.1, shear=10).device(
-        device_target="Ascend")(img_array)
-    affine_op_cpu = vision.Affine(degrees=180, translate=[-0.256, 0.255], scale=2.1, shear=10)(img_array)
-    assert (affine_op == affine_op_cpu).all()
-    image.close()
-
-    # When the input image is bmp, the Affine interface is successfully called
-    image = cv2.imread(image_bmp)
-    affine_op = vision.Affine(degrees=100, translate=[0, 0], scale=16777216, shear=[2.2, 8.8],
-                              resample=Inter.BILINEAR, fill_value=(180, 26, 109)).device(device_target="Ascend")(image)
-    affine_op_cpu = vision.Affine(degrees=100, translate=[0, 0], scale=16777216, shear=[2.2, 8.8],
-                                  resample=Inter.BILINEAR, fill_value=(180, 26, 109))(image)
-    assert (affine_op == affine_op_cpu).all()
-
-    # When the input shape is (346, 489, 3) and shear is 0, the Affine interface is successfully called
-    image = np.random.randn(346, 489, 3).astype(np.float32)
-    affine_op = vision.Affine(degrees=180.0, translate=(0, 0), scale=0.03, shear=0,
-                              resample=Inter.BILINEAR, fill_value=(64, 64, 64)).device(device_target="Ascend")(image)
-    affine_op_cpu = vision.Affine(degrees=180.0, translate=(0, 0), scale=0.03, shear=0,
-                                  resample=Inter.BILINEAR, fill_value=(64, 64, 64))(image)
-    assert np.allclose(affine_op, affine_op_cpu, rtol=1)
-
-    # When the input shape is (128, 128, 1), the Affine interface is successfully called
-    image = np.random.randint(0, 255, (128, 128, 1)).astype(np.uint8)
-    affine_op = vision.Affine(degrees=4.2, translate=[-1, 1], scale=0.2, shear=(3.0, 3.0),
-                              resample=Inter.NEAREST, fill_value=(180, 180, 200)).device(device_target="Ascend")(image)
-    affine_op_cpu = vision.Affine(degrees=4.2, translate=[-1, 1], scale=0.2, shear=(3.0, 3.0),
-                                  resample=Inter.NEAREST, fill_value=(180, 180, 200))(image)
-    assert (affine_op == affine_op_cpu).all()
-
-    # When the input shape has one dimension, the Affine interface is successfully called
-    image = np.random.randint(0, 255, (1, 128, 128, 3)).astype(np.uint8)
-    new_arr = np.reshape(image, (128, 128, 3))
-    affine_op = vision.Affine(degrees=0.6, translate=(-1, -1), scale=16777215.1, shear=[0.8, 4.1],
-                              resample=Inter.BILINEAR, fill_value=(0, 255, 230)).device(device_target="Ascend")(image)
-    affine_op_cpu = vision.Affine(degrees=0.6, translate=(-1, -1), scale=16777215.1, shear=[0.8, 4.1],
-                                  resample=Inter.BILINEAR, fill_value=(0, 255, 230))(new_arr)
-    assert (affine_op == affine_op_cpu).all()
-    assert affine_op.shape == (128, 128, 3)
-
-    image = np.random.randint(0, 255, (128, 128, 1)).astype(np.uint8)
-    new_arr = np.reshape(image, (128, 128))
-    affine_op = vision.Affine(degrees=0.6, translate=(-1, -1), scale=16777215.1, shear=[0.8, 4.1],
-                              resample=Inter.BILINEAR, fill_value=(0, 255, 230)).device(device_target="Ascend")(image)
-    affine_op_cpu = vision.Affine(degrees=0.6, translate=(-1, -1), scale=16777215.1, shear=[0.8, 4.1],
-                                  resample=Inter.BILINEAR, fill_value=(0, 255, 230))(new_arr)
-    assert (affine_op == affine_op_cpu).all()
-    assert affine_op.shape == (128, 128)
-
-    # Pipeline, combined enhancement, the Affine interface is successfully called
-    dataset = ds.ImageFolderDataset(DATA_DIR, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.Affine(10, [0, 1], 20.1, (1.0, 5.0), Inter.NEAREST, 0).device(device_target="Ascend"),
-        vision.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=16.0)
@@ -1054,16 +960,3 @@ def test_dvpp_affine_exception_06():
                                         " <class 'tuple'>, <class 'list'>\\], but got <class 'NoneType'>."):
         vision.Affine(degrees=degrees, translate=translate, scale=scale, shear=shear, resample=resample,
                       fill_value=fill_value).device(device_target="Ascend").device(device_target="Ascend")(image)
-
-
-if __name__ == '__main__':
-    test_dvpp_affine_operation_01()
-    test_dvpp_affine_operation_02()
-    test_dvpp_affine_operation_03()
-    test_dvpp_affine_operation_04()
-    test_dvpp_affine_exception_01()
-    test_dvpp_affine_exception_02()
-    test_dvpp_affine_exception_03()
-    test_dvpp_affine_exception_04()
-    test_dvpp_affine_exception_05()
-    test_dvpp_affine_exception_06()

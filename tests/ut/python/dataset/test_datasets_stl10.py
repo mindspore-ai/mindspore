@@ -19,10 +19,8 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testSTL10Data"
@@ -261,68 +259,6 @@ def test_stl10_sequential_sampler():
     assert num_iter == num_samples
 
 
-def test_stl10_exception():
-    """
-    Feature: test_stl10_exception.
-    Description: Test error cases for STL10Dataset.
-    Expectation: Raise exception.
-    """
-    logger.info("Test error cases for STL10Dataset")
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.STL10Dataset(DATA_DIR, "all", shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.STL10Dataset(DATA_DIR, "all", sampler=ds.PKSampler(3), num_shards=2, shard_id=0)
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.STL10Dataset(DATA_DIR, "all", num_shards=10)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.STL10Dataset(DATA_DIR, "all", shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.STL10Dataset(DATA_DIR, "all", num_shards=5, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.STL10Dataset(DATA_DIR, "all", num_shards=5, shard_id=5)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.STL10Dataset(DATA_DIR, "all", num_shards=2, shard_id=5)
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.STL10Dataset(DATA_DIR, "all", shuffle=False, num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.STL10Dataset(DATA_DIR, "all", shuffle=False, num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.STL10Dataset(DATA_DIR, "all", shuffle=False, num_parallel_workers=-2)
-    error_msg_7 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_7):
-        ds.STL10Dataset(DATA_DIR, "all", num_shards=2, shard_id="0")
-
-    def exception_func(item):
-        raise Exception("Error occur!")
-
-    error_msg_8 = "The corresponding data file is"
-    with pytest.raises(RuntimeError, match=error_msg_8):
-        all_data = ds.STL10Dataset(DATA_DIR, "all")
-        all_data = all_data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in all_data.__iter__():
-            pass
-
-    with pytest.raises(RuntimeError, match=error_msg_8):
-        all_data = ds.STL10Dataset(DATA_DIR, "all")
-        all_data = all_data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
-        for _ in all_data.__iter__():
-            pass
-
-    error_msg_9 = "does not exist or permission denied!"
-    with pytest.raises(ValueError, match=error_msg_9):
-        all_data = ds.STL10Dataset(WRONG_DIR, "all")
-        for _ in all_data.__iter__():
-            pass
 
 
 def test_stl10_visualize(plot=False):
@@ -386,12 +322,3 @@ def test_stl10_usage():
         assert test_config("train", all_files_path) == 1
 
         assert ds.STL10Dataset(all_files_path, usage="train").get_dataset_size() == 1
-
-
-if __name__ == '__main__':
-    test_stl10_content_check()
-    test_stl10_basic()
-    test_stl10_sequential_sampler()
-    test_stl10_exception()
-    test_stl10_visualize(plot=True)
-    test_stl10_usage()

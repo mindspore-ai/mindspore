@@ -26,7 +26,6 @@ import mindspore.dataset.text as text
 import mindspore.dataset.transforms as transforms
 import mindspore.dataset.vision as vision
 from mindspore.dataset.text import JiebaMode, NormalizeForm, SentencePieceModel, SPieceTokenizerOutType
-from mindspore.dataset.transforms import Relational
 from mindspore.dataset.vision import Border, Inter
 
 
@@ -39,70 +38,14 @@ def test_transforms_transform_input_consistency():
     seed = ds.config.get_seed()
     ds.config.set_seed(12345)
 
-    data1 = np.array([1, 2, 3])
-    data1_copy = copy.deepcopy(data1)
-    data2 = [1, 2, 3]
-    data2_copy = copy.deepcopy(data2)
-
     def check_result(output, inputs, inputs_copy):
         assert (inputs == inputs_copy).all()
         assert not np.array_equal(output, inputs_copy)
-
-    def check_result2(output, inputs, inputs_copy):
-        assert inputs == inputs_copy
-        assert (output != np.array(inputs_copy)).any()
-
-    def check_result3(output, inputs, inputs_copy):
-        assert inputs == inputs_copy
-        assert not np.array_equal(output, inputs_copy)
-
-    out = transforms.Compose([transforms.Fill(10), transforms.Mask(Relational.EQ, 100)])(data1_copy)
-    check_result(out, data1, data1_copy)
-
-    pre_array = np.array([10, 20])
-    append_array = np.array([100])
-    out = transforms.Concatenate(axis=0, prepend=pre_array, append=append_array)(data1_copy)
-    check_result(out, data1, data1_copy)
-
-    out = transforms.Duplicate()(data2_copy)
-    check_result3(out, data2, data2_copy)
-
-    out = transforms.Fill(100)(data1_copy)
-    check_result(out, data1, data1_copy)
-
-    out = transforms.Mask(Relational.EQ, 2)(data2_copy)
-    check_result2(out, data2, data2_copy)
-
-    out = transforms.OneHot(num_classes=5, smoothing_rate=0)(data1_copy)
-    check_result(out, data1, data1_copy)
-
-    out = transforms.PadEnd(pad_shape=[4], pad_value=10)(data2_copy)
-    check_result3(out, data2, data2_copy)
-
-    data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
-    data_copy = copy.deepcopy(data)
-    transform = [vision.HsvToRgb(is_hwc=True), vision.Crop((0, 0), 10), vision.ToTensor()]
-    out = transforms.RandomApply(transform, prob=1.0)(data_copy)
-    check_result(out, data, data_copy)
-
-    out = transforms.RandomChoice([transforms.Fill(100)])(data1_copy)
-    check_result(out, data1, data1_copy)
-
-    out = transforms.RandomOrder([transforms.Mask(Relational.EQ, 100)])(data1_copy)
-    check_result(out, data1, data1_copy)
-
-    out = transforms.Slice(slice(1, 3))(data1_copy)
-    check_result(out, data1, data1_copy)
 
     data = np.array([2.71606445312564e-03, 6.3476562564e-03]).astype(np.float64)
     data_copy = copy.deepcopy(data)
     out = transforms.TypeCast(np.float16)(data_copy)
     check_result(out, data, data_copy)
-
-    data = [[0, -1, -2, -1, 2], [2, -0, 2, 1, -3]]
-    data_copy = copy.deepcopy(data)
-    out = transforms.Unique()(data_copy)
-    check_result3(out, data, data_copy)
 
     ds.config.set_seed(seed)
 
@@ -172,13 +115,6 @@ def test_vision_transform_input_consistency():
 
     out = vision.AutoContrast(cutoff=10.0, ignore=[10, 20])(data2_copy)
     check_result_any(out, data2, data2_copy)
-
-    data = copy.deepcopy(data3_copy.astype(np.float32))
-    func_data = data
-    func_bboxes = np.array([[0, 0, data.shape[1], data.shape[0]]], dtype=data.dtype)
-    func_data_copy = copy.deepcopy(func_data)
-    out = vision.BoundingBoxAugment(transforms.Fill(100), 1.0)(func_data_copy, func_bboxes)
-    check_result(out, func_data, func_data_copy)
 
     out = vision.CenterCrop(1)(data2_copy)
     check_result_any(out, data2, data2_copy)

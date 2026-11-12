@@ -19,8 +19,14 @@ import inspect
 import numpy as np
 
 from mindspore._c_expression import typing
-from ..core.validator_helpers import parse_user_args, type_check, check_pos_int64, check_value, check_positive, \
-    check_tensor_op, type_check_list
+from ..core.validator_helpers import (
+    parse_user_args,
+    type_check,
+    check_value,
+    check_positive,
+    check_tensor_op,
+    type_check_list,
+)
 
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
@@ -47,24 +53,6 @@ def check_fill_value(method):
     def new_method(self, *args, **kwargs):
         [fill_value], _ = parse_user_args(method, *args, **kwargs)
         type_check(fill_value, (str, float, bool, int, bytes), "fill_value")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_one_hot_op(method):
-    """Wrapper method to check the parameters of one_hot_op."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [num_classes, smoothing_rate], _ = parse_user_args(method, *args, **kwargs)
-        type_check(smoothing_rate, (int, float), "smoothing_rate")
-        type_check(num_classes, (int,), "num_classes")
-        check_positive(num_classes)
-
-        if smoothing_rate is not None:
-            check_value(smoothing_rate, [0., 1.], "smoothing_rate")
 
         return method(self, *args, **kwargs)
 
@@ -112,95 +100,6 @@ def check_slice_option(method):
 
             if isinstance(slice_option, list):
                 type_check_list(slice_option, (int,), "slice_option")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_slice_op(method):
-    """Wrapper method to check the parameters of slice."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [slice_op], _ = parse_user_args(method, *args, **kwargs)
-
-        for s in slice_op:
-            from .transforms import _SliceOption
-            if s is not None:
-                type_check(s, (int, list, slice, bool, type(Ellipsis), _SliceOption), "slice")
-                if isinstance(s, list) and s:
-                    if isinstance(s[0], int):
-                        type_check_list(s, (int,), "slice")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_mask_op_new(method):
-    """Wrapper method to check the parameters of mask."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [operator, constant, dtype], _ = parse_user_args(method, *args, **kwargs)
-
-        from .transforms import Relational
-        type_check(operator, (Relational,), "operator")
-        type_check(constant, (str, float, bool, int, bytes), "constant")
-        type_check(dtype, (typing.Type,), "dtype")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_pad_end(method):
-    """Wrapper method to check the parameters of PadEnd."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-
-        [pad_shape, pad_value], _ = parse_user_args(method, *args, **kwargs)
-
-        if pad_value is not None:
-            type_check(pad_value, (str, float, bool, int, bytes), "pad_value")
-        type_check(pad_shape, (list,), "pad_shape")
-
-        for dim in pad_shape:
-            if dim is not None:
-                if isinstance(dim, int):
-                    check_pos_int64(dim)
-                else:
-                    raise TypeError("a value in the list is not an integer.")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_concat_type(method):
-    """Wrapper method to check the parameters of concatenation op."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-
-        [axis, prepend, append], _ = parse_user_args(method, *args, **kwargs)
-
-        if axis is not None:
-            type_check(axis, (int,), "axis")
-            if axis not in (0, -1):
-                raise ValueError("only 1D concatenation supported.")
-
-        if prepend is not None:
-            type_check(prepend, (np.ndarray,), "prepend")
-            if len(prepend.shape) != 1:
-                raise ValueError("can only prepend 1D arrays.")
-
-        if append is not None:
-            type_check(append, (np.ndarray,), "append")
-            if len(append.shape) != 1:
-                raise ValueError("can only append 1D arrays.")
 
         return method(self, *args, **kwargs)
 

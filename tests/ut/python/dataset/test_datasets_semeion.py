@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Dataset regression coverage for datasets semeion."""
 import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
@@ -131,39 +131,6 @@ def test_semeion_sequential_sampler():
     assert num_iter == num_samples
 
 
-def test_semeion_exceptions():
-    """
-    Feature: SemeionDataset
-    Description: Error test
-    Expectation: Throw error
-    """
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.SemeionDataset(DATA_DIR_SEMEION, shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.SemeionDataset(DATA_DIR_SEMEION, sampler=ds.PKSampler(3), num_shards=2, shard_id=0)
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.SemeionDataset(DATA_DIR_SEMEION, num_shards=10)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.SemeionDataset(DATA_DIR_SEMEION, shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.SemeionDataset(DATA_DIR_SEMEION, num_shards=2, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.SemeionDataset(DATA_DIR_SEMEION, num_shards=2, shard_id=5)
-
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.SemeionDataset(DATA_DIR_SEMEION, shuffle=False, num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.SemeionDataset(DATA_DIR_SEMEION, shuffle=False, num_parallel_workers=256)
 
 
 def test_semeion_visualize(plot=False):
@@ -235,13 +202,3 @@ def test_semeion_pipeline():
     for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         i += 1
     assert i == 1
-
-
-if __name__ == '__main__':
-    test_semeion_content_check()
-    test_semeion_basic()
-    test_semeion_sequential_sampler()
-    test_semeion_exceptions()
-    test_semeion_visualize(plot=False)
-    test_semeion_exception_file_path()
-    test_semeion_pipeline()

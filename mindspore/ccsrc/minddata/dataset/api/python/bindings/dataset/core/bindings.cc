@@ -74,13 +74,6 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_enable_shared_mem", &ConfigManager::enable_shared_mem)
                     .def("set_auto_offload", &ConfigManager::set_auto_offload)
                     .def("get_auto_offload", &ConfigManager::get_auto_offload)
-                    .def("set_enable_autotune",
-                         [](ConfigManager &c, bool enable, bool save_autoconfig, std::string json_filepath) {
-                           THROW_IF_ERROR(c.set_enable_autotune(enable, save_autoconfig, json_filepath));
-                         })
-                    .def("get_enable_autotune", &ConfigManager::enable_autotune)
-                    .def("set_autotune_interval", &ConfigManager::set_autotune_interval)
-                    .def("get_autotune_interval", &ConfigManager::autotune_interval)
                     .def("set_enable_watchdog", &ConfigManager::set_enable_watchdog)
                     .def("get_enable_watchdog", &ConfigManager::enable_watchdog)
                     .def("set_multiprocessing_timeout_interval", &ConfigManager::set_multiprocessing_timeout_interval)
@@ -89,7 +82,6 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_dynamic_shape", &ConfigManager::dynamic_shape)
                     .def("set_fast_recovery", &ConfigManager::set_fast_recovery)
                     .def("get_fast_recovery", &ConfigManager::fast_recovery)
-                    .def("set_debug_mode", &ConfigManager::set_debug_mode)
                     .def("get_debug_mode", &ConfigManager::get_debug_mode)
                     .def("set_error_samples_mode", &ConfigManager::set_error_samples_mode)
                     .def("get_error_samples_mode", &ConfigManager::get_error_samples_mode)

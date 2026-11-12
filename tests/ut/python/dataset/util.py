@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Dataset regression coverage for util."""
 import hashlib
 import json
 import os
@@ -24,6 +25,8 @@ import matplotlib.patches as patches
 import PIL
 # import jsbeautifier
 import mindspore.dataset as ds
+from mindspore.dataset.core.config import _get_enable_shared_mem, _set_enable_shared_mem
+from mindspore.dataset.core.config import _get_num_parallel_workers
 from mindspore import log as logger
 import mindspore.dataset.vision.transforms as vision
 
@@ -71,7 +74,7 @@ def _compare_to_golden_dict(golden_ref_dir, result_dict, check_pillow_version=Fa
     """
     golden_array = np.load(golden_ref_dir, allow_pickle=True)['arr_0']
     # Note: The version of PILLOW that is used in Jenkins CI is compared with below
-    if check_pillow_version and int(PIL.__version__.split(".")[0]) >= 9:
+    if check_pillow_version and int(PIL.__version__.split(".", maxsplit=1)[0]) >= 9:
         try:
             np.testing.assert_equal(result_dict, dict(golden_array))
         except AssertionError:
@@ -91,12 +94,12 @@ def _save_json(filename, parameters, result_dict):
     """
     Save the result dictionary in json file
     """
-    fout = open(filename[:-3] + "json", "w")
-    options = jsbeautifier.default_options()
-    options.indent_size = 2
+    with open(filename[:-3] + "json", "w", encoding="utf-8") as fout:
+        options = jsbeautifier.default_options()
+        options.indent_size = 2
 
-    out_dict = {**parameters, **{"columns": result_dict}}
-    fout.write(jsbeautifier.beautify(json.dumps(out_dict), options))
+        out_dict = {**parameters, **{"columns": result_dict}}
+        fout.write(jsbeautifier.beautify(json.dumps(out_dict), options))
 
 
 def save_and_check_dict(data, filename, generate_golden=False):
@@ -229,7 +232,7 @@ def config_get_set_num_parallel_workers(num_parallel_workers_new):
     Get and return the original configuration num_parallel_workers value.
     Set the new configuration num_parallel_workers value.
     """
-    num_parallel_workers_original = ds.config.get_num_parallel_workers()
+    num_parallel_workers_original = _get_num_parallel_workers()
     ds.config.set_num_parallel_workers(num_parallel_workers_new)
     logger.info("num_parallel_workers: original = {}  new = {} ".format(num_parallel_workers_original,
                                                                         num_parallel_workers_new))
@@ -241,8 +244,8 @@ def config_get_set_enable_shared_mem(enable_shared_mem_new):
     Get and return the original configuration enable_shared_mem value.
     Set the new configuration enable_shared_mem value.
     """
-    enable_shared_mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(enable_shared_mem_new)
+    enable_shared_mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(enable_shared_mem_new)
     logger.info("enable_shared_mem: original = {}  new = {} ".format(enable_shared_mem_original,
                                                                      enable_shared_mem_new))
     return enable_shared_mem_original

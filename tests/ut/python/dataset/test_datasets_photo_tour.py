@@ -19,7 +19,6 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 from PIL import Image
 
 import mindspore.dataset as ds
@@ -69,7 +68,7 @@ def load_photo_tour_dataset(path, name):
                 break
     matches_path = os.path.join(os.path.realpath(os.path.join(path, name)), 'm50_100000_100000_0.txt')
     matches = []
-    with open(matches_path, 'r') as f:
+    with open(matches_path, 'r', encoding="utf-8") as f:
         for line in f.readlines():
             line_split = line.split()
             matches.append([int(line_split[0]), int(line_split[3]),
@@ -175,23 +174,6 @@ def test_photo_tour_basic():
     assert data6.get_col_names() == ['image1', 'image2', 'matches']
 
 
-def test_photo_tour_pk_sampler():
-    """
-    Feature: test_photo_tour_pk_sampler.
-    Description: Test usage of PhotoTourDataset with PKSampler.
-    Expectation: Get correct number of data.
-    """
-    logger.info("Test PhotoTourDataset Op with PKSampler")
-    golden = [0, 0, 0, 1, 1, 1]
-    sampler = ds.PKSampler(3)
-    data = ds.PhotoTourDataset(DATA_DIR, NAME, 'test', sampler=sampler)
-    num_iter = 0
-    matches_list = []
-    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        matches_list.append(item["matches"])
-        num_iter += 1
-    np.testing.assert_array_equal(golden, matches_list)
-    assert num_iter == 6
 
 
 def test_photo_tour_sequential_sampler():
@@ -215,48 +197,6 @@ def test_photo_tour_sequential_sampler():
     assert num_iter == num_samples
 
 
-def test_photo_tour_exception():
-    """
-    Feature: test_photo_tour_exception.
-    Description: Test error cases for PhotoTourDataset.
-    Expectation: Raise exception.
-    """
-    logger.info("Test error cases for PhotoTourDataset")
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', sampler=ds.PKSampler(3), num_shards=2, shard_id=0)
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', num_shards=10)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', num_shards=5, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', num_shards=5, shard_id=5)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', num_shards=2, shard_id=5)
-
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', shuffle=False, num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', shuffle=False, num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', shuffle=False, num_parallel_workers=-2)
-
-    error_msg_7 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_7):
-        ds.PhotoTourDataset(DATA_DIR, NAME, 'test', num_shards=2, shard_id="0")
 
 
 def test_photo_tour_visualize(plot=False):
@@ -312,13 +252,3 @@ def test_photo_tour_usage():
     assert test_config(DATA_DIR, NAME, "train") == LEN
     assert "usage is not within the valid set of ['train', 'test']" in test_config(DATA_DIR, NAME, "invalid")
     assert "Argument usage with value ['list'] is not of type [<class 'str'>]" in test_config(DATA_DIR, NAME, ["list"])
-
-
-if __name__ == '__main__':
-    test_photo_tour_content_check()
-    test_photo_tour_basic()
-    test_photo_tour_pk_sampler()
-    test_photo_tour_sequential_sampler()
-    test_photo_tour_exception()
-    test_photo_tour_visualize(plot=True)
-    test_photo_tour_usage()

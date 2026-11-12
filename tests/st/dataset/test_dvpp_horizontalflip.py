@@ -23,7 +23,6 @@ import cv2
 import mindspore as ms
 import mindspore.dataset as ds
 import mindspore.dataset.vision.transforms as v_trans
-import mindspore.dataset.transforms.transforms as t_trans
 from tests.mark_utils import arg_mark
 
 
@@ -103,43 +102,6 @@ def test_dvpp_horizontal_flip_operation_01():
     assert out.shape == (20, 30)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=28.0)
-def test_dvpp_horizontal_flip_operation_02():
-    """
-    Feature: HorizontalFlip operation on device
-    Description: Testing the normal functionality of the HorizontalFlip operator on device
-    Expectation: The Output is equal to the expected output
-    """
-    # HorizontalFlip operator: Test PIL data
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "testImageNetData", "train", "")
-    ds2 = ds.ImageFolderDataset(data_dir)
-    transforms1 = [
-        v_trans.Decode(to_pil=True),
-        v_trans.HorizontalFlip().device(device_target="Ascend"),
-        v_trans.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    ds2 = ds2.map(input_columns=["image"], operations=transform1)
-
-    for _ in ds2.create_dict_iterator(output_numpy=True):
-        pass
-
-    # HorizontalFlip operator: Test image is 4d numpy data
-    input_4_dim = np.random.randint(0, 255, (1, 6, 6, 3)).astype(np.uint8)
-    input_4_shape = input_4_dim.shape
-    num_batch = input_4_shape[0]
-
-    out_4_list = []
-    batch_1d = 0
-    while batch_1d < num_batch:
-        out_4_list.append(np.flip(input_4_dim[batch_1d], 1))
-        batch_1d += 1
-
-    out_4_np = np.array(out_4_list).astype(np.uint8)
-    horizontal_flip_op = v_trans.HorizontalFlip().device(device_target="Ascend")
-    out_4_mindspore = horizontal_flip_op(input_4_dim)
-
-    assert (out_4_np == out_4_mindspore).all()
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
@@ -248,10 +210,3 @@ def test_dvpp_horizontal_flip_exception_02():
     with pytest.raises(RuntimeError, match=r"The input tensor is not of shape \[H,W\], \[H,W,C\] or \[N,H,W,C\]."):
         horizontal_flip_op = v_trans.HorizontalFlip().device(device_target="Ascend")
         _ = horizontal_flip_op(input_7_dim)
-
-
-if __name__ == '__main__':
-    test_dvpp_horizontal_flip_operation_01()
-    test_dvpp_horizontal_flip_operation_02()
-    test_dvpp_horizontal_flip_exception_01()
-    test_dvpp_horizontal_flip_exception_02()

@@ -23,6 +23,7 @@ import pytest
 from scipy.io import loadmat
 
 import mindspore.dataset as ds
+from mindspore.dataset.core.config import _get_enable_shared_mem, _set_enable_shared_mem
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testSVHNData"
@@ -188,14 +189,14 @@ def test_svhn_basic():
     assert num_iter == 1
 
     # case 6: test num_parallel_workers>1
-    shared_mem_flag = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    shared_mem_flag = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
     all_data = ds.SVHNDataset(DATA_DIR, "all", num_parallel_workers=2)
     num_iter = 0
     for _ in all_data.create_dict_iterator(num_epochs=1):
         num_iter += 1
     assert num_iter == 12
-    ds.config.set_enable_shared_mem(shared_mem_flag)
+    _set_enable_shared_mem(shared_mem_flag)
 
     # case 7: test map method
     input_columns = ["image"]

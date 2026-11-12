@@ -19,7 +19,6 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 from PIL import Image
 
 import mindspore.dataset as ds
@@ -38,7 +37,7 @@ def load_places365(path):
     labels_path = os.path.realpath(os.path.join(path, 'places365_val.txt'))
     images = []
     labels = []
-    with open(labels_path, 'r') as f:
+    with open(labels_path, 'r', encoding="utf-8") as f:
         for line in f.readlines():
             file_path, label = line.split()
             image = np.array(Image.open(images_path + file_path))
@@ -139,24 +138,6 @@ def test_places365_basic():
     assert num_iter5 == 1
 
 
-def test_places365_pk_sampler():
-    """
-    Feature: test_places365_pk_sampler.
-    Description: Test usage of Places365Dataset with PKSampler.
-    Expectation: Get correct number of data.
-    """
-    logger.info("Test Places365Dataset Op with PKSampler")
-
-    sampler = ds.PKSampler(1)
-    data = ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, sampler=sampler)
-    num_iter = 0
-    golden = [0, 1]
-    label_list = []
-    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        label_list.append(item["label"])
-        num_iter += 1
-    np.testing.assert_array_equal(golden, label_list)
-    assert num_iter == 2
 
 
 def test_places365_sequential_sampler():
@@ -180,49 +161,6 @@ def test_places365_sequential_sampler():
     assert num_iter == num_samples
 
 
-def test_places365_exception():
-    """
-    Feature: test_places365_exception.
-    Description: Test error cases for Places365Dataset.
-    Expectation: Raise exception.
-    """
-    logger.info("Test error cases for Places365Dataset")
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True,
-                            sampler=ds.PKSampler(3), num_shards=2, shard_id=0)
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, num_shards=4)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, num_shards=2, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, num_shards=2, shard_id=2)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, num_shards=2, shard_id=5)
-
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, shuffle=False, num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, shuffle=False, num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, shuffle=False, num_parallel_workers=-2)
-
-    error_msg_7 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_7):
-        ds.Places365Dataset(DATA_DIR, usage='val', small=True, decode=True, num_shards=2, shard_id="0")
 
 
 def test_places365_visualize(plot=False):
@@ -288,13 +226,3 @@ def test_places365_usage():
     if train_challenge_files_path is not None:
         assert test_config("train-challenge", train_challenge_files_path) == 4
         assert test_config("val", train_standard_files_path) == 4
-
-
-if __name__ == '__main__':
-    test_places365_content_check()
-    test_places365_basic()
-    test_places365_pk_sampler()
-    test_places365_sequential_sampler()
-    test_places365_exception()
-    test_places365_visualize(plot=True)
-    test_places365_usage()

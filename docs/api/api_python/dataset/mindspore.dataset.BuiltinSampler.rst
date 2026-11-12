@@ -6,7 +6,7 @@
         被添加的子sampler如果有 `shuffle` 属性，其值不能是 ``Shuffle.PARTIAL`` ，且父sampler的 `shuffle` 属性值必须是 ``Shuffle.GLOBAL`` 。
 
     参数：
-        - **sampler** (Sampler) - 用于从数据集中选择样本的对象。仅支持内置采样器（ :class:`mindspore.dataset.DistributedSampler` 、 :class:`mindspore.dataset.PKSampler` 、 :class:`mindspore.dataset.RandomSampler` 、 :class:`mindspore.dataset.SequentialSampler` 、 :class:`mindspore.dataset.SubsetRandomSampler` 、 :class:`mindspore.dataset.WeightedRandomSampler` ）。
+        - **sampler** (Sampler) - 用于从数据集中选择样本的对象。仅支持内置采样器（ :class:`mindspore.dataset.DistributedSampler` 、 :class:`mindspore.dataset.RandomSampler` 、 :class:`mindspore.dataset.SequentialSampler` ）。
 
 .. py:method:: get_child()
 

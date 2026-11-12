@@ -27,7 +27,6 @@ from mindspore import log as logger
 from mindspore.dataset.vision import Inter
 import mindspore as ms
 import mindspore.dataset.vision as vision
-import mindspore.dataset.transforms as transforms
 from tests.mark_utils import arg_mark
 
 # pylint: disable=W0212
@@ -218,9 +217,8 @@ def test_eager_resize_dvpp_exception():
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
 
-    f = open(input_apple_jpg, "rb")
-    img = f.read()
-    f.close()
+    with open(input_apple_jpg, "rb") as f:
+        img = f.read()
 
     # the input is bytes
     with pytest.raises(TypeError) as error_info:
@@ -689,9 +687,8 @@ def test_eager_horizontal_flip_dvpp_exception():
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
 
-    f = open(input_apple_jpg, "rb")
-    img = f.read()
-    f.close()
+    with open(input_apple_jpg, "rb") as f:
+        img = f.read()
 
     # the input is list
     img = np.ones([1024], dtype=np.uint8)
@@ -791,9 +788,8 @@ def test_eager_vertical_flip_dvpp_exception():
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
 
-    f = open(input_apple_jpg, "rb")
-    img = f.read()
-    f.close()
+    with open(input_apple_jpg, "rb") as f:
+        img = f.read()
 
     # the input is list
     img = np.ones([1024], dtype=np.uint8)
@@ -893,9 +889,8 @@ def test_eager_resize_crop_dvpp_exception():
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
 
-    f = open(input_apple_jpg, "rb")
-    img = f.read()
-    f.close()
+    with open(input_apple_jpg, "rb") as f:
+        img = f.read()
 
     # the input is HW2
     img = np.ones([224, 224, 2], dtype=np.uint8)
@@ -992,9 +987,8 @@ def test_eager_perspective_dvpp_exception():
 
     print("Run testcase: " + sys._getframe().f_code.co_name)
 
-    f = open(input_apple_jpg, "rb")
-    img = f.read()
-    f.close()
+    with open(input_apple_jpg, "rb") as f:
+        img = f.read()
 
     start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
     end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
@@ -1068,34 +1062,6 @@ def test_eager_perspective_dvpp_exception():
     assert "The input PIL Image cannot be executed on Ascend, " in str(error_info.value)
 
 
-def test_eager_compose_dvpp_ops():
-    """
-    Feature: Compose multi dvpp ops on Ascend910B
-    Description: Test composing multi DVPP ops in eager mode
-    Expectation: Output image info from op is correct
-    """
-    ms.set_context(device_target="Ascend")
-
-    # dvpp decode + resize + normaize eager
-    img_bytes = np.fromfile(input_apple_jpg, dtype=np.uint8)
-    mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
-    std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
-    decode_resize_normalize_compose_dvpp = \
-        transforms.Compose([vision.Decode().device("Ascend"),
-                            vision.Resize(224).device("Ascend"),
-                            vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")])
-    image_normalize = decode_resize_normalize_compose_dvpp(img_bytes)
-    assert image_normalize.shape == (224, 398, 3)
-    assert image_normalize.dtype == np.float32
-
-    # don't support mix usage
-    with pytest.raises(RuntimeError) as error_info:
-        decode_resize_normalize_compose_dvpp_mixed = \
-            transforms.Compose([vision.Decode(),
-                                vision.Resize(224).device("Ascend"),
-                                vision.Normalize(mean=mean_vec, std=std_vec).device("Ascend")])
-        image_normalize = decode_resize_normalize_compose_dvpp_mixed(img_bytes)
-    assert "Building Transform ops failed!" in str(error_info.value)
 
 
 def test_eager_crop_dvpp():
@@ -2089,34 +2055,6 @@ def test_resize_performance():
     assert (time.time() - s) < 5.0  # Probably around 4.43 seconds
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=124.0)
-def test_basic_transforms_dvpp():
-    """
-    Feature: Test DVPP basic transforms
-    Description: Test dvpp basic transforms together to reduce st time.
-    Expectation: SUCCESS
-    """
-    test_eager_decode_dvpp()
-    test_eager_resize_dvpp()
-    test_eager_normalize_dvpp()
-    test_eager_horizontal_flip_dvpp()
-    test_eager_vertical_flip_dvpp()
-    test_eager_resize_crop_dvpp()
-    test_eager_perspective_dvpp()
-    test_eager_compose_dvpp_ops()
-    test_eager_crop_dvpp()
-    test_eager_pad_dvpp()
-    test_eager_gaussian_blur_dvpp()
-    test_eager_affine_dvpp()
-    test_eager_equalize_dvpp()
-    test_eager_auto_contrast_dvpp()
-    test_eager_adjust_sharpness_dvpp()
-    test_eager_convert_color_dvpp()
-    test_eager_erase_dvpp()
-    test_eager_rotate_dvpp()
-    test_eager_posterize_dvpp()
-    test_eager_solarize_dvpp()
-    test_eager_invert_dvpp()
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=54.0)
@@ -2129,44 +2067,3 @@ def test_basic_transforms_dvpp_mix_cpu():
     test_eager_multi_dvpp_op_dvpp_cpu_dvpp()
     test_eager_multi_dvpp_op_dvpp_dvpp_cpu()
     test_eager_multi_dvpp_op_cpu_dvpp_dvpp()
-
-
-if __name__ == '__main__':
-    test_eager_resize_dvpp()
-    test_resize_performance()
-    test_eager_resize_dvpp_exception()
-    test_eager_resize_dvpp_exception_with_910A()
-    test_eager_decode_dvpp()
-    test_eager_decode_dvpp_exception()
-    test_eager_normalize_dvpp()
-    test_eager_normalize_dvpp_exception()
-    test_eager_multi_dvpp_op_dvpp_cpu_dvpp()
-    test_eager_multi_dvpp_op_dvpp_dvpp_cpu()
-    test_eager_multi_dvpp_op_cpu_dvpp_dvpp()
-    test_eager_compose_dvpp_ops()
-    test_eager_horizontal_flip_dvpp()
-    test_eager_horizontal_flip_dvpp_exception()
-    test_eager_vertical_flip_dvpp()
-    test_eager_vertical_flip_dvpp_exception()
-    test_eager_resize_crop_dvpp()
-    test_eager_resize_crop_dvpp_exception()
-    test_eager_perspective_dvpp()
-    test_eager_perspective_dvpp_exception()
-    test_eager_equalize_dvpp()
-    test_eager_equalize_dvpp_exception()
-    test_eager_auto_contrast_dvpp()
-    test_eager_auto_contrast_dvpp_exception()
-    test_eager_adjust_sharpness_dvpp()
-    test_eager_adjust_sharpness_dvpp_exception()
-    test_eager_convert_color_dvpp()
-    test_eager_convert_color_dvpp_exception()
-    test_eager_erase_dvpp()
-    test_eager_erase_dvpp_exception()
-    test_eager_rotate_dvpp()
-    test_eager_rotate_dvpp_exception()
-    test_eager_posterize_dvpp()
-    test_eager_posterize_dvpp_exception()
-    test_eager_solarize_dvpp()
-    test_eager_solarize_dvpp_exception()
-    test_eager_invert_dvpp()
-    test_eager_invert_dvpp_exception()

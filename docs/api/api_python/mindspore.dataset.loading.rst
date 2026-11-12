@@ -184,13 +184,9 @@ MindSpore的核心数据加载模块是Dataset，是一种基于Pipeline设计�
 .. mscnautosummary::
     :toctree: dataset
 
-    mindspore.dataset.DistributedSampler
-    mindspore.dataset.PKSampler
-    mindspore.dataset.RandomSampler
     mindspore.dataset.SequentialSampler
-    mindspore.dataset.SubsetRandomSampler
-    mindspore.dataset.SubsetSampler
-    mindspore.dataset.WeightedRandomSampler
+    mindspore.dataset.RandomSampler
+    mindspore.dataset.DistributedSampler
 
 配置
 -------
@@ -200,41 +196,13 @@ config模块能够设置或获取数据处理管道的全局配置参数。
 .. mscnautosummary::
     :toctree: dataset
 
-    mindspore.dataset.config.set_sending_batches
-    mindspore.dataset.config.load
     mindspore.dataset.config.set_seed
     mindspore.dataset.config.get_seed
     mindspore.dataset.config.set_prefetch_size
-    mindspore.dataset.config.get_prefetch_size
     mindspore.dataset.config.set_num_parallel_workers
-    mindspore.dataset.config.get_num_parallel_workers
     mindspore.dataset.config.set_numa_enable
-    mindspore.dataset.config.get_numa_enable
-    mindspore.dataset.config.set_monitor_sampling_interval
-    mindspore.dataset.config.get_monitor_sampling_interval
-    mindspore.dataset.config.set_callback_timeout
-    mindspore.dataset.config.get_callback_timeout
-    mindspore.dataset.config.set_auto_num_workers
-    mindspore.dataset.config.get_auto_num_workers
-    mindspore.dataset.config.set_enable_shared_mem
-    mindspore.dataset.config.get_enable_shared_mem
-    mindspore.dataset.config.set_enable_autotune
-    mindspore.dataset.config.get_enable_autotune
-    mindspore.dataset.config.set_autotune_interval
-    mindspore.dataset.config.get_autotune_interval
-    mindspore.dataset.config.set_auto_offload
-    mindspore.dataset.config.get_auto_offload
     mindspore.dataset.config.set_enable_watchdog
     mindspore.dataset.config.get_enable_watchdog
-    mindspore.dataset.config.set_fast_recovery
-    mindspore.dataset.config.get_fast_recovery
-    mindspore.dataset.config.set_multiprocessing_timeout_interval
-    mindspore.dataset.config.get_multiprocessing_timeout_interval
-    mindspore.dataset.config.set_error_samples_mode
-    mindspore.dataset.config.get_error_samples_mode
-    mindspore.dataset.config.ErrorSamplesMode
-    mindspore.dataset.config.set_debug_mode
-    mindspore.dataset.config.get_debug_mode
     mindspore.dataset.config.set_multiprocessing_start_method
     mindspore.dataset.config.get_multiprocessing_start_method
     mindspore.dataset.config.set_video_backend
@@ -254,10 +222,3 @@ config模块能够设置或获取数据处理管道的全局配置参数。
     mindspore.dataset.Schema
     mindspore.dataset.Shuffle
     mindspore.dataset.WaitedDSCallback
-    mindspore.dataset.compare
-    mindspore.dataset.debug.DebugHook
-    mindspore.dataset.deserialize
-    mindspore.dataset.serialize
-    mindspore.dataset.show
-    mindspore.dataset.utils.imshow_det_bbox
-    mindspore.dataset.utils.LineReader

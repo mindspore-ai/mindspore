@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-The module transforms provides common operations, including Compose, OneHot and TypeCast.
+The module transforms provides common operations, including Plugin and TypeCast.
 """
 import json
 from abc import ABC
@@ -21,16 +21,19 @@ import os
 import threading
 
 import sys
-from enum import IntEnum
 import numpy as np
 
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
-from mindspore.common import dtype as mstype
 from . import py_transforms_util as util
 from .py_transforms_util import Implementation, FuncWrapper
-from .validators import check_fill_value, check_slice_option, check_slice_op, check_one_hot_op, check_compose_call, \
-    check_mask_op_new, check_pad_end, check_concat_type, check_random_transform_ops, check_plugin, check_type_cast
+from .validators import (
+    check_slice_option,
+    check_compose_call,
+    check_random_transform_ops,
+    check_plugin,
+    check_type_cast,
+)
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..vision.py_transforms_util import is_pil
 
@@ -253,12 +256,12 @@ def not_random(function):
     return function
 
 
-class Compose(CompoundOperation):
+class _Compose(CompoundOperation):
     """
-    Compose a list of transforms into a single transform.
+    _Compose a list of transforms into a single transform.
 
     .. Note::
-        Compose takes a list of transformations in `mindspore.dataset.transforms` / `mindspore.dataset.vision`
+        _Compose takes a list of transformations in `mindspore.dataset.transforms` / `mindspore.dataset.vision`
         and user-defined Python callable objects to combine as a single data augmentation.
         For user-defined Python callable objects, the return value is required to be of type numpy.ndarray.
 
@@ -274,81 +277,12 @@ class Compose(CompoundOperation):
     Supported Platforms:
         ``CPU``
 
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>> import mindspore.dataset.vision as vision
-        >>> from mindspore.dataset.transforms import Relational
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> # create a dataset that reads all files in dataset_dir with 8 threads
-        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>>
-        >>> # create a list of transformations to be applied to the image data
-        >>> transform = transforms.Compose([
-        ...     vision.RandomHorizontalFlip(0.5),
-        ...     vision.ToTensor(),
-        ...     vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
-        ...     vision.RandomErasing()])
-        >>> # apply the transform to the dataset through dataset.map function
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transform, input_columns=["image"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     break
-        (3, 100, 100) float32
-        >>>
-        >>> # Compose can also be invoked implicitly, by just passing in a list of ops
-        >>> # the above example then becomes:
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
-        ...                    vision.ToTensor(),
-        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
-        ...                    vision.RandomErasing()]
-        >>>
-        >>> # apply the transform to the dataset through dataset.map()
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     break
-        (3, 100, 100) float32
-        >>>
-        >>> # Certain C++ and Python ops can be combined, but not all of them
-        >>> # An example of combined operations
-        >>> arr = [0, 1]
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(arr, column_names=["cols"], shuffle=False)
-        >>> transformed_list = [transforms.OneHot(2),
-        ...                     transforms.Mask(transforms.Relational.EQ, 1)]
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transformed_list, input_columns=["cols"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["cols"].shape, item["cols"].dtype)
-        ...     break
-        (2,) bool
-        >>>
-        >>> # Here is an example of mixing vision ops
-        >>> op_list=[vision.Resize((224, 244)),
-        ...          vision.ToPIL(),
-        ...          np.array, # need to convert PIL image to a NumPy array to pass it to C++ operation
-        ...          vision.Resize((24, 24))]
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=op_list,  input_columns=["image"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     break
-        (24, 24, 3) uint8
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.array([1, 2, 3])
-        >>> output = transforms.Compose([transforms.Fill(10), transforms.Mask(Relational.EQ, 100)])(data)
-        >>> print(output.shape, output.dtype)
-        (3,) bool
     """
 
     @check_random_transform_ops
     def __init__(self, transforms):
         super().__init__(transforms)
-        self.transforms = Compose.decompose(self.transforms)
+        self.transforms = _Compose.decompose(self.transforms)
         if all(hasattr(transform, "random") and not transform.random for transform in self.transforms):
             self.random = False
 
@@ -364,8 +298,8 @@ class Compose(CompoundOperation):
         #    list of operations without compose operations.
         new_operations = []
         for op in operations:
-            if isinstance(op, Compose):
-                new_operations.extend(Compose.decompose(op.transforms))
+            if isinstance(op, _Compose):
+                new_operations.extend(_Compose.decompose(op.transforms))
             else:
                 new_operations.append(op)
         return new_operations
@@ -373,7 +307,7 @@ class Compose(CompoundOperation):
     # pylint: disable=missing-docstring
     @staticmethod
     def reduce(operations):
-        # Wraps adjacent Python operations in a Compose to allow mixing of Python and C++ operations.
+        # Wraps adjacent Python operations in a _Compose to allow mixing of Python and C++ operations.
         #
         # Args:
         #    operations (list): list of tensor operations.
@@ -388,7 +322,7 @@ class Compose(CompoundOperation):
                     if end_ind == start_ind + 1:
                         composed_op = operations[start_ind]
                     else:
-                        composed_op = Compose(operations[start_ind:end_ind])
+                        composed_op = _Compose(operations[start_ind:end_ind])
                         composed_op.implementation = Implementation.PY
                     new_ops.append(composed_op)
                 new_ops.append(op)
@@ -400,7 +334,7 @@ class Compose(CompoundOperation):
             if end_ind == start_ind + 1:
                 composed_op = operations[start_ind]
             else:
-                composed_op = Compose(operations[start_ind:end_ind])
+                composed_op = _Compose(operations[start_ind:end_ind])
                 composed_op.implementation = Implementation.PY
             new_ops.append(composed_op)
         return new_ops
@@ -432,350 +366,6 @@ class Compose(CompoundOperation):
         # use transform in eager mode in map op
         # this will be call in MapOp::WorkerEntry
         clean_unused_executors()
-
-
-class Concatenate(TensorOperation):
-    """
-    Concatenate data with the input array along a given axis. Only 1D data is supported.
-
-    Args:
-        axis (int, optional): The axis along which the arrays will be concatenated. Default: ``0``.
-        prepend (numpy.ndarray, optional): NumPy array to be prepended to the input array.
-            Default: ``None``, no array will be prepended.
-        append (numpy.ndarray, optional): NumPy array to be appended to the input array.
-            Default: ``None``, no array will be appended.
-
-    Raises:
-        TypeError: If `axis` is not of type int.
-        TypeError: If `prepend` is not of type numpy.ndarray.
-        TypeError: If `append` is not of type numpy.ndarray.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> # concatenate strings
-        >>> prepend_tensor = np.array(["dw", "df"])
-        >>> append_tensor = np.array(["dwsdf", "df"])
-        >>> concatenate_op = transforms.Concatenate(0, prepend_tensor, append_tensor)
-        >>> data = [["This","is","a","string"]]
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data)
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=concatenate_op)
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["column_0"].shape, item["column_0"].dtype)
-        (8,) <U6
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.array([1, 2, 3])
-        >>> prepend_tensor = np.array([10, 20])
-        >>> append_tensor = np.array([100])
-        >>> output = transforms.Concatenate(0, prepend_tensor, append_tensor)(data)
-        >>> print(output.shape, output.dtype)
-        (6,) int64
-    """
-
-    @check_concat_type
-    def __init__(self, axis=0, prepend=None, append=None):
-        super().__init__()
-        self.axis = axis
-        self.prepend = cde.Tensor(np.array(prepend)) if prepend is not None else prepend
-        self.append = cde.Tensor(np.array(append)) if append is not None else append
-        self.implementation = Implementation.C
-
-    def parse(self):
-        return cde.ConcatenateOperation(self.axis, self.prepend, self.append)
-
-
-class Duplicate(TensorOperation):
-    """
-    Duplicate the input tensor to the output. Only one column can be transformed at a time.
-
-    Raises:
-        RuntimeError: If the given tensor has two columns.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> # Data before
-        >>> # |  x      |
-        >>> # +---------+
-        >>> # | [1,2,3] |
-        >>> # +---------+
-        >>> data = [[1,2,3]]
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["x"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Duplicate(),
-        ...                                                 input_columns=["x"],
-        ...                                                 output_columns=["x", "y"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["x"].shape, item["x"].dtype)
-        ...     print(item["y"].shape, item["y"].dtype)
-        (3,) int64
-        (3,) int64
-        >>> # Data after
-        >>> # |  x      |  y      |
-        >>> # +---------+---------+
-        >>> # | [1,2,3] | [1,2,3] |
-        >>> # +---------+---------+
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = [1, 2, 3]
-        >>> output = transforms.Duplicate()(data)
-        >>> print(np.array(output).shape, np.array(output).dtype)
-        (2, 3) int64
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.implementation = Implementation.C
-
-    def parse(self):
-        return cde.DuplicateOperation()
-
-
-class Fill(TensorOperation):
-    """
-    Tensor operation to fill all elements in the tensor with the specified value.
-    The output tensor will have the same shape and type as the input tensor.
-
-    Args:
-        fill_value (Union[str, bytes, int, float, bool]): scalar value
-            used to fill the tensor.
-
-    Raises:
-        TypeError: If `fill_value` is not of type str, float, bool, int or bytes.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> # generate a 1D integer numpy array from 0 to 4
-        >>> def generator_1d():
-        ...     for i in range(5):
-        ...         yield (np.array([i]),)
-        >>> generator_dataset = ds.GeneratorDataset(generator_1d, column_names="col1")
-        >>> # [[0], [1], [2], [3], [4]]
-        >>> fill_op = transforms.Fill(3)
-        >>> generator_dataset = generator_dataset.map(operations=fill_op)
-        >>> for item in generator_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["col1"].shape, item["col1"].dtype)
-        ...     break
-        (1,) int64
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.array([1, 2, 3])
-        >>> output = transforms.Fill(100)(data)
-        >>> print(output.shape, output.dtype)
-        (3,) int64
-    """
-
-    @check_fill_value
-    def __init__(self, fill_value):
-        super().__init__()
-        self.fill_value = cde.Tensor(np.array(fill_value))
-        self.implementation = Implementation.C
-
-    def parse(self):
-        return cde.FillOperation(self.fill_value)
-
-
-class Mask(TensorOperation):
-    r"""
-    Mask content of the input tensor with the given predicate.
-    Any element of the tensor that matches the predicate will be evaluated to True, otherwise False.
-
-    Args:
-        operator (Relational): relational operators, it can be ``Relational.EQ``, ``Relational.NE``, ``Relational.LT``,
-            ``Relational.GT``, ``Relational.LE``, ``Relational.GE``, take ``Relational.EQ`` as example,
-            EQ refers to equal.
-        constant (Union[str, int, float, bool]): Constant to be compared to.
-        dtype (mindspore.dtype, optional): Type of the generated mask. Default: ``mstype.bool``.
-
-    Raises:
-        TypeError: `operator` is not of type Relational.
-        TypeError: `constant` is not of type str, int, float or bool.
-        TypeError: `dtype` is not of type mindspore.dtype.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>> from mindspore.dataset.transforms import Relational
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> # Data before
-        >>> # |  col   |
-        >>> # +---------+
-        >>> # | [1,2,3] |
-        >>> # +---------+
-        >>> data = [[1, 2, 3]]
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Mask(Relational.EQ, 2))
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["col"].shape, item["col"].dtype)
-        (3,) bool
-        >>> # Data after
-        >>> # |       col         |
-        >>> # +--------------------+
-        >>> # | [False,True,False] |
-        >>> # +--------------------+
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = [1, 2, 3]
-        >>> output = transforms.Mask(Relational.EQ, 2)(data)
-        >>> print(output.shape, output.dtype)
-        (3,) bool
-    """
-
-    @check_mask_op_new
-    def __init__(self, operator, constant, dtype=mstype.bool):
-        super().__init__()
-        self.operator = operator
-        self.dtype = mstype_to_detype(dtype)
-        self.constant = cde.Tensor(np.array(constant))
-        self.implementation = Implementation.C
-
-    def parse(self):
-        return cde.MaskOperation(DE_C_RELATIONAL.get(self.operator), self.constant, self.dtype)
-
-
-class OneHot(TensorOperation):
-    r"""
-    Apply One-Hot encoding to the input labels.
-
-    For a 1-D input of shape :math:`(*)`, an output of shape :math:`(*, num\_classes)` will be
-    returned, where the elements with index values equal to the input values will be set to 1,
-    and the rest will be set to 0. If a label smoothing rate is specified, the element values
-    are further smoothed to enhance generalization.
-
-    Args:
-        num_classes (int): Total number of classes. Must be greater than the maximum value
-            of the input labels.
-        smoothing_rate (float, optional): The amount of label smoothing. Must be in the
-            range [0.0, 1.0]. Default: ``0.0``, no label smoothing.
-
-    Raises:
-        TypeError: If `num_classes` is not of type int.
-        TypeError: If `smoothing_rate` is not of type float.
-        ValueError: If `smoothing_rate` is not in range of [0.0, 1.0].
-        RuntimeError: If the input label is not of type int.
-        RuntimeError: If the dimension of the input label is not 1.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> data = [1, 2, 3, 4, 5, 6, 7, 8]
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["label"])
-        >>>
-        >>> # Assume that dataset has 10 classes, thus the label ranges from 0 to 9
-        >>> onehot_op = transforms.OneHot(num_classes=10)
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=onehot_op, input_columns=["label"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["label"].shape, item["label"].dtype)
-        ...     break
-        (10,) int64
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.array([1, 2, 3])
-        >>> output = transforms.OneHot(num_classes=5, smoothing_rate=0)(data)
-        >>> print(output.shape, output.dtype)
-        (3, 5) int64
-    """
-
-    @check_one_hot_op
-    def __init__(self, num_classes, smoothing_rate=0.0):
-        super().__init__()
-        self.num_classes = num_classes
-        self.random = False
-        self.smoothing_rate = smoothing_rate
-
-    def parse(self):
-        return cde.OneHotOperation(self.num_classes, self.smoothing_rate)
-
-
-class PadEnd(TensorOperation):
-    """
-    Pad input tensor according to pad_shape. The input tensor needs to have the same rank.
-
-    Args:
-        pad_shape (list(int)): List of integers representing the shape needed. Dimensions that
-            are set to ``None`` will not be padded (i.e., original dim will be used). Shorter
-            dimensions will truncate the values.
-        pad_value (Union[str, bytes, int, float, bool], optional): Value used to pad. Default: ``None``.
-            When ``None``, defaults to ``0`` for tensors of numbers, or to empty string
-            for tensors of strings.
-
-    Raises:
-        TypeError: If `pad_shape` is not of type list.
-        TypeError: If `pad_value` is not of type str, float, bool, int or bytes.
-        TypeError: If elements of `pad_shape` are not of type int.
-        ValueError: If elements of `pad_shape` are not positive.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> # Data before
-        >>> # |   col   |
-        >>> # +---------+
-        >>> # | [1,2,3] |
-        >>> # +---------|
-        >>> data = [[1, 2, 3]]
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.PadEnd(pad_shape=[4], pad_value=10))
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["col"].shape, item["col"].dtype)
-        ...     break
-        (4,) int64
-        >>> # Data after
-        >>> # |    col     |
-        >>> # +------------+
-        >>> # | [1,2,3,10] |
-        >>> # +------------|
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = [1, 2, 3]
-        >>> output = transforms.PadEnd(pad_shape=[4], pad_value=10)(data)
-        >>> print(output.shape, output.dtype)
-        (4,) int64
-    """
-
-    @check_pad_end
-    def __init__(self, pad_shape, pad_value=None):
-        super().__init__()
-        self.pad_shape = cde.TensorShape(pad_shape)
-        self.pad_value = cde.Tensor(np.array(pad_value)) if pad_value is not None else pad_value
-        self.implementation = Implementation.C
-
-    def parse(self):
-        return cde.PadEndOperation(self.pad_shape, self.pad_value)
 
 
 class Plugin(TensorOperation):
@@ -816,243 +406,6 @@ class Plugin(TensorOperation):
         return cde.PluginOperation(self.lib_path, self.func_name, self.user_args)
 
 
-class RandomApply(CompoundOperation):
-    """
-    Randomly perform a series of transforms with a given probability.
-
-    Args:
-        transforms (list): List of transformations to be applied.
-        prob (float, optional): The probability of applying the transformation list. Default: ``0.5``.
-
-    Raises:
-        TypeError: If `transforms` is not of type list.
-        ValueError: If `transforms` is empty.
-        TypeError: If elements of `transforms` are neither Python callable objects nor data
-            processing operations in the audio, text, transforms, or vision modules.
-        TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in the range [0.0, 1.0].
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>> import mindspore.dataset.vision as vision
-        >>> from mindspore.dataset.transforms import Compose
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> seed = ds.config.get_seed()
-        >>> ds.config.set_seed(12345)
-        >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
-        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        ...                    vision.RandomErasing()]
-        >>> composed_transform = Compose([transforms.RandomApply(transforms_list, prob=0.6),
-        ...                               vision.ToTensor()])
-        >>>
-        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=composed_transform, input_columns=["image"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     break
-        (3, 100, 100) float32
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
-        >>> transform = [vision.HsvToRgb(is_hwc=True), vision.Crop((0, 0), 10), vision.ToTensor()]
-        >>> output = transforms.RandomApply(transform, prob=1.0)(data)
-        >>> print(output.shape, output.dtype)
-        (3, 10, 10) float32
-        >>> ds.config.set_seed(seed)
-    """
-
-    @check_random_transform_ops
-    def __init__(self, transforms, prob=0.5):
-        super().__init__(transforms)
-        self.prob = prob
-
-    def parse(self):
-        operations = self.parse_transforms()
-        return cde.RandomApplyOperation(self.prob, operations)
-
-    def _execute_py(self, img):
-        """
-        Execute method.
-
-        Args:
-            img (PIL image): Image to be randomly applied a list transformations.
-
-        Returns:
-            img (PIL image), Transformed image.
-        """
-        return util.random_apply(img, self.transforms, self.prob)
-
-
-class RandomChoice(CompoundOperation):
-    """
-    Randomly select one transform from a list and apply it.
-
-    Args:
-        transforms (list): List of transforms from which one is randomly selected and applied.
-
-    Raises:
-        TypeError: If `transforms` is not of type list.
-        ValueError: If `transforms` is empty.
-        TypeError: If elements of `transforms` are neither Python callable objects nor data
-            processing operations in the audio, text, transforms, or vision modules.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>> import mindspore.dataset.vision as vision
-        >>> from mindspore.dataset.transforms import Compose
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> seed = ds.config.get_seed()
-        >>> ds.config.set_seed(12345)
-        >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
-        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        ...                    vision.RandomErasing()]
-        >>> composed_transform = Compose([transforms.RandomChoice(transforms_list),
-        ...                               vision.ToTensor()])
-        >>>
-        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=composed_transform, input_columns=["image"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     break
-        (3, 100, 100) float32
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.array([1, 2, 3])
-        >>> output = transforms.RandomChoice([transforms.Fill(100)])(data)
-        >>> print(output.shape, output.dtype)
-        (3,) int64
-        >>> ds.config.set_seed(seed)
-    """
-
-    @check_random_transform_ops
-    def __init__(self, transforms):
-        super().__init__(transforms)
-
-    def parse(self):
-        operations = self.parse_transforms()
-        return cde.RandomChoiceOperation(operations)
-
-    def _execute_py(self, img):
-        """
-        Execute method.
-
-        Args:
-            img (PIL image): Image to which the transformation is applied .
-
-        Returns:
-            img (PIL image), Transformed image.
-        """
-        return util.random_choice(img, self.transforms)
-
-
-class RandomOrder(PyTensorOperation):
-    """
-    Perform a series of transforms to the input image in a random order.
-
-    Args:
-        transforms (list): List of the transformations to apply.
-
-    Raises:
-        TypeError: If `transforms` is not of type list.
-        TypeError: If elements of `transforms` are neither Python callable objects nor data
-            processing operations in the audio, text, transforms, or vision modules.
-        ValueError: If `transforms` is empty.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>> import mindspore.dataset.vision as vision
-        >>> from mindspore.dataset.transforms import Compose, Relational
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> seed = ds.config.get_seed()
-        >>> ds.config.set_seed(12345)
-        >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
-        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
-        ...                    vision.RandomErasing()]
-        >>> composed_transform = Compose([transforms.RandomOrder(transforms_list),
-        ...                               vision.ToTensor()])
-        >>>
-        >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=composed_transform, input_columns=["image"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     break
-        (3, 100, 100) float32
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.array([1, 2, 3])
-        >>> output = transforms.RandomOrder([transforms.Mask(Relational.EQ, 100)])(data)
-        >>> print(output.shape, output.dtype)
-        (3,) bool
-        >>> ds.config.set_seed(seed)
-    """
-
-    @check_random_transform_ops
-    def __init__(self, transforms):
-        super().__init__()
-        self.transforms = transforms
-        self.implementation = Implementation.PY
-
-    def _execute_py(self, img):
-        """
-        Execute method.
-
-        Args:
-            img (PIL image): Image to apply transformations in a random order.
-
-        Returns:
-            img (PIL image), Transformed image.
-        """
-        return util.random_order(img, self.transforms)
-
-
-class Relational(IntEnum):
-    """
-    An enumeration of relational operators.
-
-    Available values are as follows:
-
-    - ``Relational.EQ``: Equal to.
-    - ``Relational.NE``: Not equal to.
-    - ``Relational.GT``: Greater than.
-    - ``Relational.GE``: Greater than or equal to.
-    - ``Relational.LT``: Less than.
-    - ``Relational.LE``: Less than or equal to.
-    """
-    EQ = 0
-    NE = 1
-    GT = 2
-    GE = 3
-    LT = 4
-    LE = 5
-
-
-DE_C_RELATIONAL = {Relational.EQ: cde.RelationalOp.EQ,
-                   Relational.NE: cde.RelationalOp.NE,
-                   Relational.GT: cde.RelationalOp.GT,
-                   Relational.GE: cde.RelationalOp.GE,
-                   Relational.LT: cde.RelationalOp.LT,
-                   Relational.LE: cde.RelationalOp.LE}
 
 
 class _SliceOption(cde.SliceOption):
@@ -1079,75 +432,6 @@ class _SliceOption(cde.SliceOption):
         elif slice_option is None:
             slice_option = True
         super().__init__(slice_option)
-
-
-class Slice(TensorOperation):
-    """
-    Extract a slice from the input.
-
-    Currently, only 1-D input is supported.
-
-    Args:
-        slices (Union[int, list[int], slice, Ellipsis]): The desired slice.
-
-            - If the input type is int, it will slice the element with the specified index value.
-              Negative index is also supported.
-            - If the input type is list[int], it will slice all the elements with the specified index values.
-              Negative indices are also supported.
-            - If the input type is `slice <https://docs.python.org/3.7/library/functions.html#slice>`_ ,
-              it will slice according to its specified start position, stop position, and step size.
-            - If the input type is `Ellipsis <https://docs.python.org/3.7/library/constants.html#Ellipsis>`_ ,
-              all elements will be sliced.
-            - If the input is None, all elements will be sliced.
-
-    Raises:
-        TypeError: If `slices` is not of type Union[int, list[int], slice, Ellipsis].
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> # Data before
-        >>> # |   col   |
-        >>> # +---------+
-        >>> # | [1,2,3] |
-        >>> # +---------|
-        >>> data = [[1, 2, 3]]
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
-        >>> # slice indices 1 and 2 only
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Slice(slice(1,3)))
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["col"].shape, item["col"].dtype)
-        ...     break
-        (2,) int64
-        >>> # Data after
-        >>> # |   col   |
-        >>> # +---------+
-        >>> # |  [2,3]  |
-        >>> # +---------|
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.array([1, 2, 3])
-        >>> output = transforms.Slice(slice(1, 3))(data)
-        >>> print(output.shape, output.dtype)
-        (2,) int64
-    """
-
-    @check_slice_op
-    def __init__(self, *slices):
-        super().__init__()
-        slice_input_ = list(slices)
-        slice_input_ = [_SliceOption(slice_dim) for slice_dim in slice_input_]
-        self.slice_input_ = slice_input_
-        self.implementation = Implementation.C
-
-    def parse(self):
-        return cde.SliceOperation(self.slice_input_)
 
 
 class TypeCast(TensorOperation):
@@ -1207,67 +491,3 @@ class TypeCast(TensorOperation):
 
     def parse(self):
         return cde.TypeCastOperation(self.data_type)
-
-
-class Unique(TensorOperation):
-    """
-    Perform the unique operation on the input tensor. Only one column can be transformed at a time.
-
-    Returns 3 tensors: unique output tensor, index tensor, and count tensor.
-
-    - The output tensor contains all the unique elements of the input tensor
-      in the same order that they occur in the input tensor.
-    - The index tensor contains the index of each element of the input tensor in the unique output tensor.
-    - The count tensor contains the count of each element of the output tensor in the input tensor.
-
-    Note:
-        Call batch op before calling this function.
-
-    Raises:
-        RuntimeError: If the given tensor has two columns.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> # Data before
-        >>> # |  x                 |
-        >>> # +--------------------+
-        >>> # | [[0,1,2], [1,2,3]] |
-        >>> # +--------------------+
-        >>> data = [[[0,1,2], [1,2,3]]]
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["x"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Unique(),
-        ...                                                 input_columns=["x"],
-        ...                                                 output_columns=["x", "y", "z"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["x"].shape, item["y"].shape, item["z"].shape)
-        ...     print(item["x"].dtype, item["y"].dtype, item["z"].dtype)
-        (4,) (6,) (4,)
-        int64 int32 int32
-        >>> # Data after
-        >>> # |  x      |  y              |z        |
-        >>> # +---------+-----------------+---------+
-        >>> # | [0,1,2,3] | [0,1,2,1,2,3] | [1,2,2,1]
-        >>> # +---------+-----------------+---------+
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = [[0, -1, -2, -1, 2], [2, -0, 2, 1, -3]]
-        >>> output = transforms.Unique()(data)
-        >>> print(output[0].shape, output[1].shape, output[2].shape)
-        (6,) (10,) (6,)
-        >>> print(output[0].dtype, output[1].dtype, output[2].dtype)
-        int64 int32 int32
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.implementation = Implementation.C
-
-    def parse(self):
-        return cde.UniqueOperation()

@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Dataset regression coverage for sampler chain."""
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms as transforms
 from mindspore import log as logger
 from util import save_and_check_md5
 
@@ -53,7 +53,7 @@ def test_numpyslices_sampler_no_chain():
     assert data1_size == 2
 
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 2
+    assert sum((1 for _ in data1)) == 2
 
     # Verify dataset contents
     res = []
@@ -86,7 +86,7 @@ def test_numpyslices_sampler_chain():
     assert data1_size == 1
 
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 1
+    assert sum((1 for _ in data1)) == 1
 
     # Verify dataset contents
     res = []
@@ -120,7 +120,7 @@ def test_numpyslices_sampler_chain2():
     assert data1_size == 1
 
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 1
+    assert sum((1 for _ in data1)) == 1
 
     # Verify dataset contents
     res = []
@@ -161,7 +161,7 @@ def test_numpyslices_sampler_chain_multi_add_child():
     assert data1_size == 5
 
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 5
+    assert sum((1 for _ in data1)) == 5
 
     # Verify dataset contents
     res = []
@@ -173,31 +173,6 @@ def test_numpyslices_sampler_chain_multi_add_child():
     np.testing.assert_array_equal(res, [[3], [4], [5], [6], [7]])
 
 
-def test_imagefolder_sampler_chain():
-    """
-    Feature: Chained Sampler
-    Description: ImageFolderDataset with sampler chain; add child sampler with 2 statements
-    Expectation: Data verified to be correct
-    """
-    logger.info("test_imagefolder_sampler_chain")
-
-    sampler = ds.SequentialSampler(start_index=1, num_samples=3)
-    child_sampler = ds.PKSampler(2)
-    sampler.add_child(child_sampler)
-    data1 = ds.ImageFolderDataset(IMAGENET_RAWDATA_DIR, sampler=sampler)
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 3
-    # Verify number of rows
-    assert sum([1 for _ in data1]) == 3
-
-    # Verify dataset contents
-    res = []
-    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        logger.info("item: {}".format(item))
-        res.append(item)
-    logger.info("dataset: {}".format(res))
 
 
 def test_mnist_sampler_chain():
@@ -218,7 +193,7 @@ def test_mnist_sampler_chain():
     logger.info("dataset size is: {}".format(data1_size))
     assert data1_size == 3
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 3
+    assert sum((1 for _ in data1)) == 3
 
     # Verify dataset contents
     res = []
@@ -246,7 +221,7 @@ def test_manifest_sampler_chain():
     logger.info("dataset size is: {}".format(data1_size))
     assert data1_size == 2
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 2
+    assert sum((1 for _ in data1)) == 2
 
     # Verify dataset contents
     res = []
@@ -276,7 +251,7 @@ def test_coco_sampler_chain():
     assert data1_size == 1
 
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 1
+    assert sum((1 for _ in data1)) == 1
 
     # Verify dataset contents
     res = []
@@ -307,7 +282,7 @@ def test_cifar_sampler_chain():
     assert data1_size == 1
 
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 1
+    assert sum((1 for _ in data1)) == 1
 
     # Verify dataset contents
     res = []
@@ -336,7 +311,7 @@ def test_voc_sampler_chain():
     assert data1_size == 5
 
     # Verify number of rows
-    assert sum([1 for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True)]) == 5
+    assert sum((1 for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True))) == 5
 
     # Verify dataset contents
     res = []
@@ -367,7 +342,7 @@ def test_numpyslices_sampler_chain_batch():
     assert data1_size == 4
 
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 4
+    assert sum((1 for _ in data1)) == 4
 
     # Verify dataset contents
     res = []
@@ -427,41 +402,13 @@ def test_manifest_sampler_chain_repeat():
     assert data1_size == 10
 
     # Verify number of rows
-    assert sum([1 for _ in data1]) == 10
+    assert sum((1 for _ in data1)) == 10
 
     # Verify dataset contents
     filename = "sampler_chain_manifest_repeat_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_manifest_sampler_chain_batch_repeat():
-    """
-    Feature: Chained Sampler
-    Description: Test ManifestDataset sampler chain DistributedSampler -> SequentialSampler, with batch then repeat
-    Expectation: Data verified to be correct
-    """
-    logger.info("test_manifest_sampler_chain_batch_repeat")
-    manifest_file = "../data/dataset/testManifestData/test5trainimgs.json"
-
-    # Create sampler chain DistributedSampler->SequentialSampler
-    sampler = ds.DistributedSampler(num_shards=1, shard_id=0, shuffle=False, num_samples=5)
-    child_sampler = ds.SequentialSampler()
-    sampler.add_child(child_sampler)
-
-    # Create ManifestDataset with sampler chain
-    data1 = ds.ManifestDataset(manifest_file, decode=True, sampler=sampler)
-    one_hot_encode = transforms.OneHot(3)
-    data1 = data1.map(operations=one_hot_encode, input_columns=["label"])
-    data1 = data1.batch(batch_size=1, drop_remainder=False)
-    data1 = data1.repeat(count=2)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 10
-
-    # Verify number of rows
-    assert sum([1 for _ in data1]) == 10
 
 
 def test_add_user_defined_sampler_dataset_size():
@@ -479,8 +426,7 @@ def test_add_user_defined_sampler_dataset_size():
                 interval = 3
             else:
                 interval = 1
-            for i in range(0, self.num_samples, interval):
-                yield i
+            yield from range(0, self.num_samples, interval)
 
     data = np.random.randint(0, 255, (100, 28, 28, 1))
     dataset = ds.NumpySlicesDataset(data, column_names=["data"], shuffle=True)
@@ -508,8 +454,7 @@ def test_add_user_defined_sampler_result():
 
     class MySampler(ds.Sampler):
         def __iter__(self):
-            for index in range(0, self.num_samples, 2):
-                yield index
+            yield from range(0, self.num_samples, 2)
 
     data = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m"]
     dataset = ds.NumpySlicesDataset(data, column_names=["data"], shuffle=False)
@@ -610,25 +555,3 @@ def test_generator_sampler_chain_of_user_defined_and_user_defined():
     expected_result = np.array(['8', '6', '4', '2', '0'])
     for index, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(item["data"], expected_result[index])
-
-
-if __name__ == '__main__':
-    test_numpyslices_sampler_no_chain()
-    test_numpyslices_sampler_chain()
-    test_numpyslices_sampler_chain2()
-    test_numpyslices_sampler_chain_multi_add_child()
-    test_imagefolder_sampler_chain()
-    test_mnist_sampler_chain()
-    test_manifest_sampler_chain()
-    test_coco_sampler_chain()
-    test_cifar_sampler_chain()
-    test_voc_sampler_chain()
-    test_numpyslices_sampler_chain_batch()
-    test_sampler_chain_errors()
-    test_manifest_sampler_chain_repeat()
-    test_manifest_sampler_chain_batch_repeat()
-    test_add_user_defined_sampler_dataset_size()
-    test_add_user_defined_sampler_result()
-    test_generator_sampler_chain_of_sequential_and_user_defined()
-    test_generator_sampler_chain_of_user_defined_and_random()
-    test_generator_sampler_chain_of_user_defined_and_user_defined()

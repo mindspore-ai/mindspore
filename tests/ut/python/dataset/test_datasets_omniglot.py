@@ -328,27 +328,6 @@ def test_distributed_sampler():
     ds.config.set_seed(original_seed)
 
 
-def test_pk_sampler():
-    """
-    Feature: load_omniglot.
-    Description: Load OmniglotDataset.
-    Expectation: Get data of OmniglotDataset.
-    """
-    logger.info("Test Case PKSampler")
-    # define parameters.
-    repeat_count = 1
-
-    # apply dataset operations.
-    sampler = ds.PKSampler(1)
-    data1 = ds.OmniglotDataset(DATA_DIR, sampler=sampler)
-    data1 = data1.repeat(repeat_count)
-
-    num_iter = 0
-    # each data is a dictionary.
-    for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        num_iter += 1
-    logger.info("Number of data in data1: {}".format(num_iter))
-    assert num_iter == 2
 
 
 def test_chained_sampler():
@@ -477,21 +456,3 @@ def test_omniglot_exception():
         assert False
     except RuntimeError as e:
         assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
-
-
-if __name__ == '__main__':
-    test_omniglot_basic()
-    test_omniglot_num_samples()
-    test_sequential_sampler()
-    test_random_sampler()
-    test_distributed_sampler()
-    test_chained_sampler()
-    test_pk_sampler()
-    test_omniglot_num_shards()
-    test_omniglot_shard_id()
-    test_omniglot_no_shuffle()
-    test_omniglot_extra_shuffle()
-    test_omniglot_decode()
-    test_omniglot_evaluation()
-    test_omniglot_zip()
-    test_omniglot_exception()

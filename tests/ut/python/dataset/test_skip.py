@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
+from mindspore.dataset.core.config import _get_enable_shared_mem, _set_enable_shared_mem
 import mindspore.dataset.vision as vision
 
 
@@ -63,8 +64,8 @@ def test_generator_skip():
     # need to disable shared memory when running this test in CI
     # since GeneratorDataset using num_parallel_workers > 1.
     # Reduce memory required by disabling the shared memory optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
 
     ds1 = ds.GeneratorDataset(generator_md, ["data"], num_parallel_workers=4)
 
@@ -78,7 +79,7 @@ def test_generator_skip():
     assert buf == [3, 4]
 
     # Restore configuration
-    ds.config.set_enable_shared_mem(mem_original)
+    _set_enable_shared_mem(mem_original)
 
 
 def test_skip_1():
@@ -95,7 +96,7 @@ def test_skip_1():
     buf = []
     for data in ds1.create_tuple_iterator(num_epochs=1, output_numpy=True):
         buf.append(data[0][0])
-    assert buf == []
+    assert not buf
 
 
 def test_skip_2():

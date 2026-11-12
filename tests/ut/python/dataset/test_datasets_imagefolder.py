@@ -17,11 +17,9 @@ Test ImageFolderDataset
 """
 import os
 
-import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms as data_trans
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
 from util import config_get_set_seed
@@ -397,120 +395,12 @@ def test_distributed_sampler():
     assert num_iter == 5
 
 
-def test_pk_sampler():
-    """
-    Feature: ImageFolderDataset
-    Description: Test ImageFolderDataset with PKSampler
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("Test Case PKSampler")
-    # define parameters
-    repeat_count = 1
-
-    # apply dataset operations
-    sampler = ds.PKSampler(3)
-    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
-    data1 = data1.repeat(repeat_count)
-
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
-        # in this example, each dictionary has keys "image" and "label"
-        logger.info("image is {}".format(item["image"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    assert num_iter == 12
 
 
-def test_subset_random_sampler():
-    """
-    Feature: ImageFolderDataset
-    Description: Test ImageFolderDataset with SubsetRandomSampler
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("Test Case SubsetRandomSampler")
-    # define parameters
-    repeat_count = 1
-
-    # apply dataset operations
-    indices = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 11]
-    sampler = ds.SubsetRandomSampler(indices)
-    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
-    data1 = data1.repeat(repeat_count)
-
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
-        # in this example, each dictionary has keys "image" and "label"
-        logger.info("image is {}".format(item["image"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    assert num_iter == 12
 
 
-def test_weighted_random_sampler():
-    """
-    Feature: ImageFolderDataset
-    Description: Test ImageFolderDataset with WeightedRandomSampler
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("Test Case WeightedRandomSampler")
-    # define parameters
-    repeat_count = 1
-
-    # apply dataset operations
-    weights = [1.0, 0.1, 0.02, 0.3, 0.4, 0.05, 1.2, 0.13, 0.14, 0.015, 0.16, 1.1]
-    sampler = ds.WeightedRandomSampler(weights, 11)
-    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
-    data1 = data1.repeat(repeat_count)
-
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
-        # in this example, each dictionary has keys "image" and "label"
-        logger.info("image is {}".format(item["image"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    assert num_iter == 11
 
 
-def test_weighted_random_sampler_exception():
-    """
-    Feature: ImageFolderDataset
-    Description: Test error cases for ImageFolderDataset with WeightedRandomSampler
-    Expectation: Correct error is thrown as expected
-    """
-    logger.info("Test error cases for WeightedRandomSampler")
-    error_msg_1 = "type of weights element must be number"
-    with pytest.raises(TypeError, match=error_msg_1):
-        weights = ""
-        ds.WeightedRandomSampler(weights)
-
-    error_msg_2 = "type of weights element must be number"
-    with pytest.raises(TypeError, match=error_msg_2):
-        weights = (0.9, 0.8, 1.1)
-        ds.WeightedRandomSampler(weights)
-
-    error_msg_3 = "WeightedRandomSampler: weights vector must not be empty"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        weights = []
-        sampler = ds.WeightedRandomSampler(weights)
-        sampler.parse()
-
-    error_msg_4 = "WeightedRandomSampler: weights vector must not contain negative numbers, got: "
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        weights = [1.0, 0.1, 0.02, 0.3, -0.4]
-        sampler = ds.WeightedRandomSampler(weights)
-        sampler.parse()
-
-    error_msg_5 = "WeightedRandomSampler: elements of weights vector must not be all zero"
-    with pytest.raises(RuntimeError, match=error_msg_5):
-        weights = [0, 0, 0, 0, 0]
-        sampler = ds.WeightedRandomSampler(weights)
-        sampler.parse()
 
 
 def test_chained_sampler_01():
@@ -654,143 +544,12 @@ def test_chained_sampler_04():
     assert num_iter == 6
 
 
-def test_chained_sampler_05():
-    """
-    Feature: Chained Sampler
-    Description: Chained Samplers: Distributed and WeightedRandom
-    Expectation: Get correct number of data
-    """
-    logger.info("Test Case Chained Sampler - Distributed and WeightedRandom")
-
-    # Create chained sampler, Distributed and WeightedRandom
-    sampler = ds.DistributedSampler(num_shards=2, shard_id=1)
-    weights = [1.0, 0.1, 0.02, 0.3, 0.4, 0.05, 1.2, 0.13, 0.14, 0.015, 0.16, 0.5]
-    child_sampler = ds.WeightedRandomSampler(weights, num_samples=24)
-    sampler.add_child(child_sampler)
-    # Create ImageFolderDataset with sampler
-    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 12
-
-    # Verify number of iterations
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
-        # in this example, each dictionary has keys "image" and "label"
-        logger.info("image is {}".format(item["image"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    # Note: Child WeightedRandomSampler produces 24 samples
-    # Note: DistributedSampler produces 24/2=12 samples
-    assert num_iter == 12
 
 
-def test_chained_sampler_06():
-    """
-    Feature: Chained Sampler
-    Description: Chained Samplers: WeightedRandom and PKSampler
-    Expectation: Get correct number of data
-    """
-    logger.info("Test Case Chained Sampler - WeightedRandom and PKSampler")
-
-    # Create chained sampler, WeightedRandom and PKSampler
-    weights = [1.0, 0.1, 0.02, 0.3, 0.4, 0.05, 1.2, 0.13, 0.14, 0.015, 0.16, 0.5]
-    sampler = ds.WeightedRandomSampler(weights=weights, num_samples=12)
-    child_sampler = ds.PKSampler(num_val=3)  # Number of elements per class is 3 (and there are 4 classes)
-    sampler.add_child(child_sampler)
-    # Create ImageFolderDataset with sampler
-    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 12
-
-    # Verify number of iterations
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
-        # in this example, each dictionary has keys "image" and "label"
-        logger.info("image is {}".format(item["image"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    # Note: WeightedRandomSampler produces 12 samples
-    # Note: Child PKSampler produces 12 samples
-    assert num_iter == 12
 
 
-def test_chained_sampler_07():
-    """
-    Feature: Chained Sampler
-    Description: Chained Samplers: SubsetRandom and Distributed, 2 shards
-    Expectation: Get correct number of data
-    """
-    logger.info("Test Case Chained Sampler - SubsetRandom and Distributed, 2 shards")
-
-    # Create chained sampler, subset random and distributed
-    indices = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16, 11]
-    sampler = ds.SubsetRandomSampler(indices, num_samples=12)
-    child_sampler = ds.DistributedSampler(num_shards=2, shard_id=1)
-    sampler.add_child(child_sampler)
-    # Create ImageFolderDataset with sampler
-    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 12
-
-    # Verify number of iterations
-
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
-        # in this example, each dictionary has keys "image" and "label"
-        logger.info("image is {}".format(item["image"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    # Note: SubsetRandomSampler produces 12 samples
-    assert num_iter == 12
 
 
-def test_chained_sampler_08():
-    """
-    Feature: Chained Sampler
-    Description: Chained Samplers: SubsetRandom and Distributed, 4 shards
-    Expectation: Get correct number of data
-    """
-    logger.info("Test Case Chained Sampler - SubsetRandom and Distributed, 4 shards")
-
-    # Create chained sampler, subset random and distributed
-    indices = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-    sampler = ds.SubsetRandomSampler(indices, num_samples=11)
-    child_sampler = ds.DistributedSampler(num_shards=4, shard_id=1)
-    sampler.add_child(child_sampler)
-    # Create ImageFolderDataset with sampler
-    data1 = ds.ImageFolderDataset(DATA_DIR, sampler=sampler)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 11
-
-    # Verify number of iterations
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
-        # in this example, each dictionary has keys "image" and "label"
-        logger.info("image is {}".format(item["image"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    # Note: SubsetRandomSampler returns 11 samples
-    assert num_iter == 11
 
 
 def test_imagefolder_rename():
@@ -961,65 +720,6 @@ def decrypt_func(cipher_file):
     return new_content
 
 
-@pytest.mark.usefixtures("encrypt_func")
-def test_imagefolder_decrypt():
-    """
-    Feature: Test imagefolder decrypt
-    Description: Support decrypting encrypted image data
-    Expectation: Success
-    """
-    logger.info("Test imagefolder decrypt")
-
-    resize_height = 224
-    resize_width = 224
-
-    # Create dataset and define map operations
-    ds1 = ds.ImageFolderDataset(DATA_DIR_3, decrypt=decrypt_func)
-
-    num_classes = 3
-    decode_op = vision.Decode()
-    resize_op = vision.Resize((resize_height, resize_width), vision.Inter.LINEAR)
-    one_hot_encode = data_trans.OneHot(num_classes)  # num_classes is input argument
-
-    ds1 = ds1.map(operations=decode_op, input_columns=["image"])
-    ds1 = ds1.map(operations=resize_op, input_columns=["image"])
-    ds1 = ds1.map(operations=one_hot_encode, input_columns=["label"])
-
-    # apply batch operations
-    batch_size = 3
-    ds1 = ds1.batch(batch_size, drop_remainder=True)
-
-    ds2 = ds1
-    alpha = 0.2
-    transforms = [vision.MixUp(batch_size=batch_size, alpha=alpha, is_single=False)
-                  ]
-    ds1 = ds1.map(operations=transforms, input_columns=["image", "label"])
-    num_iter = 0
-    batch1_image1 = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            ds2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        image1 = data1["image"]
-        label1 = data1["label"]
-        logger.info("label: {}".format(label1))
-
-        image2 = data2["image"]
-        label2 = data2["label"]
-        logger.info("label2: {}".format(label2))
-
-        if num_iter == 0:
-            batch1_image1 = image1
-
-        if num_iter == 1:
-            lam = np.abs(label2 - label1)
-            logger.info("lam value in multi: {}".format(lam))
-            for index in range(batch_size):
-                if np.square(lam[index]).mean() != 0:
-                    lam_value = 1 - np.sum(lam[index]) / 2
-                    img_golden = lam_value * image2[index] + (1 - lam_value) * batch1_image1[index]
-                    assert image1[index].all() == img_golden.all()
-                    logger.info("====test several batch mixup ok====")
-            break
-        num_iter += 1
 
 
 def test_imagefolder_error_sample_sourceop():
@@ -1118,38 +818,3 @@ def test_imagefolder_classindexing():
     data2 = data2.repeat(2)
     index2 = data2.get_class_indexing()
     assert index2 == {'class1': 4, 'class2': 0}
-
-
-if __name__ == '__main__':
-    test_imagefolder_basic()
-    test_imagefolder_numsamples()
-    test_sequential_sampler()
-    test_random_sampler()
-    test_distributed_sampler()
-    test_pk_sampler()
-    test_subset_random_sampler()
-    test_weighted_random_sampler()
-    test_weighted_random_sampler_exception()
-    test_chained_sampler_01()
-    test_chained_sampler_02()
-    test_chained_sampler_03()
-    test_chained_sampler_04()
-    test_chained_sampler_05()
-    test_chained_sampler_06()
-    test_chained_sampler_07()
-    test_chained_sampler_08()
-    test_imagefolder_numshards()
-    test_imagefolder_shardid()
-    test_imagefolder_noshuffle()
-    test_imagefolder_extrashuffle()
-    test_imagefolder_classindex()
-    test_imagefolder_negative_classindex()
-    test_imagefolder_extensions()
-    test_imagefolder_decode()
-    test_imagefolder_rename()
-    test_imagefolder_zip()
-    test_imagefolder_exception()
-    test_imagefolder_decrypt()
-    test_imagefolder_error_sample_sourceop()
-    test_imagefolder_error_sample_mapop()
-    test_imagefolder_classindexing()

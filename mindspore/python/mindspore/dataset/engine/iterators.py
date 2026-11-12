@@ -29,7 +29,7 @@ import mindspore._c_dataengine as cde
 from mindspore.common.tensor import Tensor, np_types
 import mindspore.dataset as ds
 from mindspore.dataset.engine import offload
-from mindspore.dataset.core.config import get_debug_mode
+from mindspore.dataset.core.config import _get_debug_mode
 
 from mindspore import log as logger
 from ..core.py_util_helpers import ExceptionHandler
@@ -244,7 +244,7 @@ class Iterator:
         else:
             init_step = dataset.get_init_step()
             dataset_size = dataset.get_dataset_size()
-        if get_debug_mode():
+        if _get_debug_mode():
             if dataset.get_init_step() != 0:
                 logger.warning("Dataset init step will be ignored in debug mode.")
             consumer = cde.PythonPullBasedIteratorConsumer(num_epochs)

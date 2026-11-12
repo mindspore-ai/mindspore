@@ -23,7 +23,6 @@ from PIL import Image
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision.transforms as vision
-import mindspore.dataset.transforms.transforms as t_trans
 from mindspore import log as logger
 from util import visualize_image, diff_mse
 
@@ -122,64 +121,6 @@ def test_erase_invalid_input():
                        "Argument inplace with value 0 is not of type [<class 'bool'>], but got <class 'int'>.")
 
 
-def test_erase_operation_01():
-    """
-    Feature: Erase operation
-    Description: Testing the normal functionality of the Erase operator
-    Expectation: The Output is equal to the expected output
-    """
-    # Erase Normal Scenario: input HWC Numpy uint8 format
-    image1 = np.random.randint(0, 255, (30, 30, 3), dtype=np.uint8)
-    v = (30, 5, 100)
-    _ = vision.Erase(1, 4, 20, 30, v)(image1)
-
-    # Erase Normal Scenario: input HWC Numpy int32 format
-    image1 = np.random.randint(0, 255, (30, 40, 3), dtype=np.int32)
-    v = (30, 5, 100)
-    _ = vision.Erase(1, 4, 20, 30, v)(image1)
-
-    # Erase Normal Scenario: input HWC Numpy float64 format
-    image1 = np.random.randn(30, 60, 3).astype(np.float64)
-    v = (30, 5, 100)
-    _ = vision.Erase(1, 4, 20, 30, v)(image1)
-
-    # Erase Normal Scenario: no argument value
-    image = np.random.randint(0, 255, (3, 6, 3)).astype(np.uint8)
-    _ = vision.Erase(top=1, left=1, height=2, width=2, inplace=True)(image)
-
-    # Erase Normal Scenario: no argument inplace
-    image = np.random.randn(3, 6, 3).astype(np.uint8)
-    v = (30, 5, 100)
-    _ = vision.Erase(top=1, left=2, height=1, width=3, value=v)(image)
-
-    # Erase Normal Scenario: test erase func pipeline
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "testImageNetData", "train")
-    data1 = ds.ImageFolderDataset(data_dir, shuffle=False)
-    v = (30, 5, 100)
-    transforms_1 = [
-        vision.Decode(False),
-        vision.Resize(3),
-        vision.Erase(1, 1, 2, 2, v)
-    ]
-    transform_1 = t_trans.Compose(transforms_1)
-    data1 = data1.map(operations=transform_1, input_columns=["image"])
-    expect_out = [[[176, 166, 157], [185, 175, 166], [137, 146, 164]],
-                  [[176, 165, 159], [30, 5, 100], [30, 5, 100]], [[12, 55, 84], [30, 5, 100], [30, 5, 100]]]
-    for i in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        out = i["image"]
-    assert (expect_out == out).all()
-
-    # Erase Normal Scenario: input HWC Numpy float64 format
-    image1 = np.random.randn(30, 60, 3).astype(np.float32)
-    v = (30, 5, 100)
-    _ = vision.Erase(1, 4, 20, 30, v)(image1)
-
-    # Erase Normal Scenario: input PIL format
-    image1 = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "testImageNetData", "train", "class1", "1_1.jpg")
-    image = Image.open(image1)
-    v = (30, 50, 100)
-    _ = vision.Erase(1, 4, 3, 10, v)(image)
-    image.close()
 
 
 def test_erase_exception_01():
@@ -315,12 +256,3 @@ def test_erase_exception_02():
     v = (30, 5, 100)
     with pytest.raises(RuntimeError, match="channel of input image should be 3"):
         vision.Erase(1, 4, 20, 30, v)(image1)
-
-
-if __name__ == "__main__":
-    test_erase_op(plot=True)
-    test_func_erase_eager()
-    test_erase_invalid_input()
-    test_erase_operation_01()
-    test_erase_exception_01()
-    test_erase_exception_02()

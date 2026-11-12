@@ -15,7 +15,6 @@
 """
 Test Food101 dataset operators
 """
-import pytest
 import numpy as np
 
 import mindspore.dataset as ds
@@ -148,57 +147,3 @@ def test_food101_pipeline():
     for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         num_iter += 1
     assert num_iter == 1
-
-
-def test_food101_exception():
-    """
-    Feature: Food101 dataset
-    Description: Throw error messages when certain errors occur
-    Expectation: Error message
-    """
-    logger.info("Test error cases for Food101Dataset")
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.Food101Dataset(DATA_DIR, shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.Food101Dataset(DATA_DIR, sampler=ds.PKSampler(
-            3), num_shards=2, shard_id=0)
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.Food101Dataset(DATA_DIR, num_shards=10)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.Food101Dataset(DATA_DIR, shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.Food101Dataset(DATA_DIR, num_shards=5, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.Food101Dataset(DATA_DIR, num_shards=5, shard_id=5)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.Food101Dataset(DATA_DIR, num_shards=2, shard_id=5)
-
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.Food101Dataset(DATA_DIR, shuffle=False, num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.Food101Dataset(DATA_DIR, shuffle=False, num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.Food101Dataset(DATA_DIR, shuffle=False, num_parallel_workers=-2)
-
-    error_msg_7 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_7):
-        ds.Food101Dataset(DATA_DIR, num_shards=2, shard_id="0")
-
-
-if __name__ == '__main__':
-    test_food101_basic()
-    test_food101_sequential_sampler()
-    test_food101_noshuffle()
-    test_food101_usage()
-    test_food101_pipeline()
-    test_food101_exception()

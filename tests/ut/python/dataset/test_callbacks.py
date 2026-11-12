@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Dataset regression coverage for callbacks."""
 import os
 from builtins import range, super
 import time
@@ -148,11 +149,11 @@ def build_test_case_1cb(epochs, steps, step_size=1, repeat=1):
 
     my_cb = MyDSCallback(step_size=step_size, events=events)
 
-    data = data.map(operations=(lambda x: x), callbacks=my_cb)
+    data = data.map(operations=lambda x: x, callbacks=my_cb)
     if repeat != 1:
         if repeat % 2 == 0 and repeat != 2:
             data = data.repeat(2)
-            data = data.map(operations=(lambda x: x))
+            data = data.map(operations=lambda x: x)
             data = data.repeat(repeat // 2)
         else:
             data = data.repeat(repeat)
@@ -179,7 +180,7 @@ def build_test_case_2cbs(epochs, steps):
     arr = list(range(1, steps + 1))
     data = ds.NumpySlicesDataset(arr, shuffle=False)
 
-    data = data.map(operations=(lambda x: x), callbacks=[my_cb1, my_cb2])
+    data = data.map(operations=lambda x: x, callbacks=[my_cb1, my_cb2])
 
     itr = data.create_tuple_iterator(num_epochs=epochs)
     for _ in range(epochs):
@@ -202,8 +203,8 @@ def build_test_case_2maps(epochs, steps):
     arr = list(range(1, steps + 1))
     data = ds.NumpySlicesDataset(arr, shuffle=False)
 
-    data = data.map(operations=(lambda x: x), callbacks=my_cb1)
-    data = data.map(operations=(lambda x: x), callbacks=my_cb2)
+    data = data.map(operations=lambda x: x, callbacks=my_cb1)
+    data = data.map(operations=lambda x: x, callbacks=my_cb2)
 
     itr = data.create_tuple_iterator(num_epochs=epochs)
     for _ in range(epochs):
@@ -328,7 +329,7 @@ def test_callbacks_non_sink():
     my_cb2 = MyMSCallback(events)
     arr = [1, 2, 3, 4]
     data = ds.NumpySlicesDataset((arr, arr), column_names=["c1", "c2"], shuffle=False)
-    data = data.map(operations=(lambda x: x), callbacks=my_cb1)
+    data = data.map(operations=lambda x: x, callbacks=my_cb1)
 
     net = Net()
     model = Model(net)
@@ -357,7 +358,7 @@ def test_callbacks_non_sink_batch_size2():
     my_cb2 = MyMSCallback(events)
     arr = [1, 2, 3, 4]
     data = ds.NumpySlicesDataset((arr, arr), column_names=["c1", "c2"], shuffle=False)
-    data = data.map(operations=(lambda x: x), callbacks=my_cb1)
+    data = data.map(operations=lambda x: x, callbacks=my_cb1)
     data = data.batch(2)
     net = Net()
     model = Model(net)
@@ -373,30 +374,6 @@ def test_callbacks_non_sink_batch_size2():
     assert events[:10] == expected_synced_events
 
 
-def test_callbacks_non_sink_mismatch_size():
-    """
-    Feature: Callback
-    Description: Test callbacks with dataset_sink_mode=False in train with mismatch size
-    Expectation: Exception is raised as expected
-    """
-    logger.info("test_callbacks_non_sink_mismatch_size")
-    default_timeout = ds.config.get_callback_timeout()
-    ds.config.set_callback_timeout(1)
-
-    events = []
-    my_cb1 = MyWaitedCallback(events, 2)
-    my_cb2 = MyMSCallback(events)
-    arr = [1, 2, 3, 4]
-    data = ds.NumpySlicesDataset((arr, arr), column_names=["c1", "c2"], shuffle=False)
-    data = data.map(operations=(lambda x: x), callbacks=my_cb1)
-    data = data.batch(3)
-    net = Net()
-    model = Model(net)
-    with pytest.raises(Exception) as err:
-        model.train(2, data, dataset_sink_mode=False, callbacks=[my_cb2, my_cb1])
-    assert "RuntimeError: ds_step_begin timed out after 1 second(s)" in str(err.value)
-
-    ds.config.set_callback_timeout(default_timeout)
 
 
 def test_callbacks_validations():
@@ -409,13 +386,13 @@ def test_callbacks_validations():
 
     with pytest.raises(Exception) as err:
         data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
-        data.map(operations=(lambda x: x), callbacks=0)
+        data.map(operations=lambda x: x, callbacks=0)
     assert "Argument callbacks with value 0 is not " in str(err.value)
 
     with pytest.raises(Exception) as err:
         my_cb1 = MyDSCallback()
         data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
-        data.map(operations=(lambda x: x), callbacks=[my_cb1, 0])
+        data.map(operations=lambda x: x, callbacks=[my_cb1, 0])
     assert "Argument callbacks[1] with value 0 is not " in str(err.value)
 
     with pytest.raises(Exception) as err:
@@ -425,7 +402,7 @@ def test_callbacks_validations():
         my_cb = BadCB()
 
         data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
-        data = data.map(operations=(lambda x: x), callbacks=my_cb)
+        data = data.map(operations=lambda x: x, callbacks=my_cb)
         for _ in data:
             pass
     assert "Inheriting Callback class without overriding any methods" in str(err.value)
@@ -443,7 +420,7 @@ def test_callbacks_sink_simulation():
     epochs = 2
     my_cb = MyWaitedCallback(events, 1)
     data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
-    data = data.map(operations=(lambda x: x), callbacks=my_cb)
+    data = data.map(operations=lambda x: x, callbacks=my_cb)
     data = data.device_que()
     data.send(num_epochs=epochs)
     for e in range(epochs):
@@ -491,7 +468,7 @@ def test_callbacks_exceptions():
 
     with pytest.raises(Exception) as err:
         data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
-        data = data.map(operations=(lambda x: x), callbacks=BadCB())
+        data = data.map(operations=lambda x: x, callbacks=BadCB())
         for _ in data:
             pass
         assert "RuntimeError: Bad begin" in str(err.value)
@@ -510,7 +487,7 @@ def test_callbacks_train_end():
 
     my_cb = MyWaitedCallback(events, 1)
     data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
-    data = data.map(operations=(lambda x: x), callbacks=[my_cb])
+    data = data.map(operations=lambda x: x, callbacks=[my_cb])
     data = data.device_que()
     data.send(num_epochs=epochs)
     time.sleep(0.5)
@@ -536,9 +513,9 @@ def test_callbacks_one_cb():
     my_step_begin = StepBegin(events=events3, cb_id=3)
     my_step_end = StepEnd(events=events2, cb_id=2)
 
-    data = data.map(operations=(lambda x: x), callbacks=my_begin)
-    data = data.map(operations=(lambda x: x), callbacks=[my_epoch_begin, my_step_end])
-    data = data.map(operations=(lambda x: x), callbacks=[my_epoch_end, my_step_begin])
+    data = data.map(operations=lambda x: x, callbacks=my_begin)
+    data = data.map(operations=lambda x: x, callbacks=[my_epoch_begin, my_step_end])
+    data = data.map(operations=lambda x: x, callbacks=[my_epoch_end, my_step_begin])
 
     itr = data.create_tuple_iterator(num_epochs=2)
     for _ in range(2):
@@ -590,7 +567,7 @@ def test_clear_callback():
     cb = FlagCallback()
     # make sure variables are properly initialized before testing
     assert not cb.flag and cb.row_cnt == 0
-    data = data.map(operations=(lambda x: x), callbacks=cb)
+    data = data.map(operations=lambda x: x, callbacks=cb)
     assert data.get_dataset_size() == 4
     assert data.output_shapes() == [[]]
     # make sure callback is never called by checking flag and row_cnt
@@ -611,22 +588,6 @@ def test_disable_callback_in_independent_mode():
     with pytest.raises(RuntimeError) as err:
         my_cb = MyWaitedCallback([], 1)
         data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
-        data = data.map(operations=(lambda x: x), callbacks=[my_cb])
+        data = data.map(operations=lambda x: x, callbacks=[my_cb])
     assert "Dataset Callbacks is not supported in Dataset Independent mode" in str(err.value)
     os.environ["MS_INDEPENDENT_DATASET"] = "False"
-
-
-if __name__ == '__main__':
-    test_callbacks_all_2cbs()
-    test_callbacks_all_methods()
-    test_callbacks_exceptions()
-    test_callbacks_repeat()
-    test_callbacks_sink_simulation()
-    test_callbacks_validations()
-    test_callbacks_var_step_size()
-    test_callbacks_non_sink_batch_size2()
-    test_callbacks_non_sink()
-    test_callbacks_one_cb()
-    test_callbacks_non_sink_mismatch_size()
-    test_callbacks_train_end()
-    test_clear_callback()

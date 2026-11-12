@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 
+"""Dataset regression coverage for gpu reset."""
 import mindspore.dataset as ds
 import mindspore.nn as nn
-from mindspore import context
 from mindspore import log as logger
 from mindspore.common import set_seed
 from mindspore.ops import operations as P
 from mindspore.train import Model, Callback
-from tests.mark_utils import arg_mark
 
 set_seed(1)
 
@@ -47,7 +45,7 @@ def create_model():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.print = P.Print()
 
         def construct(self, x):
@@ -71,29 +69,3 @@ class MyCallback(Callback):
         if cb_params.cur_epoch_num == self.reset_point:
             dataset = ds.engine.datasets._get_training_dataset()  # pylint: disable=W0212
             dataset._reset(self.reset_point * self.dataset_size, self.dataset_size)  # pylint: disable=W0212
-
-
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize("fast_recovery", (False, True))
-@pytest.mark.parametrize("num_parallel_workers", (1, 4))
-@pytest.mark.parametrize("python_multiprocessing", (False, True))
-def test_dataset_reset_sink(fast_recovery, num_parallel_workers, python_multiprocessing):
-    """
-    Feature: Dataset recovery
-    Description: Test Dataset recovery when GPU (and sink mode) is used.
-    Expectation: Training completes successfully
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    original_fast_recovery = ds.config.get_fast_recovery()
-    ds.config.set_fast_recovery(fast_recovery)
-    data = create_np_dataset(20, num_parallel_workers, python_multiprocessing)
-    model = create_model()
-    num_epochs = 3
-    reset_point = 2  # 2nd epoch
-    cb = MyCallback(dataset_size=data.get_dataset_size(), reset_point=reset_point)
-    model.train(num_epochs, data, callbacks=[cb], dataset_sink_mode=True)
-    ds.config.set_fast_recovery(original_fast_recovery)
-
-
-if __name__ == '__main__':
-    test_dataset_reset_sink(fast_recovery=True, num_parallel_workers=4, python_multiprocessing=True)

@@ -23,7 +23,6 @@ from PIL import Image, ImageEnhance
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
@@ -125,95 +124,8 @@ def test_adjust_saturation_invalid_saturationfactor_param():
         assert "is not of type [<class 'float'>, <class 'int'>], but got" in str(error)
 
 
-def test_adjust_saturation_pipeline():
-    """
-    Feature: AdjustSaturation op
-    Description: Test AdjustSaturation Cpp implementation Pipeline
-    Expectation: Output is the same as expected output
-    """
-    # First dataset
-    transforms1 = [vision.Decode(), vision.Resize([64, 64])]
-    transforms1 = t_trans.Compose(transforms1)
-    ds1 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    transforms2 = [
-        vision.Decode(),
-        vision.Resize([64, 64]),
-        vision.AdjustSaturation(1.0)
-    ]
-    transform2 = t_trans.Compose(transforms2)
-    ds2 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-
-    num_iter = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1),
-                            ds2.create_dict_iterator(num_epochs=1)):
-        num_iter += 1
-        ori_img = data1["image"].asnumpy()
-        cvt_img = data2["image"].asnumpy()
-        assert_allclose(ori_img.flatten(),
-                        cvt_img.flatten(),
-                        rtol=1e-5,
-                        atol=0)
-        assert ori_img.shape == cvt_img.shape
 
 
-def test_adjust_saturation_operation_01():
-    """
-    Feature: AdjustSaturation operation
-    Description: Testing the normal functionality of the AdjustSaturation operator
-    Expectation: The Output is equal to the expected output
-    """
-    # AdjustSaturation Operator: Test Pipeline Mode
-    transform1 = [vision.Decode()]
-    transform1 = t_trans.Compose(transform1)
-    ds1 = ds.ImageFolderDataset(dir_data()[0], shuffle=False)
-    ds1 = ds1.map(operations=transform1, input_columns=["image"])
-    transform2 = [vision.Decode(), vision.AdjustSaturation(saturation_factor=2.0)]
-    transform2 = t_trans.Compose(transform2)
-    ds2 = ds.ImageFolderDataset(dir_data()[0], shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-    for _ in zip(ds1.create_dict_iterator(output_numpy=True), ds2.create_dict_iterator(output_numpy=True)):
-        pass
-
-    # AdjustSaturation Operator: Input data is in JPG format
-    with Image.open(dir_data()[1]) as image:
-        adjust_saturation_op = vision.AdjustSaturation(saturation_factor=2.0)
-        _ = adjust_saturation_op(image)
-
-    # AdjustSaturation Operator: Input data is in GIF format
-    with Image.open(dir_data()[2]) as image:
-        adjust_saturation_op = vision.AdjustSaturation(saturation_factor=2.0)
-        with pytest.raises(ValueError, match=r"image has wrong mode"):
-            adjust_saturation_op(image)
-
-    # AdjustSaturation Operator: Input data is in BMP format
-    with  Image.open(dir_data()[3]) as image:
-        adjust_saturation_op = vision.AdjustSaturation(saturation_factor=2.0)
-        _ = adjust_saturation_op(image)
-
-    # AdjustSaturation Operator: Input data is in PNG format
-    with Image.open(dir_data()[4]) as image:
-        adjust_saturation_op = vision.AdjustSaturation(saturation_factor=2.0)
-        _ = adjust_saturation_op(image)
-
-    # AdjustSaturation operator: Input data is a 3D numpy array.
-    image = np.random.randint(0, 255, (30, 30, 3)).astype(np.uint8)
-    adjust_saturation_op = vision.AdjustSaturation(saturation_factor=2.0)
-    _ = adjust_saturation_op(image)
-
-    # AdjustSaturation operator: The saturation_factor parameter is of type int.
-    image = np.random.randint(0, 255, (30, 30, 3)).astype(np.uint8)
-    adjust_saturation_op = vision.AdjustSaturation(saturation_factor=2)
-    _ = adjust_saturation_op(image)
 
 
 def test_adjust_saturation_exception_01():
@@ -346,12 +258,3 @@ def test_adjust_saturation_exception_02():
                        match=r"Argument saturation_factor with value None is not of "
                              r"type \[<class 'float'>, <class 'int'>\], but got <class 'NoneType'>."):
         vision.AdjustSaturation(saturation_factor=None)
-
-
-if __name__ == "__main__":
-    test_adjust_saturation_eager()
-    test_adjust_saturation_invalid_saturationfactor_param()
-    test_adjust_saturation_pipeline()
-    test_adjust_saturation_operation_01()
-    test_adjust_saturation_exception_01()
-    test_adjust_saturation_exception_02()

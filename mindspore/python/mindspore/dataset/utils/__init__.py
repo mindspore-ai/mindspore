@@ -13,7 +13,5 @@
 # limitations under the License.
 # ==============================================================================
 """init file for MindData utils"""
-from .browse_dataset import imshow_det_bbox
-from .line_reader import LineReader
 
-__all__ = ["imshow_det_bbox", "LineReader"]
+__all__ = []

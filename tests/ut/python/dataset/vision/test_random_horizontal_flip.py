@@ -15,7 +15,6 @@
 """
 Testing the random horizontal flip op in DE
 """
-import cv2
 import numpy as np
 import os
 import pytest
@@ -23,10 +22,14 @@ from PIL import Image
 
 from mindspore import log as logger
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as trans
 import mindspore.dataset.vision.transforms as vision
-from util import save_and_check_md5, save_and_check_md5_pil, visualize_list, visualize_image, diff_mse, \
-    config_get_set_seed, config_get_set_num_parallel_workers
+from util import (
+    save_and_check_md5,
+    visualize_image,
+    diff_mse,
+    config_get_set_seed,
+    config_get_set_num_parallel_workers,
+)
 
 GENERATE_GOLDEN = False
 
@@ -143,33 +146,6 @@ def test_random_horizontal_valid_prob_c():
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_random_horizontal_valid_prob_py():
-    """
-    Feature: RandomHorizontalFlip op
-    Description: Test RandomHorizontalFlip with Python implementation using valid non-default input
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("test_random_horizontal_valid_prob_py")
-    original_seed = config_get_set_seed(0)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-
-    # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
-        "image"], shuffle=False)
-    transforms = [
-        vision.Decode(True),
-        vision.RandomHorizontalFlip(0.8),
-        vision.ToTensor()
-    ]
-    transform = trans.Compose(transforms)
-    data = data.map(operations=transform, input_columns=["image"])
-
-    filename = "random_horizontal_01_py_result.npz"
-    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
-
-    # Restore config setting
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
 def test_random_horizontal_invalid_prob_c():
@@ -196,105 +172,10 @@ def test_random_horizontal_invalid_prob_c():
             e)
 
 
-def test_random_horizontal_invalid_prob_py():
-    """
-    Feature: RandomHorizontalFlip op
-    Description: Test RandomHorizontalFlip with Python implementation using invalid input
-    Expectation: Error is raised as expected
-    """
-    logger.info("test_random_horizontal_invalid_prob_py")
-
-    # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
-        "image"], shuffle=False)
-
-    try:
-        transforms = [
-            vision.Decode(True),
-            # Note: Valid range of prob should be [0.0, 1.0]
-            vision.RandomHorizontalFlip(1.5),
-            vision.ToTensor()
-        ]
-        transform = trans.Compose(transforms)
-        data = data.map(operations=transform, input_columns=["image"])
-    except ValueError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(
-            e)
 
 
-def test_random_horizontal_comp(plot=False):
-    """
-    Feature: RandomHorizontalFlip op
-    Description: Test RandomHorizontalFlip op and compare between Python and Cpp image augmentation ops
-    Expectation: Resulting datasets from the ops are expected to be the same
-    """
-    logger.info("test_random_horizontal_comp")
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
-        "image"], shuffle=False)
-    decode_op = vision.Decode()
-    # Note: The image must be flipped if prob is set to be 1
-    random_horizontal_op = vision.RandomHorizontalFlip(1)
-    data1 = data1.map(operations=decode_op, input_columns=["image"])
-    data1 = data1.map(operations=random_horizontal_op, input_columns=["image"])
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
-        "image"], shuffle=False)
-    transforms = [
-        vision.Decode(True),
-        # Note: The image must be flipped if prob is set to be 1
-        vision.RandomHorizontalFlip(1),
-        vision.ToTensor()
-    ]
-    transform = trans.Compose(transforms)
-    data2 = data2.map(operations=transform, input_columns=["image"])
-
-    images_list_c = []
-    images_list_py = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        image_c = item1["image"]
-        image_py = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-        images_list_c.append(image_c)
-        images_list_py.append(image_py)
-
-        # Check if the output images are the same
-        mse = diff_mse(image_c, image_py)
-        assert mse < 0.001
-    if plot:
-        visualize_list(images_list_c, images_list_py, visualize_mode=2)
 
 
-def test_random_horizontal_op_1():
-    """
-    Feature: RandomHorizontalFlip op
-    Description: Test RandomHorizontalFlip with different fields
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("Test RandomHorizontalFlip with different fields.")
-
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
-        "image"], shuffle=False)
-    data = data.map(operations=trans.Duplicate(), input_columns=["image"],
-                    output_columns=["image", "image_copy"])
-    random_horizontal_op = vision.RandomHorizontalFlip(1.0)
-    decode_op = vision.Decode()
-
-    data = data.map(operations=decode_op, input_columns=["image"])
-    data = data.map(operations=decode_op, input_columns=["image_copy"])
-    data = data.map(operations=random_horizontal_op,
-                    input_columns=["image", "image_copy"])
-
-    num_iter = 0
-    for data1 in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        image = data1["image"]
-        image_copy = data1["image_copy"]
-        mse = diff_mse(image, image_copy)
-        logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
-        assert mse == 0
-        num_iter += 1
 
 
 def test_random_horizontal_flip_invalid_data():
@@ -412,66 +293,6 @@ def test_random_horizontal_flip_video_op_precision_pipeline_c():
         assert mse < 0.001
 
 
-def test_random_horizontal_flip_operation_01():
-    """
-    Feature: RandomHorizontalFlip operation
-    Description: Testing the normal functionality of the RandomHorizontalFlip operator
-    Expectation: The Output is equal to the expected output
-    """
-    # When parameter prob is 0.0, RandomHorizontalFlip interface is successfully called
-    prob = 0.0
-    ds2 = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.RandomHorizontalFlip(prob),
-        vision.ToTensor()
-    ]
-    transform1 = trans.Compose(transforms1)
-    ds2 = ds2.map(input_columns=["image"], operations=transform1)
-    for _ in ds2.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When parameter prob is 0, RandomHorizontalFlip interface is successfully called
-    dataset2 = ds.ImageFolderDataset(DATA_DIR_1, shuffle=False, decode=True)
-    prob = 0
-    random_horizontal_flip_op = vision.RandomHorizontalFlip(prob=prob)
-    dataset2 = dataset2.map(input_columns=["image"], operations=random_horizontal_flip_op)
-    for _ in dataset2.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When parameter prob is 0.8, RandomHorizontalFlip interface is successfully called
-    source = generator_mc
-    column_names = ["image1", "image2", "image3", "image4", "image5"]
-    dataset = ds.GeneratorDataset(source, column_names)
-    prob = 0.8
-    horizontal_flip_op = vision.RandomHorizontalFlip(prob=prob)
-    dataset = dataset.map(input_columns=["image1", "image2", "image3", "image4", "image5"],
-                          operations=horizontal_flip_op)
-    for data in dataset.create_dict_iterator(output_numpy=True):
-        assert (data["image1"] == data["image2"]).all()
-        assert (data["image3"] == data["image4"]).all()
-
-    # When no parameters are set, RandomHorizontalFlip interface is successfully called
-    source = generator_mc
-    column_names = ["image1", "image2", "image3", "image4", "image5"]
-    dataset = ds.GeneratorDataset(source, column_names)
-    horizontal_flip_op = vision.RandomHorizontalFlip()
-    dataset = dataset.map(input_columns=["image1", "image2", "image5"], operations=horizontal_flip_op)
-    for data in dataset.create_dict_iterator(output_numpy=True):
-        assert (data["image1"] == data["image2"]).all()
-
-    # When setting extra parameters, RandomHorizontalFlip interface call fails
-    image = cv2.imread(image_jpg)
-    with Image.open(image_bmp) as image2:
-        prob = 1
-        random_horizontal_flip_op = vision.RandomHorizontalFlip(prob)
-        _ = random_horizontal_flip_op(image, image2)
-
-    # When input image is bmp, RandomHorizontalFlip interface is successfully called
-    with Image.open(image_bmp) as image:
-        prob = 0
-        random_horizontal_flip_op = vision.RandomHorizontalFlip(prob)
-        _ = random_horizontal_flip_op(image)
 
 
 def test_random_horizontal_flip_operation_02():
@@ -627,23 +448,3 @@ def test_random_horizontal_flip_exception_02():
     prob = (0.5, 1)
     with pytest.raises(TypeError, match=r'is not of type \[\<class \'float\'\>, \<class \'int\'\>\].'):
         vision.RandomHorizontalFlip(prob)
-
-
-if __name__ == "__main__":
-    test_random_horizontal_op(plot=True)
-    test_random_horizontal_valid_prob_c()
-    test_random_horizontal_valid_prob_py()
-    test_random_horizontal_invalid_prob_c()
-    test_random_horizontal_invalid_prob_py()
-    test_random_horizontal_comp(plot=True)
-    test_random_horizontal_op_1()
-    test_random_horizontal_flip_invalid_data()
-    test_random_horizontal_flip_video_op_1d_c()
-    test_random_horizontal_flip_video_op_4d_c()
-    test_random_horizontal_flip_video_op_5d_c()
-    test_random_horizontal_flip_video_op_precision_eager_c()
-    test_random_horizontal_flip_video_op_precision_pipeline_c()
-    test_random_horizontal_flip_operation_01()
-    test_random_horizontal_flip_operation_02()
-    test_random_horizontal_flip_exception_01()
-    test_random_horizontal_flip_exception_02()

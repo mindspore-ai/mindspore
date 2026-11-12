@@ -21,7 +21,6 @@ import pytest
 from PIL import Image
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as data_trans
 import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from mindspore.common.tensor import Tensor
@@ -149,44 +148,6 @@ def test_hwc2chw_md5():
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_hwc2chw_comp(plot=False):
-    """
-    Feature: HWC2CHW op
-    Description: Test HWC2CHW between Python (using ToTensor) and Cpp image augmentation
-    Expectation: Image augmentations should be almost the same with mse < 0.001
-    """
-    logger.info("Test HWC2CHW with C and Python ToTensor image augmentation comparison")
-
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    hwc2chw_op = vision.HWC2CHW()
-    data1 = data1.map(operations=decode_op, input_columns=["image"])
-    data1 = data1.map(operations=hwc2chw_op, input_columns=["image"])
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    transforms = [
-        vision.Decode(True),
-        vision.ToTensor()]
-    transform = data_trans.Compose(transforms)
-    data2 = data2.map(operations=transform, input_columns=["image"])
-
-    image_c_transposed = []
-    image_py_transposed = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        c_image = item1["image"]
-        py_image = (item2["image"] * 255).astype(np.uint8)
-
-        # Compare images between that applying C implementation and Python implementation image augmentations
-        mse = diff_mse(py_image, c_image)
-        # Note: The images aren't exactly the same due to rounding error
-        assert mse < 0.001
-    if plot:
-        image_c_transposed.append(c_image.transpose(1, 2, 0))
-        image_py_transposed.append(py_image.transpose(1, 2, 0))
-        visualize_list(image_c_transposed, image_py_transposed, visualize_mode=2)
 
 
 def test_hwc2chw_comparison2(plot=False):
@@ -263,42 +224,6 @@ def test_hwc2chw_mix(plot=False):
         visualize_list(image, image_transposed)
 
 
-def test_hwc2chw_mix_compose(plot=False):
-    """
-    Feature: HWC2CHW op
-    Description: Test HWC2CHW C++ implementation in pipeline with mix of prior Python implementation ops,
-        and with Compose op
-    Expectation: Pipelines succeed with comparison mse=0
-    """
-    logger.info("Test HWC2CHW mix")
-
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    operations_list = [vision.Decode(to_pil=True),
-                       vision.ToPIL(),
-                       vision.HWC2CHW()]
-    compose_op = data_trans.Compose(operations_list)
-    data1 = data1.map(operations=compose_op, input_columns=["image"])
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=[vision.Decode(to_pil=True)], input_columns=["image"])
-
-    image_transposed = []
-    image = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        transposed_item = item1["image"].copy()
-        original_item = item2["image"].copy()
-        image_transposed.append(transposed_item.transpose(1, 2, 0))
-        image.append(original_item)
-
-        # check if the shape of data is transposed correctly
-        # transpose the original image from shape (H,W,C) to (C,H,W)
-        mse = diff_mse(transposed_item, original_item.transpose(2, 0, 1))
-        assert mse == 0
-    if plot:
-        visualize_list(image, image_transposed)
 
 
 def test_hwc2chw_operation_01():
@@ -423,16 +348,3 @@ def test_hwc2chw_exception_01():
     hwc2chw_op = vision.HWC2CHW()
     with pytest.raises(RuntimeError, match="Input Tensor is not valid."):
         hwc2chw_op()
-
-
-if __name__ == '__main__':
-    test_hwc2chw_callable()
-    test_hwc2chw_multi_channels()
-    test_hwc2chw(True)
-    test_hwc2chw_md5()
-    test_hwc2chw_comp(True)
-    test_hwc2chw_comparison2(True)
-    test_hwc2chw_mix(True)
-    test_hwc2chw_mix_compose(True)
-    test_hwc2chw_operation_01()
-    test_hwc2chw_exception_01()

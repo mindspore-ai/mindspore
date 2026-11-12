@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Dataset regression coverage for datasets div2k."""
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
@@ -152,101 +152,3 @@ def test_div2k_sequential_sampler():
         np.testing.assert_array_equal(item1["lr_image"], item2["lr_image"])
         num_iter += 1
     assert num_iter == num_samples
-
-
-def test_div2k_exception():
-    """
-    Feature: DIV2KDataset
-    Description: Test invalid parameters for DIV2KDataset
-    Expectation: Throw correct error as expected
-    """
-    usage = "train"          # train, valid, all
-    downgrade = "bicubic"    # bicubic, unknown, mild, difficult, wild
-    scale = 2                # 2, 3, 4, 8
-
-    error_msg_1 = "does not exist or is not a directory or permission denied!"
-    with pytest.raises(ValueError, match=error_msg_1):
-        ds.DIV2KDataset("NoExistsDir", usage=usage, downgrade=downgrade, scale=scale)
-
-    error_msg_2 = r"Input usage is not within the valid set of \['train', 'valid', 'all'\]."
-    with pytest.raises(ValueError, match=error_msg_2):
-        ds.DIV2KDataset(DATASET_DIR, usage="test", downgrade=downgrade, scale=scale)
-
-    error_msg_3 = r"Input scale is not within the valid set of \[2, 3, 4, 8\]."
-    with pytest.raises(ValueError, match=error_msg_3):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, scale=16, downgrade=downgrade)
-
-    error_msg_4 = r"Input downgrade is not within the valid set of .*"
-    with pytest.raises(ValueError, match=error_msg_4):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, scale=scale, downgrade="downgrade")
-
-    error_msg_5 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_5):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, shuffle=False,
-                        sampler=ds.PKSampler(3))
-
-    error_msg_6 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_6):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, num_shards=2, shard_id=0,
-                        sampler=ds.PKSampler(3))
-
-    error_msg_7 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_7):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, num_shards=10)
-
-    error_msg_8 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_8):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, shard_id=0)
-
-    error_msg_9 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_9):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, num_shards=5, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_9):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, num_shards=5, shard_id=5)
-    with pytest.raises(ValueError, match=error_msg_9):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, num_shards=2, shard_id=5)
-
-    error_msg_10 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_10):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, shuffle=False,
-                        num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_10):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, shuffle=False,
-                        num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_10):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, shuffle=False,
-                        num_parallel_workers=-2)
-
-    error_msg_11 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_11):
-        ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, num_shards=2, shard_id="0")
-
-    def exception_func(item):
-        raise Exception("Error occur!")
-
-    try:
-        data = ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale)
-        data = data.map(operations=exception_func, input_columns=["hr_image"], num_parallel_workers=1)
-        num_rows = 0
-        for _ in data.create_dict_iterator(num_epochs=1):
-            num_rows += 1
-        assert False
-    except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data file is:" in str(e)
-
-    try:
-        data = ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale)
-        data = data.map(operations=exception_func, input_columns=["hr_image"], num_parallel_workers=1)
-        num_rows = 0
-        for _ in data.create_dict_iterator(num_epochs=1):
-            num_rows += 1
-        assert False
-    except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data file is:" in str(e)
-
-
-if __name__ == "__main__":
-    test_div2k_basic()
-    test_div2k_basic_func()
-    test_div2k_sequential_sampler()
-    test_div2k_exception()

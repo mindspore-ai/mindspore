@@ -82,7 +82,6 @@
     .. note::
         - 当参数 `extra_metadata` 为 ``True`` 时，还需使用 `rename` 操作删除额外数据列 `_meta-filename` 的前缀 `_meta-`，
           否则迭代得到的数据行中不会出现此额外数据列。
-        - 暂不支持指定 `sampler` 参数为 :class:`mindspore.dataset.PKSampler`。
         - 入参 `num_samples` 、 `shuffle` 、 `num_shards` 、 `shard_id` 可用于控制数据集所使用的采样器，其与入参 `sampler` 搭配使用的效果如下。
 
     .. include:: mindspore.dataset.sampler.rst

@@ -21,7 +21,7 @@
 
         - **num_shards** (int, 可选) - 指定分布式训练时数据集划分的片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
-        - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值： ``None`` 。 `sampler` 与 `shuffle` 互斥。下表中会展示不同配置的预期行为。当前此数据集仅支持以下采样器： :class:`mindspore.dataset.SubsetRandomSampler` 、 :class:`mindspore.dataset.PKSampler` 、 :class:`mindspore.dataset.RandomSampler` 、 :class:`mindspore.dataset.SequentialSampler` 和 :class:`mindspore.dataset.DistributedSampler` 。
+        - **sampler** (Sampler, 可选) - 指定从数据集中选取样本的采样器。默认值： ``None`` 。 `sampler` 与 `shuffle` 互斥。下表中会展示不同配置的预期行为。当前此数据集仅支持以下采样器： :class:`mindspore.dataset.RandomSampler` 、 :class:`mindspore.dataset.SequentialSampler` 和 :class:`mindspore.dataset.DistributedSampler` 。
         - **padded_sample** (dict, 可选) - 指定额外添加到数据集的样本，可用于在分布式训练时补齐分片数据，注意字典的键名需要与 `columns_list` 指定的列名相同。默认值： ``None`` ，不添加样本。需要与 `num_padded` 参数同时使用。
         - **num_padded** (int, 可选) - 指定额外添加的数据集样本的数量。在分布式训练时可用于为数据集补齐样本，使得总样本数量可被 `num_shards` 整除。默认值： ``None`` ，不添加样本。需要与 `padded_sample` 参数同时使用。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取所有样本。

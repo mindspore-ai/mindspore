@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Dataset regression coverage for concat."""
 import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
-import mindspore.dataset.vision as F
 from mindspore import log as logger
 from util import config_get_set_seed
 
@@ -64,7 +64,7 @@ def test_concat_01():
         logger.info("data: %i", t[0][0])
         assert i == t[0][0]
 
-    assert sum([1 for _ in data3]) == 10
+    assert sum((1 for _ in data3)) == 10
 
 
 def test_concat_02():
@@ -85,7 +85,7 @@ def test_concat_02():
         logger.info("data: %i", t[0][0])
         assert i == t[0][0]
 
-    assert sum([1 for _ in data3]) == 10
+    assert sum((1 for _ in data3)) == 10
 
 
 def test_concat_03():
@@ -171,7 +171,7 @@ def test_concat_06():
         logger.info("data: %i", t[0][0])
         assert i == t[0][0]
 
-    assert sum([1 for _ in dataset]) == 20
+    assert sum((1 for _ in dataset)) == 20
 
 
 def test_concat_07():
@@ -194,7 +194,7 @@ def test_concat_07():
         logger.info("data: %i", t[0][0])
         assert i == t[0][0]
 
-    assert sum([1 for _ in data4]) == 20
+    assert sum((1 for _ in data4)) == 20
 
 
 def test_concat_08():
@@ -216,7 +216,7 @@ def test_concat_08():
         logger.info("data: %i", t[0][0])
         assert i % 10 == t[0][0]
 
-    assert sum([1 for _ in data3]) == 20
+    assert sum((1 for _ in data3)) == 20
 
 
 def test_concat_09():
@@ -240,7 +240,7 @@ def test_concat_09():
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
 
-    assert sum([1 for _ in data3]) == 20
+    assert sum((1 for _ in data3)) == 20
 
 
 def test_concat_10():
@@ -263,7 +263,7 @@ def test_concat_10():
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
 
-    assert sum([1 for _ in data3]) == 13
+    assert sum((1 for _ in data3)) == 13
 
 
 def test_concat_11():
@@ -288,7 +288,7 @@ def test_concat_11():
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
 
-    assert sum([1 for _ in data3]) == 3
+    assert sum((1 for _ in data3)) == 3
 
 
 def test_concat_12():
@@ -314,7 +314,7 @@ def test_concat_12():
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
 
-    assert sum([1 for _ in data3]) == 10
+    assert sum((1 for _ in data3)) == 10
     ds.config.set_seed(original_seed)
 
 
@@ -345,44 +345,10 @@ def test_concat_13():
         logger.info("data: %i", t[0][0])
         assert res[i] == t[0][0]
 
-    assert sum([1 for _ in data3]) == 3
+    assert sum((1 for _ in data3)) == 3
     ds.config.set_seed(original_seed)
 
 
-def test_concat_14():
-    """
-    Feature: Concat op
-    Description: Test Concat op on two different source datasets with different dataset operations
-    Expectation: Output passes the equality test
-    """
-    logger.info("test_concat_14")
-    data_dir = "../data/dataset/testPK/data"
-    data_dir2 = "../data/dataset/testImageNetData/train/"
-
-    data1 = ds.ImageFolderDataset(data_dir, num_samples=3)
-    data2 = ds.ImageFolderDataset(data_dir2, num_samples=2)
-
-    transforms1 = C.Compose([F.Decode(True),
-                             F.Resize((224, 224)),
-                             F.ToTensor()])
-
-    data1 = data1.map(operations=transforms1, input_columns=["image"])
-    data2 = data2.map(operations=transforms1, input_columns=["image"])
-    data3 = data1 + data2
-
-    expected, output = [], []
-    for d in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        expected.append(d[0])
-    for d in data2.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        expected.append(d[0])
-    for d in data3.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        output.append(d[0])
-
-    assert len(expected) == len(output)
-    np.array_equal(np.array(output), np.array(expected))
-
-    assert sum([1 for _ in data3]) == 5
-    assert data3.get_dataset_size() == 5
 
 
 def test_concat_15():
@@ -402,7 +368,7 @@ def test_concat_15():
     data1 = data1.project(["image"])
     data3 = data1 + data2
 
-    assert sum([1 for _ in data3]) == 47
+    assert sum((1 for _ in data3)) == 47
 
 
 def test_concat_16():
@@ -526,7 +492,7 @@ def test_concat_18():
     # check global shuffle on shared source
     class DS:
         def __init__(self, i, j):
-            self.data = [i for i in range(i, j)]
+            self.data = list(range(i, j))
 
         def __getitem__(self, index):
             return self.data[index]
@@ -550,81 +516,3 @@ def test_concat_18():
     assert check_flag == [True, True]
 
     ds.config.set_seed(original_seed)
-
-
-def test_concat_19():
-    """
-    Feature: Concat op
-    Description: Test random select of ConcatDataset in debug mode
-    Expectation: Output passes the equality test
-    """
-    logger.info("test_concat_19")
-
-    original_seed = config_get_set_seed(2)
-
-    class DS:
-        def __init__(self, i, j):
-            self.data = [i for i in range(i, j)]
-
-        def __getitem__(self, index):
-            return self.data[index]
-
-        def __len__(self):
-            return len(self.data)
-
-    ds1 = ds.GeneratorDataset(DS(0, 20), "data1", shuffle=True)
-    ds2 = ds.GeneratorDataset(DS(20, 25), "data1", shuffle=True)
-    ds3 = ds1.concat([ds2])
-    ds3.use_sampler(ds.RandomSampler())
-    ds3 = ds3.map(lambda x: x + 1)
-
-    # check data distribution in debug mode
-    ds.config.set_debug_mode(True)
-    less_than_20 = 0
-    greater_euqal_to_20 = 0
-    for i, data in enumerate(ds3.create_tuple_iterator(output_numpy=True, num_epochs=1)):
-        if data[0] < 20:
-            less_than_20 += 1
-        else:
-            greater_euqal_to_20 += 1
-        if i >= 15:
-            break
-    result1 = [less_than_20, greater_euqal_to_20]
-
-    # check data distribution in pipeline mode
-    ds.config.set_debug_mode(False)
-    less_than_20 = 0
-    greater_euqal_to_20 = 0
-    for i, data in enumerate(ds3.create_tuple_iterator(output_numpy=True, num_epochs=1)):
-        if data[0] < 20:
-            less_than_20 += 1
-        else:
-            greater_euqal_to_20 += 1
-        if i >= 15:
-            break
-    result2 = [less_than_20, greater_euqal_to_20]
-
-    assert result1 == result2
-    ds.config.set_seed(original_seed)
-
-
-if __name__ == "__main__":
-    test_concat_01()
-    test_concat_02()
-    test_concat_03()
-    test_concat_04()
-    test_concat_05()
-    test_concat_06()
-    test_concat_07()
-    test_concat_08()
-    test_concat_09()
-    test_concat_10()
-    test_concat_11()
-    test_concat_12()
-    test_concat_13()
-    test_concat_14()
-    test_concat_15()
-    test_concat_16()
-    test_concat_17()
-    test_concat_18()
-    test_concat_19()

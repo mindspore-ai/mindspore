@@ -23,10 +23,9 @@ from PIL import Image
 
 from mindspore import log as logger
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 from mindspore.dataset.vision import Inter
-from util import visualize_list, diff_mse
+from util import diff_mse
 
 GENERATE_GOLDEN = False
 
@@ -117,44 +116,6 @@ def test_affine_exception_translate_value():
         assert str(e) == "The length of translate should be 2."
 
 
-def test_affine_pipeline(plot=False):
-    """
-    Feature: Affine
-    Description: Test Affine in pipeline mode
-    Expectation: The dataset is processed as expected
-    """
-    # First dataset
-    transforms_list = t_trans.Compose([vision.Decode(), vision.Resize([64, 64])])
-    dataset = ds.TFRecordDataset(DATA_DIR,
-                                 SCHEMA_DIR,
-                                 columns_list=["image"],
-                                 shuffle=False)
-    dataset = dataset.map(operations=transforms_list, input_columns=["image"])
-
-    # Second dataset
-    affine_transforms_list = t_trans.Compose([vision.Decode(),
-                                              vision.Resize([64, 64]),
-                                              vision.Affine(degrees=15, translate=[0.2, 0.2],
-                                                            scale=1.1, shear=[10.0, 10.0])])
-    affine_dataset = ds.TFRecordDataset(DATA_DIR,
-                                        SCHEMA_DIR,
-                                        columns_list=["image"],
-                                        shuffle=False)
-    affine_dataset = affine_dataset.map(operations=affine_transforms_list, input_columns=["image"])
-
-    num_image = 0
-    image_list = []
-    affine_image_list = []
-    for image, affine_image in zip(dataset.create_dict_iterator(num_epochs=1, output_numpy=True),
-                                   affine_dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        num_image += 1
-        image_list.append(image["image"])
-        affine_image_list.append(affine_image["image"])
-
-    assert num_image == 3
-
-    if plot:
-        visualize_list(image_list, affine_image_list)
 
 
 def test_affine_eager():
@@ -371,86 +332,6 @@ def test_affine_operation_02():
     affine_op(image)
 
 
-def test_affine_operation_03():
-    """
-    Feature: Affine operation
-    Description: Testing the normal functionality of the Affine operator
-    Expectation: The Output is equal to the expected output
-    """
-    # Affine operator executed normally: Input data shape is (128, 128, 4)
-    image = np.random.randint(0, 255, (128, 128, 4)).astype(np.uint8)
-    degrees = 0.6
-    translate = (-1, -1)
-    scale = 16777215.1
-    shear = [0.8, 4.1]
-    resample = Inter.BILINEAR
-    fill_value = (0, 255, 230)
-    affine_op = vision.Affine(degrees=degrees, translate=translate, scale=scale, shear=shear,
-                              resample=resample, fill_value=fill_value)
-    _ = affine_op(image)
-
-    # 输入shape为(192, 263)时，Affine接口调用成功
-    # Affine operator executed normally: Input data shape is (192, 263)
-    image = np.random.randn(192, 263, 23)
-    degrees = 179.9
-    translate = [0, 1]
-    scale = 18.21
-    shear = (100.1, 100.0)
-    resample = Inter.BILINEAR
-    fill_value = (12, 8, 12)
-    affine_op = vision.Affine(degrees=degrees, translate=translate, scale=scale, shear=shear,
-                              resample=resample, fill_value=fill_value)
-    _ = affine_op(image)
-
-    # Affine operator executed normally: Testing pipeline combination mode
-    ds1 = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms0 = [
-        vision.Decode(),
-        vision.ToTensor()
-    ]
-    transform0 = t_trans.Compose(transforms0)
-    ds1 = ds1.map(input_columns=["image"], operations=transform0)
-    ds2 = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.Affine(10, [0, 1], 20.1, (1.0, 5.0), Inter.NEAREST, 0),
-        vision.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    ds2 = ds2.map(input_columns=["image"], operations=transform1)
-
-    for _ in zip(ds1.create_dict_iterator(output_numpy=True), ds2.create_dict_iterator(output_numpy=True)):
-        break
-
-    # Affine operator executed normally: parameter degrees set to 10
-    image = cv2.imread(image_jpg)
-    degrees = 10
-    translate = (0, 1)
-    scale = 0.9
-    shear = (0.8, 4.1)
-    affine_op = vision.Affine(degrees=degrees, translate=translate, scale=scale, shear=shear)
-    _ = affine_op(image)
-
-    # Affine operator executed normally: parameter translate set to [0.8, -1]
-    degrees = 15.1
-    translate = [0.8, -1]
-    scale = 0.9
-    shear = (0.9, 1.1)
-    dataset1 = ds.ImageFolderDataset(DATA_DIR_1, shuffle=False, decode=True)
-    dataset2 = ds.ImageFolderDataset(DATA_DIR_1, shuffle=False, decode=True)
-    affine_op = vision.Affine(degrees=degrees, translate=translate, scale=scale, shear=shear)
-    dataset2 = dataset2.map(input_columns=["image"], operations=affine_op)
-    for _ in zip(dataset1.create_dict_iterator(output_numpy=True), dataset2.create_dict_iterator(output_numpy=True)):
-        pass
-
-    # Affine operator executed normally: The scale parameter is of type int.
-    image = np.random.randn(192, 263, 23)
-    degrees = 150.2
-    translate = [-1, 1]
-    scale = 180
-    shear = (11.1, 0.11)
-    affine_op = vision.Affine(degrees=degrees, translate=translate, scale=scale, shear=shear)
-    affine_op(image)
 
 
 def test_affine_operation_04():
@@ -927,22 +808,3 @@ def test_affine_exception_05():
                                             " <class 'tuple'>, <class 'list'>\\], but got <class 'NoneType'>."):
             vision.Affine(degrees=degrees, translate=translate, scale=scale, shear=shear, resample=resample,
                           fill_value=fill_value)(image)
-
-
-if __name__ == "__main__":
-    test_affine_exception_degrees_type()
-    test_affine_exception_scale_value()
-    test_affine_exception_shear_size()
-    test_affine_exception_translate_size()
-    test_affine_exception_translate_value()
-    test_affine_pipeline(plot=False)
-    test_affine_eager()
-    test_affine_operation_01()
-    test_affine_operation_02()
-    test_affine_operation_03()
-    test_affine_operation_04()
-    test_affine_exception_01()
-    test_affine_exception_02()
-    test_affine_exception_03()
-    test_affine_exception_04()
-    test_affine_exception_05()

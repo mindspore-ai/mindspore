@@ -47,7 +47,7 @@ from mindspore import nn
 from mindspore.context import ParallelMode
 from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
 from mindspore.graph.api import _pynative_executor, ARG_SPECIFIED, TOTAL_ARG_LEN
-from mindspore.dataset.core.config import get_debug_mode
+from mindspore.dataset.core.config import _get_debug_mode
 from mindspore.dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 from mindspore.train import amp
 from mindspore.train._utils import _mstx_range_decorator
@@ -1364,7 +1364,7 @@ class Model:
 
     @staticmethod
     def _check_sink_mode_for_ds_debug_mode(dataset_sink_mode):
-        if get_debug_mode() and dataset_sink_mode:
+        if _get_debug_mode() and dataset_sink_mode:
             raise ValueError("Dataset sink mode is not supported when dataset pipeline debug mode is on. "
                              "Please manually turn off sink mode.")
 

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import pytest
+"""Dataset regression coverage for datasets imdb."""
 import mindspore.dataset as ds
 from mindspore import log as logger
 
@@ -361,135 +361,12 @@ def test_distributed_sampler():
     assert num_iter == 2
 
 
-def test_pk_sampler():
-    """
-    Feature: Test IMDB Dataset.
-    Description: Read data from all file with sampler=ds.PKSampler().
-    Expectation: The data is processed successfully.
-    """
-    logger.info("Test Case PKSampler")
-    # define parameters
-    repeat_count = 1
-
-    # apply dataset operations
-    sampler = ds.PKSampler(3)
-    data1 = ds.IMDBDataset(DATA_DIR, sampler=sampler)
-    data1 = data1.repeat(repeat_count)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 6
-
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
-        # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    assert num_iter == 6
 
 
-def test_subset_random_sampler():
-    """
-    Feature: Test IMDB Dataset.
-    Description: Read data from all file with sampler=ds.SubsetRandomSampler().
-    Expectation: The data is processed successfully.
-    """
-    logger.info("Test Case SubsetRandomSampler")
-    # define parameters
-    repeat_count = 1
-
-    # apply dataset operations
-    indices = [0, 3, 1, 2, 5, 4]
-    sampler = ds.SubsetRandomSampler(indices)
-    data1 = ds.IMDBDataset(DATA_DIR, sampler=sampler)
-    data1 = data1.repeat(repeat_count)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 6
-
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
-        # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    assert num_iter == 6
 
 
-def test_weighted_random_sampler():
-    """
-    Feature: Test IMDB Dataset.
-    Description: Read data from all file with sampler=ds.WeightedRandomSampler().
-    Expectation: The data is processed successfully.
-    """
-    logger.info("Test Case WeightedRandomSampler")
-    # define parameters
-    repeat_count = 1
-
-    # apply dataset operations
-    weights = [1.0, 0.1, 0.02, 0.3, 0.4, 0.05]
-    sampler = ds.WeightedRandomSampler(weights, 6)
-    data1 = ds.IMDBDataset(DATA_DIR, sampler=sampler)
-    data1 = data1.repeat(repeat_count)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 6
-
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
-        # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    assert num_iter == 6
 
 
-def test_weighted_random_sampler_exception():
-    """
-    Feature: Test IMDB Dataset.
-    Description: Read data from all file with random sampler exception.
-    Expectation: The data is processed successfully.
-    """
-    logger.info("Test error cases for WeightedRandomSampler")
-    error_msg_1 = "type of weights element must be number"
-    with pytest.raises(TypeError, match=error_msg_1):
-        weights = ""
-        ds.WeightedRandomSampler(weights)
-
-    error_msg_2 = "type of weights element must be number"
-    with pytest.raises(TypeError, match=error_msg_2):
-        weights = (0.9, 0.8, 1.1)
-        ds.WeightedRandomSampler(weights)
-
-    error_msg_3 = "WeightedRandomSampler: weights vector must not be empty"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        weights = []
-        sampler = ds.WeightedRandomSampler(weights)
-        sampler.parse()
-
-    error_msg_4 = "WeightedRandomSampler: weights vector must not contain negative numbers, got: "
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        weights = [1.0, 0.1, 0.02, 0.3, -0.4]
-        sampler = ds.WeightedRandomSampler(weights)
-        sampler.parse()
-
-    error_msg_5 = "WeightedRandomSampler: elements of weights vector must not be all zero"
-    with pytest.raises(RuntimeError, match=error_msg_5):
-        weights = [0, 0, 0, 0, 0]
-        sampler = ds.WeightedRandomSampler(weights)
-        sampler.parse()
 
 
 def test_chained_sampler_with_random_sequential_repeat():
@@ -563,39 +440,6 @@ def test_chained_sampler_with_distribute_random_batch_then_repeat():
     assert num_iter == 0
 
 
-def test_chained_sampler_with_weighted_random_pk_sampler():
-    """
-    Feature: Test IMDB Dataset.
-    Description: Read data from all file with WeightedRandom and PKSampler.
-    Expectation: The data is processed successfully.
-    """
-    logger.info("Test Case Chained Sampler - WeightedRandom and PKSampler")
-
-    # Create chained sampler, WeightedRandom and PKSampler
-    weights = [1.0, 0.1, 0.02, 0.3, 0.4, 0.05]
-    sampler = ds.WeightedRandomSampler(weights=weights, num_samples=6)
-    child_sampler = ds.PKSampler(num_val=3)  # Number of elements per class is 3 (and there are 4 classes)
-    sampler.add_child(child_sampler)
-    # Create IMDBDataset with sampler
-    data1 = ds.IMDBDataset(DATA_DIR, sampler=sampler)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 6
-
-    # Verify number of iterations
-    num_iter = 0
-    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
-        # in this example, each dictionary has keys "text" and "label"
-        logger.info("text is {}".format(item["text"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-
-    logger.info("Number of data in data1: {}".format(num_iter))
-    # Note: WeightedRandomSampler produces 12 samples
-    # Note: Child PKSampler produces 12 samples
-    assert num_iter == 6
 
 
 def test_imdb_rename():
@@ -707,26 +551,3 @@ def test_imdb_exception():
         assert False
     except ValueError as e:
         assert "does not exist or is not a directory or permission denied" in str(e)
-
-
-if __name__ == '__main__':
-    test_imdb_basic()
-    test_imdb_test()
-    test_imdb_train()
-    test_imdb_num_samples()
-    test_random_sampler()
-    test_distributed_sampler()
-    test_pk_sampler()
-    test_subset_random_sampler()
-    test_weighted_random_sampler()
-    test_weighted_random_sampler_exception()
-    test_chained_sampler_with_random_sequential_repeat()
-    test_chained_sampler_with_distribute_random_batch_then_repeat()
-    test_chained_sampler_with_weighted_random_pk_sampler()
-    test_imdb_num_shards()
-    test_imdb_shard_id()
-    test_imdb_no_shuffle()
-    test_imdb_true_shuffle()
-    test_imdb_rename()
-    test_imdb_zip()
-    test_imdb_exception()

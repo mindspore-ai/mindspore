@@ -22,10 +22,9 @@ import pytest
 from PIL import Image
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms
 import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
-from util import visualize_list, diff_mse, config_get_set_seed
+from util import visualize_list, diff_mse
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 TEST_DATA_DATASET_FUNC ="../data/dataset/"
@@ -127,132 +126,8 @@ def test_uniform_augment_callable_tuple(num_ops=2):
     assert img.shape == (2268, 4032, 3) or img.shape == (200, 400, 3)
 
 
-def test_uniform_augment(plot=False, num_ops=2):
-    """
-    Feature: UniformAugment
-    Description: Test UniformAugment using Python implementation
-    Expectation: Output is the same as expected output
-    """
-    logger.info("Test UniformAugment")
-
-    # Original Images
-    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-
-    transforms_original = mindspore.dataset.transforms.Compose([vision.Decode(True),
-                                                                vision.Resize((224, 224)),
-                                                                vision.ToTensor()])
-
-    ds_original = data_set.map(operations=transforms_original, input_columns="image")
-
-    ds_original = ds_original.batch(512)
-
-    for idx, (image, _) in enumerate(ds_original):
-        if idx == 0:
-            images_original = np.transpose(image.asnumpy(), (0, 2, 3, 1))
-        else:
-            images_original = np.append(images_original,
-                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
-                                        axis=0)
-
-    # UniformAugment Images
-    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-
-    transform_list = [vision.RandomRotation(45),
-                      vision.RandomColor(),
-                      vision.RandomSharpness(),
-                      vision.Invert(),
-                      vision.AutoContrast(),
-                      vision.Equalize()]
-
-    transforms_ua = \
-        mindspore.dataset.transforms.Compose([vision.Decode(True),
-                                              vision.Resize((224, 224)),
-                                              vision.UniformAugment(transforms=transform_list,
-                                                                    num_ops=num_ops),
-                                              vision.ToTensor()])
-
-    ds_ua = data_set.map(operations=transforms_ua, input_columns="image")
-
-    ds_ua = ds_ua.batch(512)
-
-    for idx, (image, _) in enumerate(ds_ua):
-        if idx == 0:
-            images_ua = np.transpose(image.asnumpy(), (0, 2, 3, 1))
-        else:
-            images_ua = np.append(images_ua,
-                                  np.transpose(image.asnumpy(), (0, 2, 3, 1)),
-                                  axis=0)
-
-    num_samples = images_original.shape[0]
-    mse = np.zeros(num_samples)
-    for i in range(num_samples):
-        mse[i] = diff_mse(images_ua[i], images_original[i])
-    logger.info("MSE= {}".format(str(np.mean(mse))))
-
-    if plot:
-        visualize_list(images_original, images_ua)
 
 
-def test_uniform_augment_pyfunc(num_ops=2, my_seed=1):
-    """
-    Feature: UniformAugment
-    Description: Test UniformAugment using Python implementation.   Include pyfunc in transforms list.
-    Expectation: Output is the same as expected output
-    """
-    logger.info("Test UniformAugment with pyfunc")
-    original_seed = config_get_set_seed(my_seed)
-    logger.info("my_seed= {}".format(str(my_seed)))
-
-    # Original Images
-    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-
-    transforms_original = mindspore.dataset.transforms.Compose([vision.Decode(True)])
-
-    ds_original = data_set.map(operations=transforms_original, input_columns="image")
-
-    ds_original = ds_original.batch(512)
-
-    for idx, (image, _) in enumerate(ds_original):
-        if idx == 0:
-            images_original = np.transpose(image.asnumpy(), (0, 2, 3, 1))
-        else:
-            images_original = np.append(images_original,
-                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
-                                        axis=0)
-
-    # UniformAugment Images
-    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-
-    transform_list = [vision.Invert(),
-                      lambda x: x,
-                      vision.AutoContrast(),
-                      vision.Equalize()
-                      ]
-
-    transforms_ua = \
-        mindspore.dataset.transforms.Compose([vision.Decode(True),
-                                              vision.UniformAugment(transforms=transform_list, num_ops=num_ops)])
-
-    ds_ua = data_set.map(operations=transforms_ua, input_columns="image")
-
-    ds_ua = ds_ua.batch(512)
-
-    for idx, (image, _) in enumerate(ds_ua):
-        if idx == 0:
-            images_ua = np.transpose(image.asnumpy(), (0, 2, 3, 1))
-        else:
-            images_ua = np.append(images_ua,
-                                  np.transpose(image.asnumpy(), (0, 2, 3, 1)),
-                                  axis=0)
-
-    num_samples = images_original.shape[0]
-    mse = np.zeros(num_samples)
-    for i in range(num_samples):
-        mse[i] = diff_mse(images_ua[i], images_original[i])
-    logger.info("MSE= {}".format(str(np.mean(mse))))
-
-    # Restore configuration
-    ds.config.set_seed(original_seed)
 
 
 def test_cpp_uniform_augment(plot=False, num_ops=2):
@@ -567,19 +442,3 @@ def test_uniform_augment_exception_01():
     # UniformAugment: Abnormal Testing, transforms equals custom operators
     transforms = [vision.RandomVerticalFlip(), py_func]
     vision.UniformAugment(transforms, 1)
-
-
-if __name__ == "__main__":
-    test_uniform_augment_callable()
-    test_uniform_augment_callable_pil()
-    test_uniform_augment_callable_pil_pyfunc()
-    test_uniform_augment_callable_tuple()
-    test_uniform_augment(num_ops=6, plot=True)
-    test_uniform_augment_pyfunc(num_ops=2, my_seed=1)
-    test_cpp_uniform_augment(num_ops=1, plot=True)
-    test_cpp_uniform_augment_exception_large_numops(num_ops=6)
-    test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0)
-    test_cpp_uniform_augment_exception_float_numops(num_ops=2.5)
-    test_cpp_uniform_augment_random_crop_badinput(num_ops=1)
-    test_uniform_augment_operation_01()
-    test_uniform_augment_exception_01()

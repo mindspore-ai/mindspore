@@ -18,19 +18,15 @@ mindspore.dataset.transforms
 - TensorOperation，所有C++实现的数据处理操作的基类。
 - PyTensorOperation，所有Python实现的数据处理操作的基类。
 
-    mindspore.dataset.transforms.Compose
-    mindspore.dataset.transforms.Concatenate
-    mindspore.dataset.transforms.Duplicate
-    mindspore.dataset.transforms.Fill
-    mindspore.dataset.transforms.Mask
-    mindspore.dataset.transforms.OneHot
-    mindspore.dataset.transforms.PadEnd
-    mindspore.dataset.transforms.RandomApply
-    mindspore.dataset.transforms.RandomChoice
-    mindspore.dataset.transforms.RandomOrder
-    mindspore.dataset.transforms.Slice
+变换
+^^^^^
+
+.. mscnautosummary::
+    :toctree: dataset_transforms
+    :nosignatures:
+    :template: classtemplate.rst
+
     mindspore.dataset.transforms.TypeCast
-    mindspore.dataset.transforms.Unique
 
 工具
 ^^^^^
@@ -40,7 +36,6 @@ mindspore.dataset.transforms
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.transforms.Relational
 
 视觉
 -----

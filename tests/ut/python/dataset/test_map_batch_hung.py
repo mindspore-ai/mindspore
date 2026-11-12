@@ -21,6 +21,7 @@ import time
 import numpy as np
 
 import mindspore.dataset as ds
+from mindspore.dataset.core.config import _config
 from mindspore.dataset import vision
 from mindspore.dataset.vision import Inter
 
@@ -70,5 +71,5 @@ def run(num_workers):
 
 
 if __name__ == '__main__':
-    ds.config.set_multiprocessing_timeout_interval(2)
+    _config.set_multiprocessing_timeout_interval(2)
     run(2)

@@ -53,7 +53,7 @@ from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.dataset.engine.offload import GetOffloadModel
 from mindspore.dataset import transforms
 from mindspore.dataset.text.utils import SentencePieceModel, DE_C_INTER_SENTENCEPIECE_MODE
-from mindspore.dataset.debug import DebugHook
+from mindspore.dataset.debug.debug_hook import DebugHook
 
 from mindspore.dataset.engine import samplers
 from mindspore.dataset.engine.samplers import Shuffle
@@ -68,13 +68,26 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
     check_save, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, check_padded_batch, \
     check_total_batch, check_sync_update, check_send, check_recv
-from ..core.config import get_callback_timeout, _init_device_info, get_num_parallel_workers, \
-    get_enable_watchdog, get_seed, set_seed, get_debug_mode, get_multiprocessing_timeout_interval, \
-    _get_debug_hook_list, get_multiprocessing_start_method, get_video_backend, set_video_backend, \
-    get_error_samples_mode, ErrorSamplesMode
+from ..core.config import (
+    _get_callback_timeout as get_callback_timeout,
+    _init_device_info,
+    _get_num_parallel_workers,
+    get_enable_watchdog,
+    get_seed,
+    set_seed,
+    _get_debug_mode,
+    _get_multiprocessing_timeout_interval as get_multiprocessing_timeout_interval,
+    _get_debug_hook_list,
+    get_multiprocessing_start_method,
+    get_video_backend,
+    set_video_backend,
+    _get_error_samples_mode as get_error_samples_mode,
+    _ErrorSamplesMode as ErrorSamplesMode,
+)
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..core.py_util_helpers import ExceptionHandler
+from ..transforms.transforms import _Compose
 from ..transforms.py_transforms_util import FuncWrapper, Implementation
 from ..vision.transforms import ToNumpy
 from ...mindrecord.config import _get_enc_key, _get_enc_mode, encrypt
@@ -2974,7 +2987,7 @@ class BatchDataset(UnionBaseDataset):
         """
         if self.python_multiprocessing and platform.system().lower() == 'windows':
             logger.warning("Python multiprocessing is not supported on Windows platform.")
-        if self.python_multiprocessing and get_debug_mode():
+        if self.python_multiprocessing and _get_debug_mode():
             logger.warning("Python multiprocessing is not supported in debug mode."
                            " Ignoring Python multiprocessing for batch operation.")
             self.python_multiprocessing = False
@@ -2985,7 +2998,7 @@ class BatchDataset(UnionBaseDataset):
 
             # If user didn't specify num_parallel_workers, set it to default
             if self.num_parallel_workers is None:
-                self.num_parallel_workers = get_num_parallel_workers()
+                self.num_parallel_workers = _get_num_parallel_workers()
 
             self.process_pool = _PythonMultiprocessing(get_multiprocessing_start_method(), self.num_parallel_workers,
                                                        str(self), [self.per_batch_map], self.max_rowsize)
@@ -3452,7 +3465,7 @@ def _worker_loop(quit_signal, operations, worker_id, op_type, key, video_backend
 
             num_send += 1
             logger.info(f"Python process {op_type} worker({worker_id}) sends {num_send} samples to map thread.")
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             try:
                 if op_type == cde.MAP_OP:
                     pyfunc_err = ExceptionHandler(where="in map worker and execute Python function")
@@ -3461,7 +3474,7 @@ def _worker_loop(quit_signal, operations, worker_id, op_type, key, video_backend
                 else:
                     pyfunc_err = f"The op_type: {op_type} is invalid."
                 pyfunc_err.reraise()
-            except Exception as err:
+            except Exception as err:  # pylint: disable=broad-exception-caught
                 _, _, exc_tb = sys.exc_info()
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
 
@@ -3630,7 +3643,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             try:
                 if p.exitcode is None:
                     p.terminate()
-            except Exception:  # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-except  # pylint: disable=broad-exception-caught
                 # process has been closed already
                 pass
         for p in processes:
@@ -4008,7 +4021,7 @@ class MapDataset(UnionBaseDataset):
         # py_op(s) / PyFunc            true                    no
         # c_op(s) + py_op(s) / PyFunc  false                   yes
         # c_op(s) + py_op(s) / PyFunc  true                    no
-        run_in_thread = not self.python_multiprocessing or (count_pyfunc == 0 and count_py_ops == 0) or get_debug_mode()
+        run_in_thread = not self.python_multiprocessing or (count_pyfunc == 0 and count_py_ops == 0) or _get_debug_mode()
 
         if self.python_multiprocessing and platform.system().lower() == 'windows':
             run_in_thread = True
@@ -4031,11 +4044,11 @@ class MapDataset(UnionBaseDataset):
                 prev_op = op
             operations = self.__insert_debug_wrapper(operations)
             if run_in_thread:
-                operations = transforms.Compose.reduce(operations)
+                operations = _Compose.reduce(operations)
         elif count_pyfunc + count_non_data_vision_transforms == len(operations):
             operations = self.__insert_debug_wrapper(operations)
             if run_in_thread:
-                operations = transforms.Compose.reduce(operations)
+                operations = _Compose.reduce(operations)
         else:
             raise RuntimeError("Mixing old legacy c/py_transforms and new unified transforms is not allowed.")
 
@@ -4111,7 +4124,7 @@ class MapDataset(UnionBaseDataset):
         Check if the op is user added DebugHook and skip it to avoid changing transforms implementation.
         """
         if isinstance(op, DebugHook):
-            if not get_debug_mode():
+            if not _get_debug_mode():
                 raise ValueError("It is not allowed to inject DebugHook object in non-debug mode.")
             return True
         return False
@@ -4188,7 +4201,7 @@ class MapDataset(UnionBaseDataset):
         if self.python_multiprocessing and platform.system().lower() == 'windows':
             logger.warning("Python multiprocessing is not supported on Windows platform.")
             return
-        if self.python_multiprocessing and get_debug_mode():
+        if self.python_multiprocessing and _get_debug_mode():
             logger.warning("Python multiprocessing is not supported in debug mode."
                            " Ignoring Python multiprocessing for map operation.")
             return
@@ -4197,7 +4210,7 @@ class MapDataset(UnionBaseDataset):
 
             # If user didn't specify num_parallel_workers, set it to default
             if self.num_parallel_workers is None:
-                self.num_parallel_workers = get_num_parallel_workers()
+                self.num_parallel_workers = _get_num_parallel_workers()
 
             # Pass #1, look for Python callables and build list
             for op in self.operations:
@@ -4213,7 +4226,7 @@ class MapDataset(UnionBaseDataset):
         """
         Insert DebuggerWrapper before and after each op if debug mode is on.
         """
-        if not get_debug_mode():
+        if not _get_debug_mode():
             return operations
         first_op_name = self.__parse_op_name(operations[0])
         inserted_operations = self.__construct_debug_hook(first_op_name, is_first_op=True)
@@ -4227,7 +4240,7 @@ class MapDataset(UnionBaseDataset):
         """
         Decompose operations and build list of old legacy ops which are callable
         """
-        decomposed_operations = transforms.Compose.decompose(self.operations)
+        decomposed_operations = _Compose.decompose(self.operations)
         operations = []
         for op in decomposed_operations:
             if callable(op) and not hasattr(op, "implementation"):
@@ -4518,7 +4531,7 @@ class _ToDevice:
     """
 
     def __init__(self, dataset, num_epochs):
-        if get_debug_mode():
+        if _get_debug_mode():
             logger.error("MindData debugger cannot be used in dataset sink mode. Please manually turn off "
                          "sink mode and try debugger again.")
         ir_tree, _ = dataset.create_ir_tree()

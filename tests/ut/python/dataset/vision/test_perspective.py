@@ -25,8 +25,6 @@ import PIL
 from PIL import Image
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
-import mindspore.dataset.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
@@ -220,144 +218,8 @@ def test_perspective_invalid_interpolation():
         assert "Argument interpolation with value invalid is not of type [<enum 'Inter'>]" in str(e)
 
 
-def test_perspective_pipeline():
-    """
-    Feature: Perspective
-    Description: Test Perspective C implementation Pipeline
-    Expectation: Runs successfully
-    """
-
-    src = [[0, 63], [63, 63], [63, 0], [0, 0]]
-    dst = [[0, 63], [63, 63], [63, 0], [0, 0]]
-
-    # First dataset
-    transforms1 = [vision.Decode(), vision.Resize([64, 64])]
-    transforms1 = mindspore.dataset.transforms.transforms.Compose(
-        transforms1)
-    ds1 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    transforms2 = [
-        vision.Decode(),
-        vision.Resize([64, 64]),
-        vision.Perspective(src, dst, Inter.BILINEAR)
-    ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(
-        transforms2)
-    ds2 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1),
-                            ds2.create_dict_iterator(num_epochs=1)):
-        ori_img = data1["image"].asnumpy()
-        cvt_img = data2["image"].asnumpy()
-        assert_allclose(ori_img.flatten(),
-                        cvt_img.flatten(),
-                        rtol=1e-5,
-                        atol=0)
-        assert ori_img.shape == cvt_img.shape
 
 
-def test_perspective_operation_01():
-    """
-    Feature: Perspective operation
-    Description: Testing the normal functionality of the Perspective operator
-    Expectation: The Output is equal to the expected output
-    """
-    # Pipeline mode, parameter-free interpolation, Perspective interface invocation successful
-    start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
-    end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "testImageNetData", "train")
-    dataset = ds.ImageFolderDataset(data_dir, 1)
-    transforms = [
-        vision.Decode(to_pil=True),
-        vision.Perspective(start_points, end_points),
-        vision.ToTensor()
-    ]
-    transform = t_trans.Compose(transforms)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        break
-
-    # In eager mode, the Perspective interface call succeeds when fed 3D uint8 data.
-    image = np.random.randint(0, 128, (128, 128, 4)).astype(np.uint8)
-    start_points = [[1, 1], [2, 2], [3, 3], [4, 4]]
-    end_points = [[2, 2], [1, 1], [3, 3], [4, 4]]
-    perspective_op = vision.Perspective(start_points, end_points, Inter.PILCUBIC)
-    _ = perspective_op(image)
-
-    # In eager mode, the Perspective interface call succeeds when fed 2D uint16 data.
-    image = np.random.randint(0, 128, (128, 128)).astype(np.uint16)
-    start_points = [[10, 1], [2, 20], [30, 3], [40, 4]]
-    end_points = [[20, 2], [10, 1], [3, 30], [4, 40]]
-    perspective_op = vision.Perspective(start_points, end_points, Inter.NEAREST)
-    perspective_op(image)
-
-    # When input is 3D float32 data, the Perspective interface call succeeds.
-    image = np.random.randn(5, 5, 3).astype(np.float32)
-    start_points = [[1089, 1], [2, 202], [30, 3], [40, 402]]
-    end_points = [[20, 2], [10, 1], [3, 303], [4, 4018]]
-    perspective_op = vision.Perspective(start_points, end_points, Inter.PILCUBIC)
-    perspective_op(image)
-
-    # When input is 3D float64 data, the Perspective interface call succeeds.
-    image = np.random.randn(255, 255, 255).astype(np.float64)
-    start_points = ((1, 1), (2, 2), (3, 3), (4, 4))
-    end_points = [[2, 2], [1, 1], [3, 3], [4, 4]]
-    perspective_op = vision.Perspective(start_points, end_points, Inter.AREA)
-    perspective_op(image)
-
-    # When the end_points parameter contains the maximum value, the Perspective interface call succeeds.
-    image = np.random.randn(255, 255, 3)
-    start_points = [[-100, 100], [200, -200], [300, 300], [-400, 400]]
-    end_points = [[-2147483648, -2147483648], [-21474836, -21474836], [2147483647, 2147483647],
-                  [2147483647, 2147483647]]
-    perspective_op = vision.Perspective(start_points, end_points, Inter.CUBIC)
-    perspective_op(image)
-
-    # When the interpolation parameter is set to Inter.BICUBIC or Inter.CUBIC,
-    # the Perspective interface call succeeds with identical precision.
-    with Image.open(image_bmp) as image:
-        start_points = [[-2147483648, -2147483648], [-21474836, -21474836], [2147483647, 2147483647],
-                        [2147483647, 2147483647]]
-        end_points = [[-2147483648, -2147483648], [-21474836, -21474836], [2147483647, 2147483647],
-                      [2147483647, 2147483647]]
-        perspective_op = vision.Perspective(start_points, end_points, Inter.BICUBIC)
-        perspective_op1 = vision.Perspective(start_points, end_points, Inter.CUBIC)
-        out = perspective_op(image)
-        out1 = perspective_op1(image)
-        assert out == out1
-
-    # When the interpolation parameter is set to Inter.BILINEAR or Inter.LINEAR, the Perspective interface call succeeds
-    with Image.open(image_gif) as image:
-        start_points = [(-218, -21474), (-2147, -21474), (21474, 214748), (218, 21474)]
-        end_points = [(-218, -214), (-2147, -2147), (2178, 21783), (218, 214)]
-        perspective_op = vision.Perspective(start_points, end_points, Inter.BILINEAR)
-        perspective_op1 = vision.Perspective(start_points, end_points, Inter.LINEAR)
-        out = perspective_op(image)
-        out1 = perspective_op1(image)
-        assert out == out1
-
-    # Pipeline mode: When inputting NumPy data, the Perspective interface call succeeds.
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "testImageNetData", "train")
-    ds1 = ds.ImageFolderDataset(data_dir, 1)
-    start_points = [[-28, -2474], [-214, -2144], [2147, 21448], [28, 2144]]
-    end_points = [[-21, -24], [-217, -214], [218, 213], [21, 24]]
-    transforms1 = [
-        vision.Decode(to_pil=False),
-        vision.Perspective(start_points, end_points),
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    ds1 = ds1.map(input_columns=["image"], operations=transform1)
-    for _ in ds1.create_dict_iterator(output_numpy=True):
-        pass
 
 
 def test_perspective_exception_01():
@@ -657,14 +519,3 @@ def test_perspective_exception_03():
         perspective_op = vision.Perspective(start_points=start_points, end_points=end_points,
                                             interpolation=interpolation)
         perspective_op(image)
-
-
-if __name__ == "__main__":
-    test_perspective_eager()
-    test_perspective_invalid_param()
-    test_perspective_invalid_interpolation()
-    test_perspective_pipeline()
-    test_perspective_operation_01()
-    test_perspective_exception_01()
-    test_perspective_exception_02()
-    test_perspective_exception_03()

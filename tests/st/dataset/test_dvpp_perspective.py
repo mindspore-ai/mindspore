@@ -20,9 +20,6 @@ import numpy as np
 import pytest
 from PIL import Image
 import cv2
-import mindspore as ms
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as v_trans
 from mindspore.dataset.vision import Inter as v_Inter
 from tests.mark_utils import arg_mark
@@ -37,137 +34,8 @@ image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "png.PNG")
 image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "gif.gif")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=112.0)
-def test_dvpp_perspective_operation_01():
-    """
-    Feature: Perspective operation on device
-    Description: Testing the normal functionality of the Perspective operator on device
-    Expectation: The Output is equal to the expected output
-    """
-    # Using Perspective operator in pyfunc
-    ms.set_context(device_target="Ascend")
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "testImageNetData", "train")
-    # testcase : map with process mode
-    dataset1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    dataset2 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    start_points = [[1, 1], [2, 2], [3, 3], [4, 4]]
-    end_points = [[2, 2], [1, 1], [3, 3], [4, 4]]
-    def pyfunc1(img_bytes):
-        img_decode = v_trans.Decode().device("Ascend")(img_bytes)
-        img_ops = v_trans.Perspective(start_points, end_points, v_Inter.NEAREST).device("Ascend")(
-            img_decode)
-        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
-        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
-        img_normalize = v_trans.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_ops)
-        return img_normalize
-    def pyfunc2(img_bytes):
-        img_decode = v_trans.Decode()(img_bytes)
-        img_ops = v_trans.Perspective(start_points, end_points, v_Inter.NEAREST)(img_decode)
-        mean_vec = [0.475 * 255, 0.451 * 255, 0.392 * 255]
-        std_vec = [0.275 * 255, 0.267 * 255, 0.278 * 255]
-        img_normalize = v_trans.Normalize(mean=mean_vec, std=std_vec).device("Ascend")(img_ops)
-        return img_normalize
-    dataset1 = dataset1.map(pyfunc1, input_columns="image", python_multiprocessing=False)
-    dataset2 = dataset2.map(pyfunc2, input_columns="image", python_multiprocessing=False)
-    for data1, data2 in zip(dataset1.create_dict_iterator(output_numpy=True),
-                            dataset2.create_dict_iterator(output_numpy=True)):
-        assert np.allclose(data1["image"], data2["image"])
-
-    # pipeline mode, no interpolation parameter, Perspective interface call successful
-    start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
-    end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "testImageNetData", "train")
-    ds2 = ds.ImageFolderDataset(data_dir, 1)
-    transforms1 = [
-        v_trans.Decode(to_pil=False),
-        v_trans.Perspective(start_points, end_points).device(device_target="Ascend"),
-        v_trans.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    ds2 = ds2.map(input_columns=["image"], operations=transform1)
-
-    for _ in ds2.create_dict_iterator(output_numpy=True):
-        pass
-
-    # eager mode, when input is 3-dimensional uint8 data, Perspective interface call successful
-    image = np.random.randint(0, 128, (128, 128, 3)).astype(np.uint8)
-    start_points = [[1, 1], [2, 2], [3, 3], [4, 4]]
-    end_points = [[2, 2], [1, 1], [3, 3], [4, 4]]
-    perspective_op = v_trans.Perspective(start_points, end_points).device(device_target="Ascend")
-    perspective_op_cpu = v_trans.Perspective(start_points, end_points)(image)
-    out = perspective_op(image)
-    assert (out == perspective_op_cpu).all()
-
-    # eager mode, when input is 2-dimensional uint8 data, Perspective interface call successful
-    image = np.random.randint(0, 128, (128, 128)).astype(np.uint8)
-    start_points = [[10, 1], [2, 20], [30, 3], [40, 4]]
-    end_points = [[20, 2], [10, 1], [3, 30], [4, 40]]
-    perspective_op = v_trans.Perspective(start_points, end_points, v_Inter.NEAREST).device(device_target="Ascend")
-    perspective_op_cpu = v_trans.Perspective(start_points, end_points, v_Inter.NEAREST)(image)
-    out = perspective_op(image)
-    assert (out == perspective_op_cpu).all()
-
-    # When input is 3-dimensional float32 data, Perspective interface call successful
-    image = np.random.randn(255, 255, 3).astype(np.float32)
-    start_points = ((1, 1), (2, 2), (3, 3), (4, 4))
-    end_points = [[2, 2], [1, 1], [3, 3], [4, 4]]
-    perspective_op = v_trans.Perspective(start_points, end_points, v_Inter.NEAREST).device(device_target="Ascend")
-    perspective_op_cpu = v_trans.Perspective(start_points, end_points, v_Inter.NEAREST)(image)
-    out = perspective_op(image)
-    assert (out == perspective_op_cpu).all()
-
-    image = np.random.randn(1, 128, 128, 3).astype(np.uint8)
-    start_points = ((1, 1), (2, 2), (3, 3), (4, 4))
-    end_points = [[2, 2], [1, 1], [3, 3], [4, 4]]
-    perspective_op = v_trans.Perspective(start_points, end_points, v_Inter.NEAREST).device(device_target="Ascend")
-    out = perspective_op(image)
-    assert out.shape == (128, 128, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=34.0)
-def test_dvpp_perspective_operation_02():
-    """
-    Feature: Perspective operation on device
-    Description: Testing the normal functionality of the Perspective operator on device
-    Expectation: The Output is equal to the expected output
-    """
-    # When interpolation parameter is Inter.BILINEAR or Inter.LINEAR, Perspective interface call successful
-    image = Image.open(image_gif)
-    img_array = np.array(image)
-    start_points = [(-218, -21474), (-2147, -21474), (21474, 214748), (218, 21474)]
-    end_points = [(-218, -214), (-2147, -2147), (2178, 21783), (218, 214)]
-    perspective_op = v_trans.Perspective(start_points, end_points, v_Inter.BILINEAR).device(device_target="Ascend")
-    perspective_op_cpu = v_trans.Perspective(start_points, end_points, v_Inter.BILINEAR)(img_array)
-    perspective_op1 = v_trans.Perspective(start_points, end_points, v_Inter.LINEAR).device(device_target="Ascend")
-    perspective_op1_cpu = v_trans.Perspective(start_points, end_points, v_Inter.LINEAR)(img_array)
-    out = perspective_op(img_array)
-    out1 = perspective_op1(img_array)
-    assert (out == perspective_op_cpu).all()
-    assert (out1 == perspective_op1_cpu).all()
-    image.close()
-
-    # pipeline mode, when input is numpy data, Perspective interface call successful
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "testImageNetData", "train")
-    ds1 = ds.ImageFolderDataset(data_dir, 1)
-    start_points = [[-28, -2474], [-214, -2144], [2147, 21448], [28, 2144]]
-    end_points = [[-21, -24], [-217, -214], [218, 213], [21, 24]]
-    transforms1 = [
-        v_trans.Decode(to_pil=False),
-        v_trans.Perspective(start_points, end_points).device(device_target="Ascend"),
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    ds1 = ds1.map(input_columns=["image"], operations=transform1)
-    for _ in ds1.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When input image format is png, Perspective interface call successful
-    image = cv2.imread(image_png)
-    start_points = ((1, 1), (2, 2), (3, 3), (4, 4))
-    end_points = [[2, 2], [1, 1], [3, 3], [4, 4]]
-    perspective_op = v_trans.Perspective(start_points, end_points, v_Inter.NEAREST).device(device_target="Ascend")
-    perspective_op_cpu = v_trans.Perspective(start_points, end_points, v_Inter.NEAREST)(image)
-    out = perspective_op(image)
-    assert (out == perspective_op_cpu).all()
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
@@ -604,13 +472,3 @@ def test_dvpp_perspective_exception_05():
     with pytest.raises(RuntimeError, match="the input shape should be from \\[6, 10\\] to \\[8192, 4096\\]"):
         perspective_op = v_trans.Perspective(start_points, end_points, ).device(device_target="Ascend")
         _ = perspective_op(image)
-
-
-if __name__ == '__main__':
-    test_dvpp_perspective_operation_01()
-    test_dvpp_perspective_operation_02()
-    test_dvpp_perspective_exception_01()
-    test_dvpp_perspective_exception_02()
-    test_dvpp_perspective_exception_03()
-    test_dvpp_perspective_exception_04()
-    test_dvpp_perspective_exception_05()

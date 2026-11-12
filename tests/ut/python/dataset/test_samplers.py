@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Dataset regression coverage for samplers."""
 import numpy as np
 import pytest
 
@@ -131,11 +132,11 @@ def test_python_sampler():
 
     class Sp1(ds.Sampler):
         def __iter__(self):
-            return iter([i for i in range(self.dataset_size)])
+            return iter(list(range(self.dataset_size)))
 
     class Sp2(ds.Sampler):
         def __init__(self, num_samples=None):
-            super(Sp2, self).__init__(num_samples)
+            super().__init__(num_samples)
             # at this stage, self.dataset_size and self.num_samples are not yet known
             self.cnt = 0
 
@@ -160,8 +161,7 @@ def test_python_sampler():
     def test_generator():
         class MySampler(ds.Sampler):
             def __iter__(self):
-                for i in range(99, -1, -1):
-                    yield i
+                yield from range(99, -1, -1)
 
         data1 = ds.GeneratorDataset([(np.array(i),) for i in range(100)], ["data"], sampler=MySampler())
         i = 99
@@ -173,8 +173,7 @@ def test_python_sampler():
     def test_generator_iter_sampler():
         class MySampler:
             def __iter__(self):
-                for i in range(99, -1, -1):
-                    yield i
+                yield from range(99, -1, -1)
 
         data1 = ds.GeneratorDataset([(np.array(i),) for i in range(100)], ["data"], sampler=MySampler())
         i = 99
@@ -219,67 +218,6 @@ def test_sequential_sampler2():
     assert test_config(4, None) == [4]
 
 
-def test_subset_sampler():
-    """
-    Feature: SubsetSampler op
-    Description: Test SubsetSampler op with various indices and num_samples args combinations including invalid ones
-    Expectation: Output is equal to the expected output when input is valid, otherwise exception is raised
-    """
-
-    def test_config(indices, num_samples=None, exception_msg=None):
-        def pipeline():
-            sampler = ds.SubsetSampler(indices, num_samples)
-            data = ds.NumpySlicesDataset(list(range(0, 10)), sampler=sampler)
-            data2 = ds.NumpySlicesDataset(list(range(0, 10)), sampler=indices, num_samples=num_samples)
-            dataset_size = data.get_dataset_size()
-            dataset_size2 = data.get_dataset_size()
-            res1 = [d[0] for d in data.create_tuple_iterator(num_epochs=1, output_numpy=True)], dataset_size
-            res2 = [d[0] for d in data2.create_tuple_iterator(num_epochs=1, output_numpy=True)], dataset_size2
-            return res1, res2
-
-        if exception_msg is None:
-            res, res2 = pipeline()
-            res, size = res
-            res2, size2 = res2
-            if not isinstance(indices, list):
-                indices = list(indices)
-            assert indices[:num_samples] == res
-            assert len(indices[:num_samples]) == size
-            assert indices[:num_samples] == res2
-            assert len(indices[:num_samples]) == size2
-        else:
-            with pytest.raises(Exception) as error_info:
-                pipeline()
-            print(str(error_info.value))
-            assert exception_msg in str(error_info.value)
-
-    test_config([1, 2, 3])
-    test_config(list(range(10)))
-    test_config([0])
-    test_config([9])
-    test_config(list(range(0, 10, 2)))
-    test_config(list(range(1, 10, 2)))
-    test_config(list(range(9, 0, -1)))
-    test_config(list(range(9, 0, -2)))
-    test_config(list(range(8, 0, -2)))
-    test_config([0, 9, 3, 2])
-    test_config([0, 0, 0, 0])
-    test_config([0])
-    test_config([0, 9, 3, 2], num_samples=2)
-    test_config([0, 9, 3, 2], num_samples=5)
-
-    test_config(np.array([1, 2, 3]))
-
-    test_config([20], exception_msg="Sample ID (20) is out of bound, expected range [0, 9]")
-    test_config([10], exception_msg="Sample ID (10) is out of bound, expected range [0, 9]")
-    test_config([0, 9, 0, 500], exception_msg="Sample ID (500) is out of bound, expected range [0, 9]")
-    test_config([0, 9, -6, 2], exception_msg="Sample ID (-6) is out of bound, expected range [0, 9]")
-    # test_config([], exception_msg="Indices list is empty") # temporary until we check with MindDataset
-    test_config([0, 9, 3, 2], num_samples=-1,
-                exception_msg="num_samples exceeds the boundary between 0 and 9223372036854775807(INT64_MAX)")
-    test_config(np.array([[1], [5]]), num_samples=10,
-                exception_msg="SubsetSampler: Type of indices element must be int, but got list[0]: [1],"
-                              " type: <class 'numpy.ndarray'>.")
 
 
 def test_sampler_chain():
@@ -406,8 +344,7 @@ def test_sampler_when_less_and_larger_index_ids():
     # sampler with less index ids
     class MySampler:
         def __iter__(self):
-            for i in range(0, 10, 2):
-                yield i
+            yield from range(0, 10, 2)
 
     np_data = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l']
 
@@ -436,8 +373,7 @@ def test_sampler_when_less_and_larger_index_ids():
 
     class MySampler2:
         def __iter__(self):
-            for i in index:
-                yield i
+            yield from index
 
     dataset2 = ds.NumpySlicesDataset(np_data, column_names=["data"], sampler=MySampler2())
     count = 0
@@ -582,7 +518,7 @@ def test_distributed_sampler_offset(num_shards):
             else:
                 expected_result = dataset_size // num_shards
             assert dataset.get_dataset_size() == expected_result
-            assert sum([1 for _ in dataset]) == expected_result
+            assert sum((1 for _ in dataset)) == expected_result
 
 
 class StrNumberDataset:
@@ -611,7 +547,7 @@ def test_python_sampler_randomness():
         def __iter__(self):
             # number of samples is random
             num_samples = self.generator.integers(1, 11)
-            indices = [i for i in range(num_samples)]
+            indices = list(range(num_samples))
             # order of samples is random
             self.generator.shuffle(indices)
             return iter(indices)
@@ -716,23 +652,3 @@ def test_python_sampler_with_length(inherit_sampler, length):
             for _ in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
                 pass
         assert "The actual amount of data read from generator 10 is different from generator.len 15" in str(error.value)
-
-
-if __name__ == '__main__':
-    test_sequential_sampler(True)
-    test_random_sampler(True)
-    test_random_sampler_multi_iter(True)
-    test_sampler_py_api()
-    test_python_sampler()
-    test_sequential_sampler2()
-    test_subset_sampler()
-    test_sampler_chain()
-    test_add_sampler_invalid_input()
-    test_distributed_sampler_invalid_offset()
-    test_sampler_list()
-    test_sampler_when_less_and_larger_index_ids()
-    test_sampler_with_getitem_method()
-    test_distributed_sampler_offset(num_shards=1)
-    test_python_sampler_randomness()
-    test_python_sampler_with_num_samples(num_samples=None)
-    test_python_sampler_with_length(inherit_sampler=True, length=10)

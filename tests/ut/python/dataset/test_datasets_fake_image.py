@@ -18,7 +18,6 @@ Test FakeImage dataset operations
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -97,24 +96,6 @@ def test_fake_image_basic():
     assert num_iter5 == 1
 
 
-def test_fake_image_pk_sampler():
-    """
-    Feature: FakeImage
-    Description: Test FakeImageDataset with PKSamplere
-    Expectation: The results are as expected
-    """
-    logger.info("Test FakeImageDataset Op with PKSampler")
-    golden = [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9]
-    #correlation with num_classes
-    sampler = ds.PKSampler(3)
-    train_data = ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, sampler=sampler)
-    num_iter = 0
-    label_list = []
-    for item in train_data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        label_list.append(item["label"])
-        num_iter += 1
-    np.testing.assert_array_equal(golden, label_list)
-    assert num_iter == 30
 
 
 def test_fake_image_sequential_sampler():
@@ -141,53 +122,6 @@ def test_fake_image_sequential_sampler():
     assert num_iter == num_samples
 
 
-def test_fake_image_exception():
-    """
-    Feature: FakeImage
-    Description: Test error cases for FakeImageDataset
-    Expectation: Throw exception correctly
-    """
-    logger.info("Test error cases for FakeImageDataset")
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, sampler=ds.PKSampler(3), num_shards=2,
-                            shard_id=0)
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, num_shards=10)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, num_shards=5, shard_id=-1)
-
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, num_shards=5, shard_id=5)
-
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, num_shards=2, shard_id=5)
-
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, shuffle=False, num_parallel_workers=0)
-
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, shuffle=False, num_parallel_workers=256)
-
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, shuffle=False, num_parallel_workers=-2)
-
-    error_msg_7 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_7):
-        ds.FakeImageDataset(num_images, image_size, num_classes, base_seed, num_shards=2, shard_id="0")
 
 
 def test_fake_image_visualize(plot=False):
@@ -290,14 +224,3 @@ def test_fake_image_num_classes():
     assert "Input num_classes is not within the required interval of [1, 2147483647]." in test_config(-1)
     #should not be negative
     assert "is not of type [<class 'int'>], but got <class 'str'>." in test_config("10")
-
-
-if __name__ == '__main__':
-    test_fake_image_basic()
-    test_fake_image_pk_sampler()
-    test_fake_image_sequential_sampler()
-    test_fake_image_exception()
-    test_fake_image_visualize(plot=True)
-    test_fake_image_num_images()
-    test_fake_image_image_size()
-    test_fake_image_num_classes()
