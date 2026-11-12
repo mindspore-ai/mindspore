@@ -514,10 +514,6 @@ Array Operation
     mindspore.ops.ReverseV2
     mindspore.ops.RightShift
     mindspore.ops.ScatterNd
-    mindspore.ops.ScatterNdDiv
-    mindspore.ops.ScatterNdMax
-    mindspore.ops.ScatterNdMin
-    mindspore.ops.ScatterNdMul
     mindspore.ops.SearchSorted
     mindspore.ops.Select
     mindspore.ops.Shape
@@ -579,12 +575,6 @@ Parameter Operation Operator
     mindspore.ops.AssignAdd
     mindspore.ops.AssignSub
     mindspore.ops.ScatterAdd
-    mindspore.ops.ScatterDiv
-    mindspore.ops.ScatterMax
-    mindspore.ops.ScatterMin
-    mindspore.ops.ScatterMul
-    mindspore.ops.ScatterNdAdd
-    mindspore.ops.ScatterNdSub
     mindspore.ops.ScatterNdUpdate
     mindspore.ops.ScatterNonAliasingAdd
     mindspore.ops.ScatterSub

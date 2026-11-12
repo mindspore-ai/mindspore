@@ -41,7 +41,7 @@ mindspore.Tensor.scatter_add
     .. py:method:: mindspore.Tensor.scatter_add(indices, updates) -> Tensor
         :noindex:
 
-    根据指定的更新值 `updates` 和输入索引 `indices` ，通过相加运算更新输入Tensor的值。当同一索引有不同值时，更新的结果将是所有值的总和。此操作与 :func:`mindspore.ops.scatter_nd_add` 类似，但更新后的结果是返回一个新的输出Tensor，而不是直接更新 `self` 。
+    根据指定的更新值 `updates` 和输入索引 `indices` ，通过相加运算更新输入Tensor的值。当同一索引有不同值时，更新的结果将是所有值的总和。更新结果写入新的输出 Tensor，输入保持不变。
 
     `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `self[indices]` 的shape。有关更多详细信息，请参见样例。
 

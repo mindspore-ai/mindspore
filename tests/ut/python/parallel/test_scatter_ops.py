@@ -14,6 +14,7 @@
 # ============================================================================
 """ test scatter update """
 import numpy as np
+from mindspore.ops.operations import _scatter_ops
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
@@ -21,15 +22,15 @@ from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
 from parallel.utils.utils import ParallelValidator
 
-scatter_ops_dict = {"Add": P.ScatterAdd(), "Mul": P.ScatterMul(), "Div": P.ScatterDiv(),
-                    "Min": P.ScatterMin(), "Max": P.ScatterMax(), "Sub": P.ScatterSub()}
+scatter_ops_dict = {"Add": P.ScatterAdd(), "Mul": _scatter_ops.ScatterMul(), "Div": _scatter_ops.ScatterDiv(),
+                    "Min": _scatter_ops.ScatterMin(), "Max": _scatter_ops.ScatterMax(), "Sub": P.ScatterSub()}
 
 
 class Net(nn.Cell):
     """Net definition"""
 
     def __init__(self, input_shape, indices_shape, updates_shape, strategy1=None, strategy2=None, ops="Add"):
-        super(Net, self).__init__()
+        super().__init__()
         self.inputs = Parameter(Tensor(np.ones(input_shape).astype(np.float32)), "input")
         self.indices = Tensor(np.ones(indices_shape).astype(np.int32))
         self.updates = Tensor(np.ones(updates_shape).astype(np.float32))

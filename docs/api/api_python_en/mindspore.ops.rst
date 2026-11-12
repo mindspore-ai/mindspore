@@ -675,16 +675,6 @@ Parameter Operation Functions
     mindspore.ops.assign_add
     mindspore.ops.assign_sub
     mindspore.ops.scatter_add
-    mindspore.ops.scatter_div
-    mindspore.ops.scatter_min
-    mindspore.ops.scatter_max
-    mindspore.ops.scatter_mul
-    mindspore.ops.scatter_nd_add
-    mindspore.ops.scatter_nd_div
-    mindspore.ops.scatter_nd_max
-    mindspore.ops.scatter_nd_min
-    mindspore.ops.scatter_nd_mul
-    mindspore.ops.scatter_nd_sub
     mindspore.ops.scatter_update
 
 Differential Functions

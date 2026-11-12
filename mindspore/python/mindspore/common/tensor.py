@@ -1357,7 +1357,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         `mindspore.Tensor.scatter_mul` is deprecated from version 2.9.0 and will be removed in a future version.
 
-        For details, please refer to :func:`mindspore.ops.scatter_mul`.
+        For details, please refer to :func:`mindspore.ops.tensor_scatter_mul`.
         """
         return tensor_operator_registry.get('tensor_scatter_mul')(self, indices, updates)
 
@@ -1366,7 +1366,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         `mindspore.Tensor.scatter_div` is deprecated from version 2.9.0 and will be removed in a future version.
 
-        For details, please refer to :func:`mindspore.ops.scatter_div`.
+        For details, please refer to :func:`mindspore.ops.tensor_scatter_div`.
         """
         return tensor_operator_registry.get('tensor_scatter_div')(self, indices, updates)
 
@@ -2062,7 +2062,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         `mindspore.Tensor.scatter_min` is deprecated from version 2.9.0 and will be removed in a future version.
 
-        For details, please refer to :func:`mindspore.ops.scatter_min`.
+        For details, please refer to :func:`mindspore.ops.tensor_scatter_min`.
         """
         return tensor_operator_registry.get('tensor_scatter_min')(self, indices, updates)
 
@@ -2071,7 +2071,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         `mindspore.Tensor.scatter_max` is deprecated from version 2.9.0 and will be removed in a future version.
 
-        For details, please refer to :func:`mindspore.ops.scatter_max`.
+        For details, please refer to :func:`mindspore.ops.tensor_scatter_max`.
         """
         return tensor_operator_registry.get('tensor_scatter_max')(self, indices, updates)
 

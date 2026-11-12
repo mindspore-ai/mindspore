@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Ascend tests for ScatterDiv."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
+from mindspore.ops.operations import _scatter_ops
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.ops as ops
 from mindspore import Tensor, Parameter
 
 
@@ -28,9 +28,9 @@ from mindspore import Tensor, Parameter
 
 class TestScatterDivNet(nn.Cell):
     def __init__(self, inputx):
-        super(TestScatterDivNet, self).__init__()
+        super().__init__()
 
-        self.scattre_div = ops.ScatterDiv()
+        self.scattre_div = _scatter_ops.ScatterDiv()
         self.inputx = Parameter(inputx, name="inputx")
 
     def construct(self, indices, updates):

@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Ascend tests for ScatterMul."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
+from mindspore.ops.operations import _scatter_ops
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.ops as ops
 from mindspore import Tensor, Parameter
-from mindspore.ops import functional as F
 
 
 # all cases tested against dchip
@@ -29,9 +28,9 @@ from mindspore.ops import functional as F
 
 class TestScatterMulNet(nn.Cell):
     def __init__(self, inputx):
-        super(TestScatterMulNet, self).__init__()
+        super().__init__()
 
-        self.scatter_mul = ops.ScatterMul()
+        self.scatter_mul = _scatter_ops.ScatterMul()
         self.inputx = Parameter(inputx, name="inputx")
 
     def construct(self, indices, updates):
@@ -46,16 +45,6 @@ def scatter_mul_forward(nptype):
 
     net = TestScatterMulNet(inputx)
     output = net(indices, updates)
-    expected = inputx.asnumpy()
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-
-def scatter_mul_forward_functional(nptype):
-    inputx = Tensor(np.arange(0, 9).reshape((3, 3)).astype(nptype))
-    indices = Tensor(np.array([[[1, 0, 2], [2, 2, 0]], [[1, 0, 1], [2, 1, 2]]]).astype(np.int32))
-    updates = Tensor(np.ones((2, 2, 3, 3)).astype(nptype))
-
-    output = F.scatter_mul(Parameter(inputx, name="inputx"), indices, updates)
     expected = inputx.asnumpy()
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -149,16 +138,3 @@ def test_scatter_mul_dynamic_updates():
     scatter_mul_dynamic_updates()
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     scatter_mul_dynamic_updates()
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
-def test_scatter_mul_forward_int32_functional():
-    """
-    Feature: test scatter_mul forward.
-    Description: test int32 inputs.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    scatter_mul_forward_functional(np.int32)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    scatter_mul_forward_functional(np.int32)

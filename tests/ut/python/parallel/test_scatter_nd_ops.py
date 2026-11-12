@@ -15,6 +15,7 @@
 """ test scatter update """
 import numpy as np
 import pytest
+from mindspore.ops.operations import _scatter_nd_ops
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Model, Parameter
@@ -23,7 +24,8 @@ from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
 from parallel.utils.utils import ParallelValidator
 
-scatter_nd_ops_map = {"Add": P.ScatterNdAdd(), "Update": P.ScatterNdUpdate(), "Sub": P.ScatterNdSub()}
+scatter_nd_ops_map = {"Add": _scatter_nd_ops.ScatterNdAdd(), "Update": P.ScatterNdUpdate(),
+                      "Sub": _scatter_nd_ops.ScatterNdSub()}
 tensor_scatter_ops_map = {"Add": P.TensorScatterAdd(), "Update": P.TensorScatterUpdate(),
                           "Sub": P.TensorScatterSub(), "Mul": P.TensorScatterMul(), "Div": P.TensorScatterDiv()}
 
@@ -37,7 +39,7 @@ class Net(nn.Cell):
     """Net definition"""
 
     def __init__(self, strategy1=None, strategy2=None, ops_type="Add"):
-        super(Net, self).__init__()
+        super().__init__()
         self.inputs = Parameter(Tensor(np.ones([32, 64, 128]).astype(np.float32)), "input")
         self.indices = Tensor(np.ones([4, 2]).astype(np.int32))
         self.updates = Tensor(np.ones([4, 128]).astype(np.float32))
@@ -56,7 +58,7 @@ class Net1(nn.Cell):
     """Net definition"""
 
     def __init__(self, strategy1=None, strategy2=None, ops_type="Add"):
-        super(Net1, self).__init__()
+        super().__init__()
         self.inputs = Parameter(Tensor(np.ones([32, 64, 128]).astype(np.float32)), "input")
         self.indices = Tensor(np.ones([4, 3]).astype(np.int32))
         self.updates = Tensor(np.ones([4]).astype(np.float32))
@@ -75,7 +77,7 @@ class Net2(nn.Cell):
     """Net definition"""
 
     def __init__(self, strategy1=None, strategy2=None, ops_type="Add"):
-        super(Net2, self).__init__()
+        super().__init__()
         self.indices = Tensor(np.ones([4, 3]).astype(np.int32))
         self.updates = Tensor(np.ones([4]).astype(np.float32))
         self.scatter_ops = tensor_scatter_ops_map.get(ops_type).shard(strategy1)
@@ -94,7 +96,7 @@ class Net3(nn.Cell):
     """Net definition"""
 
     def __init__(self, strategy1=None, strategy2=None, ops_type="Add"):
-        super(Net3, self).__init__()
+        super().__init__()
         self.inputs = Parameter(Tensor(np.ones([8, 8, 64]).astype(np.float32)), "input")
         self.inputs1 = Parameter(Tensor(np.ones([8, 8, 64]).astype(np.float32)), "input1")
         self.indices = Tensor(np.ones([8, 8, 2]).astype(np.int32))
@@ -115,7 +117,7 @@ class Net4(nn.Cell):
     """Net definition"""
 
     def __init__(self, strategy1=None, ops_type="Add"):
-        super(Net4, self).__init__()
+        super().__init__()
         self.indices = Tensor(np.ones([4, 3]).astype(np.int32))
         self.updates = Tensor(np.ones([4]).astype(np.float32))
         self.scatter_ops = tensor_scatter_ops_map.get(ops_type).shard(strategy1)

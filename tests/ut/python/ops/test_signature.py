@@ -15,6 +15,7 @@
 """
 test assign sub
 """
+from mindspore.ops.operations import _scatter_ops
 import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
@@ -31,7 +32,7 @@ import numpy as np
 
 class AssignW(nn.Cell):
     def __init__(self):
-        super(AssignW, self).__init__()
+        super().__init__()
         self.assign = P.Assign()
 
     def construct(self, x, w):
@@ -41,7 +42,7 @@ class AssignW(nn.Cell):
 
 class AssignOp(nn.Cell):
     def __init__(self):
-        super(AssignOp, self).__init__()
+        super().__init__()
         self.b = Parameter(initializer('ones', [5]), name='b')
 
     def construct(self, w):
@@ -59,7 +60,7 @@ def test_assign_by_operator():
 
 class NetScatterNdUpdate(nn.Cell):
     def __init__(self):
-        super(NetScatterNdUpdate, self).__init__()
+        super().__init__()
         self.b = Parameter(initializer('ones', [5, 5]), name='b')
         self.scatter = P.ScatterNdUpdate()
 
@@ -85,10 +86,10 @@ def test_signature_error_info():
     '''
     class NetScatterDiv(nn.Cell):
         def __init__(self):
-            super(NetScatterDiv, self).__init__()
+            super().__init__()
             # pylint:disable=protected-access
             self.b = Parameter(initializer(1, [5, 3], _pytype_to_dtype(np.int8)), name='input')
-            self.scatter = P.ScatterDiv(False)
+            self.scatter = _scatter_ops.ScatterDiv(False)
 
         def construct(self, idx, x):
             return self.scatter(self.b, idx, x)
