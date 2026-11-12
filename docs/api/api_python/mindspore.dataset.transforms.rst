@@ -67,76 +67,55 @@ API样例中常用的导入模块如下：
 快速上手使用视觉类变换的API，跳转参考 `视觉变换样例库 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_ 。
 此指南中展示了多个变换API的用法，以及输入输出结果。
 
-    mindspore.dataset.vision.AdjustBrightness
-    mindspore.dataset.vision.AdjustContrast
+变换
+^^^^^
+
+.. mscnautosummary::
+    :toctree: dataset_vision
+    :nosignatures:
+    :template: classtemplate.rst
+
     mindspore.dataset.vision.AdjustGamma
-    mindspore.dataset.vision.AdjustHue
-    mindspore.dataset.vision.AdjustSaturation
-    mindspore.dataset.vision.AdjustSharpness
-    mindspore.dataset.vision.Affine
     mindspore.dataset.vision.AutoAugment
-    mindspore.dataset.vision.AutoContrast
     mindspore.dataset.vision.BoundingBoxAugment
     mindspore.dataset.vision.CenterCrop
-    mindspore.dataset.vision.ConvertColor
     mindspore.dataset.vision.Crop
     mindspore.dataset.vision.CutMixBatch
-    mindspore.dataset.vision.CutOut
     mindspore.dataset.vision.Decode
     mindspore.dataset.vision.DecodeVideo
-    mindspore.dataset.vision.Equalize
     mindspore.dataset.vision.Erase
     mindspore.dataset.vision.FiveCrop
-    mindspore.dataset.vision.GaussianBlur
     mindspore.dataset.vision.Grayscale
-    mindspore.dataset.vision.HorizontalFlip
-    mindspore.dataset.vision.HsvToRgb
     mindspore.dataset.vision.HWC2CHW
-    mindspore.dataset.vision.Invert
     mindspore.dataset.vision.LinearTransformation
     mindspore.dataset.vision.MixUp
     mindspore.dataset.vision.MixUpBatch
     mindspore.dataset.vision.Normalize
     mindspore.dataset.vision.NormalizePad
     mindspore.dataset.vision.Pad
-    mindspore.dataset.vision.PadToSize
     mindspore.dataset.vision.Perspective
     mindspore.dataset.vision.Posterize
     mindspore.dataset.vision.RandAugment
-    mindspore.dataset.vision.RandomAdjustSharpness
-    mindspore.dataset.vision.RandomAffine
-    mindspore.dataset.vision.RandomAutoContrast
-    mindspore.dataset.vision.RandomColor
     mindspore.dataset.vision.RandomColorAdjust
     mindspore.dataset.vision.RandomCrop
     mindspore.dataset.vision.RandomCropDecodeResize
     mindspore.dataset.vision.RandomCropWithBBox
-    mindspore.dataset.vision.RandomEqualize
     mindspore.dataset.vision.RandomErasing
     mindspore.dataset.vision.RandomGrayscale
     mindspore.dataset.vision.RandomHorizontalFlip
     mindspore.dataset.vision.RandomHorizontalFlipWithBBox
-    mindspore.dataset.vision.RandomInvert
     mindspore.dataset.vision.RandomLighting
     mindspore.dataset.vision.RandomPerspective
     mindspore.dataset.vision.RandomPosterize
     mindspore.dataset.vision.RandomResizedCrop
     mindspore.dataset.vision.RandomResizedCropWithBBox
-    mindspore.dataset.vision.RandomResize
     mindspore.dataset.vision.RandomResizeWithBBox
-    mindspore.dataset.vision.RandomRotation
-    mindspore.dataset.vision.RandomSelectSubpolicy
-    mindspore.dataset.vision.RandomSharpness
     mindspore.dataset.vision.RandomSolarize
     mindspore.dataset.vision.RandomVerticalFlip
     mindspore.dataset.vision.RandomVerticalFlipWithBBox
     mindspore.dataset.vision.Rescale
     mindspore.dataset.vision.Resize
-    mindspore.dataset.vision.ResizedCrop
     mindspore.dataset.vision.ResizeWithBBox
-    mindspore.dataset.vision.RgbToHsv
-    mindspore.dataset.vision.Rotate
-    mindspore.dataset.vision.SlicePatches
     mindspore.dataset.vision.Solarize
     mindspore.dataset.vision.TenCrop
     mindspore.dataset.vision.ToNumpy
@@ -144,8 +123,6 @@ API样例中常用的导入模块如下：
     mindspore.dataset.vision.ToTensor
     mindspore.dataset.vision.ToType
     mindspore.dataset.vision.TrivialAugmentWide
-    mindspore.dataset.vision.UniformAugment
-    mindspore.dataset.vision.VerticalFlip
 
 工具
 ^^^^^
@@ -156,12 +133,10 @@ API样例中常用的导入模块如下：
     :template: classtemplate.rst
 
     mindspore.dataset.vision.AutoAugmentPolicy
-    mindspore.dataset.vision.Border
-    mindspore.dataset.vision.ConvertMode
-    mindspore.dataset.vision.ImageBatchFormat
     mindspore.dataset.vision.ImageReadMode
+    mindspore.dataset.vision.Border
+    mindspore.dataset.vision.ImageBatchFormat
     mindspore.dataset.vision.Inter
-    mindspore.dataset.vision.SliceMode
     mindspore.dataset.vision.VideoDecoder
     mindspore.dataset.vision.encode_jpeg
     mindspore.dataset.vision.encode_png

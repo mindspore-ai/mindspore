@@ -37,65 +37,6 @@ class TensorOperation;
 
 // Transform operations for performing computer vision.
 namespace vision {
-/// \brief Apply brightness adjustment on input image.
-class DATASET_API AdjustBrightness final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] brightness_factor Adjusts image brightness, non negative real number.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto adjust_brightness_op = vision::AdjustBrightness(2.0);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, adjust_brightness_op},  // operations
-  ///                            {"image"});                         // input columns
-  /// \endcode
-  explicit AdjustBrightness(float brightness_factor);
-
-  /// \brief Destructor.
-  ~AdjustBrightness() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Apply contrast adjustment on input image.
-class DATASET_API AdjustContrast final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] contrast_factor Adjusts image contrast, non negative real number.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto adjust_contrast_op = vision::AdjustContrast(10.0);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, adjust_contrast_op},  // operations
-  ///                            {"image"});                       // input columns
-  /// \endcode
-  explicit AdjustContrast(float contrast_factor);
-
-  /// \brief Destructor.
-  ~AdjustContrast() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
 
 /// \brief AdjustGamma TensorTransform.
 /// \note Apply gamma correction on input image.
@@ -119,97 +60,6 @@ class DATASET_API AdjustGamma final : public TensorTransform {
 
   /// \brief Destructor.
   ~AdjustGamma() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \note Apply hue adjustment on input image.
-class DATASET_API AdjustHue final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] hue_factor How much to shift the hue channel, must be in the interval [-0.5, 0.5].
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto adjust_hue_op = vision::AdjustHue(0.2);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, adjust_contrast_op},  // operations
-  ///                            {"image"});                       // input columns
-  /// \endcode
-  explicit AdjustHue(float hue_factor);
-
-  /// \brief Destructor.
-  ~AdjustHue() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Adjust the color saturation of the input image.
-class DATASET_API AdjustSaturation final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] saturation_factor Adjust image saturation, non negative real number.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto adjust_saturation_op = vision::AdjustSaturation(2.0);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, adjust_saturation_op},  // operations
-  ///                            {"image"});                         // input columns
-  /// \endcode
-  explicit AdjustSaturation(float saturation_factor);
-
-  /// \brief Destructor.
-  ~AdjustSaturation() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Apply adjust sharpness on input image. Input image is expected to be in [H, W, C] or [H, W] format.
-class DATASET_API AdjustSharpness final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] sharpness_factor How much to adjust the sharpness. Can be any Non negative real number.
-  ///     0 gives a blurred image, 1 gives the original image while 2 increases the Sharpness by a factor of 2.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto adjust_sharpness_op = vision::AdjustSharpness(2.0);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, adjust_sharpness_op},   // operations
-  ///                            {"image"});                         // input columns
-  /// \endcode
-  explicit AdjustSharpness(float sharpness_factor);
-
-  /// \brief Destructor.
-  ~AdjustSharpness() override = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
@@ -251,37 +101,6 @@ class DATASET_API AutoAugment final : public TensorTransform {
 
   /// \brief Destructor.
   ~AutoAugment() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Apply automatic contrast on the input image.
-class DATASET_API AutoContrast final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] cutoff Percent of pixels to cut off from the histogram, the valid range of cutoff value is 0 to 50.
-  /// \param[in] ignore Pixel values to ignore.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto autocontrast_op = vision::AutoContrast(10.0, {10, 20});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, autocontrast_op},  // operations
-  ///                            {"image"});                    // input columns
-  /// \endcode
-  explicit AutoContrast(float cutoff = 0.0, const std::vector<uint32_t> &ignore = {});
-
-  /// \brief Destructor.
-  ~AutoContrast() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -355,33 +174,6 @@ class DATASET_API BoundingBoxAugment final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Change the color space of the image.
-class DATASET_API ConvertColor final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] convert_mode The mode of image channel conversion.
-  /// \par Example
-  /// \code
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({std::make_shared<vision::Decode>(),
-  ///                             std::make_shared<vision::ConvertColor>(ConvertMode::COLOR_BGR2RGB)}, // operations
-  ///                            {"image"});                                                           // input columns
-  /// \endcode
-  explicit ConvertColor(ConvertMode convert_mode);
-
-  /// \brief Destructor.
-  ~ConvertColor() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 /// \brief Mask a random section of each image with the corresponding part of another randomly
 ///     selected image in that batch.
 class DATASET_API CutMixBatch final : public TensorTransform {
@@ -401,36 +193,6 @@ class DATASET_API CutMixBatch final : public TensorTransform {
 
   /// \brief Destructor.
   ~CutMixBatch() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Randomly cut (mask) out a given number of square patches from the input image.
-class DATASET_API CutOut final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] length Integer representing the side length of each square patch.
-  /// \param[in] num_patches Integer representing the number of patches to be cut out of an image.
-  /// \param[in] is_hwc A boolean to indicate whether the input image is in HWC format (true) or CHW
-  ///     format (false) (default = true).
-  /// \par Example
-  /// \code
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({std::make_shared<vision::Decode>(),
-  ///                             std::make_shared<vision::CutOut>(1, 4, true)}, // operations
-  ///                            {"image"});                                     // input columns
-  /// \endcode
-  explicit CutOut(int32_t length, int32_t num_patches = 1, bool is_hwc = true);
-
-  /// \brief Destructor.
-  ~CutOut() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -488,28 +250,6 @@ Status DATASET_API EncodeJpeg(const mindspore::MSTensor &image, mindspore::MSTen
 /// \return The status code.
 Status DATASET_API EncodePng(const mindspore::MSTensor &image, mindspore::MSTensor *output, int compression_level = 6);
 
-/// \brief Apply histogram equalization on the input image.
-class DATASET_API Equalize final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \par Example
-  /// \code
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({std::make_shared<vision::Decode>(),
-  ///                             std::make_shared<vision::Equalize>()}, // operations
-  ///                            {"image"});                             // input columns
-  /// \endcode
-  Equalize();
-
-  /// \brief Destructor.
-  ~Equalize() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-};
-
 /// \brief Erase the input image with given value.
 class DATASET_API Erase final : public TensorTransform {
  public:
@@ -556,50 +296,6 @@ Status DATASET_API GetImageNumChannels(const mindspore::MSTensor &image, dsize_t
 /// \param[out] size Size of the image as [height, width].
 /// \return The status code.
 Status DATASET_API GetImageSize(const mindspore::MSTensor &image, std::vector<dsize_t> *size);
-
-/// \brief Flip the input image horizontally.
-class DATASET_API HorizontalFlip final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \par Example
-  /// \code
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({std::make_shared<vision::Decode>(),
-  ///                             std::make_shared<vision::HorizontalFlip>()}, // operations
-  ///                            {"image"});                                   // input columns
-  /// \endcode
-  HorizontalFlip();
-
-  /// \brief Destructor.
-  ~HorizontalFlip() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-};
-
-/// \brief Apply invert on the input image in RGB mode.
-class DATASET_API Invert final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \par Example
-  /// \code
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({std::make_shared<vision::Decode>(),
-  ///                             std::make_shared<vision::Invert>()}, // operations
-  ///                            {"image"});                           // input columns
-  /// \endcode
-  Invert();
-
-  /// \brief Destructor.
-  ~Invert() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-};
 
 /// \brief Apply MixUp transformation on an input batch of images and labels. The labels must be in
 ///     one-hot format and Batch must be called before calling this function.
@@ -661,48 +357,6 @@ class DATASET_API NormalizePad final : public TensorTransform {
 
   /// \brief Destructor.
   ~NormalizePad() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Pad the image to a fixed size.
-class DATASET_API PadToSize final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] size A two element vector representing the target size to pad, in order of [height, width].
-  /// \param[in] offset A two element vector representing the lengths to pad on the top and left,
-  ///    in order of [top, left]. Default: {}, means to pad symmetrically, keeping the original image in center.
-  /// \param[in] fill_value A vector representing the pixel intensity of the borders. Only valid if the
-  ///    padding_mode is BorderType.kConstant. If 1 value is provided, it is used for all RGB channels.
-  ///    If 3 values are provided, it is used to fill R, G, B channels respectively. Default: {0}.
-  /// \param[in] padding_mode The method of padding, which can be one of BorderType.kConstant, BorderType.kEdge,
-  ///    BorderType.kReflect or BorderType.kSymmetric. Default: BorderType.kConstant.
-  ///    - BorderType.kConstant, pads with a constant value.
-  ///    - BorderType.kEdge, pads with the last value at the edge of the image.
-  ///    - BorderType.kReflect, pads with reflection of the image omitting the last value on the edge.
-  ///    - BorderType.kSymmetric, pads with reflection of the image repeating the last value on the edge.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto pad_to_size_op = vision::PadToSize({256, 256}, {10, 20}, {255, 255, 255});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, pad_to_size_op},  // operations
-  ///                            {"image"});                   // input columns
-  /// \endcode
-  explicit PadToSize(const std::vector<int32_t> &size, const std::vector<int32_t> &offset = {},
-                     const std::vector<uint8_t> &fill_value = {0}, BorderType padding_mode = BorderType::kConstant);
-
-  /// \brief Destructor.
-  ~PadToSize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -814,106 +468,6 @@ class DATASET_API RandAugment final : public TensorTransform {
 
   /// \brief Destructor.
   ~RandAugment() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Automatically adjust the contrast of the image with a given probability.
-class DATASET_API RandomAutoContrast final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] cutoff Percent of the lightest and darkest pixels to be cut off from
-  ///     the histogram of the input image. The value must be in range of [0.0, 50.0) (default=0.0).
-  /// \param[in] ignore The background pixel values to be ignored, each of which must be
-  ///     in range of [0, 255] (default={}).
-  /// \param[in] prob A float representing the probability of AutoContrast, which must be
-  ///     in range of [0, 1] (default=0.5).
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto random_auto_contrast_op = vision::RandomAutoContrast(5.0);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_auto_contrast_op},  // operations
-  ///                            {"image"});                            // input columns
-  /// \endcode
-  explicit RandomAutoContrast(float cutoff = 0.0, const std::vector<uint32_t> &ignore = {}, float prob = 0.5);
-
-  /// \brief Destructor.
-  ~RandomAutoContrast() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Randomly adjust the sharpness of the input image with a given probability.
-class DATASET_API RandomAdjustSharpness final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] degree A float representing sharpness adjustment degree, which must be non negative.
-  /// \param[in] prob A float representing the probability of the image being sharpness adjusted, which
-  ///     must in range of [0, 1] (default=0.5).
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto random_adjust_sharpness_op = vision::RandomAdjustSharpness(30.0);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_adjust_sharpness_op},  // operations
-  ///                            {"image"});                               // input columns
-  /// \endcode
-  explicit RandomAdjustSharpness(float degree, float prob = 0.5);
-
-  /// \brief Destructor.
-  ~RandomAdjustSharpness() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Blend an image with its grayscale version with random weights
-///        t and 1 - t generated from a given range. If the range is trivial
-///        then the weights are determinate and t equals to the bound of the interval.
-class DATASET_API RandomColor final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] t_lb Lower bound random weights.
-  /// \param[in] t_ub Upper bound random weights.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto random_color_op = vision::RandomColor(5.0, 50.0);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_color_op},  // operations
-  ///                            {"image"});                    // input columns
-  /// \endcode
-  RandomColor(float t_lb, float t_ub);
-
-  /// \brief Destructor.
-  ~RandomColor() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1115,37 +669,6 @@ class DATASET_API RandomCropWithBBox final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
-/// \brief Randomly apply histogram equalization on the input image with a given probability.
-class DATASET_API RandomEqualize final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] prob A float representing the probability of equalization, which
-  ///     must be in range of [0, 1] (default=0.5).
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto random_op = vision::RandomEqualize(0.5);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
-  ///                            {"image"});              // input columns
-  /// \endcode
-  explicit RandomEqualize(float prob = 0.5);
-
-  /// \brief Destructor.
-  ~RandomEqualize() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 /// \brief Randomly flip the input image horizontally with a given probability.
 class DATASET_API RandomHorizontalFlip final : public TensorTransform {
  public:
@@ -1194,37 +717,6 @@ class DATASET_API RandomHorizontalFlipWithBBox final : public TensorTransform {
 
   /// \brief Destructor.
   ~RandomHorizontalFlipWithBBox() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Randomly invert the input image with a given probability.
-class DATASET_API RandomInvert final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] prob A float representing the probability of the image being inverted, which
-  ///     must be in range of [0, 1] (default=0.5).
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto random_op = vision::RandomInvert(0.8);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
-  ///                            {"image"});              // input columns
-  /// \endcode
-  explicit RandomInvert(float prob = 0.5);
-
-  /// \brief Destructor.
-  ~RandomInvert() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1286,38 +778,6 @@ class DATASET_API RandomPosterize final : public TensorTransform {
 
   /// \brief Destructor.
   ~RandomPosterize() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Resize the input image using a randomly selected interpolation mode.
-class DATASET_API RandomResize final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] size A vector representing the output size of the resized image.
-  ///     If the size is a single value, the smaller edge of the image will be resized to this value with
-  ///      the same image aspect ratio. If the size has 2 values, it should be (height, width).
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto random_op = vision::RandomResize({32, 32});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
-  ///                            {"image"});              // input columns
-  /// \endcode
-  explicit RandomResize(const std::vector<int32_t> &size);
-
-  /// \brief Destructor.
-  ~RandomResize() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1445,160 +905,6 @@ class DATASET_API RandomResizedCropWithBBox final : public TensorTransform {
 
   /// \brief Destructor.
   ~RandomResizedCropWithBBox() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Rotate the image according to parameters.
-class DATASET_API RandomRotation final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] degrees A float vector of size 2, representing the starting and ending degrees.
-  /// \param[in] resample An enum for the mode of interpolation.
-  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
-  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
-  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
-  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
-  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
-  /// \param[in] expand A boolean representing whether the image is expanded after rotation.
-  /// \param[in] center A float vector of size 2 or empty, representing the x and y center of rotation
-  ///     or the center of the image.
-  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
-  ///    in the output image. If 1 value is provided, it is used for all RGB channels.
-  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto random_op = vision::RandomRotation({30, 60}, InterpolationMode::kNearestNeighbour);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
-  ///                            {"image"});              // input columns
-  /// \endcode
-  explicit RandomRotation(const std::vector<float> &degrees,
-                          InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
-                          const std::vector<float> &center = {}, const std::vector<uint8_t> &fill_value = {0, 0, 0});
-
-  /// \brief Destructor.
-  ~RandomRotation() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
-///     (operation, prob), where operation is a TensorTransform operation and prob is the probability that this
-///     operation will be applied. Once a sub-policy is selected, each operation within the sub-policy with be
-///     applied in sequence according to its probability.
-class DATASET_API RandomSelectSubpolicy final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are raw pointers.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto invert_op(new vision::Invert());
-  ///     auto equalize_op(new vision::Equalize());
-  ///
-  ///     std::vector<std::pair<TensorTransform *, double>> policy = {{invert_op, 0.5}, {equalize_op, 0.4}};
-  ///     vision::RandomSelectSubpolicy random_select_subpolicy_op = vision::RandomSelectSubpolicy({policy});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({random_select_subpolicy_op},    // operations
-  ///                            {"image"});                      // input columns
-  /// \endcode
-  explicit RandomSelectSubpolicy(const std::vector<std::vector<std::pair<TensorTransform *, double>>> &policy);
-
-  /// \brief Constructor.
-  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are shared pointers.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     std::shared_ptr<TensorTransform> invert_op(new vision::Invert());
-  ///     std::shared_ptr<TensorTransform> equalize_op(new vision::Equalize());
-  ///     std::shared_ptr<TensorTransform> resize_op(new vision::Resize({15, 15}));
-  ///
-  ///     auto random_select_subpolicy_op = vision::RandomSelectSubpolicy({
-  ///                                          {{invert_op, 0.5}, {equalize_op, 0.4}},
-  ///                                          {{resize_op, 0.1}}
-  ///                                       });
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({random_select_subpolicy_op},    // operations
-  ///                            {"image"});                      // input columns
-  /// \endcode
-  explicit RandomSelectSubpolicy(
-    const std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> &policy);
-
-  /// \brief Constructor.
-  /// \param[in] policy Vector of sub-policies to choose from, in which the TensorTransform objects are object pointers.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     vision::Invert invert_op = vision::Invert();
-  ///     vision::Equalize equalize_op = vision::Equalize();
-  ///     vision::Resize resize_op = vision::Resize({15, 15});
-  ///
-  ///     auto random_select_subpolicy_op = vision::RandomSelectSubpolicy({
-  ///                                          {{invert_op, 0.5}, {equalize_op, 0.4}},
-  ///                                          {{resize_op, 0.1}}
-  ///                                       });
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({random_select_subpolicy_op},    // operations
-  ///                            {"image"});                      // input columns
-  /// \endcode
-  explicit RandomSelectSubpolicy(
-    const std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> &policy);
-
-  /// \brief Destructor.
-  ~RandomSelectSubpolicy() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Adjust the sharpness of the input image by a fixed or random degree.
-class DATASET_API RandomSharpness final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] degrees A float vector of size 2, representing the range of random sharpness
-  ///     adjustment degrees. It should be in (min, max) format. If min=max, then it is a
-  ///     single fixed magnitude operation (default = (0.1, 1.9)).
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto random_op = vision::RandomSharpness({0.1, 1.5});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
-  ///                            {"image"});              // input columns
-  /// \endcode
-  explicit RandomSharpness(const std::vector<float> &degrees = {0.1, 1.9});
-
-  /// \brief Destructor.
-  ~RandomSharpness() override = default;
 
  protected:
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
@@ -1743,50 +1049,6 @@ Status DATASET_API ReadVideoTimestamps(const std::string &filename, std::tuple<s
                                        const std::string &pts_unit = "pts");
 #endif
 
-/// \brief Crop the given image and zoom to the specified size.
-class DATASET_API ResizedCrop final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] top Horizontal ordinate of the upper left corner of the crop image.
-  /// \param[in] left Vertical ordinate of the upper left corner of the crop image.
-  /// \param[in] height Height of cropped image.
-  /// \param[in] width Width of cropped image.
-  /// \param[in] size A vector representing the output size of the image.
-  ///     If the size is a single value, a squared resized of size (size, size) is returned.
-  ///     If the size has 2 values, it should be (height, width).
-  /// \param[in] interpolation Image interpolation mode. Default: InterpolationMode::kLinear.
-  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
-  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
-  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
-  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
-  ///   - InterpolationMode::kCubicPil, Interpolation method is bicubic interpolation like implemented in pillow.
-  /// \note If the input image is more than one, then make sure that the image size is the same.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto resized_crop_op = vision::ResizedCrop(128, 128, 256, 256, {128, 128});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, resized_crop_op},  // operations
-  ///                            {"image"});                    // input columns
-  /// \endcode
-  ResizedCrop(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
-              InterpolationMode interpolation = InterpolationMode::kLinear);
-
-  /// \brief Destructor.
-  ~ResizedCrop() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 /// \brief Resize the input image to the given size and adjust bounding boxes accordingly.
 class DATASET_API ResizeWithBBox final : public TensorTransform {
  public:
@@ -1873,43 +1135,6 @@ class DATASET_API RGBA2RGB final : public TensorTransform {
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
-};
-
-/// \note Slice the tensor to multiple patches in horizontal and vertical directions.
-class DATASET_API SlicePatches final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] num_height The number of patches in vertical direction (default=1).
-  /// \param[in] num_width The number of patches in horizontal direction (default=1).
-  /// \param[in] slice_mode An enum for the mode of slice (default=SliceMode::kPad).
-  /// \param[in] fill_value A value representing the pixel to fill the padding area in right and
-  ///     bottom border if slice_mode is kPad. Then padded tensor could be just sliced to multiple patches (default=0).
-  /// \note The usage scenario is suitable to tensor with large height and width. The tensor will keep the same
-  ///     if set both num_height and num_width to 1. And the number of output tensors is equal to num_height*num_width.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto slice_patch_op = vision::SlicePatches(255, 255);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, slice_patch_op},  // operations
-  ///                            {"image"});                   // input columns
-  /// \endcode
-  explicit SlicePatches(int32_t num_height = 1, int32_t num_width = 1, SliceMode slice_mode = SliceMode::kPad,
-                        uint8_t fill_value = 0);
-
-  /// \brief Destructor.
-  ~SlicePatches() override = default;
-
- protected:
-  /// \brief Function to convert TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
 };
 
 /// \brief Invert pixels within a specified range.
@@ -2011,98 +1236,6 @@ class DATASET_API TrivialAugmentWide final : public TensorTransform {
  private:
   struct Data;
   std::shared_ptr<Data> data_;
-};
-
-/// \brief Randomly perform transformations, as selected from input transform list, on the input tensor.
-class DATASET_API UniformAugment final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] transforms Raw pointer to vector of TensorTransform operations.
-  /// \param[in] num_ops An integer representing the number of operations to be selected and applied.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto resize_op(new vision::Resize({30, 30}));
-  ///     auto random_crop_op(new vision::RandomCrop({28, 28}));
-  ///     auto center_crop_op(new vision::CenterCrop({16, 16}));
-  ///     auto uniform_op(new vision::UniformAugment({random_crop_op, center_crop_op}, 2));
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({resize_op, uniform_op},  // operations
-  ///                            {"image"});               // input columns
-  /// \endcode
-  explicit UniformAugment(const std::vector<TensorTransform *> &transforms, int32_t num_ops = 2);
-
-  /// \brief Constructor.
-  /// \param[in] transforms Smart pointer to vector of TensorTransform operations.
-  /// \param[in] num_ops An integer representing the number of operations to be selected and applied.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     std::shared_ptr<TensorTransform> resize_op(new vision::Resize({30, 30}));
-  ///     std::shared_ptr<TensorTransform> random_crop_op(new vision::RandomCrop({28, 28}));
-  ///     std::shared_ptr<TensorTransform> center_crop_op(new vision::CenterCrop({16, 16}));
-  ///     std::shared_ptr<TensorTransform> uniform_op(new vision::UniformAugment({random_crop_op, center_crop_op}, 2));
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({resize_op, uniform_op},  // operations
-  ///                            {"image"});               // input columns
-  /// \endcode
-  explicit UniformAugment(const std::vector<std::shared_ptr<TensorTransform>> &transforms, int32_t num_ops = 2);
-
-  /// \brief Constructor.
-  /// \param[in] transforms Object pointer to vector of TensorTransform operations.
-  /// \param[in] num_ops An integer representing the number of operations to be selected and applied.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     vision::Resize resize_op = vision::Resize({30, 30});
-  ///     vision::RandomCrop random_crop_op = vision::RandomCrop({28, 28});
-  ///     vision::CenterCrop center_crop_op = vision::CenterCrop({16, 16});
-  ///     vision::UniformAugment uniform_op = vision::UniformAugment({random_crop_op, center_crop_op}, 2);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({resize_op, uniform_op},  // operations
-  ///                            {"image"});               // input columns
-  /// \endcode
-  explicit UniformAugment(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, int32_t num_ops = 2);
-
-  /// \brief Destructor.
-  ~UniformAugment() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Flip the input image vertically.
-class DATASET_API VerticalFlip final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto flip_op = vision::VerticalFlip();
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, flip_op},  // operations
-  ///                            {"image"});            // input columns
-  /// \endcode
-  VerticalFlip();
-
-  /// \brief Destructor.
-  ~VerticalFlip() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
 };
 
 /// \brief Write the one dimension uint8 data into a file using binary mode.

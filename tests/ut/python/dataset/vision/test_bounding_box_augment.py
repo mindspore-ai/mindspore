@@ -49,37 +49,6 @@ def dir_data():
     return data_list
 
 
-def test_bounding_box_augment_with_rotation_op(plot_vis=False):
-    """
-    Feature: BoundingBoxAugment op
-    Description: Prints images and bboxes side by side with and without aug to compare by passing rotation op
-    Expectation: Passes the md5 check test
-    """
-    logger.info("test_bounding_box_augment_with_rotation_op")
-
-    original_seed = config_get_set_seed(0)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-
-    data_voc1 = ds.VOCDataset(DATA_DIR, task="Detection",
-                              usage="train", shuffle=False, decode=True)
-    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection",
-                              usage="train", shuffle=False, decode=True)
-
-    # Ratio is set to 1 to apply rotation on all bounding boxes.
-    test_op = c_vision.BoundingBoxAugment(c_vision.RandomRotation(90), 1)
-
-    # map to apply ops
-    data_voc2 = helper_perform_ops_bbox(data_voc2, test_op)
-    data_voc2 = data_voc2.project(["image", "bbox"])
-
-    filename = "bounding_box_augment_rotation_c_result.npz"
-    save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)
-
-    helper_test_visual_bbox(plot_vis, data_voc1, data_voc2)
-
-    # Restore config setting
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
 def test_bounding_box_augment_with_crop_op(plot_vis=False):
@@ -363,16 +332,3 @@ def test_bounding_box_augment_exception_01():
         dataset = dataset.project(columns=["image", "bbox"])
         for _ in dataset.create_dict_iterator(output_numpy=True):
             pass
-
-
-if __name__ == "__main__":
-    # set to false to not show plots
-    test_bounding_box_augment_with_rotation_op(plot_vis=False)
-    test_bounding_box_augment_with_crop_op(plot_vis=False)
-    test_bounding_box_augment_op_coco_c(plot_vis=False)
-    test_bounding_box_augment_valid_ratio_c(plot_vis=False)
-    test_bounding_box_augment_valid_edge_c(plot_vis=False)
-    test_bounding_box_augment_invalid_ratio_c()
-    test_bounding_box_augment_invalid_bounds_c()
-    test_bounding_box_augment_operation_01()
-    test_bounding_box_augment_exception_01()

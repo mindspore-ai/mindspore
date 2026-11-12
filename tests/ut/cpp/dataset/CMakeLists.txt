@@ -4,10 +4,8 @@ SET(DE_UT_SRCS
         lite_affine_op_test.cc
         execute_test.cc
         arena_test.cc
-        eager_auto_contrast_op_test.cc
         batch_op_test.cc
         bit_functions_test.cc
-        bounding_box_augment_op_test.cc
         btree_test.cc
         buddy_test.cc
         build_vocab_test.cc
@@ -76,15 +74,8 @@ SET(DE_UT_SRCS
         c_api_text_test.cc
         c_api_transforms_test.cc
         c_api_vision_a_to_q_test.cc
-        c_api_vision_affine_test.cc
-        c_api_vision_bounding_box_augment_test.cc
-        c_api_vision_horizontal_flip_test.cc
-        c_api_vision_random_subselect_policy_test.cc
         c_api_vision_random_test.cc
         c_api_vision_r_to_z_test.cc
-        c_api_vision_slice_patches_test.cc
-        c_api_vision_uniform_aug_test.cc
-        c_api_vision_vertical_flip_test.cc
         center_crop_op_test.cc
         channel_swap_test.cc
         circular_pool_test.cc
@@ -95,17 +86,14 @@ SET(DE_UT_SRCS
         concatenate_op_test.cc
         connector_test.cc
         csv_op_test.cc
-        cut_out_op_test.cc
         cutmix_batch_op_test.cc
         cyclic_array_test.cc
         data_helper_test.cc
         datatype_test.cc
         decode_op_test.cc
         distributed_sampler_test.cc
-        equalize_op_test.cc
         execute_test.cc
         execution_tree_test.cc
-        c_api_vision_gaussian_blur_test.cc
         global_context_test.cc
         image_process_test.cc
         interrupt_test.cc
@@ -128,9 +116,7 @@ SET(DE_UT_SRCS
         perf_data_test.cc
         profiler_test.cc
         queue_test.cc
-        random_affine_op_test.cc
         random_color_adjust_op_test.cc
-        random_color_op_test.cc
         random_crop_and_resize_op_test.cc
         random_crop_and_resize_with_bbox_op_test.cc
         random_crop_decode_resize_op_test.cc
@@ -138,10 +124,7 @@ SET(DE_UT_SRCS
         random_crop_with_bbox_op_test.cc
         random_horizontal_flip_op_test.cc
         random_horizontal_flip_with_bbox_test.cc
-        random_resize_op_test.cc
-        random_resize_op_test.cc
         random_resize_with_bbox_op_test.cc
-        random_rotation_op_test.cc
         random_solarize_op_test.cc
         random_vertical_flip_op_test.cc
         random_vertical_flip_with_bbox_op_test.cc
@@ -168,7 +151,6 @@ SET(DE_UT_SRCS
         tensor_test.cc
         tensorshape_test.cc
         tfReader_op_test.cc
-        to_float16_op_test.cc
         tokenizer_op_test.cc
         treap_test.cc
         tree_modifying_function_test.cc

@@ -13,8 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Dataset regression coverage for datasets get dataset size."""
 import mindspore.dataset as ds
-import mindspore.dataset.vision as vision
 
 IMAGENET_RAWDATA_DIR = "../data/dataset/testImageNetData2/train"
 IMAGENET_TFFILE_DIR = ["../data/dataset/test_tf_file_3_images2/train-0000-of-0001.data",
@@ -359,40 +359,6 @@ def test_padded_dataset_size():
     assert len(dataset) == 2
 
 
-def test_pipeline_get_dataset_size():
-    """
-    Feature: get_dataset_size
-    Description: Test get_dataset_size for TFRecordDataset that is pipelined
-    Expectation: The dataset is processed as expected
-    """
-    dataset = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, SCHEMA_FILE, columns_list=["image"], shuffle=False)
-    assert dataset.get_dataset_size() == 12
-    assert len(dataset) == 12
-
-    dataset = dataset.shuffle(buffer_size=3)
-    assert dataset.get_dataset_size() == 12
-    assert len(dataset) == 12
-
-    decode_op = vision.Decode()
-    resize_op = vision.RandomResize(10)
-
-    dataset = dataset.map([decode_op, resize_op], input_columns=["image"])
-    assert dataset.get_dataset_size() == 12
-    assert len(dataset) == 12
-
-    dataset = dataset.batch(batch_size=3)
-    assert dataset.get_dataset_size() == 4
-    assert len(dataset) == 4
-
-    dataset = dataset.repeat(count=2)
-    assert dataset.get_dataset_size() == 8
-    assert len(dataset) == 8
-
-    tf1 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, shuffle=True)
-    tf2 = ds.TFRecordDataset(IMAGENET_TFFILE_DIR, shuffle=True)
-    tf3 = tf2.concat(tf1)
-    assert tf3.get_dataset_size() == 24
-    assert len(tf3) == 24
 
 
 def test_distributed_get_dataset_size():
@@ -420,22 +386,3 @@ def test_distributed_get_dataset_size():
     for _ in dataset2.create_dict_iterator(num_epochs=1):
         count2 += 1
     assert count2 == 2500
-
-
-if __name__ == '__main__':
-    test_imagenet_rawdata_dataset_size()
-    test_imagenet_tf_file_dataset_size()
-    test_mnist_dataset_size()
-    test_mind_dataset_size()
-    test_manifest_dataset_size()
-    test_cifar10_dataset_size()
-    test_cifar100_dataset_size()
-    test_voc_dataset_size()
-    test_coco_dataset_size()
-    test_celeba_dataset_size()
-    test_clue_dataset_size()
-    test_csv_dataset_size()
-    test_text_file_dataset_size()
-    test_padded_dataset_size()
-    test_pipeline_get_dataset_size()
-    test_distributed_get_dataset_size()

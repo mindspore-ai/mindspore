@@ -36,97 +36,48 @@
 #include "minddata/dataset/vision/kernels/pyav/stream.h"
 #include "minddata/dataset/vision/kernels/video_utils.h"
 
-#include "minddata/dataset/vision/transform/adjust_brightness_ir.h"
-#include "minddata/dataset/vision/transform/adjust_contrast_ir.h"
 #include "minddata/dataset/vision/transform/adjust_gamma_ir.h"
-#include "minddata/dataset/vision/transform/adjust_hue_ir.h"
-#include "minddata/dataset/vision/transform/adjust_saturation_ir.h"
-#include "minddata/dataset/vision/transform/adjust_sharpness_ir.h"
-#include "minddata/dataset/vision/transform/affine_ir.h"
 #include "minddata/dataset/vision/transform/auto_augment_ir.h"
-#include "minddata/dataset/vision/transform/auto_contrast_ir.h"
 #include "minddata/dataset/vision/transform/bounding_box_augment_ir.h"
 #include "minddata/dataset/vision/transform/center_crop_ir.h"
-#include "minddata/dataset/vision/transform/convert_color_ir.h"
 #include "minddata/dataset/vision/transform/crop_ir.h"
 #include "minddata/dataset/vision/transform/cutmix_batch_ir.h"
-#include "minddata/dataset/vision/transform/cutout_ir.h"
 #include "minddata/dataset/vision/transform/decode_ir.h"
 #include "minddata/dataset/vision/transform/decode_video_ir.h"
-#include "minddata/dataset/vision/transform/equalize_ir.h"
 #include "minddata/dataset/vision/transform/erase_ir.h"
-#include "minddata/dataset/vision/transform/gaussian_blur_ir.h"
-#include "minddata/dataset/vision/transform/horizontal_flip_ir.h"
 #include "minddata/dataset/vision/transform/hwc_to_chw_ir.h"
-#include "minddata/dataset/vision/transform/invert_ir.h"
 #include "minddata/dataset/vision/transform/mixup_batch_ir.h"
 #include "minddata/dataset/vision/transform/normalize_ir.h"
 #include "minddata/dataset/vision/transform/normalize_pad_ir.h"
 #include "minddata/dataset/vision/transform/pad_ir.h"
-#include "minddata/dataset/vision/transform/pad_to_size_ir.h"
 #include "minddata/dataset/vision/transform/perspective_ir.h"
 #include "minddata/dataset/vision/transform/posterize_ir.h"
 #include "minddata/dataset/vision/transform/rand_augment_ir.h"
-#include "minddata/dataset/vision/transform/random_adjust_sharpness_ir.h"
-#include "minddata/dataset/vision/transform/random_affine_ir.h"
-#include "minddata/dataset/vision/transform/random_auto_contrast_ir.h"
 #include "minddata/dataset/vision/transform/random_color_adjust_ir.h"
-#include "minddata/dataset/vision/transform/random_color_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_decode_resize_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_equalize_ir.h"
 #include "minddata/dataset/vision/transform/random_horizontal_flip_ir.h"
 #include "minddata/dataset/vision/transform/random_horizontal_flip_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_invert_ir.h"
 #include "minddata/dataset/vision/transform/random_lighting_ir.h"
 #include "minddata/dataset/vision/transform/random_posterize_ir.h"
 #include "minddata/dataset/vision/transform/random_resized_crop_ir.h"
 #include "minddata/dataset/vision/transform/random_resized_crop_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_resize_ir.h"
 #include "minddata/dataset/vision/transform/random_resize_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_rotation_ir.h"
-#include "minddata/dataset/vision/transform/random_select_subpolicy_ir.h"
-#include "minddata/dataset/vision/transform/random_sharpness_ir.h"
 #include "minddata/dataset/vision/transform/random_solarize_ir.h"
 #include "minddata/dataset/vision/transform/random_vertical_flip_ir.h"
 #include "minddata/dataset/vision/transform/random_vertical_flip_with_bbox_ir.h"
 #include "minddata/dataset/vision/transform/rescale_ir.h"
 #include "minddata/dataset/vision/transform/resize_ir.h"
 #include "minddata/dataset/vision/transform/resize_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/resized_crop_ir.h"
 #include "minddata/dataset/vision/transform/rgb_to_bgr_ir.h"
 #include "minddata/dataset/vision/transform/rotate_ir.h"
-#include "minddata/dataset/vision/transform/slice_patches_ir.h"
 #include "minddata/dataset/vision/transform/solarize_ir.h"
 #include "minddata/dataset/vision/transform/to_tensor_ir.h"
 #include "minddata/dataset/vision/transform/trivial_augment_wide_ir.h"
-#include "minddata/dataset/vision/transform/uniform_aug_ir.h"
-#include "minddata/dataset/vision/transform/vertical_flip_ir.h"
 
 namespace mindspore {
 namespace dataset {
-PYBIND_REGISTER(AdjustBrightnessOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::AdjustBrightnessOperation, TensorOperation,
-                                   std::shared_ptr<vision::AdjustBrightnessOperation>>(*m, "AdjustBrightnessOperation")
-                    .def(py::init([](float brightness_factor, const std::string &device_target) {
-                      auto adjust_brightness =
-                        std::make_shared<vision::AdjustBrightnessOperation>(brightness_factor, device_target);
-                      THROW_IF_ERROR(adjust_brightness->ValidateParams());
-                      return adjust_brightness;
-                    }));
-                }));
-
-PYBIND_REGISTER(AdjustContrastOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::AdjustContrastOperation, TensorOperation,
-                                   std::shared_ptr<vision::AdjustContrastOperation>>(*m, "AdjustContrastOperation")
-                    .def(py::init([](float contrast_factor, const std::string &device_target) {
-                      auto adjust_contrast =
-                        std::make_shared<vision::AdjustContrastOperation>(contrast_factor, device_target);
-                      THROW_IF_ERROR(adjust_contrast->ValidateParams());
-                      return adjust_contrast;
-                    }));
-                }));
 
 PYBIND_REGISTER(
   AdjustGammaOperation, 1, ([](const py::module *m) {
@@ -140,52 +91,6 @@ PYBIND_REGISTER(
   }));
 
 PYBIND_REGISTER(
-  AdjustHueOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::AdjustHueOperation, TensorOperation, std::shared_ptr<vision::AdjustHueOperation>>(
-      *m, "AdjustHueOperation")
-      .def(py::init([](float hue_factor, const std::string &device_target) {
-        auto adjust_hue = std::make_shared<vision::AdjustHueOperation>(hue_factor, device_target);
-        THROW_IF_ERROR(adjust_hue->ValidateParams());
-        return adjust_hue;
-      }));
-  }));
-
-PYBIND_REGISTER(AdjustSaturationOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::AdjustSaturationOperation, TensorOperation,
-                                   std::shared_ptr<vision::AdjustSaturationOperation>>(*m, "AdjustSaturationOperation")
-                    .def(py::init([](float saturation_factor, const std::string &device_target) {
-                      auto ajust_saturation =
-                        std::make_shared<vision::AdjustSaturationOperation>(saturation_factor, device_target);
-                      THROW_IF_ERROR(ajust_saturation->ValidateParams());
-                      return ajust_saturation;
-                    }));
-                }));
-
-PYBIND_REGISTER(AdjustSharpnessOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::AdjustSharpnessOperation, TensorOperation,
-                                   std::shared_ptr<vision::AdjustSharpnessOperation>>(*m, "AdjustSharpnessOperation")
-                    .def(py::init([](float sharpness_factor, const std::string &device_target) {
-                      auto adjust_sharpness =
-                        std::make_shared<vision::AdjustSharpnessOperation>(sharpness_factor, device_target);
-                      THROW_IF_ERROR(adjust_sharpness->ValidateParams());
-                      return adjust_sharpness;
-                    }));
-                }));
-
-PYBIND_REGISTER(AffineOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::AffineOperation, TensorOperation, std::shared_ptr<vision::AffineOperation>>(
-                    *m, "AffineOperation")
-                    .def(py::init([](float degrees, const std::vector<float> &translation, float scale,
-                                     const std::vector<float> &shear, InterpolationMode interpolation,
-                                     const std::vector<uint8_t> &fill_value, const std::string &device_target) {
-                      auto affine = std::make_shared<vision::AffineOperation>(degrees, translation, scale, shear,
-                                                                              interpolation, fill_value, device_target);
-                      THROW_IF_ERROR(affine->ValidateParams());
-                      return affine;
-                    }));
-                }));
-
-PYBIND_REGISTER(
   AutoAugmentOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::AutoAugmentOperation, TensorOperation, std::shared_ptr<vision::AutoAugmentOperation>>(
       *m, "AutoAugmentOperation")
@@ -195,17 +100,6 @@ PYBIND_REGISTER(
           THROW_IF_ERROR(auto_augment->ValidateParams());
           return auto_augment;
         }));
-  }));
-
-PYBIND_REGISTER(
-  AutoContrastOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::AutoContrastOperation, TensorOperation, std::shared_ptr<vision::AutoContrastOperation>>(
-      *m, "AutoContrastOperation")
-      .def(py::init([](float cutoff, const std::vector<uint32_t> &ignore, const std::string &device_target) {
-        auto auto_contrast = std::make_shared<vision::AutoContrastOperation>(cutoff, ignore, device_target);
-        THROW_IF_ERROR(auto_contrast->ValidateParams());
-        return auto_contrast;
-      }));
   }));
 
 PYBIND_REGISTER(BoundingBoxAugmentOperation, 1, ([](const py::module *m) {
@@ -228,17 +122,6 @@ PYBIND_REGISTER(
         auto center_crop = std::make_shared<vision::CenterCropOperation>(size);
         THROW_IF_ERROR(center_crop->ValidateParams());
         return center_crop;
-      }));
-  }));
-
-PYBIND_REGISTER(
-  ConvertColorOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::ConvertColorOperation, TensorOperation, std::shared_ptr<vision::ConvertColorOperation>>(
-      *m, "ConvertColorOperation", "Tensor operation to change the color space of the image.")
-      .def(py::init([](ConvertMode convert_mode, const std::string &device_target) {
-        auto convert = std::make_shared<vision::ConvertColorOperation>(convert_mode, device_target);
-        THROW_IF_ERROR(convert->ValidateParams());
-        return convert;
       }));
   }));
 
@@ -266,17 +149,6 @@ PYBIND_REGISTER(
         return cut_mix_batch;
       }));
   }));
-
-PYBIND_REGISTER(CutOutOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::CutOutOperation, TensorOperation, std::shared_ptr<vision::CutOutOperation>>(
-                    *m, "CutOutOperation",
-                    "Tensor operation to randomly erase a portion of the image. Takes height and width.")
-                    .def(py::init([](int32_t length, int32_t num_patches, bool is_hwc) {
-                      auto cut_out = std::make_shared<vision::CutOutOperation>(length, num_patches, is_hwc);
-                      THROW_IF_ERROR(cut_out->ValidateParams());
-                      return cut_out;
-                    }));
-                }));
 
 PYBIND_REGISTER(DecodeOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::DecodeOperation, TensorOperation, std::shared_ptr<vision::DecodeOperation>>(
@@ -317,17 +189,6 @@ PYBIND_REGISTER(EncodePNGOperation, 1, ([](py::module *m) {
                                }));
                 }));
 
-PYBIND_REGISTER(EqualizeOperation, 1, ([](const py::module *m) {
-                  (void)
-                    py::class_<vision::EqualizeOperation, TensorOperation, std::shared_ptr<vision::EqualizeOperation>>(
-                      *m, "EqualizeOperation")
-                      .def(py::init([](const std::string &device_target) {
-                        auto equalize = std::make_shared<vision::EqualizeOperation>(device_target);
-                        THROW_IF_ERROR(equalize->ValidateParams());
-                        return equalize;
-                      }));
-                }));
-
 PYBIND_REGISTER(EraseOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::EraseOperation, TensorOperation, std::shared_ptr<vision::EraseOperation>>(
                     *m, "EraseOperation")
@@ -339,18 +200,6 @@ PYBIND_REGISTER(EraseOperation, 1, ([](const py::module *m) {
                       return erase;
                     }));
                 }));
-
-PYBIND_REGISTER(
-  GaussianBlurOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::GaussianBlurOperation, TensorOperation, std::shared_ptr<vision::GaussianBlurOperation>>(
-      *m, "GaussianBlurOperation")
-      .def(py::init(
-        [](const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma, const std::string &device_target) {
-          auto gaussian_blur = std::make_shared<vision::GaussianBlurOperation>(kernel_size, sigma, device_target);
-          THROW_IF_ERROR(gaussian_blur->ValidateParams());
-          return gaussian_blur;
-        }));
-  }));
 
 PYBIND_REGISTER(GetImageNumChannels, 1, ([](py::module *m) {
                   (void)m->def("get_image_num_channels", ([](const std::shared_ptr<Tensor> &image) {
@@ -371,16 +220,6 @@ PYBIND_REGISTER(GetImageSize, 1, ([](py::module *m) {
                                }));
                 }));
 
-PYBIND_REGISTER(HorizontalFlipOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::HorizontalFlipOperation, TensorOperation,
-                                   std::shared_ptr<vision::HorizontalFlipOperation>>(*m, "HorizontalFlipOperation")
-                    .def(py::init([](const std::string &device_target) {
-                      auto horizontal_flip = std::make_shared<vision::HorizontalFlipOperation>(device_target);
-                      THROW_IF_ERROR(horizontal_flip->ValidateParams());
-                      return horizontal_flip;
-                    }));
-                }));
-
 PYBIND_REGISTER(HwcToChwOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<vision::HwcToChwOperation, TensorOperation, std::shared_ptr<vision::HwcToChwOperation>>(
@@ -390,16 +229,6 @@ PYBIND_REGISTER(HwcToChwOperation, 1, ([](const py::module *m) {
                         THROW_IF_ERROR(hwc_to_chw->ValidateParams());
                         return hwc_to_chw;
                       }));
-                }));
-
-PYBIND_REGISTER(InvertOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::InvertOperation, TensorOperation, std::shared_ptr<vision::InvertOperation>>(
-                    *m, "InvertOperation")
-                    .def(py::init([](const std::string &device_target) {
-                      auto invert = std::make_shared<vision::InvertOperation>(device_target);
-                      THROW_IF_ERROR(invert->ValidateParams());
-                      return invert;
-                    }));
                 }));
 
 PYBIND_REGISTER(
@@ -450,18 +279,6 @@ PYBIND_REGISTER(PadOperation, 1, ([](const py::module *m) {
                 }));
 
 PYBIND_REGISTER(
-  PadToSizeOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::PadToSizeOperation, TensorOperation, std::shared_ptr<vision::PadToSizeOperation>>(
-      *m, "PadToSizeOperation")
-      .def(py::init([](const std::vector<int32_t> &size, const std::vector<int32_t> &offset,
-                       const std::vector<uint8_t> &fill_value, BorderType padding_mode) {
-        auto pad_to_size = std::make_shared<vision::PadToSizeOperation>(size, offset, fill_value, padding_mode);
-        THROW_IF_ERROR(pad_to_size->ValidateParams());
-        return pad_to_size;
-      }));
-  }));
-
-PYBIND_REGISTER(
   PerspectiveOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::PerspectiveOperation, TensorOperation, std::shared_ptr<vision::PerspectiveOperation>>(
       *m, "PerspectiveOperation", "Tensor operation to apply perspective transformations on an image.")
@@ -499,44 +316,6 @@ PYBIND_REGISTER(
       }));
   }));
 
-PYBIND_REGISTER(RandomAdjustSharpnessOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::RandomAdjustSharpnessOperation, TensorOperation,
-                                   std::shared_ptr<vision::RandomAdjustSharpnessOperation>>(
-                    *m, "RandomAdjustSharpnessOperation")
-                    .def(py::init([](float degree, float prob) {
-                      auto random_adjust_sharpness =
-                        std::make_shared<vision::RandomAdjustSharpnessOperation>(degree, prob);
-                      THROW_IF_ERROR(random_adjust_sharpness->ValidateParams());
-                      return random_adjust_sharpness;
-                    }));
-                }));
-
-PYBIND_REGISTER(
-  RandomAffineOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::RandomAffineOperation, TensorOperation, std::shared_ptr<vision::RandomAffineOperation>>(
-      *m, "RandomAffineOperation", "Tensor operation to apply random affine transformations on an image.")
-      .def(py::init([](const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range,
-                       const std::vector<float_t> &scale_range, const std::vector<float_t> &shear_ranges,
-                       InterpolationMode interpolation, const std::vector<uint8_t> &fill_value) {
-        auto random_affine = std::make_shared<vision::RandomAffineOperation>(degrees, translate_range, scale_range,
-                                                                             shear_ranges, interpolation, fill_value);
-        THROW_IF_ERROR(random_affine->ValidateParams());
-        return random_affine;
-      }));
-  }));
-
-PYBIND_REGISTER(RandomAutoContrastOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::RandomAutoContrastOperation, TensorOperation,
-                                   std::shared_ptr<vision::RandomAutoContrastOperation>>(*m,
-                                                                                         "RandomAutoContrastOperation")
-                    .def(py::init([](float cutoff, const std::vector<uint32_t> &ignore, float prob) {
-                      auto random_auto_contrast =
-                        std::make_shared<vision::RandomAutoContrastOperation>(cutoff, ignore, prob);
-                      THROW_IF_ERROR(random_auto_contrast->ValidateParams());
-                      return random_auto_contrast;
-                    }));
-                }));
-
 PYBIND_REGISTER(RandomColorAdjustOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomColorAdjustOperation, TensorOperation,
                                    std::shared_ptr<vision::RandomColorAdjustOperation>>(*m,
@@ -549,17 +328,6 @@ PYBIND_REGISTER(RandomColorAdjustOperation, 1, ([](const py::module *m) {
                       return random_color_adjust;
                     }));
                 }));
-
-PYBIND_REGISTER(
-  RandomColorOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::RandomColorOperation, TensorOperation, std::shared_ptr<vision::RandomColorOperation>>(
-      *m, "RandomColorOperation")
-      .def(py::init([](float t_lb, float t_ub) {
-        auto random_color = std::make_shared<vision::RandomColorOperation>(t_lb, t_ub);
-        THROW_IF_ERROR(random_color->ValidateParams());
-        return random_color;
-      }));
-  }));
 
 PYBIND_REGISTER(
   RandomCropDecodeResizeOperation, 1, ([](const py::module *m) {
@@ -601,16 +369,6 @@ PYBIND_REGISTER(RandomCropWithBBoxOperation, 1, ([](const py::module *m) {
                       }));
                 }));
 
-PYBIND_REGISTER(RandomEqualizeOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::RandomEqualizeOperation, TensorOperation,
-                                   std::shared_ptr<vision::RandomEqualizeOperation>>(*m, "RandomEqualizeOperation")
-                    .def(py::init([](float prob) {
-                      auto random_equalize = std::make_shared<vision::RandomEqualizeOperation>(prob);
-                      THROW_IF_ERROR(random_equalize->ValidateParams());
-                      return random_equalize;
-                    }));
-                }));
-
 PYBIND_REGISTER(RandomHorizontalFlipOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomHorizontalFlipOperation, TensorOperation,
                                    std::shared_ptr<vision::RandomHorizontalFlipOperation>>(
@@ -633,17 +391,6 @@ PYBIND_REGISTER(RandomHorizontalFlipWithBBoxOperation, 1, ([](const py::module *
                       return random_horizontal_flip_with_bbox;
                     }));
                 }));
-
-PYBIND_REGISTER(
-  RandomInvertOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::RandomInvertOperation, TensorOperation, std::shared_ptr<vision::RandomInvertOperation>>(
-      *m, "RandomInvertOperation")
-      .def(py::init([](float prob) {
-        auto random_invert = std::make_shared<vision::RandomInvertOperation>(prob);
-        THROW_IF_ERROR(random_invert->ValidateParams());
-        return random_invert;
-      }));
-  }));
 
 PYBIND_REGISTER(RandomLightingOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomLightingOperation, TensorOperation,
@@ -692,17 +439,6 @@ PYBIND_REGISTER(RandomResizedCropWithBBoxOperation, 1, ([](const py::module *m) 
                     }));
                 }));
 
-PYBIND_REGISTER(
-  RandomResizeOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::RandomResizeOperation, TensorOperation, std::shared_ptr<vision::RandomResizeOperation>>(
-      *m, "RandomResizeOperation")
-      .def(py::init([](const std::vector<int32_t> &size) {
-        auto random_resize = std::make_shared<vision::RandomResizeOperation>(size);
-        THROW_IF_ERROR(random_resize->ValidateParams());
-        return random_resize;
-      }));
-  }));
-
 PYBIND_REGISTER(RandomResizeWithBBoxOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::RandomResizeWithBBoxOperation, TensorOperation,
                                    std::shared_ptr<vision::RandomResizeWithBBoxOperation>>(
@@ -711,68 +447,6 @@ PYBIND_REGISTER(RandomResizeWithBBoxOperation, 1, ([](const py::module *m) {
                       auto random_resize_with_bbox = std::make_shared<vision::RandomResizeWithBBoxOperation>(size);
                       THROW_IF_ERROR(random_resize_with_bbox->ValidateParams());
                       return random_resize_with_bbox;
-                    }));
-                }));
-
-PYBIND_REGISTER(
-  RandomRotationOperation, 1, ([](const py::module *m) {
-    (void)
-      py::class_<vision::RandomRotationOperation, TensorOperation, std::shared_ptr<vision::RandomRotationOperation>>(
-        *m, "RandomRotationOperation")
-        .def(py::init([](const std::vector<float> &degrees, InterpolationMode interpolation_mode, bool expand,
-                         const std::vector<float> &center, const std::vector<uint8_t> &fill_value) {
-          auto random_rotation =
-            std::make_shared<vision::RandomRotationOperation>(degrees, interpolation_mode, expand, center, fill_value);
-          THROW_IF_ERROR(random_rotation->ValidateParams());
-          return random_rotation;
-        }));
-  }));
-
-PYBIND_REGISTER(
-  RandomSelectSubpolicyOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::RandomSelectSubpolicyOperation, TensorOperation,
-                     std::shared_ptr<vision::RandomSelectSubpolicyOperation>>(*m, "RandomSelectSubpolicyOperation")
-      .def(py::init([](const py::list &py_policy) {
-        std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> cpp_policy;
-        for (auto &py_sub : py_policy) {
-          cpp_policy.push_back({});
-          for (auto handle : py_sub.cast<py::list>()) {
-            py::tuple tp = handle.cast<py::tuple>();
-            if (tp.is_none() || tp.size() != 2) {
-              THROW_IF_ERROR(Status(StatusCode::kMDUnexpectedError, "Each tuple in subpolicy should be (op, prob)."));
-            }
-            std::shared_ptr<TensorOperation> t_op;
-            if (py::isinstance<TensorOperation>(tp[0])) {
-              t_op = (tp[0]).cast<std::shared_ptr<TensorOperation>>();
-            } else if (py::isinstance<TensorOp>(tp[0])) {
-              t_op = std::make_shared<transforms::PreBuiltOperation>((tp[0]).cast<std::shared_ptr<TensorOp>>());
-            } else if (py::isinstance<py::function>(tp[0])) {
-              t_op = std::make_shared<transforms::PreBuiltOperation>(
-                std::make_shared<PyFuncOp>((tp[0]).cast<py::function>()));
-            } else {
-              THROW_IF_ERROR(
-                Status(StatusCode::kMDUnexpectedError, "op is neither a tensorOp, tensorOperation nor a pyfunc."));
-            }
-            double prob = (tp[1]).cast<py::float_>();
-            if (prob < 0 || prob > 1) {
-              THROW_IF_ERROR(Status(StatusCode::kMDUnexpectedError, "prob needs to be with [0,1]."));
-            }
-            cpp_policy.back().emplace_back(std::make_pair(t_op, prob));
-          }
-        }
-        auto random_select_subpolicy = std::make_shared<vision::RandomSelectSubpolicyOperation>(cpp_policy);
-        THROW_IF_ERROR(random_select_subpolicy->ValidateParams());
-        return random_select_subpolicy;
-      }));
-  }));
-
-PYBIND_REGISTER(RandomSharpnessOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::RandomSharpnessOperation, TensorOperation,
-                                   std::shared_ptr<vision::RandomSharpnessOperation>>(*m, "RandomSharpnessOperation")
-                    .def(py::init([](const std::vector<float> &degrees) {
-                      auto random_sharpness = std::make_shared<vision::RandomSharpnessOperation>(degrees);
-                      THROW_IF_ERROR(random_sharpness->ValidateParams());
-                      return random_sharpness;
                     }));
                 }));
 
@@ -884,19 +558,6 @@ PYBIND_REGISTER(ResizeWithBBoxOperation, 1, ([](const py::module *m) {
                     }));
                 }));
 
-PYBIND_REGISTER(
-  ResizedCropOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::ResizedCropOperation, TensorOperation, std::shared_ptr<vision::ResizedCropOperation>>(
-      *m, "ResizedCropOperation")
-      .def(py::init([](int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
-                       InterpolationMode interpolation, const std::string &device_target) {
-        auto resized_crop =
-          std::make_shared<vision::ResizedCropOperation>(top, left, height, width, size, interpolation, device_target);
-        THROW_IF_ERROR(resized_crop->ValidateParams());
-        return resized_crop;
-      }));
-  }));
-
 PYBIND_REGISTER(RgbToBgrOperation, 1, ([](const py::module *m) {
                   (void)
                     py::class_<vision::RgbToBgrOperation, TensorOperation, std::shared_ptr<vision::RgbToBgrOperation>>(
@@ -907,31 +568,6 @@ PYBIND_REGISTER(RgbToBgrOperation, 1, ([](const py::module *m) {
                         return rgb2bgr;
                       }));
                 }));
-
-PYBIND_REGISTER(RotateOperation, 1, ([](const py::module *m) {
-                  (void)py::class_<vision::RotateOperation, TensorOperation, std::shared_ptr<vision::RotateOperation>>(
-                    *m, "RotateOperation")
-                    .def(py::init([](float degrees, InterpolationMode resample, bool expand,
-                                     const std::vector<float> &center, const std::vector<uint8_t> &fill_value,
-                                     const std::string &device_target) {
-                      auto rotate = std::make_shared<vision::RotateOperation>(degrees, resample, expand, center,
-                                                                              fill_value, device_target);
-                      THROW_IF_ERROR(rotate->ValidateParams());
-                      return rotate;
-                    }));
-                }));
-
-PYBIND_REGISTER(
-  SlicePatchesOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::SlicePatchesOperation, TensorOperation, std::shared_ptr<vision::SlicePatchesOperation>>(
-      *m, "SlicePatchesOperation")
-      .def(py::init([](int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value) {
-        auto slice_patches =
-          std::make_shared<vision::SlicePatchesOperation>(num_height, num_width, slice_mode, fill_value);
-        THROW_IF_ERROR(slice_patches->ValidateParams());
-        return slice_patches;
-      }));
-  }));
 
 PYBIND_REGISTER(SolarizeOperation, 1, ([](const py::module *m) {
                   (void)
@@ -967,29 +603,6 @@ PYBIND_REGISTER(TrivialAugmentWideOperation, 1, ([](const py::module *m) {
                       return auto_augment;
                     }));
                 }));
-
-PYBIND_REGISTER(
-  UniformAugOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::UniformAugOperation, TensorOperation, std::shared_ptr<vision::UniformAugOperation>>(
-      *m, "UniformAugOperation")
-      .def(py::init([](const py::list &transforms, int32_t num_ops) {
-        auto uniform_aug =
-          std::make_shared<vision::UniformAugOperation>(std::move(toTensorOperations(transforms)), num_ops);
-        THROW_IF_ERROR(uniform_aug->ValidateParams());
-        return uniform_aug;
-      }));
-  }));
-
-PYBIND_REGISTER(
-  VerticalFlipOperation, 1, ([](const py::module *m) {
-    (void)py::class_<vision::VerticalFlipOperation, TensorOperation, std::shared_ptr<vision::VerticalFlipOperation>>(
-      *m, "VerticalFlipOperation")
-      .def(py::init([](const std::string &device_target) {
-        auto vertical_flip = std::make_shared<vision::VerticalFlipOperation>(device_target);
-        THROW_IF_ERROR(vertical_flip->ValidateParams());
-        return vertical_flip;
-      }));
-  }));
 
 PYBIND_REGISTER(WriteFileOperation, 1, ([](py::module *m) {
                   (void)m->def("write_file", ([](const std::string &filename, const std::shared_ptr<Tensor> &data) {

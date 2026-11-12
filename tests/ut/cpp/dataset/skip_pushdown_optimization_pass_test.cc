@@ -530,11 +530,8 @@ TEST_F(MindDataSkipPushdownTestOptimizationPass, SkipPushdownSubsetSampler) {
 
   std::vector<std::shared_ptr<TensorTransform>> transforms;
   std::vector<int32_t> size = {80, 80};
-  std::vector<uint32_t> ignore = {20, 20, 20, 20};
-  std::shared_ptr<TensorTransform> operation1 = std::make_shared<vision::AutoContrast>(0.5, ignore);
-  std::shared_ptr<TensorTransform> operation2 = std::make_shared<vision::CenterCrop>(size);
-  transforms.push_back(operation1);
-  transforms.push_back(operation2);
+  std::shared_ptr<TensorTransform> operation = std::make_shared<vision::CenterCrop>(size);
+  transforms.push_back(operation);
   root = ImageFolder(folder_path, true, std::make_shared<SubsetRandomSampler>(indices, 3))->Map(transforms);
   sampler = std::make_shared<SequentialSampler>(1);
   sampler->AddChild(std::make_shared<SubsetRandomSampler>(indices, 3));

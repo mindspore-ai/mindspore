@@ -132,110 +132,6 @@ TEST_F(MindDataTestPipeline, TestAdjustGammaParamCheck) {
   EXPECT_EQ(iter1, nullptr);
 }
 
-/// Feature: AutoContrast op
-/// Description: Test AutoContrast op with default values
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestAutoContrastSuccess1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoContrastSuccess1.";
-
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Repeat operation on ds
-  int32_t repeat_num = 3;
-  ds = ds->Repeat(repeat_num);
-  EXPECT_NE(ds, nullptr);
-
-  // Create auto contrast object with default values
-  auto auto_contrast = std::make_shared<vision::AutoContrast>();
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({auto_contrast});
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 1;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 15);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: AutoContrast op
-/// Description: Test AutoContrast op basic usage
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestAutoContrastSuccess2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAutoContrastSuccess2.";
-
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Repeat operation on ds
-  int32_t repeat_num = 3;
-  ds = ds->Repeat(repeat_num);
-  EXPECT_NE(ds, nullptr);
-
-  // Create auto contrast object
-  auto auto_contrast = std::make_shared<vision::AutoContrast>(10, std::vector<uint32_t>{10, 20});
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({auto_contrast});
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 1;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 15);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
 /// Feature: CenterCrop op
 /// Description: Test CenterCrop op with single integer input
 /// Expectation: Output is equal to the expected output
@@ -442,204 +338,17 @@ TEST_F(MindDataTestPipeline, TestCropParamCheck) {
   EXPECT_EQ(iter4, nullptr);
 }
 
-/// Feature: CutOut op
-/// Description: Test CutOut op basic usage with default HWC parameter
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestCutOutDefaultHWC) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutDefaultHWC.";
 
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
 
-  // Create a Repeat operation on ds
-  int32_t repeat_num = 2;
-  ds = ds->Repeat(repeat_num);
-  EXPECT_NE(ds, nullptr);
 
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> cut_out1 = std::make_shared<vision::CutOut>(30, 5);
-  std::shared_ptr<TensorTransform> cut_out2 = std::make_shared<vision::CutOut>(30);
-  // Note: No need to check for output after calling API class constructor
 
-  // Create a Map operation on ds
-  ds = ds->Map({cut_out1, cut_out2});
-  EXPECT_NE(ds, nullptr);
 
-  // Create a Batch operation on ds
-  int32_t batch_size = 1;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
 
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
 
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
 
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
 
-  EXPECT_EQ(i, 20);
 
-  // Manually terminate the pipeline
-  iter->Stop();
-}
 
-/// Feature: CutOut op
-/// Description: Test CutOut op with HWC true and HWC input
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestCutOutHWCTrueValid) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutHWCTrueValid.";
-
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> cut_out = std::make_shared<vision::CutOut>(30, 5, true);
-
-  // Create a Map operation on ds
-  ds = ds->Map({cut_out});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 2);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: CutOut op
-/// Description: Test CutOut op with HWC false and HWC input
-/// Expectation: Error is caught for mismatched input image format (HWC)
-TEST_F(MindDataTestPipeline, TestCutOutHWCFalseInvalid) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutHWCFalseInvalid.";
-
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> cut_out = std::make_shared<vision::CutOut>(30, 5, false);
-
-  // Create a Map operation on ds
-  ds = ds->Map({cut_out});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_ERROR(iter->GetNextRow(&row));
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: CutOut op
-/// Description: Test CutOut op with HWC true and CHW input
-/// Expectation: Error is caught for mismatched input image format (CHW)
-TEST_F(MindDataTestPipeline, TestCutOutHWCTrueInvalid) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutHWCTrueInvalid.";
-
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  auto cut_out = std::make_shared<vision::CutOut>(30, 5, true);
-  // Op to convert input image format to CHW
-  auto HWC2CHW = std::make_shared<vision::HWC2CHW>();
-
-  // Create a Map operation on ds
-  ds = ds->Map({HWC2CHW, cut_out});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_ERROR(iter->GetNextRow(&row));
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: CutOut op
-/// Description: Test CutOut op with HWC false and CHW input
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestCutOutHWCFalseValid) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutHWCFalseValid.";
-
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  auto cut_out = std::make_shared<vision::CutOut>(30, 5, false);
-  // Op to convert input image format to CHW
-  auto HWC2CHW = std::make_shared<vision::HWC2CHW>();
-
-  // Create a Map operation on ds
-  ds = ds->Map({HWC2CHW, cut_out});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 2);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
 
 /// Feature: Decode op
 /// Description: Test Decode op basic usage
@@ -747,46 +456,13 @@ TEST_F(MindDataTestPipeline, TestHwcToChw) {
   iter->Stop();
 }
 
-/// Feature: Invert op
-/// Description: Test Invert op basic usage
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestInvert) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestInvert.";
 
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 20));
-  EXPECT_NE(ds, nullptr);
 
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> invert_op = std::make_shared<vision::Invert>();
-  // Note: No need to check for output after calling API class constructor
 
-  // Create a Map operation on ds
-  ds = ds->Map({invert_op});
-  EXPECT_NE(ds, nullptr);
 
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
 
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
 
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-  EXPECT_EQ(i, 20);
 
-  // Manually terminate the pipeline
-  iter->Stop();
-}
 
 /// Feature: Normalize op
 /// Description: Test Normalize op basic usage with default HWC parameter
@@ -1357,151 +1033,6 @@ TEST_F(MindDataTestPipeline, TestPad) {
   iter->Stop();
 }
 
-/// Feature: ConvertColor op
-/// Description: Test ConvertColor op with ConvertMode::COLOR_RGB2GRAY
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestConvertColorSuccess1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorSuccess1.";
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
-  EXPECT_NE(ds, nullptr);
-  // Create objects for the tensor ops
-  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{500, 1000});
-  auto convert = std::make_shared<mindspore::dataset::vision::ConvertColor>(ConvertMode::COLOR_RGB2GRAY);
-
-  ds = ds->Map({resize_op, convert});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    EXPECT_EQ(image.Shape().size(), 2);
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 1);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: ConvertColor op
-/// Description: Test ConvertColor op with ConvertMode::COLOR_RGB2BGR
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestConvertColorSuccess2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorSuccess2.";
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
-  EXPECT_NE(ds, nullptr);
-  // Create objects for the tensor ops
-  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{500, 1000});
-  auto convert = std::make_shared<mindspore::dataset::vision::ConvertColor>(ConvertMode::COLOR_RGB2BGR);
-
-  ds = ds->Map({resize_op, convert});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    EXPECT_EQ(image.Shape()[2], 3);
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 1);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: ConvertColor op
-/// Description: Test ConvertColor op with ConvertMode::COLOR_RGB2RGBA
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestConvertColorSuccess3) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorSuccess3.";
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
-  EXPECT_NE(ds, nullptr);
-  // Create objects for the tensor ops
-  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{500, 1000});
-  auto convert = std::make_shared<mindspore::dataset::vision::ConvertColor>(ConvertMode::COLOR_RGB2RGBA);
-
-  ds = ds->Map({resize_op, convert});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    EXPECT_EQ(image.Shape()[2], 4);
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 1);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: ConvertColor op
-/// Description: Test ConvertColor op with invalid ConvertMode
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestConvertColorFail) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestConvertColorFail.";
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 1));
-  EXPECT_NE(ds, nullptr);
-
-  ConvertMode error_convert_mode = static_cast<ConvertMode>(50);
-
-  // Create objects for the tensor ops
-  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{500, 1000});
-  auto convert = std::make_shared<mindspore::dataset::vision::ConvertColor>(error_convert_mode);
-
-  ds = ds->Map({resize_op, convert});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_EQ(iter, nullptr);
-}
-
 /// Feature: AutoAugment op
 /// Description: Test AutoAugment op pipeline
 /// Expectation: Create an ImageFolder dataset then do auto augmentation on it with the policy
@@ -1619,110 +1150,10 @@ TEST_F(MindDataTestPipeline, TestGetImageSizeInValidInput) {
 /// Feature: PadToSize op
 /// Description: Test default usage
 /// Expectation: Samples processed successfully
-TEST_F(MindDataTestPipeline, TestPadToSize) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadToSize.";
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  auto pad_to_size = vision::PadToSize({256, 256}, {}, {0}, BorderType::kSymmetric);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({pad_to_size});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 10);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
 
 /// Feature: PadToSize op
 /// Description: Test parameter check
 /// Expectation: Error logs are as expected
-TEST_F(MindDataTestPipeline, TestPadToSizeInvalid) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPadToSizeInvalid.";
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  auto invalid_size_shape = vision::PadToSize({});
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({invalid_size_shape});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  // Expect failure: Invalid size shape
-  EXPECT_EQ(iter, nullptr);
-
-  // Create objects for the tensor ops
-  auto invalid_size_value = vision::PadToSize({0, 0});
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({invalid_size_value});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  iter = ds->CreateIterator();
-  // Expect failure: Invalid size value
-  EXPECT_EQ(iter, nullptr);
-
-  // Create objects for the tensor ops
-  auto invalid_offset_shape = vision::PadToSize({256, 256}, {0, 1, 2});
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({invalid_offset_shape});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  iter = ds->CreateIterator();
-  // Expect failure: Invalid offset shape
-  EXPECT_EQ(iter, nullptr);
-
-  // Create objects for the tensor ops
-  auto invalid_offset_value = vision::PadToSize({256, 256}, {-1, 0});
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({invalid_offset_value});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  iter = ds->CreateIterator();
-  // Expect failure: Invalid offset value
-  EXPECT_EQ(iter, nullptr);
-}
 
 /// Feature: Solarize
 /// Description: Test default usage
@@ -1854,54 +1285,10 @@ TEST_F(MindDataTestPipeline, TestEraseWideInvalidFillValue) {
 /// Feature: AdjustBrightness op
 /// Description: Test AdjustBrightness C implementation Pipeline
 /// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestAdjustBrightness) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustBrightness.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  auto adjustbrightness_op = vision::AdjustBrightness(2.0);
-
-  ds = ds->Map({adjustbrightness_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    iter->GetNextRow(&row);
-  }
-  EXPECT_EQ(i, 2);
-
-  iter->Stop();
-}
 
 /// Feature: AdjustBrightness op
 /// Description: Test improper parameters for AdjustBrightness C implementation
 /// Expectation: Throw ValueError exception and TypeError exception
-TEST_F(MindDataTestPipeline, TestAdjustBrightnessParamCheck) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustBrightnessParamCheck.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Case 1: Negative brightness_factor
-  // Create objects for the tensor ops
-  auto adjustbrightness_op = vision::AdjustBrightness(-1);
-  auto ds1 = ds->Map({adjustbrightness_op});
-  EXPECT_NE(ds1, nullptr);
-  // Create an iterator over the result of the above dataset
-  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
-  // Expect failure: invalid value of AdjustBrightness
-  EXPECT_EQ(iter1, nullptr);
-}
 
 /// Feature: TrivialAugmentWide op
 /// Description: test TrivialAugmentWide pipeline
@@ -1959,106 +1346,18 @@ TEST_F(MindDataTestPipeline, TestTrivialAugmentWideInvalidFillValue) {
 /// Feature: AdjustSharpness op
 /// Description: Test AdjustSharpness pipeline
 /// Expectation: Create an ImageFolder dataset then do auto AjustSharpness on it
-TEST_F(MindDataTestPipeline, TestAdjustSharpness) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSharpness.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  auto adjustsharpness_op = vision::AdjustSharpness(2.0);
-
-  ds = ds->Map({adjustsharpness_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    iter->GetNextRow(&row);
-  }
-  EXPECT_EQ(i, 2);
-
-  iter->Stop();
-}
 
 /// Feature: AdjustSharpness op
 /// Description: Test parameter check
 /// Expectation: Error logs are as expected
-TEST_F(MindDataTestPipeline, TestAdjustSharpnessParamCheck) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSharpnessParamCheck.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Case 1: Negative sharpness_factor
-  // Create objects for the tensor ops
-  auto adjustsharpness_op = vision::AdjustSharpness(-1);
-  auto ds1 = ds->Map({adjustsharpness_op});
-  EXPECT_NE(ds1, nullptr);
-  // Create an iterator over the result of the above dataset
-  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
-  // Expect failure: invalid value of AdjustSharpness
-  EXPECT_EQ(iter1, nullptr);
-}
 
 /// Feature: AdjustSaturation op
 /// Description: Test AdjustSaturation pipeline
 /// Expectation: Create an ImageFolder dataset then do auto AjustSaturation on it
-TEST_F(MindDataTestPipeline, TestAdjustSaturation) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSaturation.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  auto adjustsaturation_op = vision::AdjustSaturation(2.0);
-
-  ds = ds->Map({adjustsaturation_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    iter->GetNextRow(&row);
-  }
-  EXPECT_EQ(i, 2);
-
-  iter->Stop();
-}
 
 /// Feature: AdjustSaturation op
 /// Description: Test parameter check
 /// Expectation: Error logs are as expected
-TEST_F(MindDataTestPipeline, TestAdjustSaturationParamCheck) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSaturationParamCheck.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Case 1: Negative saturation_factor
-  // Create objects for the tensor ops
-  auto adjustsaturation_op = vision::AdjustSaturation(-1);
-  auto ds1 = ds->Map({adjustsaturation_op});
-  EXPECT_NE(ds1, nullptr);
-  // Create an iterator over the result of the above dataset
-  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
-  // Expect failure: invalid value of AdjustSaturation
-  EXPECT_EQ(iter1, nullptr);
-}
 
 /// Feature: Posterize op
 /// Description: Test posterize pipeline with non-default parameters
@@ -2144,105 +1443,18 @@ TEST_F(MindDataTestPipeline, TestPosterizeParamCheck) {
 /// Feature: AdjustHue op
 /// Description: Test function of operation when hue_factor is 0.2
 /// Expectation: Create an ImageFolder dataset then do auto AjustHue on it
-TEST_F(MindDataTestPipeline, TestAdjustHue) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustHue.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-
-  auto adjusthue_op = vision::AdjustHue(0.2);
-
-  ds = ds->Map({adjusthue_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  iter->GetNextRow(&row);
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    iter->GetNextRow(&row);
-  }
-  EXPECT_EQ(i, 2);
-
-  iter->Stop();
-}
 
 /// Feature: AdjustHue op
 /// Description: Test improper parameters for AdjustHue C implementation
 /// Expectation: Throw ValueError exception and TypeError exception
-TEST_F(MindDataTestPipeline, TestAdjustHueParamCheck) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustHueParamCheck.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Case 1: Negative hue_factor
-  // Create objects for the tensor ops
-  auto adjusthue_op = vision::AdjustHue(-2);
-  auto ds1 = ds->Map({adjusthue_op});
-  EXPECT_NE(ds1, nullptr);
-  // Create an iterator over the result of the above dataset
-  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
-  // Expect failure: invalid value of AdjustHue
-  EXPECT_EQ(iter1, nullptr);
-}
 
 /// Feature: AdjustContrast op
 /// Description: Test AdjustContrast C implementation Pipeline
 /// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestAdjustContrast) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustContrast.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  auto adjustcontrast_op = vision::AdjustContrast(2.0);
-
-  ds = ds->Map({adjustcontrast_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    iter->GetNextRow(&row);
-  }
-  EXPECT_EQ(i, 2);
-
-  iter->Stop();
-}
 
 /// Feature: AdjustContrast op
 /// Description: Test improper parameters for AdjustContrast C implementation
 /// Expectation: Throw ValueError exception
-TEST_F(MindDataTestPipeline, TestAdjustContrastParamCheck) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustContrastParamCheck.";
-  std::string MindDataPath = "data/dataset";
-  std::string folder_path = MindDataPath + "/testImageNetData/train/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Case 1: Negative contrast_factor
-  // Create objects for the tensor ops
-  auto adjustcontrast_op = vision::AdjustContrast(-1);
-  auto ds1 = ds->Map({adjustcontrast_op});
-  EXPECT_NE(ds1, nullptr);
-  // Create an iterator over the result of the above dataset
-  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
-  // Expect failure: invalid value of AdjustContrast
-  EXPECT_EQ(iter1, nullptr);
-}
 
 /// Feature: Perspective
 /// Description: Test Perspective pipeline

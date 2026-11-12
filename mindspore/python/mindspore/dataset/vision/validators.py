@@ -20,51 +20,32 @@ import numpy as np
 
 from mindspore._c_dataengine import TensorOp, TensorOperation
 from mindspore._c_expression import typing
-from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER, \
-    check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
-    parse_user_args, type_check, type_check_list, UINT8_MAX, UINT8_MIN, check_value_normalize_std, \
-    check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32, check_non_negative_int32, \
-    check_pos_int32, check_int32, check_tensor_op, check_valid_str
-from mindspore.dataset.transforms.validators import check_transform_op_type
-from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
-
-
-def check_affine(method):
-    """Wrapper method to check the parameters of Affine."""
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [degrees, translate, scale, shear, resample, fill_value], _ = parse_user_args(method, *args, **kwargs)
-
-        type_check(degrees, (int, float), "degrees")
-        check_value(degrees, [-180, 180], "degrees")
-
-        type_check(translate, (list, tuple), "translate")
-        if len(translate) != 2:
-            raise TypeError("The length of translate should be 2.")
-        for i, t in enumerate(translate):
-            type_check(t, (int, float), "translate[{}]".format(i))
-            check_value(t, [-1.0, 1.0], "translate[{}]".format(i))
-
-        type_check(scale, (int, float), "scale")
-        check_positive(scale, "scale")
-
-        type_check(shear, (numbers.Number, tuple, list), "shear")
-        if isinstance(shear, (list, tuple)):
-            if len(shear) != 2:
-                raise TypeError("The length of shear should be 2.")
-            for i, shear_value in enumerate(shear):
-                type_check(shear_value, (int, float), "shear[{}]".format(i))
-                check_value(shear_value, [-180, 180], "shear[{}]".format(i))
-        else:
-            check_value(shear, [-180, 180], "shear")
-
-        type_check(resample, (Inter,), "resample")
-
-        check_fill_value(fill_value)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
+from mindspore.dataset.core.validator_helpers import (
+    check_value,
+    check_uint8,
+    FLOAT_MIN_INTEGER,
+    FLOAT_MAX_INTEGER,
+    check_pos_float32,
+    check_float32,
+    check_2tuple,
+    check_range,
+    check_positive,
+    INT32_MAX,
+    INT32_MIN,
+    parse_user_args,
+    type_check,
+    type_check_list,
+    UINT8_MAX,
+    UINT8_MIN,
+    check_value_normalize_std,
+    check_value_ratio,
+    check_non_negative_float32,
+    check_non_negative_int32,
+    check_pos_int32,
+    check_int32,
+    check_valid_str,
+)
+from .utils import Inter, Border, ImageBatchFormat, AutoAugmentPolicy
 
 
 def check_crop_size(size):
@@ -363,23 +344,6 @@ def check_device_target(method):
     return new_method
 
 
-def check_resized_crop(method):
-    """A wrapper that wraps a parameter checker around the original function(ResizedCrop operation)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [top, left, height, width, size, interpolation], _ = parse_user_args(method, *args, **kwargs)
-        check_non_negative_int32(top, "top")
-        check_non_negative_int32(left, "left")
-        check_pos_int32(height, "height")
-        check_pos_int32(width, "width")
-        type_check(interpolation, (Inter,), "interpolation")
-        check_crop_size(size)
-
-        return method(self, *args, **kwargs)
-    return new_method
-
-
 def check_resize(method):
     """A wrapper that wraps a parameter checker around the original function(resize operation)."""
 
@@ -418,22 +382,6 @@ def check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
         check_pos_int32(max_attempts, "max_attempts")
 
 
-def check_random_adjust_sharpness(method):
-    """Wrapper method to check the parameters of RandomAdjustSharpness."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [degree, prob], _ = parse_user_args(method, *args, **kwargs)
-        type_check(degree, (float, int), "degree")
-        check_non_negative_float32(degree, "degree")
-        type_check(prob, (float, int), "prob")
-        check_value(prob, [0., 1.], "prob")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_random_resize_crop(method):
     """A wrapper that wraps a parameter checker around the original function(random resize crop operation)."""
 
@@ -443,30 +391,6 @@ def check_random_resize_crop(method):
         if interpolation is not None:
             type_check(interpolation, (Inter,), "interpolation")
         check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_random_auto_contrast(method):
-    """Wrapper method to check the parameters of Python RandomAutoContrast op."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [cutoff, ignore, prob], _ = parse_user_args(method, *args, **kwargs)
-        type_check(cutoff, (int, float), "cutoff")
-        check_value_cutoff(cutoff, [0, 50], "cutoff")
-        if ignore is not None:
-            type_check(ignore, (list, tuple, int), "ignore")
-        if isinstance(ignore, int):
-            check_value(ignore, [0, 255], "ignore")
-        if isinstance(ignore, (list, tuple)):
-            for item in ignore:
-                type_check(item, (int,), "item")
-                check_value(item, [0, 255], "ignore")
-        type_check(prob, (float, int,), "prob")
-        check_value(prob, [0., 1.], "prob")
 
         return method(self, *args, **kwargs)
 
@@ -639,35 +563,6 @@ def check_resample_expand_center_fill_value_params(resample, expand, center, fil
     check_fill_value(fill_value)
 
 
-def check_random_rotation(method):
-    """Wrapper method to check the parameters of random rotation."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [degrees, resample, expand, center, fill_value], _ = parse_user_args(method, *args, **kwargs)
-        check_degrees(degrees)
-        check_resample_expand_center_fill_value_params(resample, expand, center, fill_value)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_rotate(method):
-    """Wrapper method to check the parameters of rotate."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [degrees, resample, expand, center, fill_value], _ = parse_user_args(method, *args, **kwargs)
-        type_check(degrees, (float, int), "degrees")
-        check_float32(degrees, "degrees")
-        check_resample_expand_center_fill_value_params(resample, expand, center, fill_value)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_ten_crop(method):
     """Wrapper method to check the parameters of crop."""
 
@@ -715,40 +610,6 @@ def check_pad(method):
     return new_method
 
 
-def check_pad_to_size(method):
-    """Wrapper method to check the parameters of PadToSize."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [size, offset, fill_value, padding_mode], _ = parse_user_args(method, *args, **kwargs)
-
-        type_check(size, (int, list, tuple), "size")
-        if isinstance(size, int):
-            check_pos_int32(size, "size")
-        else:
-            if len(size) != 2:
-                raise ValueError("The size must be a sequence of length 2.")
-            for i, value in enumerate(size):
-                check_pos_int32(value, "size{0}".format(i))
-
-        if offset is not None:
-            type_check(offset, (int, list, tuple), "offset")
-            if isinstance(offset, int):
-                check_non_negative_int32(offset, "offset")
-            else:
-                if len(offset) not in [0, 2]:
-                    raise ValueError("The offset must be empty or a sequence of length 2.")
-                for i, offset_value in enumerate(offset):
-                    check_non_negative_int32(offset_value, "offset{0}".format(i))
-
-        check_fill_value(fill_value)
-        type_check(padding_mode, (Border,), "padding_mode")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_perspective(method):
     """Wrapper method to check the parameters of Perspective."""
 
@@ -778,28 +639,6 @@ def check_perspective(method):
 
         type_check(interpolation, (Inter,), "interpolation")
 
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_slice_patches(method):
-    """Wrapper method to check the parameters of slice patches."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [num_height, num_width, slice_mode, fill_value], _ = parse_user_args(method, *args, **kwargs)
-        if num_height is not None:
-            type_check(num_height, (int,), "num_height")
-            check_value(num_height, (1, INT32_MAX), "num_height")
-        if num_width is not None:
-            type_check(num_width, (int,), "num_width")
-            check_value(num_width, (1, INT32_MAX), "num_width")
-        if slice_mode is not None:
-            type_check(slice_mode, (SliceMode,), "slice_mode")
-        if fill_value is not None:
-            type_check(fill_value, (int,), "fill_value")
-            check_value(fill_value, [0, 255], "fill_value")
         return method(self, *args, **kwargs)
 
     return new_method
@@ -851,30 +690,6 @@ def check_rgb_to_bgr(method):
     return new_method
 
 
-def check_rgb_to_hsv(method):
-    """Wrapper method to check the parameters of rgb_to_hsv."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [is_hwc], _ = parse_user_args(method, *args, **kwargs)
-        type_check(is_hwc, (bool,), "is_hwc")
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_hsv_to_rgb(method):
-    """Wrapper method to check the parameters of hsv_to_rgb."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [is_hwc], _ = parse_user_args(method, *args, **kwargs)
-        type_check(is_hwc, (bool,), "is_hwc")
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_random_erasing(method):
     """Wrapper method to check the parameters of random erasing."""
 
@@ -910,23 +725,6 @@ def check_random_erasing(method):
                 type_check(item, (int,), "value")
                 check_value(item, [0, 255], "value")
         check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_cutout_new(method):
-    """Wrapper method to check the parameters of cutout operation."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [length, num_patches, is_hwc], _ = parse_user_args(method, *args, **kwargs)
-        type_check(length, (int,), "length")
-        type_check(num_patches, (int,), "num_patches")
-        type_check(is_hwc, (bool,), "is_hwc")
-        check_value(length, (1, FLOAT_MAX_INTEGER))
-        check_value(num_patches, (1, FLOAT_MAX_INTEGER))
 
         return method(self, *args, **kwargs)
 
@@ -983,57 +781,6 @@ def check_linear_transform(method):
     return new_method
 
 
-def check_random_affine(method):
-    """Wrapper method to check the parameters of random affine."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [degrees, translate, scale, shear, resample, fill_value], _ = parse_user_args(method, *args, **kwargs)
-        check_degrees(degrees)
-
-        if translate is not None:
-            type_check(translate, (list, tuple), "translate")
-            type_check_list(translate, (int, float), "translate")
-            if len(translate) != 2 and len(translate) != 4:
-                raise TypeError("translate should be a list or tuple of length 2 or 4.")
-            for i, t in enumerate(translate):
-                check_value(t, [-1.0, 1.0], "translate at {0}".format(i))
-
-        if scale is not None:
-            type_check(scale, (tuple, list), "scale")
-            type_check_list(scale, (int, float), "scale")
-            if len(scale) == 2:
-                if scale[0] > scale[1]:
-                    raise ValueError("Input scale[1] must be equal to or greater than scale[0].")
-                check_range(scale, [0, FLOAT_MAX_INTEGER])
-                check_positive(scale[1], "scale[1]")
-            else:
-                raise TypeError("scale should be a list or tuple of length 2.")
-
-        if shear is not None:
-            type_check(shear, (numbers.Number, tuple, list), "shear")
-            if isinstance(shear, numbers.Number):
-                check_positive(shear, "shear")
-            else:
-                type_check_list(shear, (int, float), "shear")
-                if len(shear) not in (2, 4):
-                    raise TypeError("shear must be of length 2 or 4.")
-                if len(shear) == 2 and shear[0] > shear[1]:
-                    raise ValueError("Input shear[1] must be equal to or greater than shear[0]")
-                if len(shear) == 4 and (shear[0] > shear[1] or shear[2] > shear[3]):
-                    raise ValueError("Input shear[1] must be equal to or greater than shear[0] and "
-                                     "shear[3] must be equal to or greater than shear[2].")
-
-        type_check(resample, (Inter,), "resample")
-
-        if fill_value is not None:
-            check_fill_value(fill_value)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_rescale(method):
     """Wrapper method to check the parameters of rescale."""
 
@@ -1077,30 +824,6 @@ def check_uniform_augment_cpp(method):
     return new_method
 
 
-def check_uniform_augment(method):
-    """Wrapper method to check the parameters of UniformAugment Unified op."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [transforms, num_ops], _ = parse_user_args(method, *args, **kwargs)
-        type_check(num_ops, (int,), "num_ops")
-        check_positive(num_ops, "num_ops")
-
-        if num_ops > len(transforms):
-            raise ValueError("num_ops is greater than transforms list size.")
-
-        type_check(transforms, (list, tuple,), "transforms list")
-        if not transforms:
-            raise ValueError("transforms list can not be empty.")
-        for ind, op in enumerate(transforms):
-            check_tensor_op(op, "transforms[{0}]".format(ind))
-            check_transform_op_type(ind, op)
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_bounding_box_augment_cpp(method):
     """Wrapper method to check the parameters of BoundingBoxAugment C++ op."""
 
@@ -1117,32 +840,6 @@ def check_bounding_box_augment_cpp(method):
     return new_method
 
 
-def check_adjust_brightness(method):
-    """Wrapper method to check the parameters of AdjustBrightness ops (Python and C++)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [brightness_factor], _ = parse_user_args(method, *args, **kwargs)
-        type_check(brightness_factor, (float, int), "brightness_factor")
-        check_value(brightness_factor, (0, FLOAT_MAX_INTEGER), "brightness_factor")
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_adjust_contrast(method):
-    """Wrapper method to check the parameters of AdjustContrast ops (Python and C++)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [contrast_factor], _ = parse_user_args(method, *args, **kwargs)
-        type_check(contrast_factor, (float, int), "contrast_factor")
-        check_value(contrast_factor, (0, FLOAT_MAX_INTEGER), "contrast_factor")
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_adjust_gamma(method):
     """Wrapper method to check the parameters of AdjustGamma ops (Python and C++)."""
 
@@ -1154,66 +851,6 @@ def check_adjust_gamma(method):
         if gain is not None:
             type_check(gain, (float, int), "gain")
             check_value(gain, (FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER))
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_adjust_hue(method):
-    """Wrapper method to check the parameters of AdjustHue ops (Python and C++)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [hue_factor], _ = parse_user_args(method, *args, **kwargs)
-        type_check(hue_factor, (float, int), "hue_factor")
-        check_value(hue_factor, (-0.5, 0.5), "hue_factor")
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_adjust_saturation(method):
-    """Wrapper method to check the parameters of AdjustSaturation ops (Python and C++)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [saturation_factor], _ = parse_user_args(method, *args, **kwargs)
-        type_check(saturation_factor, (float, int), "saturation_factor")
-        check_value(saturation_factor, (0, FLOAT_MAX_INTEGER))
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_adjust_sharpness(method):
-    """Wrapper method to check the parameters of AdjustSharpness ops (Python and C++)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [sharpness_factor], _ = parse_user_args(method, *args, **kwargs)
-        type_check(sharpness_factor, (float, int), "sharpness_factor")
-        check_value(sharpness_factor, (0, FLOAT_MAX_INTEGER))
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_auto_contrast(method):
-    """Wrapper method to check the parameters of AutoContrast ops (Python and C++)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [cutoff, ignore], _ = parse_user_args(method, *args, **kwargs)
-        type_check(cutoff, (int, float), "cutoff")
-        check_value_cutoff(cutoff, [0, 50], "cutoff")
-        if ignore is not None:
-            type_check(ignore, (list, tuple, int), "ignore")
-        if isinstance(ignore, int):
-            check_value(ignore, [0, 255], "ignore")
-        if isinstance(ignore, (list, tuple)):
-            for item in ignore:
-                type_check(item, (int,), "item")
-                check_value(item, [0, 255], "ignore")
         return method(self, *args, **kwargs)
 
     return new_method
@@ -1244,52 +881,6 @@ def check_uniform_augment_py(method):
     return new_method
 
 
-def check_positive_degrees(method):
-    """A wrapper method to check degrees parameter in RandomSharpness and RandomColor ops (Python and C++)"""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [degrees], _ = parse_user_args(method, *args, **kwargs)
-
-        if degrees is not None:
-            if not isinstance(degrees, (list, tuple)):
-                raise TypeError("degrees must be either a tuple or a list.")
-            type_check_list(degrees, (int, float), "degrees")
-            if len(degrees) != 2:
-                raise ValueError("degrees must be a sequence with length 2.")
-            for degree in degrees:
-                check_value(degree, (0, FLOAT_MAX_INTEGER))
-            if degrees[0] > degrees[1]:
-                raise ValueError("degrees should be in (min,max) format. Got (max,min).")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_random_select_subpolicy_op(method):
-    """Wrapper method to check the parameters of RandomSelectSubpolicyOp."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [policy], _ = parse_user_args(method, *args, **kwargs)
-        type_check(policy, (list,), "policy")
-        if not policy:
-            raise ValueError("policy can not be empty.")
-        for sub_ind, sub in enumerate(policy):
-            type_check(sub, (list,), "policy[{0}]".format([sub_ind]))
-            if not sub:
-                raise ValueError("policy[{0}] can not be empty.".format(sub_ind))
-            for op_ind, tp in enumerate(sub):
-                check_2tuple(tp, "policy[{0}][{1}]".format(sub_ind, op_ind))
-                check_tensor_op(tp[0], "op of (op, prob) in policy[{0}][{1}]".format(sub_ind, op_ind))
-                check_value(tp[1], (0, 1), "prob of (op, prob) policy[{0}][{1}]".format(sub_ind, op_ind))
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_random_solarize(method):
     """Wrapper method to check the parameters of RandomSolarizeOp."""
 
@@ -1306,54 +897,6 @@ def check_random_solarize(method):
         if threshold[1] < threshold[0]:
             raise ValueError("threshold must be in min max format numbers.")
 
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_gaussian_blur(method):
-    """Wrapper method to check the parameters of GaussianBlur."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [kernel_size, sigma], _ = parse_user_args(method, *args, **kwargs)
-
-        type_check(kernel_size, (int, list, tuple), "kernel_size")
-        if isinstance(kernel_size, int):
-            check_value(kernel_size, (1, FLOAT_MAX_INTEGER), "kernel_size")
-            check_odd(kernel_size, "kernel_size")
-        elif isinstance(kernel_size, (list, tuple)) and len(kernel_size) == 2:
-            for index, value in enumerate(kernel_size):
-                type_check(value, (int,), "kernel_size[{}]".format(index))
-                check_value(value, (1, FLOAT_MAX_INTEGER), "kernel_size")
-                check_odd(value, "kernel_size[{}]".format(index))
-        else:
-            raise TypeError(
-                "Kernel size should be a single integer or a list/tuple (kernel_width, kernel_height) of length 2.")
-
-        if sigma is not None:
-            type_check(sigma, (numbers.Number, list, tuple), "sigma")
-            if isinstance(sigma, numbers.Number):
-                check_value(sigma, (0, FLOAT_MAX_INTEGER), "sigma")
-            elif isinstance(sigma, (list, tuple)) and len(sigma) == 2:
-                for index, value in enumerate(sigma):
-                    type_check(value, (numbers.Number,), "size[{}]".format(index))
-                    check_value(value, (0, FLOAT_MAX_INTEGER), "sigma")
-            else:
-                raise TypeError("Sigma should be a single number or a list/tuple of length 2 for width and height.")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
-def check_convert_color(method):
-    """Wrapper method to check the parameters of convertcolor."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [convert_mode], _ = parse_user_args(method, *args, **kwargs)
-        type_check(convert_mode, (ConvertMode,), "convert_mode")
         return method(self, *args, **kwargs)
 
     return new_method

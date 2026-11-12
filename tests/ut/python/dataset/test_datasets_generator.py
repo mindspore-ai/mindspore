@@ -14,6 +14,7 @@
 # ==============================================================================
 """test generatordataset"""
 
+import numpy as np
 import copy
 import os
 import random
@@ -22,7 +23,6 @@ import subprocess
 import time
 import psutil
 import pytest
-import numpy as np
 from PIL import Image
 import mindspore
 import mindspore.common.dtype as mstype
@@ -34,8 +34,8 @@ from mindspore import ops
 from mindspore import log as logger
 from mindspore import Tensor
 from mindspore.dataset import vision
-from mindspore.dataset.vision import Inter
 from mindspore.dataset.callback import DSCallback
+from mindspore.dataset.vision import Inter
 from util import config_get_set_seed, save_and_check_dict
 
 

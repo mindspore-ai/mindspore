@@ -23,8 +23,7 @@ import mindspore.dataset.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.dataset import vision
-from mindspore.dataset.vision import Border
-from mindspore.dataset.vision import Inter
+from mindspore.dataset.vision import Border, Inter
 from mindspore.dataset.callback import DSCallback
 
 DATA_DIR_10 = "../data/dataset/testCifar10Data"
@@ -133,13 +132,6 @@ def invert_sign_per_batch_multi_col(col_list, batch_info):
     return ([np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col_list],)
 
 
-
-
-
-
-
-
-### Testcases for Cifar10Dataset Op ###
 
 
 class DatasetCTransformsFunc():
@@ -525,24 +517,33 @@ def test_cifar_exception_file_path():
         assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
+
+
+
+
+
+
+
+
+
 def dataset_call_py_transforms_func(sampler, sampler_num):
     """
     All of py_transforms
     Returns:
 
     """
-    crop_height = 100
-    crop_width = 50
+    unused_crop_height = 100
+    unused_crop_width = 50
     unused_target_height = 200
     unused_target_width = 200
-    scalelb = 0.5
-    scaleub = 200.5
-    aspectlb = 200.5
-    aspectub = 200.5
-    targetheight = 100
-    targetwidth = 100
-    interpolation = Inter.BILINEAR
-    maxiter = 100
+    unused_scalelb = 0.5
+    unused_scaleub = 200.5
+    unused_aspectlb = 200.5
+    unused_aspectub = 200.5
+    unused_targetheight = 100
+    unused_targetwidth = 100
+    unused_interpolation = Inter.BILINEAR
+    unused_maxiter = 100
     unused_transformation_matrix = np.ones([432, 432])
     unused_mean_vector = np.ones([432])
     unused_l1 = []
@@ -552,31 +553,6 @@ def dataset_call_py_transforms_func(sampler, sampler_num):
     for _ in dataset.create_dict_iterator(output_numpy=True):
         dataset_num += 1
     assert dataset_num == sampler_num
-
-    unused_op_list = [vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                  fill_value=(1, 1, 0), padding_mode=Border.CONSTANT),
-               vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                  fill_value=(1, 1, 0), padding_mode=Border.EDGE),
-               vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                  fill_value=(1, 1, 0), padding_mode=Border.REFLECT),
-               vision.RandomCrop(size=(crop_height, crop_width), padding=(1, 1), pad_if_needed=True,
-                                  fill_value=(1, 1, 0), padding_mode=Border.SYMMETRIC),
-               vision.RandomHorizontalFlip(),
-               vision.RandomVerticalFlip(),
-               vision.Grayscale(3),
-               vision.RandomGrayscale(0.3),
-               vision.RandomPerspective(distortion_scale=0.5, prob=0.1, interpolation=Inter.BICUBIC),
-               vision.RandomPerspective(distortion_scale=0.5, prob=0.1, interpolation=Inter.NEAREST),
-               vision.RandomPerspective(distortion_scale=0.5, prob=0.1, interpolation=Inter.BILINEAR),
-               vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-               vision.RandomSharpness((0.1, 1.9)),
-               vision.RandomColor((0.1, 1.9)),
-               vision.RandomResizedCrop((targetheight, targetwidth), (scalelb, scaleub),
-                                         (aspectlb, aspectub), interpolation, maxiter),
-               vision.AutoContrast(cutoff=10.0, ignore=[10, 20]),
-               vision.Equalize(),
-               vision.Invert()
-               ]
 
 
 
@@ -690,6 +666,9 @@ def dataset_call_c_transforms_func(sampler, shard_id=0):
 
 
 
+
+
+
 def test_cifar10_sequential_sampler():
     """
     Feature: Cifar10Dataset
@@ -746,6 +725,7 @@ def test_cifar10_with_random_sampler():
 
     sampler = ds.RandomSampler(True, 50)
     dataset_call_py_transforms_func(sampler=sampler, sampler_num=50)
+
 
 
 

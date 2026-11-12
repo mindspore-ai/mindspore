@@ -38,25 +38,15 @@ else()
     endif()
 
     add_library(vision-kernels OBJECT
-        adjust_brightness_op.cc
-        adjust_contrast_op.cc
         adjust_gamma_op.cc
-        adjust_hue_op.cc
-        adjust_saturation_op.cc
         affine_op.cc
         auto_augment_op.cc
-        auto_contrast_op.cc
         bounding_box.cc
         center_crop_op.cc
-        convert_color_op.cc
         crop_op.cc
-        cut_out_op.cc
         cutmix_batch_op.cc
         decode_op.cc
-        equalize_op.cc
         erase_op.cc
-        gaussian_blur_op.cc
-        horizontal_flip_op.cc
         hwc_to_chw_op.cc
         image_utils.cc
         invert_op.cc
@@ -65,53 +55,38 @@ else()
         normalize_op.cc
         normalize_pad_op.cc
         pad_op.cc
-        pad_to_size_op.cc
         perspective_op.cc
         posterize_op.cc
         rand_augment_op.cc
-        random_adjust_sharpness_op.cc
-        random_affine_op.cc
-        random_auto_contrast_op.cc
         random_color_adjust_op.cc
         random_crop_decode_resize_op.cc
         random_crop_and_resize_with_bbox_op.cc
         random_crop_and_resize_op.cc
         random_crop_op.cc
         random_crop_with_bbox_op.cc
-        random_equalize_op.cc
         random_horizontal_flip_op.cc
         random_horizontal_flip_with_bbox_op.cc
-        random_invert_op.cc
         random_lighting_op.cc
         bounding_box_augment_op.cc
         random_posterize_op.cc
-        random_resize_op.cc
-        random_rotation_op.cc
-        random_select_subpolicy_op.cc
         random_solarize_op.cc
         random_vertical_flip_op.cc
         random_vertical_flip_with_bbox_op.cc
-        random_sharpness_op.cc
         rescale_op.cc
         resize_op.cc
         resize_preserve_ar_op.cc
-        resized_crop_op.cc
         rgb_to_bgr_op.cc
         rgb_to_gray_op.cc
         rgba_to_bgr_op.cc
         rgba_to_rgb_op.cc
         sharpness_op.cc
-        slice_patches_op.cc
         solarize_op.cc
         swap_red_blue_op.cc
-        uniform_aug_op.cc
         resize_with_bbox_op.cc
         random_resize_with_bbox_op.cc
-        random_color_op.cc
         rotate_op.cc
         resize_cubic_op.cc
         trivial_augment_wide_op.cc
-        vertical_flip_op.cc
         to_tensor_op.cc
         ${FFMPEG_DEPEND_FILES})
 endif()
