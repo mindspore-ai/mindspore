@@ -1,4 +1,0 @@
-# Paths are relative to third_party/torch_npu/test. Add one pytest node ID per line.
-# Each entry selects one test; comments and blank lines are ignored.
-npu/test_resnet.py::TestResnet::test_resnet
-test_dvm.py::TestDvmSmallNetworks::test_training_loop_3steps
