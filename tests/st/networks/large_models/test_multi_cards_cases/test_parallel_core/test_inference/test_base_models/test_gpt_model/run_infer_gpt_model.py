@@ -22,6 +22,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore.communication import init, comm_func
+from mindspore.ops import communication as p2p
 
 workspace = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))))
@@ -167,9 +168,10 @@ class GPTModelRunner:
         hidden_states = ms.mint.zeros(hidden_states_shape, dtype=self.compute_dtype)
 
         if not self.config.pre_process:
-            comm_func.recv(hidden_states,
-                           src=ps.get_pipeline_model_parallel_prev_rank(),
-                           group=ps.get_pipeline_model_parallel_group().group)
+            received = p2p.recv(hidden_states, src=ps.get_pipeline_model_parallel_prev_rank(),
+                                group=ps.get_pipeline_model_parallel_group().group)
+            if isinstance(received, ms.Tensor):
+                hidden_states = received
 
         if not self.config.post_process:
             hidden_states = self.jit_forward(
@@ -186,9 +188,8 @@ class GPTModelRunner:
                 key_cache=key_cache,
                 value_cache=value_cache
             )
-            comm_func.send(hidden_states,
-                           dst=ps.get_pipeline_model_parallel_next_rank(),
-                           group=ps.get_pipeline_model_parallel_group().group)
+            p2p.send(hidden_states.contiguous(), dst=ps.get_pipeline_model_parallel_next_rank(),
+                     group=ps.get_pipeline_model_parallel_group().group)
 
         if self.config.post_process:
             logits = self.jit_forward(
@@ -206,7 +207,7 @@ class GPTModelRunner:
                 value_cache=value_cache
             )
         if ps.get_pipeline_model_parallel_world_size() > 1:
-            comm_func.all_reduce(logits, group=ps.get_pipeline_model_parallel_group().group)
+            logits, _ = comm_func.all_reduce(logits, group=ps.get_pipeline_model_parallel_group().group)
         return logits
 
     def run(self):

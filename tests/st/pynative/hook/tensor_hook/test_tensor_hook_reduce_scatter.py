@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Test reduce-scatter communication from a PyNative tensor hook."""
 import numpy as np
 import mindspore.nn as nn
 import mindspore as ms
 from mindspore.communication.management import init, get_rank
-from mindspore.communication.comm_func import reduce_scatter_tensor
+from mindspore.ops.communication import reduce_scatter_tensor
 from mindspore import Tensor, Parameter
 from mindspore import ops
 from tests.st.pynative.utils import GradOfAllParams
@@ -29,13 +31,14 @@ init()
 def hook_fn(grad_out):
     """改变梯度"""
     print("hook_fn print grad_out:", grad_out, flush=True)  # 该梯度是传播到该tensor时，该tensor所对应的梯度
-    output, _ = reduce_scatter_tensor(grad_out, ops.ReduceOp.SUM)
+    output = ops.zeros_like(grad_out[:1])
+    reduce_scatter_tensor(output, grad_out, ops.ReduceOp.SUM)
     return output
 
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.weight1 = Parameter(Tensor(np.array([8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0]), ms.float32), name="weight1")
         self.weight1.register_hook(hook_fn)
 

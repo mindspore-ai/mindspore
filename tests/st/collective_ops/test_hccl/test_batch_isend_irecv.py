@@ -19,7 +19,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore.ops.operations.comm_ops import BatchISendIRecv
-from mindspore.communication.comm_func import batch_isend_irecv, P2POp
+from mindspore.ops.communication import batch_isend_irecv, P2POp
 from mindspore.communication.management import init, get_rank, get_group_size
 
 # 'BatchISendIRecv' operator only supports KernelByKernel mode by now.
@@ -31,7 +31,7 @@ world_size = get_group_size()
 
 class BatchISendIRecvNet(nn.Cell):
     def __init__(self, op_types, remote_ranks, receive_shapes, receive_types, group=None):
-        super(BatchISendIRecvNet, self).__init__()
+        super().__init__()
         self.batch_isend_irecv = BatchISendIRecv(op_types, remote_ranks, receive_shapes, receive_types, group=group)
     def construct(self, x):
         return self.batch_isend_irecv(x)
@@ -74,5 +74,6 @@ def test_hccl_batchisendirecv_func_8p():
     expect_output = np.array(prev_rank).astype(np.float32)
 
     p2p_op_list = [send_op, recv_op]
-    output = net(p2p_op_list)
-    assert np.allclose(output[1].asnumpy(), expect_output)
+    for handle in net(p2p_op_list):
+        handle.wait()
+    assert np.allclose(recv_tensor.asnumpy(), expect_output)

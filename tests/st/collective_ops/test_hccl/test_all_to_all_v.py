@@ -19,7 +19,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import nn
 from mindspore.ops.operations.comm_ops import AlltoAllV
-from mindspore.communication.comm_func import all_to_all_with_output_shape, all_to_all_single_with_output_shape
+from mindspore.ops.communication import all_to_all, all_to_all_single
 from mindspore.communication.management import init, get_rank, get_group_size
 
 # 'AlltoAllV' operator only supports KernelByKernel mode by now.
@@ -38,11 +38,13 @@ class AlltoAllVNet(nn.Cell):
 
 class AllToAllFunNet(nn.Cell):
     def construct(self, output_tensor_list, input_tensor_list, group=None):
-        return all_to_all_with_output_shape(output_tensor_list, input_tensor_list, group)
+        all_to_all(output_tensor_list, input_tensor_list, group)
+        return output_tensor_list
 
 class AllToAllTensorFunNet(nn.Cell):
     def construct(self, output, input_x, output_split_sizes=None, input_split_sizes=None, group=None):
-        return all_to_all_single_with_output_shape(output, input_x, output_split_sizes, input_split_sizes, group)
+        all_to_all_single(output, input_x, output_split_sizes, input_split_sizes, group)
+        return output
 
 def test_hccl_alltoallv2_2p():
     """
@@ -69,9 +71,9 @@ def test_hccl_alltoall_func_2p():
     """
     data = [i + this_rank for i in range(world_size)]
     input_tensor_list = [ms.Tensor([data[i]], dtype=ms.float32) for i in range(world_size)]
-    output_tensor_list = [(1,)] * world_size
+    output_tensor_list = [ms.ops.zeros_like(tensor) for tensor in input_tensor_list]
     net = AllToAllFunNet()
-    output = net(output_tensor_list, input_tensor_list)[0]
+    output = net(output_tensor_list, input_tensor_list)
     for i, out in enumerate(output):
         expect_output = np.array([data[i]], dtype=np.float32)
         if isinstance(out, tuple):
@@ -87,7 +89,7 @@ def test_hccl_alltoall_tensor_2p():
     """
     data = [i + this_rank for i in range(world_size)]
     input_x = ms.Tensor(data, dtype=ms.float32)
-    output = (world_size,)
+    output = ms.ops.zeros_like(input_x)
     net = AllToAllTensorFunNet()
     output = net(output, input_x)
     expect_output = np.array(data, dtype=np.float32)
@@ -105,7 +107,7 @@ def test_hccl_alltoall_tensor_bool():
     """
     data = [True for _ in range(world_size)]
     input_x = ms.Tensor(data, dtype=ms.bool_)
-    output = (world_size,)
+    output = ms.ops.zeros_like(input_x)
     net = AllToAllTensorFunNet()
     output = net(output, input_x)
     expect_output = np.array(data, dtype=np.bool_)

@@ -13,11 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test point-to-point communication and asynchronous completion."""
+
 import numpy as np
 import mindspore as ms
 from mindspore import nn
+from mindspore.ops import communication as p2p
 from mindspore.communication import init
-from mindspore.communication.comm_func import isend, irecv
+from mindspore.ops.communication import isend, irecv
 from mindspore.communication.management import get_rank, get_group_size
 
 # 'isend' and 'irecv' function only supports KernelByKernel mode by now.
@@ -33,14 +36,15 @@ x2 = np.ones([3, 3, 3, 3]).astype(np.float32)
 
 class SendNet(nn.Cell):
     def construct(self, tensor):
-        out = isend(tensor, rank + size // 2)
-        return out
+        handle = isend(tensor, rank + size // 2)
+        handle.wait()
+        return tensor
 
 class RecvNet(nn.Cell):
     def construct(self, tensor):
-        out, handle = irecv(tensor, rank - size // 2)
+        handle = irecv(tensor, rank - size // 2)
         handle.wait()
-        return out
+        return tensor
 
 def test_hccl_send_recv_2p():
     """
@@ -64,3 +68,21 @@ def test_hccl_send_recv_2p():
         assert expect_output.shape == output.shape
 
 test_hccl_send_recv_2p()
+
+
+def test_sync_send_payload():
+    """
+    Feature: Synchronous point-to-point send migration.
+    Description: Send a transposed payload through the retained API and receive it on the peer.
+    Expectation: The peer receives the original logical layout and values.
+    """
+    peer = rank + size // 2 if rank < size // 2 else rank - size // 2
+    expected = np.arange(6, dtype=np.float32).reshape(2, 3).T
+    if rank < size // 2:
+        view = ms.Tensor(np.arange(6, dtype=np.float32).reshape(2, 3)).transpose(1, 0)
+        p2p.send(view.contiguous(), dst=peer)
+    else:
+        buf = ms.Tensor(np.zeros_like(expected))
+        result = p2p.recv(buf, src=peer)
+        actual = result if isinstance(result, ms.Tensor) else buf
+        np.testing.assert_array_equal(actual.asnumpy(), expected)
