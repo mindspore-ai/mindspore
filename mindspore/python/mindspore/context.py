@@ -1721,7 +1721,7 @@ def set_ps_context(**kwargs):
 
     Examples:
         >>> import mindspore as ms
-        >>> ms.set_ps_context(enable_ps=True, enable_ssl=True, client_password='', server_password='')
+        >>> ms.context.set_ps_context(enable_ps=True, enable_ssl=True, client_password='', server_password='')
     """
     _set_ps_context(**kwargs)
 
@@ -1750,7 +1750,7 @@ def get_ps_context(attr_key):
 
     Examples:
         >>> import mindspore as ms
-        >>> ms.get_ps_context("enable_ps")
+        >>> ms.context.get_ps_context("enable_ps")
     """
     return _get_ps_context(attr_key)
 
@@ -1760,11 +1760,11 @@ def reset_ps_context():
     Reset parameter server training mode context attributes to the default values. This API will be deprecated and
     removed in future versions.
 
-    For the meaning of each field and its default value, refer to :func:`mindspore.set_ps_context`.
+    For the meaning of each field and its default value, refer to :func:`mindspore.context.set_ps_context`.
 
     Examples:
         >>> import mindspore as ms
-        >>> ms.reset_ps_context()
+        >>> ms.context.reset_ps_context()
     """
     _reset_ps_context()
 

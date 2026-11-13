@@ -29,7 +29,7 @@ def sdc_detect_start():
         ``Ascend``
 
     Examples:
-        >>> from mindspore.tools import sdc_detect_start
+        >>> from mindspore.tools.sdc_detect import sdc_detect_start
         >>> sdc_detect_start()
     """
     _c_expression.sdc_detect_start()
@@ -43,7 +43,7 @@ def sdc_detect_stop():
         ``Ascend``
 
     Examples:
-        >>> from mindspore.tools import sdc_detect_stop
+        >>> from mindspore.tools.sdc_detect import sdc_detect_stop
         >>> sdc_detect_stop()
     """
     _c_expression.sdc_detect_stop()
@@ -60,7 +60,7 @@ def get_sdc_detect_result():
         ``Ascend``
 
     Examples:
-        >>> from mindspore.tools import get_sdc_detect_result
+        >>> from mindspore.tools.sdc_detect import get_sdc_detect_result
         >>> result = get_sdc_detect_result()
         >>> print(result)
         False

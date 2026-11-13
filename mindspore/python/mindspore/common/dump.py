@@ -18,7 +18,7 @@ from mindspore.tools import set_dump as tools_set_dump
 from mindspore.common._decorator import deprecated
 
 
-@deprecated("2.7.1", "mindspore.tools.set_dump", module_prefix="mindspore.")
+@deprecated("2.7.1", "mindspore.tools.set_dump", module_prefix="mindspore.common.")
 def set_dump(target, enabled=True):
     """
     This api will be deprecated and removed in future versions, please use the api
