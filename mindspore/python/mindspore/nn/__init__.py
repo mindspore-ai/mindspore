@@ -21,7 +21,8 @@ from __future__ import absolute_import
 
 __all__ = ["Cell", "GraphCell", "PipelineGradReducer", "PipelineCell", "MicroBatchInterleaved"]
 
-from mindspore.nn import layer, loss, optim, wrap, grad, metrics, sparse
+from mindspore._api_exports import _remove_exports
+from mindspore.nn import layer, loss, optim, wrap, grad, metrics, sparse, utils
 from mindspore.parallel.nn.parallel_grad_reducer import PipelineGradReducer
 from mindspore.parallel.nn.parallel_cell_wrapper import PipelineCell, MicroBatchInterleaved
 from mindspore.nn.learning_rate_schedule import CosineDecayLR
@@ -45,4 +46,11 @@ __all__.extend(sparse.__all__)
 __all__.append("CosineDecayLR")
 __all__.extend(utils.__all__)
 
+# Only remove nn package aliases; retain the original classes in their submodules.
+_retired_top_level_exports = (
+    "FastGelu", "SampledSoftmaxLoss", "FTRL", "ProximalAdagrad", "LazyAdam", "LARS", "AdamWeightDecay",
+    "AdaSumByDeltaWeightWrapCell", "AdaSumByGradWrapCell", "OptTFTWrapper",
+)
+_remove_exports(globals(), _retired_top_level_exports)
 __all__.sort()
+del _remove_exports, _retired_top_level_exports

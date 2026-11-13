@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained neural-network and operator regression tests."""
 import math
 from mindspore import ops, nn
 from mindspore.common.initializer import HeUniform
@@ -31,7 +32,7 @@ class RPNFeat(nn.Cell):
     """
 
     def __init__(self, num_layers=1, num_anchors=3, in_channel=1024, out_channel=1024):
-        super(RPNFeat, self).__init__()
+        super().__init__()
         self.rpn_conv = nn.Conv2d(
             in_channel,
             out_channel,
@@ -68,11 +69,11 @@ class RPNHead(nn.Cell):
         cfg(Config): rpn_head config
         backbone_feat_nums(int): backbone feature numbers
         in_channel(int): rpn feature conv in channel
-        loss_rpn_bbox(Cell): bbox loss function Cell, default is MAELoss
+        loss_rpn_bbox(Cell): bbox loss function Cell, for bounding-box regression
     """
 
     def __init__(self, cfg, backbone_feat_nums, in_channel, loss_rpn_bbox=None):
-        super(RPNHead, self).__init__()
+        super().__init__()
         acfg = cfg.anchor_generator
         self.anchor_generator = AnchorGenerator(aspect_ratios=acfg.aspect_ratios,
                                                 anchor_sizes=acfg.anchor_sizes,

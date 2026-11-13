@@ -1,9 +1,9 @@
-mindspore.nn.LazyAdam
-======================
+mindspore.nn.optim.LazyAdam
+===========================
 
-.. py:class:: mindspore.nn.LazyAdam(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
+.. py:class:: mindspore.nn.optim.LazyAdam(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
 
-    `nn.LazyAdam` 从2.0版本开始已被弃用，并将在2.9.0（不含）之后版本中被移除。
+    `nn.optim.LazyAdam` 从2.0版本开始已被弃用，并将在2.9.0（不含）之后版本中被移除。
 
     Adaptive Moment Estimation (Adam)算法的实现。请参阅论文 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 

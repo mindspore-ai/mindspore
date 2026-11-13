@@ -117,7 +117,7 @@ class SparseOptimizerStep(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.parametrize('optimizer_type', [nn.Adam, nn.LazyAdam, nn.FTRL])
+@pytest.mark.parametrize('optimizer_type', [nn.Adam, nn.optim.LazyAdam, nn.optim.FTRL])
 def test_internal_sparse_optimizer(mode, optimizer_type, tmp_path):
     """
     Feature: Retained sparse optimizer dispatch and checkpointing.
@@ -132,7 +132,7 @@ def test_internal_sparse_optimizer(mode, optimizer_type, tmp_path):
     optimizer.target = 'CPU'
     SparseOptimizerStep(optimizer)(indices, values)
     expected = np.ones((4, 2), np.float32)
-    if optimizer_type is nn.FTRL:
+    if optimizer_type is nn.optim.FTRL:
         updated = -(1.0 - (np.sqrt(1.1) - np.sqrt(0.1)) / 0.1) * 0.1 / np.sqrt(1.1)
     else:
         updated = 1.0 - 0.1 / (1.0 + 1e-8 / np.sqrt(1 - 0.999))

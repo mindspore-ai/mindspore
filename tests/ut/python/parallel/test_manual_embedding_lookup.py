@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
+"""Parallel tests for manually partitioned embedding lookups."""
 import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import context, Tensor, Parameter
 from mindspore.graph.api import _cell_graph_executor
-from mindspore.nn import Cell, TrainOneStepCell, LazyAdam
+from mindspore.nn import Cell, TrainOneStepCell
+from mindspore.nn.optim import LazyAdam
 from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 

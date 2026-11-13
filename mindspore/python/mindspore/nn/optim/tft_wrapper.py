@@ -59,7 +59,7 @@ class OptTFTWrapper(Optimizer):
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
         >>> optim = nn.SGD(params=net.trainable_params())
-        >>> optim_wrapper = nn.OptTFTWrapper(optim)
+        >>> optim_wrapper = nn.optim.OptTFTWrapper(optim)
         >>>
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim)

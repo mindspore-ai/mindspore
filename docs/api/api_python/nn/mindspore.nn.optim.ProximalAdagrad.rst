@@ -1,9 +1,9 @@
-mindspore.nn.ProximalAdagrad
-==============================
+mindspore.nn.optim.ProximalAdagrad
+==================================
 
-.. py:class:: mindspore.nn.ProximalAdagrad(params, accum=0.1, learning_rate=0.001, l1=0.0, l2=0.0, use_locking=False, loss_scale=1.0, weight_decay=0.0)
+.. py:class:: mindspore.nn.optim.ProximalAdagrad(params, accum=0.1, learning_rate=0.001, l1=0.0, l2=0.0, use_locking=False, loss_scale=1.0, weight_decay=0.0)
 
-    `mindspore.nn.ProximalAdagrad` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    `mindspore.nn.optim.ProximalAdagrad` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
 
     ProximalAdagrad算法的实现，用于在线学习和随机优化。
 

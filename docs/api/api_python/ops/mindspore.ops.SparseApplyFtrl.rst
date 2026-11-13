@@ -5,7 +5,7 @@ mindspore.ops.SparseApplyFtrl
 
     `ops.SparseApplyFtrl` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
 
-    根据FTRL-proximal算法更新相关参数或者Tensor。更多详细信息请参见 :class:`mindspore.nn.FTRL` 。
+    根据FTRL-proximal算法更新相关参数或者Tensor。更多详细信息请参见 :class:`mindspore.nn.optim.FTRL` 。
 
     除 `indices` 外，所有输入遵循隐式类型转换规则，使数据类型保持一致。若各输入数据类型不同，优先级较低的数据类型会转换为优先级相对最高的数据类型。
 

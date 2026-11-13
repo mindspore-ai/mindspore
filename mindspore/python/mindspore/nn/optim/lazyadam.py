@@ -235,7 +235,7 @@ class LazyAdam(Optimizer):
         >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
-        >>> optim = nn.LazyAdam(params=net.trainable_params())
+        >>> optim = nn.optim.LazyAdam(params=net.trainable_params())
         >>>
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
@@ -243,7 +243,7 @@ class LazyAdam(Optimizer):
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
-        >>> optim = nn.LazyAdam(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> optim = nn.optim.LazyAdam(group_params, learning_rate=0.1, weight_decay=0.0)
         >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
         >>> # centralization of True.
         >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0 and grad

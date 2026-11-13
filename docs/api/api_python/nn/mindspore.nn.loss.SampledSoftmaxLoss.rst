@@ -1,7 +1,7 @@
-mindspore.nn.SampledSoftmaxLoss
-================================
+mindspore.nn.loss.SampledSoftmaxLoss
+====================================
 
-.. py:class:: mindspore.nn.SampledSoftmaxLoss(num_sampled, num_classes, num_true=1, sampled_values=None, remove_accidental_hits=True, seed=0, reduction='none')
+.. py:class:: mindspore.nn.loss.SampledSoftmaxLoss(num_sampled, num_classes, num_true=1, sampled_values=None, remove_accidental_hits=True, seed=0, reduction='none')
 
     抽样交叉熵损失函数。
 

@@ -25,11 +25,9 @@ from mindspore.nn.wrap.cell_wrapper import ForwardValueAndGrad, TrainOneStepCell
 from mindspore.nn.wrap.loss_scale import TrainOneStepWithLossScaleCell,\
     DynamicLossScaleUpdateCell, FixedLossScaleUpdateCell
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer, PipelineGradReducer
-from mindspore.nn.layer.timedistributed import TimeDistributed
 
 
 __all__ = [
-    "TimeDistributed",
     "ForwardValueAndGrad",
     "TrainOneStepCell",
     "WithLossCell",

@@ -17,8 +17,19 @@ loss functions.
 """
 
 import numpy as np
-from mindspore import nn, Tensor
+from mindspore import nn, ops, Tensor
 from mindspore import dtype as mstype
+
+
+class _RootMeanSquareLoss(nn.Cell):
+    """Mean-square loss followed by sqrt for the local MindFlow fixture."""
+
+    def __init__(self):
+        super().__init__()
+        self.mse = nn.MSELoss()
+
+    def construct(self, logits, labels):
+        return ops.sqrt(self.mse(logits, labels))
 
 
 _loss_metric = {
@@ -28,10 +39,10 @@ _loss_metric = {
     'l2': nn.MSELoss,
     'mse_loss': nn.MSELoss,
     'mse': nn.MSELoss,
-    'rmse_loss': nn.RMSELoss,
-    'rmse': nn.RMSELoss,
-    'mae_loss': nn.MAELoss,
-    'mae': nn.MAELoss,
+    'rmse_loss': _RootMeanSquareLoss,
+    'rmse': _RootMeanSquareLoss,
+    'mae_loss': nn.L1Loss,
+    'mae': nn.L1Loss,
     'smooth_l1_loss': nn.SmoothL1Loss,
     'smooth_l1': nn.SmoothL1Loss,
 }

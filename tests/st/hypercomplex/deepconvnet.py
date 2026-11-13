@@ -1,3 +1,4 @@
+"""Retained neural-network and operator regression tests."""
 from mindspore import nn
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
@@ -6,12 +7,12 @@ import mindspore.hypercomplex.dual as ops
 
 class DeepConvNet(nn.Cell):
     def __init__(self):
-        super(DeepConvNet, self).__init__()
+        super().__init__()
 
         self.conv1 = ops.Conv1d(1, 16, kernel_size=6, stride=2, padding=2, pad_mode='pad')
         self.bn1 = ops.BatchNorm1d(16)
         self.avg_pool1 = ops.AvgPool1d(kernel_size=2, stride=2)
-        self.pad1 = nn.Pad(paddings=((0, 0), (0, 0), (0, 0), (0, 2)), mode='CONSTANT')
+        self.pad1 = P.Pad(paddings=((0, 0), (0, 0), (0, 0), (0, 2)))
 
         self.conv2 = ops.Conv1d(16, 32, kernel_size=3, stride=2, padding=0)
         self.bn2 = ops.BatchNorm1d(32)

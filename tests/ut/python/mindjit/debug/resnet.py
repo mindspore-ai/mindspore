@@ -191,7 +191,7 @@ class ResidualBlock(nn.Cell):
                  out_channel,
                  stride=1,
                  use_se=False, se_block=False):
-        super(ResidualBlock, self).__init__()
+        super().__init__()
         self.stride = stride
         self.use_se = use_se
         self.se_block = se_block
@@ -293,7 +293,7 @@ class ResidualBlockBase(nn.Cell):
                  use_se=False,
                  se_block=False,
                  res_base=True):
-        super(ResidualBlockBase, self).__init__()
+        super().__init__()
         self.res_base = res_base
         self.conv1 = _conv3x3(in_channel, out_channel, stride=stride, res_base=self.res_base)
         self.bn1d = _bn(out_channel)
@@ -366,7 +366,7 @@ class ResNet(nn.Cell):
                  num_classes,
                  use_se=False,
                  res_base=False):
-        super(ResNet, self).__init__()
+        super().__init__()
 
         if not len(layer_nums) == len(in_channels) == len(out_channels) == 4:
             raise ValueError("the length of layer_num, in_channels, out_channels list must be 4!")
@@ -388,7 +388,7 @@ class ResNet(nn.Cell):
         self.relu = ops.ReLU()
 
         if self.res_base:
-            self.pad = nn.Pad(paddings=((0, 0), (0, 0), (1, 1), (1, 1)))
+            self.pad = ops.Pad(paddings=((0, 0), (0, 0), (1, 1), (1, 1)))
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="valid")
         else:
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode="same")
@@ -509,7 +509,7 @@ def resnet50(class_num=10):
 
 class DatasetResNet(MindData):
     def __init__(self, predict, label, length=3):
-        super(DatasetResNet, self).__init__(size=length)
+        super().__init__(size=length)
         self.predict = predict
         self.label = label
         self.index = 0

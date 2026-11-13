@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained neural-network and operator regression tests."""
 from tests.mark_utils import arg_mark
 
 import pytest
@@ -21,7 +22,7 @@ import mindspore
 import mindspore.nn as nn
 import mindspore.context as context
 
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.ops.composite import GradOperation
 from mindspore.graph.api import _pynative_executor
 
@@ -38,7 +39,7 @@ def test_pad_basic():
     test_arr_expected = np.array(
         [[0, 0, 0, 0], [0, 1, 2, 0], [0, 3, 4, 0], [0, 0, 0, 0]]).astype(np.float32)
     x_test = Tensor(test_arr, dtype=mindspore.float32)
-    pad_op = nn.Pad(mode='CONSTANT', paddings=((1, 1), (1, 1)))
+    pad_op = ops.Pad(paddings=((1, 1), (1, 1)))
     y_test = pad_op(x_test).asnumpy()
     np.testing.assert_array_equal(y_test, test_arr_expected)
 
@@ -47,7 +48,7 @@ def test_pad_basic():
     test_arr_expected = np.array(
         [[0, 0, 0, 0], [0, 1, 2, 0], [0, 3, 4, 0], [0, 0, 0, 0]]).astype(np.float16)
     x_test = Tensor(test_arr, dtype=mindspore.float16)
-    pad_op = nn.Pad(mode='CONSTANT', paddings=((1, 1), (1, 1)))
+    pad_op = ops.Pad(paddings=((1, 1), (1, 1)))
     y_test = pad_op(x_test).asnumpy()
     np.testing.assert_array_equal(y_test, test_arr_expected)
 
@@ -64,8 +65,8 @@ def test_pad_row():
     test_arr_2 = np.random.randn(3, 10, 30, 30).astype(np.float32)
     test_paddings_2 = ((0, 0), (0, 0), (3, 0), (0, 0))
 
-    pad_op_row_1 = nn.Pad(mode='CONSTANT', paddings=test_paddings_1)
-    pad_op_row_2 = nn.Pad(mode='CONSTANT', paddings=test_paddings_2)
+    pad_op_row_1 = ops.Pad(paddings=test_paddings_1)
+    pad_op_row_2 = ops.Pad(paddings=test_paddings_2)
 
     x_test_1 = Tensor(np.array(test_arr_1), dtype=mindspore.float32)
     x_test_2 = Tensor(np.array(test_arr_2), dtype=mindspore.float32)
@@ -93,8 +94,8 @@ def test_pad_column():
     test_arr_2 = np.random.randn(3, 10, 30, 30).astype(np.float32)
     test_paddings_2 = ((0, 0), (0, 0), (0, 0), (6, 1))
 
-    pad_op_col_1 = nn.Pad(mode='CONSTANT', paddings=test_paddings_1)
-    pad_op_col_2 = nn.Pad(mode='CONSTANT', paddings=test_paddings_2)
+    pad_op_col_1 = ops.Pad(paddings=test_paddings_1)
+    pad_op_col_2 = ops.Pad(paddings=test_paddings_2)
 
     x_test_1 = Tensor(np.array(test_arr_1), dtype=mindspore.float32)
     x_test_2 = Tensor(np.array(test_arr_2), dtype=mindspore.float32)
@@ -120,7 +121,7 @@ def test_pad_3d_pad():
     # float32
     test_arr = np.random.randn(5, 3, 30, 30).astype(np.float32)
     test_paddings = ((0, 0), (2, 1), (0, 1), (0, 2))  # padding 3 dims now
-    pad_op_3d = nn.Pad(mode='CONSTANT', paddings=test_paddings)
+    pad_op_3d = ops.Pad(paddings=test_paddings)
     x_test = Tensor(np.array(test_arr), dtype=mindspore.float32)
     y_test = pad_op_3d(x_test).asnumpy()
     assert y_test.shape == (5, 6, 31, 32)
@@ -129,7 +130,7 @@ def test_pad_3d_pad():
     # float16
     test_arr = np.random.randn(5, 3, 30, 30).astype(np.float16)
     test_paddings = ((0, 0), (2, 1), (0, 1), (0, 2))
-    pad_op_3d = nn.Pad(mode='CONSTANT', paddings=test_paddings)
+    pad_op_3d = ops.Pad(paddings=test_paddings)
     x_test = Tensor(np.array(test_arr), dtype=mindspore.float16)
     y_test = pad_op_3d(x_test).asnumpy()
     assert y_test.shape == (5, 6, 31, 32)
@@ -138,7 +139,7 @@ def test_pad_3d_pad():
     # int32
     test_arr = np.random.randint(1, 3000, (5, 3, 30, 30)).astype(np.int32)
     test_paddings = ((0, 0), (2, 1), (0, 1), (0, 2))
-    pad_op_3d = nn.Pad(mode='CONSTANT', paddings=test_paddings)
+    pad_op_3d = ops.Pad(paddings=test_paddings)
     x_test = Tensor(np.array(test_arr), dtype=mindspore.int32)
     y_test = pad_op_3d(x_test).asnumpy()
     assert y_test.shape == (5, 6, 31, 32)
@@ -148,7 +149,7 @@ def test_pad_3d_pad():
 # For testing backprop
 class Grad(nn.Cell):
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
@@ -158,8 +159,8 @@ class Grad(nn.Cell):
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
-        self.pad = nn.Pad(mode="CONSTANT", paddings=(
+        super().__init__()
+        self.pad = ops.Pad(paddings=(
             (0, 0), (4, 3), (1, 1), (0, 2)))
 
     def construct(self, x):
@@ -211,7 +212,7 @@ def test_pad_error_cases():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     # TEST 1 - Neg padding values
-    test_op = nn.Pad(paddings=((0, 0), (-1, -1)), mode="CONSTANT")
+    test_op = ops.Pad(paddings=((0, 0), (-1, -1)))
     test_arr = np.random.randn(3, 3)
     test_arr_ms = Tensor(test_arr, dtype=mindspore.float32)
 
@@ -220,7 +221,7 @@ def test_pad_error_cases():
         _pynative_executor.sync()
 
     # TEST 2 - Mismatched input size and paddings - 1D tensor
-    test_op = nn.Pad(paddings=((0, 0), (1, 0)), mode="CONSTANT")
+    test_op = ops.Pad(paddings=((0, 0), (1, 0)))
     test_arr = np.random.randn(3)  # 1D Tensor
     test_arr_ms = Tensor(test_arr, dtype=mindspore.float32)
 
@@ -229,7 +230,7 @@ def test_pad_error_cases():
         _pynative_executor.sync()
 
     # TEST 3 - Mismatched input size and paddings - 2D tensor, 3D padding
-    test_op = nn.Pad(paddings=((0, 0), (1, 0)), mode="CONSTANT")  # 2D Padding
+    test_op = ops.Pad(paddings=((0, 0), (1, 0)))  # 2D Padding
     test_arr = np.random.randn(1, 3, 3)  # 3D Tensor
     test_arr_ms = Tensor(test_arr, dtype=mindspore.float32)
 
@@ -237,13 +238,8 @@ def test_pad_error_cases():
         test_op(test_arr_ms)
         _pynative_executor.sync()
 
-    # TEST 4 - 1D Paddings should not work
-    with pytest.raises(TypeError):
-        test_op = nn.Pad(paddings=((0, 2)), mode="CONSTANT")
-        _pynative_executor.sync()
-
-    # TEST 5 - Padding beyond 4d - (added check in nn file in PR)
+    # TEST 4 - Each dimension must have a pair of padding values at inference time.
     with pytest.raises(ValueError):
-        _ = nn.Pad(paddings=((0, 0), (0, 0,), (0, 0), (0, 0),
-                             (1, 0)), mode="CONSTANT")  # 2D Padding
+        test_op = ops.Pad(paddings=((0, 0), (1,)))
+        test_op(Tensor(np.ones((3, 3)), dtype=mindspore.float32))
         _pynative_executor.sync()

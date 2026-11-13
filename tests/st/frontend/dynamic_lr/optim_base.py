@@ -157,7 +157,7 @@ class OptimFactory:
             elif self.optim_ex == "AdamW":
                 optimizer = AdamW(params=group_params, lr=self.lr)
 
-        criterion = nn.MAELoss(reduction="mean")
+        criterion = nn.L1Loss(reduction="mean")
 
         # Match the initial factor applied by the PyTorch LinearLR reference.
         scale_learning_rates(optimizer, 1.0 / 3)

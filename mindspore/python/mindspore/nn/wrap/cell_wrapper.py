@@ -403,7 +403,7 @@ class TrainOneStepCell(Cell):
             self.degree = _get_device_num()
             from mindspore.communication.management import GlobalComm
             group = GlobalComm.WORLD_COMM_GROUP
-            if isinstance(self.optimizer, (nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell)):
+            if isinstance(self.optimizer, (nn.optim.AdaSumByGradWrapCell, nn.optim.AdaSumByDeltaWeightWrapCell)):
                 from mindspore.communication.management import get_group_size, create_group, get_rank
                 group_number = get_group_size() // 8
                 self.degree = int(self.degree / group_number)

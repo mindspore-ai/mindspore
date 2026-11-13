@@ -1,9 +1,9 @@
-mindspore.nn.LARS
-==================
+mindspore.nn.optim.LARS
+=======================
 
-.. py:class:: mindspore.nn.LARS(optimizer, epsilon=1e-05, coefficient=0.001, use_clip=False, lars_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name)
+.. py:class:: mindspore.nn.optim.LARS(optimizer, epsilon=1e-05, coefficient=0.001, use_clip=False, lars_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name)
 
-    `mindspore.nn.LARS` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    `mindspore.nn.optim.LARS` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
 
     LARS算法的实现。
 

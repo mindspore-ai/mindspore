@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Optimizer tests for dynamic weight decay."""
 import pytest
 
 import mindspore.context as context
@@ -80,8 +81,9 @@ def test_adamweightdecay_dynamic_weight_decay(mode):
     context.set_context(mode=mode)
     net1, net2 = Net(), Net()
     weight_decay_schedule = WeightDecaySchdule()
-    optimizer1 = nn.AdamWeightDecay(net1.trainable_params(), learning_rate=0.001, weight_decay=0.001)
-    optimizer2 = nn.AdamWeightDecay(net2.trainable_params(), learning_rate=0.001, weight_decay=weight_decay_schedule)
+    optimizer1 = nn.optim.AdamWeightDecay(net1.trainable_params(), learning_rate=0.001, weight_decay=0.001)
+    optimizer2 = nn.optim.AdamWeightDecay(net2.trainable_params(), learning_rate=0.001,
+                                          weight_decay=weight_decay_schedule)
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
@@ -110,8 +112,8 @@ def test_adamweightdecay_dynamic_weight_decay_group(mode):
     params2 = [{'params': net2_fc1_params, 'weight_decay': 0.01, 'lr': 0.01},
                {'params': net2_fc2_params, 'weight_decay': weight_decay_schedule, 'lr': 0.001}]
 
-    optimizer1 = nn.AdamWeightDecay(params1, learning_rate=0.001, weight_decay=0.001)
-    optimizer2 = nn.AdamWeightDecay(params2, learning_rate=0.001, weight_decay=0.001)
+    optimizer1 = nn.optim.AdamWeightDecay(params1, learning_rate=0.001, weight_decay=0.001)
+    optimizer2 = nn.optim.AdamWeightDecay(params2, learning_rate=0.001, weight_decay=0.001)
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
@@ -158,8 +160,8 @@ def test_lars_dynamic_weight_decay(mode):
 
     opt1 = nn.Momentum(net1.trainable_params(), momentum=0.001, learning_rate=0.001, weight_decay=0.001)
     opt2 = nn.Momentum(net2.trainable_params(), momentum=0.001, learning_rate=0.001, weight_decay=weight_decay_schedule)
-    optimizer1 = nn.LARS(opt1, lars_filter=lambda x: 'LayerNorm' not in x.name)
-    optimizer2 = nn.LARS(opt2, lars_filter=lambda x: 'LayerNorm' not in x.name)
+    optimizer1 = nn.optim.LARS(opt1, lars_filter=lambda x: 'LayerNorm' not in x.name)
+    optimizer2 = nn.optim.LARS(opt2, lars_filter=lambda x: 'LayerNorm' not in x.name)
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)
 
 
@@ -189,6 +191,6 @@ def test_lars_dynamic_weight_decay_group(mode):
 
     opt1 = nn.Momentum(params1, momentum=0.001, learning_rate=0.001, weight_decay=0.001)
     opt2 = nn.Momentum(params2, momentum=0.001, learning_rate=0.001, weight_decay=0.001)
-    optimizer1 = nn.LARS(opt1, lars_filter=lambda x: 'LayerNorm' not in x.name)
-    optimizer2 = nn.LARS(opt2, lars_filter=lambda x: 'LayerNorm' not in x.name)
+    optimizer1 = nn.optim.LARS(opt1, lars_filter=lambda x: 'LayerNorm' not in x.name)
+    optimizer2 = nn.optim.LARS(opt2, lars_filter=lambda x: 'LayerNorm' not in x.name)
     dynamic_weight_decay_cmp(net1, net2, optimizer1, optimizer2)

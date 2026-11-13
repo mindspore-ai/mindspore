@@ -47,7 +47,7 @@ os.environ['GLOG_v'] = str(2)
 
 class LossGet(Callback):
     def __init__(self, per_print_times, data_size):
-        super(LossGet, self).__init__()
+        super().__init__()
         if not isinstance(per_print_times, int) or per_print_times < 0:
             raise ValueError("print_step must be int and >= 0.")
         self._per_print_times = per_print_times
@@ -153,7 +153,7 @@ def test_resnet_imagenet_8p_mpi():
     if config.use_lars:
         momentum = nn.Momentum(group_params, lr, config.momentum,
                                loss_scale=config.loss_scale, use_nesterov=config.use_nesterov)
-        opt = nn.LARS(momentum, epsilon=config.lars_epsilon, coefficient=config.lars_coefficient,
+        opt = nn.optim.LARS(momentum, epsilon=config.lars_epsilon, coefficient=config.lars_coefficient,
                       lars_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name)
 
     else:

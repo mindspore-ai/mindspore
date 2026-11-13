@@ -20,13 +20,12 @@ The high-level components(Cells) used to construct the neural network.
 from __future__ import absolute_import
 
 from mindspore.nn.layer import activation, normalization, container, conv, basic, embedding, pooling, \
-    image, math, combined, timedistributed, thor_layer, rnns, rnn_cells, padding, dense, transformer, \
+    image, math, combined, thor_layer, rnns, rnn_cells, padding, transformer, \
     channel_shuffle
 from mindspore.nn.layer.activation import *
 from mindspore.nn.layer.normalization import *
 from mindspore.nn.layer.container import *
 from mindspore.nn.layer.conv import *
-from mindspore.nn.layer.dense import *
 from mindspore.nn.layer.rnns import *
 from mindspore.nn.layer.rnn_cells import *
 from mindspore.nn.layer.basic import *
@@ -35,7 +34,6 @@ from mindspore.nn.layer.pooling import *
 from mindspore.nn.layer.image import *
 from mindspore.nn.layer.math import *
 from mindspore.nn.layer.combined import *
-from mindspore.nn.layer.timedistributed import *
 from mindspore.nn.layer.transformer import *
 from mindspore.nn.layer.channel_shuffle import ChannelShuffle
 from mindspore.nn.layer.thor_layer import DenseThor, Conv2dThor, EmbeddingThor, EmbeddingLookupThor
@@ -47,7 +45,6 @@ __all__.extend(activation.__all__)
 __all__.extend(normalization.__all__)
 __all__.extend(container.__all__)
 __all__.extend(conv.__all__)
-__all__.extend(dense.__all__)
 __all__.extend(rnn_cells.__all__)
 __all__.extend(rnns.__all__)
 __all__.extend(basic.__all__)
@@ -56,7 +53,6 @@ __all__.extend(pooling.__all__)
 __all__.extend(image.__all__)
 __all__.extend(math.__all__)
 __all__.extend(combined.__all__)
-__all__.extend(timedistributed.__all__)
 __all__.extend(transformer.__all__)
 __all__.extend(thor_layer.__all__)
 __all__.extend(padding.__all__)

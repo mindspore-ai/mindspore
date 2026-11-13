@@ -17,15 +17,15 @@ import numpy as np
 
 import mindspore
 from mindspore import nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore import context
 
 class Layer1(nn.Cell):
     def __init__(self):
-        super(Layer1, self).__init__()
+        super().__init__()
         self.net = nn.Conv2d(3, 1, 3, pad_mode='same')
-        self.pad = nn.Pad(
-            paddings=((0, 0), (0, 2), (0, 0), (0, 0)), mode="CONSTANT")
+        self.pad = ops.Pad(
+            paddings=((0, 0), (0, 2), (0, 0), (0, 0)))
 
     def construct(self, x):
         y = self.net(x)
@@ -34,10 +34,10 @@ class Layer1(nn.Cell):
 
 class Layer2(nn.Cell):
     def __init__(self):
-        super(Layer2, self).__init__()
+        super().__init__()
         self.net = nn.Conv2d(3, 1, 7, pad_mode='same')
-        self.pad = nn.Pad(
-            paddings=((0, 0), (0, 2), (0, 0), (0, 0)), mode="CONSTANT")
+        self.pad = ops.Pad(
+            paddings=((0, 0), (0, 2), (0, 0), (0, 0)))
 
     def construct(self, x):
         y = self.net(x)
@@ -46,7 +46,7 @@ class Layer2(nn.Cell):
 
 class Layer3(nn.Cell):
     def __init__(self):
-        super(Layer3, self).__init__()
+        super().__init__()
         self.net = nn.Conv2d(3, 3, 3, pad_mode='same')
 
     def construct(self, x):
@@ -55,7 +55,7 @@ class Layer3(nn.Cell):
 
 class SwitchNet(nn.Cell):
     def __init__(self):
-        super(SwitchNet, self).__init__()
+        super().__init__()
         self.layer1 = Layer1()
         self.layer2 = Layer2()
         self.layer3 = Layer3()
@@ -68,7 +68,7 @@ class SwitchNet(nn.Cell):
 
 class MySwitchNet(nn.Cell):
     def __init__(self):
-        super(MySwitchNet, self).__init__()
+        super().__init__()
         self.layer1 = Layer1()
         self.layer2 = Layer2()
         self.layer3 = Layer3()
@@ -76,9 +76,9 @@ class MySwitchNet(nn.Cell):
 
     def construct(self, x, index):
         y = self.layers[0](x)
-        for i in range(len(self.layers)):
+        for i, layer in enumerate(self.layers):
             if i == index:
-                y = self.layers[i](x)
+                y = layer(x)
         return y
 
 
@@ -91,7 +91,7 @@ def test_layer_switch():
 
 class MySwitchNetPynative(nn.Cell):
     def __init__(self):
-        super(MySwitchNetPynative, self).__init__()
+        super().__init__()
         self.layer1 = Layer1()
         self.layer2 = Layer2()
         self.layer3 = Layer3()

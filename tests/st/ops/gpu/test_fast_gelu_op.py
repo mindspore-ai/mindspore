@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""FastGelu operator tests on GPU."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -46,7 +47,7 @@ class FastGeluNet(nn.Cell):
 
     def __init__(self):
         """Init."""
-        super(FastGeluNet, self).__init__()
+        super().__init__()
         self.fast_gelu = P.FastGeLU()
 
     def construct(self, x):
@@ -59,7 +60,7 @@ class FastGeLUGrad(nn.Cell):
 
     def __init__(self, network):
         """Init."""
-        super(FastGeLUGrad, self).__init__()
+        super().__init__()
         self.fast_gelu_grad = C.GradOperation(get_all=True, sens_param=True)
         self.network = network
 
@@ -119,7 +120,7 @@ def test_fast_gelu(shape, dtype):
     assert np_all_close_with_loss(y_np, y_fun.asnumpy())
 
     x_ms = Tensor(x_np)
-    fast_gelu_nn = nn.FastGelu()
+    fast_gelu_nn = nn.layer.activation.FastGelu()
     y_nn = fast_gelu_nn(x_ms)
     assert np_all_close_with_loss(y_np, y_nn.asnumpy())
 

@@ -49,7 +49,7 @@ def get_optimizer(net, step_size):
     if config.use_lars:
         momentum = nn.Momentum(group_params, lr, config.momentum,
                                loss_scale=config.loss_scale, use_nesterov=config.use_nesterov)
-        opt = nn.LARS(momentum, epsilon=config.lars_epsilon, coefficient=config.lars_coefficient,
+        opt = nn.optim.LARS(momentum, epsilon=config.lars_epsilon, coefficient=config.lars_coefficient,
                       lars_filter=lambda x: 'beta' not in x.name and 'gamma' not in x.name and 'bias' not in x.name)
 
     else:

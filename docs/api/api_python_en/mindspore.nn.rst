@@ -5,6 +5,13 @@ Neural Network Cell
 
 For building predefined building blocks or computational units in neural networks.
 
+See :doc:`nn_removed_apis` for the removed legacy layers and losses and their migration requirements.
+
+.. toctree::
+    :hidden:
+
+    nn_removed_apis
+
 For more information about dynamic shape support status, please refer to `Dynamic Shape Support Status of nn Interface <https://mindspore.cn/docs/en/master/api_python/dynamic_shape_nn.html>`_ .
 
 Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.nn` operators in MindSpore, please refer to the link `mindspore.nn API Interface Change <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_en.md>`_ .
@@ -50,7 +57,6 @@ Wrapper Layer
     mindspore.nn.GradAccumulationCell
     mindspore.nn.ParameterUpdate
     mindspore.nn.PipelineCell
-    mindspore.nn.TimeDistributed
     mindspore.nn.TrainOneStepCell
     mindspore.nn.TrainOneStepWithLossScaleCell
     mindspore.nn.WithEvalCell
@@ -124,7 +130,7 @@ Nonlinear Activation Layer
 
     mindspore.nn.CELU
     mindspore.nn.ELU
-    mindspore.nn.FastGelu
+    mindspore.nn.layer.activation.FastGelu
     mindspore.nn.GELU
     mindspore.nn.GLU
     mindspore.nn.get_activation
@@ -135,7 +141,6 @@ Nonlinear Activation Layer
     mindspore.nn.LeakyReLU
     mindspore.nn.LogSigmoid
     mindspore.nn.LogSoftmax
-    mindspore.nn.LRN
     mindspore.nn.Mish
     mindspore.nn.Softsign
     mindspore.nn.PReLU
@@ -162,7 +167,6 @@ Linear Layer
     :template: classtemplate.rst
 
     mindspore.nn.Dense
-    mindspore.nn.BiDense
 
 Dropout Layer
 -------------
@@ -212,7 +216,6 @@ Pooling Layer
     mindspore.nn.AvgPool1d
     mindspore.nn.AvgPool2d
     mindspore.nn.AvgPool3d
-    mindspore.nn.FractionalMaxPool3d
     mindspore.nn.LPPool1d
     mindspore.nn.LPPool2d
     mindspore.nn.MaxPool1d
@@ -230,7 +233,6 @@ Padding Layer
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.Pad
     mindspore.nn.ConstantPad1d
     mindspore.nn.ConstantPad2d
     mindspore.nn.ConstantPad3d
@@ -255,24 +257,19 @@ Loss Function
     mindspore.nn.CosineEmbeddingLoss
     mindspore.nn.CrossEntropyLoss
     mindspore.nn.CTCLoss
-    mindspore.nn.DiceLoss
-    mindspore.nn.FocalLoss
     mindspore.nn.GaussianNLLLoss
     mindspore.nn.HingeEmbeddingLoss
     mindspore.nn.HuberLoss
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
     mindspore.nn.MarginRankingLoss
-    mindspore.nn.MAELoss
     mindspore.nn.MSELoss
-    mindspore.nn.MultiClassDiceLoss
     mindspore.nn.MultilabelMarginLoss
     mindspore.nn.MultiLabelSoftMarginLoss
     mindspore.nn.MultiMarginLoss
     mindspore.nn.NLLLoss
     mindspore.nn.PoissonNLLLoss
-    mindspore.nn.RMSELoss
-    mindspore.nn.SampledSoftmaxLoss
+    mindspore.nn.loss.SampledSoftmaxLoss
     mindspore.nn.SmoothL1Loss
     mindspore.nn.SoftMarginLoss
     mindspore.nn.SoftmaxCrossEntropyWithLogits
@@ -290,17 +287,17 @@ Optimizer
     mindspore.nn.Adagrad
     mindspore.nn.Adam
     mindspore.nn.AdaMax
-    mindspore.nn.AdamWeightDecay
-    mindspore.nn.AdaSumByDeltaWeightWrapCell
-    mindspore.nn.AdaSumByGradWrapCell
+    mindspore.nn.optim.AdamWeightDecay
+    mindspore.nn.optim.AdaSumByDeltaWeightWrapCell
+    mindspore.nn.optim.AdaSumByGradWrapCell
     mindspore.nn.ASGD
-    mindspore.nn.FTRL
+    mindspore.nn.optim.FTRL
     mindspore.nn.Lamb
-    mindspore.nn.LARS
-    mindspore.nn.LazyAdam
+    mindspore.nn.optim.LARS
+    mindspore.nn.optim.LazyAdam
     mindspore.nn.Momentum
-    mindspore.nn.OptTFTWrapper
-    mindspore.nn.ProximalAdagrad
+    mindspore.nn.optim.OptTFTWrapper
+    mindspore.nn.optim.ProximalAdagrad
     mindspore.nn.RMSProp
     mindspore.nn.Rprop
     mindspore.nn.SGD

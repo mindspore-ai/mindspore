@@ -43,7 +43,7 @@ class ResidualBlock(nn.Cell):
                  in_channel,
                  out_channel,
                  stride=1):
-        super(ResidualBlock, self).__init__()
+        super().__init__()
         self.stride = stride
         channel = out_channel // self.expansion
         self.conv1 = _conv1x1(in_channel, channel, stride=1)
@@ -74,7 +74,7 @@ class ResidualBlock(nn.Cell):
 
 class ResNetSimple(nn.Cell):
     def __init__(self):
-        super(ResNetSimple, self).__init__(auto_prefix=True)
+        super().__init__(auto_prefix=True)
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, pad_mode='pad', weight_init="ones")
         self.bn1 = _bn(16)
         self.relu = P.ReLU()
@@ -368,7 +368,7 @@ def test_cellcontainer_pattern():
             new_relu2_node = Node.create_call_cell(new_relu2, ['new_relu_2'],
                                                    [ScopedValue.create_naming_value('new_maxpool1')],
                                                    name="new_relu2")
-            new_maxpool2 = nn.BiDense(1, 1, 2)
+            new_maxpool2 = nn.MSELoss(reduction='none')
             new_maxpool2_node = Node.create_call_cell(new_maxpool2, [bn_node.get_targets()[0]],
                                                       [ScopedValue.create_naming_value('new_relu_1'),
                                                        ScopedValue.create_naming_value('new_relu_2')])
@@ -407,4 +407,4 @@ def test_cellcontainer_pattern():
     assert isinstance(getattr(getattr(cell_container._cells["2"], "down_sample_layer"), "0"), nn.MaxPool2d)
     assert isinstance(getattr(cell_container, "3"), nn.MaxPool2d)
     assert isinstance(getattr(cell_container, "4"), nn.ReLU)
-    assert isinstance(getattr(cell_container, "6"), nn.BiDense)
+    assert isinstance(getattr(cell_container, "6"), nn.MSELoss)

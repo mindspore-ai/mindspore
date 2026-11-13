@@ -29,7 +29,7 @@ from mindspore.ops.function.nn_func import max_pool2d_ext
 
 
 __all__ = ['AvgPool3d', 'MaxPool3d', 'AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'FractionalMaxPool2d',
-           'FractionalMaxPool3d', 'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d', 'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d',
+           'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d', 'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d',
            'AdaptiveAvgPool2d', 'AdaptiveAvgPool3d', 'MaxUnpool1d', 'MaxUnpool2d', 'MaxUnpool3d', 'LPPool1d',
            'LPPool2d', 'AvgPool2dExt', 'AvgPool3dExt', 'MaxPool2dExt', 'AvgPool1dExt']
 
@@ -2019,108 +2019,6 @@ class FractionalMaxPool2d(Cell):
 
     def construct(self, input):
         return ops.fractional_max_pool2d(input, self.kernel_size, self.output_size, self.output_ratio,
-                                         self.return_indices, self._random_samples)
-
-
-class FractionalMaxPool3d(Cell):
-    r"""
-    Applies the 3D FractionalMaxPool operation over `input`. The output Tensor shape can be determined by either
-    `output_size` or `output_ratio`, and the step size is determined by `_random_samples`. `output_size` will take
-    effect when `output_size` and `output_ratio` are set at the same time.
-    And `output_size` and `output_ratio` can not be ``None`` at the same time.
-
-    Refer to the paper `Fractional MaxPooling by Ben Graham <https://arxiv.org/abs/1412.6071>`_  for more details.
-
-    The input and output data format can be "NCDHW". N is the batch size, C is the number of channels,
-    D the feature depth, H is the feature height, and W is the feature width.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value, is a positive int
-            that represents depth, height and width of the kernel, or a tuple of three positive integers that represent
-            depth, height and width respectively.
-        output_size (Union[int, tuple[int]], optional): The shape of the target `output_size`,
-            is an int number that represents depth, height and width, or a tuple of three positive integers that
-            represents depth, height and width respectively. If ``None`` , the shape of the target will be determined
-            by `output_ratio`. Default: ``None`` .
-        output_ratio (Union[float, tuple[float]], optional): The ratio of target output shape to input shape.
-            Specifying the size of the output tensor by using a ratio of the input size.
-            Data type : float16, float32, float64, and value is between (0, 1). If ``None`` , the shape of the target
-            will be determined by `output_size`.Default: ``None`` .
-        return_indices (bool, optional): Whether to return the indices of max value. Default: ``False`` .
-        _random_samples (Tensor, optional): The random step of FractionalMaxPool3d, which is a 3D tensor.
-            Tensor of data type: float16, float32, double, and value is between [0, 1).
-            Supported shape :math:`(N, C, 3)` or :math:`(1, C, 3)` . Default: ``None``, the values of `_random_samples`
-            will be randomly distributed using uniform distribution over an interval [0,1).
-
-    Inputs:
-        - **input** (Tensor) - The input of FractionalMaxPool3d, which is a 4D or 5D tensor.
-          Tensor of data type : float16, float32, float64.
-          Supported shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(C, D_{in}, H_{in}, W_{in})`.
-
-    Outputs:
-        - **y** (Tensor) - A tensor, the output of FractionalMaxPool3d.
-          Has the same data type with `input`.
-          Has the shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(C, D_{out}, H_{out}, W_{out})` ,
-          where :math:`(D_{out}, H_{out}, W_{out})` = `output_size`
-          or :math:`(D_{out}, H_{out}, W_{out})` = `output_ratio` * :math:`(D_{in}, H_{in}, W_{in})` .
-
-        - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
-          `y` and int32 data type. It will output only when `return_indices` is True.
-
-    Raises:
-        TypeError: If `input` is not a 4D or 5D tensor.
-        TypeError: If `_random_samples` is not a 3D tensor.
-        TypeError: If data type of `input` is not float16, float32, float64.
-        TypeError: If dtype of `_random_samples` is not float16, float32, float64.
-        TypeError: If dtype of `argmax` is not int32, int64.
-        TypeError: If `_random_samples` has different dtypes as `input`.
-        ValueError: If `output_size` is a tuple and if `output_size` length is not 3.
-        ValueError: If `kernel_size` is a tuple and if `kernel_size` length is not 3.
-        ValueError: If numbers in `output_size` or `kernel_size` is not positive.
-        ValueError: If `output_size` and `output_ratio` are None at the same time.
-        ValueError: If the first dimension size of `input` and `_random_samples` is not equal.
-        ValueError: If the second dimension size of `input` and `_random_samples` is not equal.
-        ValueError: If the third dimension size of `_random_samples` is not 3.
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = ms.Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-        ...            .reshape([1, 1, 2, 2, 4]), ms.float32)
-        >>> _random_samples = ms.Tensor(np.array([0.7, 0.7, 0.7]).reshape([1, 1, 3]), ms.float32)
-        >>> net = ms.nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_size=(1, 1, 3),
-        ...                              _random_samples=_random_samples, return_indices=True)
-        >>> output, argmax = net(x)
-        >>> print(output)
-        [[[[[13. 14. 16.]]]]]
-        >>> print(argmax)
-        [[[[[12 13 15]]]]]
-        >>> net = ms.nn.FractionalMaxPool3d(kernel_size=(1, 1, 1), output_ratio=(0.5, 0.5, 0.5),
-        ...                              _random_samples=_random_samples, return_indices=True)
-        >>> output, argmax = net(x)
-        >>> print(output)
-        [[[[[13. 16.]]]]]
-        >>> print(argmax)
-        [[[[[12 15]]]]]
-    """
-
-    def __init__(self, kernel_size, output_size=None, output_ratio=None, return_indices=False, _random_samples=None):
-        """Initialize FractionalMaxPool3d."""
-        super().__init__()
-        self.kernel_size = kernel_size
-        self.output_size = output_size
-        self.output_ratio = output_ratio
-        self.return_indices = return_indices
-        self._random_samples = _random_samples
-
-    def construct(self, input):
-        return ops.fractional_max_pool3d(input, self.kernel_size, self.output_size, self.output_ratio,
                                          self.return_indices, self._random_samples)
 
 

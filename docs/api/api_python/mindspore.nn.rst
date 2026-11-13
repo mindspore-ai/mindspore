@@ -5,6 +5,13 @@ mindspore.nn
 
 用于构建神经网络中的预定义构建块或计算单元。
 
+本次移除的旧层与损失函数及迁移注意事项见 :doc:`nn_removed_apis` 。
+
+.. toctree::
+    :hidden:
+
+    nn_removed_apis
+
 动态shape的支持情况详见 `nn接口动态shape支持情况 <https://mindspore.cn/docs/zh-CN/master/api_python/dynamic_shape_nn.html>`_ 。
 
 MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.nn API接口变更 <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/nn_api_updates_cn.md>`_ 。
@@ -50,7 +57,6 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.GradAccumulationCell
     mindspore.nn.ParameterUpdate
     mindspore.nn.PipelineCell
-    mindspore.nn.TimeDistributed
     mindspore.nn.TrainOneStepCell
     mindspore.nn.TrainOneStepWithLossScaleCell
     mindspore.nn.WithEvalCell
@@ -124,7 +130,7 @@ Transformer层
 
     mindspore.nn.CELU
     mindspore.nn.ELU
-    mindspore.nn.FastGelu
+    mindspore.nn.layer.activation.FastGelu
     mindspore.nn.GELU
     mindspore.nn.GLU
     mindspore.nn.get_activation
@@ -135,7 +141,6 @@ Transformer层
     mindspore.nn.LeakyReLU
     mindspore.nn.LogSigmoid
     mindspore.nn.LogSoftmax
-    mindspore.nn.LRN
     mindspore.nn.Mish
     mindspore.nn.Softsign
     mindspore.nn.PReLU
@@ -162,7 +167,6 @@ Transformer层
     :template: classtemplate.rst
 
     mindspore.nn.Dense
-    mindspore.nn.BiDense
 
 Dropout层
 -----------------
@@ -212,7 +216,6 @@ Dropout层
     mindspore.nn.AvgPool1d
     mindspore.nn.AvgPool2d
     mindspore.nn.AvgPool3d
-    mindspore.nn.FractionalMaxPool3d
     mindspore.nn.LPPool1d
     mindspore.nn.LPPool2d
     mindspore.nn.MaxPool1d
@@ -230,7 +233,6 @@ Dropout层
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.nn.Pad
     mindspore.nn.ConstantPad1d
     mindspore.nn.ConstantPad2d
     mindspore.nn.ConstantPad3d
@@ -255,24 +257,19 @@ Dropout层
     mindspore.nn.CosineEmbeddingLoss
     mindspore.nn.CrossEntropyLoss
     mindspore.nn.CTCLoss
-    mindspore.nn.DiceLoss
-    mindspore.nn.FocalLoss
     mindspore.nn.GaussianNLLLoss
     mindspore.nn.HingeEmbeddingLoss
     mindspore.nn.HuberLoss
     mindspore.nn.KLDivLoss
     mindspore.nn.L1Loss
     mindspore.nn.MarginRankingLoss
-    mindspore.nn.MAELoss
     mindspore.nn.MSELoss
-    mindspore.nn.MultiClassDiceLoss
     mindspore.nn.MultilabelMarginLoss
     mindspore.nn.MultiLabelSoftMarginLoss
     mindspore.nn.MultiMarginLoss
     mindspore.nn.NLLLoss
     mindspore.nn.PoissonNLLLoss
-    mindspore.nn.RMSELoss
-    mindspore.nn.SampledSoftmaxLoss
+    mindspore.nn.loss.SampledSoftmaxLoss
     mindspore.nn.SmoothL1Loss
     mindspore.nn.SoftMarginLoss
     mindspore.nn.SoftmaxCrossEntropyWithLogits
@@ -290,17 +287,17 @@ Dropout层
     mindspore.nn.Adagrad
     mindspore.nn.Adam
     mindspore.nn.AdaMax
-    mindspore.nn.AdamWeightDecay
-    mindspore.nn.AdaSumByDeltaWeightWrapCell
-    mindspore.nn.AdaSumByGradWrapCell
+    mindspore.nn.optim.AdamWeightDecay
+    mindspore.nn.optim.AdaSumByDeltaWeightWrapCell
+    mindspore.nn.optim.AdaSumByGradWrapCell
     mindspore.nn.ASGD
-    mindspore.nn.FTRL
+    mindspore.nn.optim.FTRL
     mindspore.nn.Lamb
-    mindspore.nn.LARS
-    mindspore.nn.LazyAdam
+    mindspore.nn.optim.LARS
+    mindspore.nn.optim.LazyAdam
     mindspore.nn.Momentum
-    mindspore.nn.OptTFTWrapper
-    mindspore.nn.ProximalAdagrad
+    mindspore.nn.optim.OptTFTWrapper
+    mindspore.nn.optim.ProximalAdagrad
     mindspore.nn.RMSProp
     mindspore.nn.Rprop
     mindspore.nn.SGD

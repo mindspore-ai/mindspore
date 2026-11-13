@@ -893,7 +893,7 @@ class AdamWeightDecay(Optimizer):
         >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
-        >>> optim = nn.AdamWeightDecay(params=net.trainable_params())
+        >>> optim = nn.optim.AdamWeightDecay(params=net.trainable_params())
         >>>
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
@@ -901,7 +901,7 @@ class AdamWeightDecay(Optimizer):
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01},
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
-        >>> optim = nn.AdamWeightDecay(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> optim = nn.optim.AdamWeightDecay(group_params, learning_rate=0.1, weight_decay=0.0)
         >>> # The parameters in `conv_params` will use default learning rate of 0.1 and weight decay of 0.01.
         >>> # The parameters in `no_conv_params` will use learning rate of 0.01 and default weight decay of 0.0.
         >>> # The final order of parameters in which the optimizer will be followed is the value of 'order_params'.

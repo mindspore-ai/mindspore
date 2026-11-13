@@ -12,16 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained neural-network and operator regression tests."""
 from tests.mark_utils import arg_mark
 
-import pytest
 import numpy as np
 
 import mindspore
 import mindspore.nn as nn
 import mindspore.context as context
 
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.ops.composite import GradOperation
 
 
@@ -39,8 +39,8 @@ def test_mirror_pad():
     test2_arr_exp = [[[[2, 1, 1, 2, 3, 3, 2], [2, 1, 1, 2, 3, 3, 2], [5, 4, 4, 5, 6, 6, 5],
                        [8, 7, 7, 8, 9, 9, 8], [8, 7, 7, 8, 9, 9, 8]]]]
 
-    reflect_op = nn.Pad(mode='REFLECT', paddings=test_1_paddings)
-    symm_op = nn.Pad(mode='SYMMETRIC', paddings=test_2_paddings)
+    reflect_op = Net(mode_='REFLECT', pads=test_1_paddings)
+    symm_op = Net(mode_='SYMMETRIC', pads=test_2_paddings)
 
     x_test_1 = Tensor(np.array(test1_arr_in), dtype=mindspore.float32)
     x_test_2 = Tensor(np.array(test2_arr_in), dtype=mindspore.float32)
@@ -57,7 +57,7 @@ def test_mirror_pad():
 
 class Grad(nn.Cell):
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.grad = GradOperation(get_all=True)
         self.network = network
 
@@ -67,11 +67,12 @@ class Grad(nn.Cell):
 
 class Net(nn.Cell):
     def __init__(self, pads, mode_):
-        super(Net, self).__init__()
-        self.pad = nn.Pad(mode=mode_, paddings=pads)
+        super().__init__()
+        self.pad = ops.MirrorPad(mode=mode_)
+        self.paddings = Tensor(pads, mindspore.int64)
 
     def construct(self, x):
-        return self.pad(x)
+        return self.pad(x, self.paddings)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
@@ -99,7 +100,7 @@ def test_mirror_pad_fwd_back_4d_int32_reflect():
     test_arr_np = np.arange(total_val).reshape(shape) + 1
     test_arr_ms = Tensor(test_arr_np, dtype=mindspore.int32)
     # fwd_pass_check
-    op = nn.Pad(mode="REFLECT", paddings=pads)
+    op = Net(mode_="REFLECT", pads=pads)
     expected_np_result = np.pad(test_arr_np, pads, 'reflect')
     obtained_ms_res = op(test_arr_ms).asnumpy()
     np.testing.assert_array_equal(expected_np_result, obtained_ms_res)
@@ -137,7 +138,7 @@ def test_mirror_pad_fwd_back_4d_int32_symm():
     test_arr_np = np.arange(total_val).reshape(shape) + 1
     test_arr_ms = Tensor(test_arr_np, dtype=mindspore.int32)
     # fwd_pass_check
-    op = nn.Pad(mode="SYMMETRIC", paddings=pads)
+    op = Net(mode_="SYMMETRIC", pads=pads)
     expected_np_result = np.pad(test_arr_np, pads, 'symmetric')
     obtained_ms_res = op(test_arr_ms).asnumpy()
     np.testing.assert_array_equal(expected_np_result, obtained_ms_res)
@@ -184,8 +185,8 @@ def test_mirror_pad_dynamic():
     test2_arr_exp = [[[[2, 1, 1, 2, 3, 3, 2], [2, 1, 1, 2, 3, 3, 2], [5, 4, 4, 5, 6, 6, 5],
                        [8, 7, 7, 8, 9, 9, 8], [8, 7, 7, 8, 9, 9, 8]]]]
 
-    reflect_op = nn.Pad(mode='REFLECT', paddings=test_1_paddings)
-    symm_op = nn.Pad(mode='SYMMETRIC', paddings=test_2_paddings)
+    reflect_op = Net(mode_='REFLECT', pads=test_1_paddings)
+    symm_op = Net(mode_='SYMMETRIC', pads=test_2_paddings)
 
     x_test_1 = Tensor(np.array(test1_arr_in), dtype=mindspore.float32)
     x_test_2 = Tensor(np.array(test2_arr_in), dtype=mindspore.float32)

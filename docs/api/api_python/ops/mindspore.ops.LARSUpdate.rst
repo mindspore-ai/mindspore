@@ -7,7 +7,7 @@ mindspore.ops.LARSUpdate
 
     对梯度的平方和应用LARS（layer-wise adaptive rate scaling）算法。
 
-    更多细节请参考 :class:`mindspore.nn.LARS` 。
+    更多细节请参考 :class:`mindspore.nn.optim.LARS` 。
 
     参数：
         - **epsilon** (float，可选) - 添加在分母中，提高数值稳定性。默认值： ``1e-05`` 。

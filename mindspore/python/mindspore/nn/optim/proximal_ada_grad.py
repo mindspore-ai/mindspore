@@ -56,7 +56,7 @@ def _check_param_value(accum, l1, l2, use_locking, prim_name=None):
 
 class ProximalAdagrad(Optimizer):
     r"""
-    `mindspore.nn.ProximalAdagrad` is deprecated from version 2.9.0 and will be removed in a future version.
+    `mindspore.nn.optim.ProximalAdagrad` is deprecated from version 2.9.0 and will be removed in a future version.
 
     This class implements the ProximalAdagrad algorithm, which is used for online learning and stochastic optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting
@@ -173,7 +173,7 @@ class ProximalAdagrad(Optimizer):
         >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> #1) All parameters use the same learning rate and weight decay
-        >>> optim = nn.ProximalAdagrad(params=net.trainable_params())
+        >>> optim = nn.optim.ProximalAdagrad(params=net.trainable_params())
         >>>
         >>> #2) Use parameter groups and set different values
         >>> conv_params = list(filter(lambda x: 'conv' in x.name, net.trainable_params()))
@@ -181,7 +181,7 @@ class ProximalAdagrad(Optimizer):
         >>> group_params = [{'params': conv_params, 'weight_decay': 0.01, 'grad_centralization':True},
         ...                 {'params': no_conv_params, 'lr': 0.01},
         ...                 {'order_params': net.trainable_params()}]
-        >>> optim = nn.ProximalAdagrad(group_params, learning_rate=0.1, weight_decay=0.0)
+        >>> optim = nn.optim.ProximalAdagrad(group_params, learning_rate=0.1, weight_decay=0.0)
          >>> # The conv_params's parameters will use default learning rate of 0.1 and weight decay of 0.01 and grad
         >>> # centralization of True.
         >>> # The no_conv_params's parameters will use learning rate of 0.01 and default weight decay of 0.0 and grad

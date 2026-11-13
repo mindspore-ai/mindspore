@@ -771,19 +771,19 @@ def mindspore_optmizer_choose(net, opt_type, default_lr=0.1, momentum=0.9, defau
     opt_dict["RMSProp"] = nn.RMSProp(params=group_params, learning_rate=default_lr, decay=0.99,
                                      epsilon=1e-8,
                                      weight_decay=default_wd)
-    opt_dict["FTRL"] = nn.FTRL(params=group_params, learning_rate=default_lr,
+    opt_dict["FTRL"] = nn.optim.FTRL(params=group_params, learning_rate=default_lr,
                                weight_decay=default_wd)
     opt_dict["Lamb"] = nn.Lamb(params=group_params, learning_rate=default_lr,
                                weight_decay=default_wd)
-    opt_dict["AdamWeightDecay"] = nn.AdamWeightDecay(params=group_params, learning_rate=default_lr,
+    opt_dict["AdamWeightDecay"] = nn.optim.AdamWeightDecay(params=group_params, learning_rate=default_lr,
                                                      weight_decay=default_wd)
     opt_dict["LazyAdam"] = nn.Adam(params=group_params, learning_rate=default_lr,
                                    weight_decay=default_wd, use_lazy=True)
-    opt_dict["ProximalAdagrad"] = nn.ProximalAdagrad(params=group_params, learning_rate=default_lr,
+    opt_dict["ProximalAdagrad"] = nn.optim.ProximalAdagrad(params=group_params, learning_rate=default_lr,
                                                      weight_decay=default_wd)
     momentum = nn.Momentum(params=group_params, learning_rate=default_lr, momentum=momentum,
                            weight_decay=default_wd)
-    opt_dict["LARS"] = nn.LARS(momentum)
+    opt_dict["LARS"] = nn.optim.LARS(momentum)
 
     return opt_dict[opt_type]
 
