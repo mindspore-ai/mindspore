@@ -2955,21 +2955,23 @@ FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
 
 bool MSANFModelParser::BuildPrimitiveNodeFromProto(const mind_ir::ModelProto &model_proto) {
   // GraphKernel contains attribute with graph, so build other primitives first, than deal with the GraphKernels.
-  std::vector<mind_ir::PrimitiveProto> graph_kernel_prim_proto;
+  // Deferred abstracts borrow attributes from the model, so do not copy the primitives here.
+  std::vector<int> graph_kernel_prim_indices;
   for (int i = 0; i < model_proto.primitives_size(); ++i) {
     auto prim_name = model_proto.primitives(i).name();
     if (prim_name.find("GraphKernel") == 0 || prim_name.find("_packet") != std::string::npos) {
-      (void)graph_kernel_prim_proto.emplace_back(model_proto.primitives(i));
+      graph_kernel_prim_indices.push_back(i);
     } else if (!BuildPrimitiveNode(model_proto.primitives(i))) {
       MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << prim_name;
       return false;
     }
   }
-  auto it = std::find_if(graph_kernel_prim_proto.begin(), graph_kernel_prim_proto.end(),
-                         [&](const mind_ir::PrimitiveProto &proto) { return !BuildPrimitiveNode(proto); });
-  if (it != graph_kernel_prim_proto.end()) {
-    MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << it->DebugString();
-    return false;
+  for (int index : graph_kernel_prim_indices) {
+    const auto &proto = model_proto.primitives(index);
+    if (!BuildPrimitiveNode(proto)) {
+      MS_LOG(ERROR) << "Parse primitives info for pb file failed! " << proto.DebugString();
+      return false;
+    }
   }
 
   return true;
