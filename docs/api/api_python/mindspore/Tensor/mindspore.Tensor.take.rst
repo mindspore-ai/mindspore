@@ -6,7 +6,7 @@ mindspore.Tensor.take
     在指定维度上获取Tensor中的元素。
 
     .. warning::
-        2.9.0（不含）之后版本非兼容性变更：删除 `take(indices, axis=None, mode='clip')` 与 `take(index)` 重载，仅支持 `take(index)`。
+        2.9.0（不含）之后版本非兼容性变更：删除 `take(indices, axis=None, mode='clip')` 重载，仅支持 `take(index)`。
 
     参数：
         - **indices** (Tensor) - 待提取的值的shape为 :math:`(Nj...)` 的索引。

@@ -222,7 +222,7 @@ class Node:
 
         Args:
             index (int): Indicate which input being modified.
-            arg (Union[ScopedValue, str]): New argument to been set.
+            arg (Union[ScopedValue, str]): New argument to be set.
 
         Raises:
             TypeError: If `index` is not a `int` number.
@@ -457,7 +457,7 @@ class Node:
         subtree: SymbolTreeImpl = self.get_handler().symbol_tree
         if subtree is None:
             raise AttributeError(
-                f"For get_sub_tree, no symbol tree is stroed in node {self.get_name()}.")
+                f"For get_sub_tree, no symbol tree is stored in node {self.get_name()}.")
         from .symbol_tree import SymbolTree
         return SymbolTree(subtree)
 

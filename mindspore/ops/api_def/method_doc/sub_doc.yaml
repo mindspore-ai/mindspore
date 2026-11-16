@@ -18,7 +18,7 @@ sub:
           consistent.
 
     Args:
-        other (Union[Tensor, number.Number, bool]): The second self, is a number.Number or
+        other (Union[Tensor, number.Number, bool]): The second input is a number.Number or
             a bool or a tensor whose data type is
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_ or
             `bool <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.dtype.html>`_.
@@ -27,7 +27,7 @@ sub:
         alpha (number.Number, optional): A scaling factor applied to `other`, default ``1``.
 
     Returns:
-        Tensor with a shape that is the same as the broadcasted shape of the self `self` and `other`,
+        Tensor with a shape that is the same as the broadcasted shape of `self` and `other`,
         and the data type is the one with higher precision or higher digits among the two inputs and alpha.
 
     Raises:

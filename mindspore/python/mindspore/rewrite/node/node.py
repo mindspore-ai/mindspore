@@ -85,10 +85,10 @@ class Node:
             node_type (NodeType): A NodeType as type of Node.
             ast_node (ast.AST, optional): An instance of ast.AST represents corresponding node in ast. `ast_node` should
                 not be None except when node type is Unknown.
-            targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            targets (list[ScopedValue]): A list of instances of ScopedValue. See detail in docstring of Node class.
             func_name (ScopedValue, optional): An instance of ScopedValue. See detail in docstring of Node class.
-            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs (Dict[str, ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instances of ScopedValue. See detail in docstring of Node class.
+            kwargs (Dict[str, ScopedValue]): A list of instances of ScopedValue. See detail in docstring of Node class.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
             instance: Object in network corresponding to this node.
@@ -139,10 +139,10 @@ class Node:
         Args:
             ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast. `ast_node`
                 should not be None currently.
-            targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            targets (list[ScopedValue]): A list of instances of ScopedValue. See detail in docstring of Node class.
             func_name ([ScopedValue, optional]): An instance of ScopedValue. See detail in docstring of Node class.
-            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instances of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instances of ScopedValue. See detail in docstring of Node class.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
         """
@@ -220,7 +220,7 @@ class Node:
             ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast. The type of
                 node is ast.Assign, and the type of ast_node.value is one of ast.BinOp, ast.UnaryOp, ast.BoolOp and
                 ast.Compare.
-            targets (list[ScopedValue]): Targets of mathematical operations. A list of instance of `ScopedValue`.
+            targets (list[ScopedValue]): Targets of mathematical operations. A list of instances of `ScopedValue`.
                 See detail in docstring of Node class.
             op_type (ScopedValue): The type of ast_node.value saved by string. A ScopedValue with NamingValue type.
             args (list[ScopedValue]): Values participating in the mathematical operations. All values are saved
@@ -274,9 +274,9 @@ class Node:
             func_name (ScopedValue): Name of function.
             ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
             func_obj (Object): An object of function. See detail in docstring of Node class.
-            targets (List[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            args (List[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            kwargs (Dict[str, ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of `Node`
+            targets (List[ScopedValue]): A list of instances of `ScopedValue`. See detail in docstring of Node class.
+            args (List[ScopedValue]): A list of instances of `ScopedValue`. See detail in docstring of Node class.
+            kwargs (Dict[str, ScopedValue]): A list of instances of `ScopedValue`. See detail in docstring of `Node`
                 class.
         '''
         from . import CallFunction
@@ -301,9 +301,9 @@ class Node:
         Args:
             op (Union[Cell, Primitive]): An instance of `Cell` or `Primitive` corresponding to this node.
             ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
-            targets (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            args (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of `ScopedValue`. See detail in docstring of `Node`
+            targets (list[ScopedValue]): A list of instances of `ScopedValue`. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instances of `ScopedValue`. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instances of `ScopedValue`. See detail in docstring of `Node`
                 class.
             node_name (str): A string represents name of node. Name of node will be unique when inserted into
                 `SymbolTree`. Name of node also used as field name in network class.
@@ -356,10 +356,10 @@ class Node:
         Args:
             op (Union[Cell, Primitive]): An instance of `Cell` or `Primitive` corresponding to this node.
             ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
-            targets (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
+            targets (list[ScopedValue]): A list of instances of `ScopedValue`. See detail in docstring of Node class.
             func_name ([ScopedValue, optional]): An instance of `ScopedValue`. See detail in docstring of Node class.
-            args (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of `ScopedValue`. See detail in docstring of `Node`
+            args (list[ScopedValue]): A list of instances of `ScopedValue`. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instances of `ScopedValue`. See detail in docstring of `Node`
                 class.
             node_name (str): A string represents name of node. Name of node will be unique when inserted into
                 `SymbolTree`. Name of node also used as field name in network class.
@@ -884,7 +884,7 @@ class Node:
 
         Args:
             index (int): Indicate which input being modified.
-            arg (Union[ScopedValue, str]): New argument to been set.
+            arg (Union[ScopedValue, str]): New argument to be set.
 
         Raises:
             ValueError: If `index` is out of range.
@@ -904,7 +904,7 @@ class Node:
         Note that when _normalized_args is updated, corresponding ast node would be updated also.
 
         Args:
-            args (list[ScopedValue]): New arguments to been set.
+            args (list[ScopedValue]): New arguments to be set.
 
         Raises:
             TypeError: Element of new argument is not an instance of ScopedValue.
@@ -923,7 +923,7 @@ class Node:
         Note that when _normalized_args is updated, corresponding ast node would be updated also.
 
         Args:
-            kwargs (dict{str: ScopedValue}): New arguments to been set.
+            kwargs (dict{str: ScopedValue}): New arguments to be set.
 
         Raises:
             TypeError: Value of new argument is not an instance of ScopedValue.
@@ -1434,10 +1434,10 @@ class TreeNode(Node):
         Args:
             tree: An instance of SymbolTree represents a handler of sub-symbol-tree.
             ast_node (ast.AST): An instance of ast.AST represents corresponding node in ast.
-            targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            targets (list[ScopedValue]): A list of instances of ScopedValue. See detail in docstring of Node class.
             func_name ([ScopedValue, optional]): An instance of ScopedValue. See detail in docstring of Node class.
-            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instances of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instances of ScopedValue. See detail in docstring of Node class.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
             instance: Object in network corresponding to this node.

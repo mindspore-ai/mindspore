@@ -23,7 +23,7 @@ masked_scatter_:
             TypeError: If data type of the "self Tensor" is not supported.
             TypeError: If dtype of `mask` is not bool.
             TypeError: If the dim of the "self Tensor" is less than the dim of `mask`.
-            ValueError: If `mask` can not be broadcastable to the "self Tensor".
+            ValueError: If `mask` can not be broadcast to the "self Tensor".
 
         Supported Platforms:
             ``Ascend``

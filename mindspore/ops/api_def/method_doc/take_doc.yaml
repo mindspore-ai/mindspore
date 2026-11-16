@@ -5,7 +5,7 @@ take:
     Takes elements from a tensor along an axis.
 
     .. warning::
-        Non-backward-compatible change after version 2.9.0: overloads `take(indices, axis=None, mode='clip')` and `take(index)` will be removed, and only `take(index)` will be supported.
+        Non-backward-compatible change after version 2.9.0: overloads `take(indices, axis=None, mode='clip')` will be removed, and only `take(index)` will be supported.
 
     Args:
         indices (Tensor): The indices with shape :math:`(Nj...)` of the values to extract.

@@ -16,12 +16,12 @@ mindspore.Tensor.median
 
     返回：
         - **y** (Tensor) - 返回指定维度上的中值。数据类型与 `input` 相同。
-        - **indices** (bool) - 指定中值索引。数据类型为int64。
+        - **indices** (Tensor) - 指定中值索引。数据类型为int64。
 
     异常：
         - **TypeError** - `axis` 不是int。
         - **TypeError** - `keepdims` 不是bool。
-        - **ValueError** - `axis` 的范围不在[-dims, dims - 1]， `dims` 表示 `x` 的维度长度。
+        - **ValueError** - `axis` 的范围不在[-self.dim, self.dim-1]。
 
     .. py:method:: mindspore.Tensor.median() -> Tensor
         :noindex:

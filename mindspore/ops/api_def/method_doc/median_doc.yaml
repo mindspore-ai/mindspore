@@ -14,7 +14,7 @@ median:
 
     Args:
         axis (int, optional): Specify the axis for calculation. Default: ``-1`` .
-        keepdims (bool, optional): Whether the output tensor need to retain `axis` dimension or not.
+        keepdims (bool, optional): Whether the output tensor needs to retain `axis` dimension or not.
             Default: ``False`` .
 
     Returns:
@@ -26,7 +26,7 @@ median:
     Raises:
         TypeError: If `axis` is not an int.
         TypeError: If `keepdims` is not a bool.
-        ValueError: If `axis` is not in range of [-x.dim, x.dim-1].
+        ValueError: If `axis` is not in range of [-self.dim, self.dim-1].
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -60,7 +60,7 @@ median:
 
     Args:
         dim (int, optional): Specify the axis for calculation. Default: ``None`` .
-        keepdim (bool, optional): Whether the output tensor need to retain ``dim`` dimension or not.
+        keepdim (bool, optional): Whether the output tensor needs to retain ``dim`` dimension or not.
             Default: ``False`` .
 
     Returns:

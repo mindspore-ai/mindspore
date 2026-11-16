@@ -19,7 +19,7 @@ mul_:
 
     Args:
         other (Union[Tensor, number.Number, bool]): `other` is a number.Number or
-            a bool or a tensor whose data type is number.Number and bool.
+            a bool or a tensor whose data type is number.Number or bool.
 
     Returns:
         Tensor, the shape is the same as `self` , and the data type is the same as `self` .

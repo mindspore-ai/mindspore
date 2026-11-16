@@ -134,7 +134,7 @@ class ExponentialDecayLR(LearningRateSchedule):
 
 class NaturalExpDecayLR(LearningRateSchedule):
     r"""
-    Calculates learning rate base on natural exponential decay function.
+    Calculates learning rate based on natural exponential decay function.
 
     For current step, the formula of computing decayed learning rate is:
 
@@ -209,7 +209,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
 
 class InverseDecayLR(LearningRateSchedule):
     r"""
-    Calculates learning rate base on inverse-time decay function.
+    Calculates learning rate based on inverse-time decay function.
 
     For current step, the formula of computing decayed learning rate is:
 

@@ -11,8 +11,8 @@ to:
 
     Args:
         dtype (dtype.Number, optional): The valid data type of the output tensor. Default: ``None``.
-        non_blocking(bool, optional): Data type conversion asynchronously. If ``True`` , convert data type asynchronously. If ``False`` , convert data type synchronously. Default: ``False`` .
-        copy(bool, optional): When copy is set ``True`` , a new Tensor is created even when then Tensor already matches the desired conversion. Default: ``False`` .
+        non_blocking (bool, optional): Data type conversion asynchronously. If ``True`` , convert data type asynchronously. If ``False`` , convert data type synchronously. Default: ``False`` .
+        copy (bool, optional): When copy is set ``True`` , a new Tensor is created even when the Tensor already matches the desired conversion. Default: ``False`` .
 
     Returns:
         Tensor, the data type of the tensor is `dtype` .
@@ -44,8 +44,8 @@ to:
     Args:
         device(str, optional): The device type of the output tensor. Default: ``None`` .
         dtype (dtype.Number, optional): The valid data type of the output tensor. Default: ``None`` .
-        non_blocking(bool, optional): Data type conversion asynchronously. If ``True`` , convert data type asynchronously. If ``False`` , convert data type synchronously. Default: ``False`` .
-        copy(bool, optional): When copy is set ``True`` , a new Tensor is created even when then Tensor already matches the desired conversion. Default: ``False`` .
+        non_blocking (bool, optional): Data type conversion asynchronously. If ``True`` , convert data type asynchronously. If ``False`` , convert data type synchronously. Default: ``False`` .
+        copy (bool, optional): When copy is set ``True`` , a new Tensor is created even when the Tensor already matches the desired conversion. Default: ``False`` .
     
     Returns:
         Tensor, the specified device type and data type of the tensor.
@@ -74,8 +74,8 @@ to:
 
     Args:
         other(Tensor): The returned Tensor has the same device and dtype as `other` .
-        non_blocking(bool, optional): Data type conversion asynchronously. If ``True`` , convert data type asynchronously. If ``False`` , convert data type synchronously. Default: ``False`` .
-        copy(bool, optional): When copy is set ``True`` , a new Tensor is created even when then Tensor already matches the desired conversion. Default: ``False`` .
+        non_blocking (bool, optional): Data type conversion asynchronously. If ``True`` , convert data type asynchronously. If ``False`` , convert data type synchronously. Default: ``False`` .
+        copy (bool, optional): When copy is set ``True`` , a new Tensor is created even when the Tensor already matches the desired conversion. Default: ``False`` .
 
     Returns:
         Tensor, same device and dtype as the Tensor `other` .
@@ -90,7 +90,7 @@ to:
         >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
         >>> input = Tensor(input_np)
         >>> other = input.to("Ascend", dtype=mindspore.float16)
-        >>  output = input.to(other)
+        >>> output = input.to(other)
         >>> print(output.device)
         "Ascend:0"
         >>> print(output.dtype)
