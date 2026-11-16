@@ -17,53 +17,28 @@
 #include "minddata/dataset/include/dataset/audio.h"
 
 #include "minddata/dataset/audio/transform/allpass_biquad_ir.h"
-#include "minddata/dataset/audio/transform/amplitude_to_db_ir.h"
-#include "minddata/dataset/audio/transform/angle_ir.h"
 #include "minddata/dataset/audio/transform/band_biquad_ir.h"
 #include "minddata/dataset/audio/transform/bandpass_biquad_ir.h"
 #include "minddata/dataset/audio/transform/bandreject_biquad_ir.h"
 #include "minddata/dataset/audio/transform/bass_biquad_ir.h"
 #include "minddata/dataset/audio/transform/biquad_ir.h"
-#include "minddata/dataset/audio/transform/complex_norm_ir.h"
-#include "minddata/dataset/audio/transform/compute_deltas_ir.h"
 #include "minddata/dataset/audio/transform/contrast_ir.h"
-#include "minddata/dataset/audio/transform/db_to_amplitude_ir.h"
 #include "minddata/dataset/audio/transform/dc_shift_ir.h"
 #include "minddata/dataset/audio/transform/deemph_biquad_ir.h"
-#include "minddata/dataset/audio/transform/detect_pitch_frequency_ir.h"
 #include "minddata/dataset/audio/transform/dither_ir.h"
 #include "minddata/dataset/audio/transform/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/transform/fade_ir.h"
 #include "minddata/dataset/audio/transform/filtfilt_ir.h"
 #include "minddata/dataset/audio/transform/flanger_ir.h"
-#include "minddata/dataset/audio/transform/frequency_masking_ir.h"
 #include "minddata/dataset/audio/transform/gain_ir.h"
-#include "minddata/dataset/audio/transform/griffin_lim_ir.h"
 #include "minddata/dataset/audio/transform/highpass_biquad_ir.h"
-#include "minddata/dataset/audio/transform/inverse_mel_scale_ir.h"
-#include "minddata/dataset/audio/transform/inverse_spectrogram_ir.h"
-#include "minddata/dataset/audio/transform/lfcc_ir.h"
 #include "minddata/dataset/audio/transform/lfilter_ir.h"
 #include "minddata/dataset/audio/transform/lowpass_biquad_ir.h"
-#include "minddata/dataset/audio/transform/magphase_ir.h"
-#include "minddata/dataset/audio/transform/mask_along_axis_iid_ir.h"
-#include "minddata/dataset/audio/transform/mask_along_axis_ir.h"
-#include "minddata/dataset/audio/transform/mel_scale_ir.h"
-#include "minddata/dataset/audio/transform/mel_spectrogram_ir.h"
-#include "minddata/dataset/audio/transform/mfcc_ir.h"
 #include "minddata/dataset/audio/transform/mu_law_decoding_ir.h"
 #include "minddata/dataset/audio/transform/mu_law_encoding_ir.h"
 #include "minddata/dataset/audio/transform/overdrive_ir.h"
-#include "minddata/dataset/audio/transform/phase_vocoder_ir.h"
 #include "minddata/dataset/audio/transform/phaser_ir.h"
-#include "minddata/dataset/audio/transform/pitch_shift_ir.h"
-#include "minddata/dataset/audio/transform/resample_ir.h"
 #include "minddata/dataset/audio/transform/riaa_biquad_ir.h"
-#include "minddata/dataset/audio/transform/sliding_window_cmn_ir.h"
-#include "minddata/dataset/audio/transform/spectral_centroid_ir.h"
-#include "minddata/dataset/audio/transform/spectrogram_ir.h"
-#include "minddata/dataset/audio/transform/time_masking_ir.h"
-#include "minddata/dataset/audio/transform/time_stretch_ir.h"
 #include "minddata/dataset/audio/transform/treble_biquad_ir.h"
 #include "minddata/dataset/audio/transform/vad_ir.h"
 #include "minddata/dataset/audio/transform/vol_ir.h"
@@ -88,28 +63,6 @@ AllpassBiquad::AllpassBiquad(int32_t sample_rate, float central_freq, float Q)
 std::shared_ptr<TensorOperation> AllpassBiquad::Parse() {
   return std::make_shared<AllpassBiquadOperation>(data_->sample_rate_, data_->central_freq_, data_->Q_);
 }
-
-// AmplitudeToDB Transform Operation.
-struct AmplitudeToDB::Data {
-  Data(ScaleType stype, float ref_value, float amin, float top_db)
-      : stype_(stype), ref_value_(ref_value), amin_(amin), top_db_(top_db) {}
-  ScaleType stype_;
-  float ref_value_;
-  float amin_;
-  float top_db_;
-};
-
-AmplitudeToDB::AmplitudeToDB(ScaleType stype, float ref_value, float amin, float top_db)
-    : data_(std::make_shared<Data>(stype, ref_value, amin, top_db)) {}
-
-std::shared_ptr<TensorOperation> AmplitudeToDB::Parse() {
-  return std::make_shared<AmplitudeToDBOperation>(data_->stype_, data_->ref_value_, data_->amin_, data_->top_db_);
-}
-
-// Angle Transform Operation.
-Angle::Angle() = default;
-
-std::shared_ptr<TensorOperation> Angle::Parse() { return std::make_shared<AngleOperation>(); }
 
 // BandBiquad Transform Operation.
 struct BandBiquad::Data {
@@ -198,30 +151,6 @@ std::shared_ptr<TensorOperation> Biquad::Parse() {
   return std::make_shared<BiquadOperation>(data_->b0_, data_->b1_, data_->b2_, data_->a0_, data_->a1_, data_->a1_);
 }
 
-// ComplexNorm Transform Operation.
-struct ComplexNorm::Data {
-  explicit Data(float power) : power_(power) {}
-  float power_;
-};
-
-ComplexNorm::ComplexNorm(float power) : data_(std::make_shared<Data>(power)) {}
-
-std::shared_ptr<TensorOperation> ComplexNorm::Parse() { return std::make_shared<ComplexNormOperation>(data_->power_); }
-
-// ComputeDeltas Transform Operation.
-struct ComputeDeltas::Data {
-  Data(int32_t win_length, BorderType pad_mode) : win_length_(win_length), pad_mode_(pad_mode) {}
-  int32_t win_length_;
-  BorderType pad_mode_;
-};
-
-ComputeDeltas::ComputeDeltas(int32_t win_length, BorderType pad_mode)
-    : data_(std::make_shared<Data>(win_length, pad_mode)) {}
-
-std::shared_ptr<TensorOperation> ComputeDeltas::Parse() {
-  return std::make_shared<ComputeDeltasOperation>(data_->win_length_, data_->pad_mode_);
-}
-
 // Contrast Transform Operation.
 struct Contrast::Data {
   explicit Data(float enhancement_amount) : enhancement_amount_(enhancement_amount) {}
@@ -232,19 +161,6 @@ Contrast::Contrast(float enhancement_amount) : data_(std::make_shared<Data>(enha
 
 std::shared_ptr<TensorOperation> Contrast::Parse() {
   return std::make_shared<ContrastOperation>(data_->enhancement_amount_);
-}
-
-// DBToAmplitude Transform Operation.
-struct DBToAmplitude::Data {
-  explicit Data(float ref, float power) : ref_(ref), power_(power) {}
-  float ref_;
-  float power_;
-};
-
-DBToAmplitude::DBToAmplitude(float ref, float power) : data_(std::make_shared<Data>(ref, power)) {}
-
-std::shared_ptr<TensorOperation> DBToAmplitude::Parse() {
-  return std::make_shared<DBToAmplitudeOperation>(data_->ref_, data_->power_);
 }
 
 // DCShift Transform Operation.
@@ -284,30 +200,6 @@ DeemphBiquad::DeemphBiquad(int32_t sample_rate) : data_(std::make_shared<Data>(s
 
 std::shared_ptr<TensorOperation> DeemphBiquad::Parse() {
   return std::make_shared<DeemphBiquadOperation>(data_->sample_rate_);
-}
-
-// DetectPitchFrequency Transform Operation.
-struct DetectPitchFrequency::Data {
-  Data(int32_t sample_rate, float frame_time, int32_t win_length, int32_t freq_low, int32_t freq_high)
-      : sample_rate_(sample_rate),
-        frame_time_(frame_time),
-        win_length_(win_length),
-        freq_low_(freq_low),
-        freq_high_(freq_high) {}
-  int32_t sample_rate_;
-  float frame_time_;
-  int32_t win_length_;
-  int32_t freq_low_;
-  int32_t freq_high_;
-};
-
-DetectPitchFrequency::DetectPitchFrequency(int32_t sample_rate, float frame_time, int32_t win_length, int32_t freq_low,
-                                           int32_t freq_high)
-    : data_(std::make_shared<Data>(sample_rate, frame_time, win_length, freq_low, freq_high)) {}
-
-std::shared_ptr<TensorOperation> DetectPitchFrequency::Parse() {
-  return std::make_shared<DetectPitchFrequencyOperation>(data_->sample_rate_, data_->frame_time_, data_->win_length_,
-                                                         data_->freq_low_, data_->freq_high_);
 }
 
 // Dither Transform Operation.
@@ -408,27 +300,6 @@ std::shared_ptr<TensorOperation> Flanger::Parse() {
                                             data_->interpolation_);
 }
 
-// FrequencyMasking Transform Operation.
-struct FrequencyMasking::Data {
-  Data(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, float mask_value)
-      : iid_masks_(iid_masks),
-        frequency_mask_param_(frequency_mask_param),
-        mask_start_(mask_start),
-        mask_value_(mask_value) {}
-  bool iid_masks_;
-  int32_t frequency_mask_param_;
-  int32_t mask_start_;
-  float mask_value_;
-};
-
-FrequencyMasking::FrequencyMasking(bool iid_masks, int32_t frequency_mask_param, int32_t mask_start, float mask_value)
-    : data_(std::make_shared<Data>(iid_masks, frequency_mask_param, mask_start, mask_value)) {}
-
-std::shared_ptr<TensorOperation> FrequencyMasking::Parse() {
-  return std::make_shared<FrequencyMaskingOperation>(data_->iid_masks_, data_->frequency_mask_param_,
-                                                     data_->mask_start_, data_->mask_value_);
-}
-
 // Gain Transform Operation.
 struct Gain::Data {
   explicit Data(float gain_db) : gain_db_(gain_db) {}
@@ -438,41 +309,6 @@ struct Gain::Data {
 Gain::Gain(float gain_db) : data_(std::make_shared<Data>(gain_db)) {}
 
 std::shared_ptr<TensorOperation> Gain::Parse() { return std::make_shared<GainOperation>(data_->gain_db_); }
-
-// GriffinLim Transform Operation.
-struct GriffinLim::Data {
-  Data(int32_t n_fft, int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type, float power,
-       float momentum, int32_t length, bool rand_init)
-      : n_fft_(n_fft),
-        n_iter_(n_iter),
-        win_length_(win_length),
-        hop_length_(hop_length),
-        window_type_(window_type),
-        power_(power),
-        momentum_(momentum),
-        length_(length),
-        rand_init_(rand_init) {}
-  int32_t n_fft_;
-  int32_t n_iter_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  WindowType window_type_;
-  float power_;
-  float momentum_;
-  int32_t length_;
-  bool rand_init_;
-};
-
-GriffinLim::GriffinLim(int32_t n_fft, int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type,
-                       float power, float momentum, int32_t length, bool rand_init)
-    : data_(std::make_shared<Data>(n_fft, n_iter, win_length, hop_length, window_type, power, momentum, length,
-                                   rand_init)) {}
-
-std::shared_ptr<TensorOperation> GriffinLim::Parse() {
-  return std::make_shared<GriffinLimOperation>(data_->n_fft_, data_->n_iter_, data_->win_length_, data_->hop_length_,
-                                               data_->window_type_, data_->power_, data_->momentum_, data_->length_,
-                                               data_->rand_init_);
-}
 
 // HighpassBiquad Transform Operation.
 struct HighpassBiquad::Data {
@@ -487,142 +323,6 @@ HighpassBiquad::HighpassBiquad(int32_t sample_rate, float cutoff_freq, float Q)
 
 std::shared_ptr<TensorOperation> HighpassBiquad::Parse() {
   return std::make_shared<HighpassBiquadOperation>(data_->sample_rate_, data_->cutoff_freq_, data_->Q_);
-}
-
-// InverseMelScale Transform Operation.
-struct InverseMelScale::Data {
-  Data(int32_t n_stft, int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
-       float tolerance_loss, float tolerance_change, const std::map<std::string, float> &sgdargs, NormType norm,
-       MelType mel_type)
-      : n_stft_(n_stft),
-        n_mels_(n_mels),
-        sample_rate_(sample_rate),
-        f_min_(f_min),
-        f_max_(f_max),
-        max_iter_(max_iter),
-        tolerance_loss_(tolerance_loss),
-        tolerance_change_(tolerance_change),
-        sgdargs_(sgdargs),
-        norm_(norm),
-        mel_type_(mel_type) {}
-  int32_t n_stft_;
-  int32_t n_mels_;
-  int32_t sample_rate_;
-  float f_min_;
-  float f_max_;
-  int32_t max_iter_;
-  float tolerance_loss_;
-  float tolerance_change_;
-  std::map<std::string, float> sgdargs_;
-  NormType norm_;
-  MelType mel_type_;
-};
-
-InverseMelScale::InverseMelScale(int32_t n_stft, int32_t n_mels, int32_t sample_rate, float f_min, float f_max,
-                                 int32_t max_iter, float tolerance_loss, float tolerance_change,
-                                 const std::map<std::string, float> &sgdargs, NormType norm, MelType mel_type)
-    : data_(std::make_shared<Data>(n_stft, n_mels, sample_rate, f_min, f_max, max_iter, tolerance_loss,
-                                   tolerance_change, sgdargs, norm, mel_type)) {}
-
-std::shared_ptr<TensorOperation> InverseMelScale::Parse() {
-  return std::make_shared<InverseMelScaleOperation>(
-    data_->n_stft_, data_->n_mels_, data_->sample_rate_, data_->f_min_, data_->f_max_, data_->max_iter_,
-    data_->tolerance_loss_, data_->tolerance_change_, data_->sgdargs_, data_->norm_, data_->mel_type_);
-}
-
-// InverseSpectrogram Transform Operation.
-struct InverseSpectrogram::Data {
-  Data(int32_t length, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
-       bool normalized, bool center, BorderType pad_mode, bool onesided)
-      : length_(length),
-        n_fft_(n_fft),
-        win_length_(win_length),
-        hop_length_(hop_length),
-        pad_(pad),
-        window_(window),
-        normalized_(normalized),
-        center_(center),
-        pad_mode_(pad_mode),
-        onesided_(onesided) {}
-  int32_t length_;
-  int32_t n_fft_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  int32_t pad_;
-  WindowType window_;
-  bool normalized_;
-  bool center_;
-  BorderType pad_mode_;
-  bool onesided_;
-};
-
-InverseSpectrogram::InverseSpectrogram(int32_t length, int32_t n_fft, int32_t win_length, int32_t hop_length,
-                                       int32_t pad, WindowType window, bool normalized, bool center,
-                                       BorderType pad_mode, bool onesided)
-    : data_(std::make_shared<Data>(length, n_fft, win_length, hop_length, pad, window, normalized, center, pad_mode,
-                                   onesided)) {}
-
-std::shared_ptr<TensorOperation> InverseSpectrogram::Parse() {
-  return std::make_shared<InverseSpectrogramOperation>(
-    data_->length_, data_->n_fft_, data_->win_length_, data_->hop_length_, data_->pad_, data_->window_,
-    data_->normalized_, data_->center_, data_->pad_mode_, data_->onesided_);
-}
-
-// LFCC Transform Operation.
-struct LFCC::Data {
-  Data(int32_t sample_rate, int32_t n_filter, int32_t n_lfcc, float f_min, float f_max, int32_t dct_type, NormMode norm,
-       bool log_lf, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window, float power,
-       bool normalized, bool center, BorderType pad_mode, bool onesided)
-      : sample_rate_(sample_rate),
-        n_filter_(n_filter),
-        n_lfcc_(n_lfcc),
-        f_min_(f_min),
-        f_max_(f_max),
-        dct_type_(dct_type),
-        norm_(norm),
-        log_lf_(log_lf),
-        n_fft_(n_fft),
-        win_length_(win_length),
-        hop_length_(hop_length),
-        pad_(pad),
-        window_(window),
-        power_(power),
-        normalized_(normalized),
-        center_(center),
-        pad_mode_(pad_mode),
-        onesided_(onesided) {}
-  int32_t sample_rate_;
-  int32_t n_filter_;
-  int32_t n_lfcc_;
-  float f_min_;
-  float f_max_;
-  int32_t dct_type_;
-  NormMode norm_;
-  bool log_lf_;
-  int32_t n_fft_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  int32_t pad_;
-  WindowType window_;
-  float power_;
-  bool normalized_;
-  bool center_;
-  BorderType pad_mode_;
-  bool onesided_;
-};
-
-LFCC::LFCC(int32_t sample_rate, int32_t n_filter, int32_t n_lfcc, float f_min, float f_max, int32_t dct_type,
-           NormMode norm, bool log_lf, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad,
-           WindowType window, float power, bool normalized, bool center, BorderType pad_mode, bool onesided)
-    : data_(std::make_shared<Data>(sample_rate, n_filter, n_lfcc, f_min, f_max, dct_type, norm, log_lf, n_fft,
-                                   win_length, hop_length, pad, window, power, normalized, center, pad_mode,
-                                   onesided)) {}
-
-std::shared_ptr<TensorOperation> LFCC::Parse() {
-  return std::make_shared<LFCCOperation>(
-    data_->sample_rate_, data_->n_filter_, data_->n_lfcc_, data_->f_min_, data_->f_max_, data_->dct_type_, data_->norm_,
-    data_->log_lf_, data_->n_fft_, data_->win_length_, data_->hop_length_, data_->pad_, data_->window_, data_->power_,
-    data_->normalized_, data_->center_, data_->pad_mode_, data_->onesided_);
 }
 
 // LFilter Transform Operation.
@@ -656,78 +356,6 @@ std::shared_ptr<TensorOperation> LowpassBiquad::Parse() {
   return std::make_shared<LowpassBiquadOperation>(data_->sample_rate_, data_->cutoff_freq_, data_->Q_);
 }
 
-// Magphase Transform Operation.
-struct Magphase::Data {
-  explicit Data(float power) : power_(power) {}
-  float power_;
-};
-
-Magphase::Magphase(float power) : data_(std::make_shared<Data>(power)) {}
-
-std::shared_ptr<TensorOperation> Magphase::Parse() { return std::make_shared<MagphaseOperation>(data_->power_); }
-
-// MaskAlongAxis Transform Operation.
-struct MaskAlongAxis::Data {
-  Data(int32_t mask_start, int32_t mask_width, float mask_value, int32_t axis)
-      : mask_start_(mask_start), mask_width_(mask_width), mask_value_(mask_value), axis_(axis) {}
-  int32_t mask_start_;
-  int32_t mask_width_;
-  float mask_value_;
-  int32_t axis_;
-};
-
-MaskAlongAxis::MaskAlongAxis(int32_t mask_start, int32_t mask_width, float mask_value, int32_t axis)
-    : data_(std::make_shared<Data>(mask_start, mask_width, mask_value, axis)) {}
-
-std::shared_ptr<TensorOperation> MaskAlongAxis::Parse() {
-  return std::make_shared<MaskAlongAxisOperation>(data_->mask_start_, data_->mask_width_, data_->mask_value_,
-                                                  data_->axis_);
-}
-
-// MaskAlongAxisIID Transform Operation.
-struct MaskAlongAxisIID::Data {
-  Data(int32_t mask_param, float mask_value, int32_t axis)
-      : mask_param_(mask_param), mask_value_(mask_value), axis_(axis) {}
-  int32_t mask_param_;
-  float mask_value_;
-  int32_t axis_;
-};
-
-MaskAlongAxisIID::MaskAlongAxisIID(int32_t mask_param, float mask_value, int32_t axis)
-    : data_(std::make_shared<Data>(mask_param, mask_value, axis)) {}
-
-std::shared_ptr<TensorOperation> MaskAlongAxisIID::Parse() {
-  return std::make_shared<MaskAlongAxisIIDOperation>(data_->mask_param_, data_->mask_value_, data_->axis_);
-}
-
-// MelScale Transform Operation.
-struct MelScale::Data {
-  Data(int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t n_stft, NormType norm, MelType mel_type)
-      : n_mels_(n_mels),
-        sample_rate_(sample_rate),
-        f_min_(f_min),
-        f_max_(f_max),
-        n_stft_(n_stft),
-        norm_(norm),
-        mel_type_(mel_type) {}
-  int32_t n_mels_;
-  int32_t sample_rate_;
-  float f_min_;
-  float f_max_;
-  int32_t n_stft_;
-  NormType norm_;
-  MelType mel_type_;
-};
-
-MelScale::MelScale(int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t n_stft, NormType norm,
-                   MelType mel_type)
-    : data_(std::make_shared<Data>(n_mels, sample_rate, f_min, f_max, n_stft, norm, mel_type)) {}
-
-std::shared_ptr<TensorOperation> MelScale::Parse() {
-  return std::make_shared<MelScaleOperation>(data_->n_mels_, data_->sample_rate_, data_->f_min_, data_->f_max_,
-                                             data_->n_stft_, data_->norm_, data_->mel_type_);
-}
-
 // MelscaleFbanks Function.
 Status MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_max, int32_t n_mels, int32_t sample_rate,
                       NormType norm, MelType mel_type) {
@@ -750,124 +378,6 @@ Status MelscaleFbanks(MSTensor *output, int32_t n_freqs, float f_min, float f_ma
                                "MelscaleFbanks: get an empty tensor with shape " + fb->shape().ToString());
   *output = mindspore::MSTensor(std::make_shared<DETensor>(fb));
   return Status::OK();
-}
-
-// MelSpectrogram Transform Operation.
-struct MelSpectrogram::Data {
-  Data(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min, float f_max,
-       int32_t pad, int32_t n_mels, WindowType window, float power, bool normalized, bool center, BorderType pad_mode,
-       bool onesided, NormType norm, MelType mel_scale)
-      : sample_rate_(sample_rate),
-        n_fft_(n_fft),
-        win_length_(win_length),
-        hop_length_(hop_length),
-        f_min_(f_min),
-        f_max_(f_max),
-        pad_(pad),
-        n_mels_(n_mels),
-        window_(window),
-        power_(power),
-        normalized_(normalized),
-        center_(center),
-        pad_mode_(pad_mode),
-        onesided_(onesided),
-        norm_(norm),
-        mel_scale_(mel_scale) {}
-  int32_t sample_rate_;
-  int32_t n_fft_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  float f_min_;
-  float f_max_;
-  int32_t pad_;
-  int32_t n_mels_;
-  WindowType window_;
-  float power_;
-  bool normalized_;
-  bool center_;
-  BorderType pad_mode_;
-  bool onesided_;
-  NormType norm_;
-  MelType mel_scale_;
-};
-
-MelSpectrogram::MelSpectrogram(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length, float f_min,
-                               float f_max, int32_t pad, int32_t n_mels, WindowType window, float power,
-                               bool normalized, bool center, BorderType pad_mode, bool onesided, NormType norm,
-                               MelType mel_scale)
-    : data_(std::make_shared<Data>(sample_rate, n_fft, win_length, hop_length, f_min, f_max, pad, n_mels, window, power,
-                                   normalized, center, pad_mode, onesided, norm, mel_scale)) {}
-
-std::shared_ptr<TensorOperation> MelSpectrogram::Parse() {
-  return std::make_shared<MelSpectrogramOperation>(
-    data_->sample_rate_, data_->n_fft_, data_->win_length_, data_->hop_length_, data_->f_min_, data_->f_max_,
-    data_->pad_, data_->n_mels_, data_->window_, data_->power_, data_->normalized_, data_->center_, data_->pad_mode_,
-    data_->onesided_, data_->norm_, data_->mel_scale_);
-}
-
-// MFCC Transform Operation.
-struct MFCC::Data {
-  Data(int32_t sample_rate, int32_t n_mfcc, int32_t dct_type, NormMode norm, bool log_mels, int32_t n_fft,
-       int32_t win_length, int32_t hop_length, float f_min, float f_max, int32_t pad, int32_t n_mels, WindowType window,
-       float power, bool normalized, bool center, BorderType pad_mode, bool onesided, NormType norm_mel,
-       MelType mel_scale)
-      : sample_rate_(sample_rate),
-        n_mfcc_(n_mfcc),
-        dct_type_(dct_type),
-        norm_(norm),
-        log_mels_(log_mels),
-        n_fft_(n_fft),
-        win_length_(win_length),
-        hop_length_(hop_length),
-        f_min_(f_min),
-        f_max_(f_max),
-        pad_(pad),
-        n_mels_(n_mels),
-        window_(window),
-        power_(power),
-        normalized_(normalized),
-        center_(center),
-        pad_mode_(pad_mode),
-        onesided_(onesided),
-        norm_mel_(norm_mel),
-        mel_scale_(mel_scale) {}
-  int32_t sample_rate_;
-  int32_t n_mfcc_;
-  int32_t dct_type_;
-  NormMode norm_;
-  bool log_mels_;
-  int32_t n_fft_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  float f_min_;
-  float f_max_;
-  int32_t pad_;
-  int32_t n_mels_;
-  WindowType window_;
-  float power_;
-  bool normalized_;
-  bool center_;
-  BorderType pad_mode_;
-  bool onesided_;
-  NormType norm_mel_;
-  MelType mel_scale_;
-  std::map<std::string, std::string> melkwargs_;
-};
-
-MFCC::MFCC(int32_t sample_rate, int32_t n_mfcc, int32_t dct_type, NormMode norm, bool log_mels, int32_t n_fft,
-           int32_t win_length, int32_t hop_length, float f_min, float f_max, int32_t pad, int32_t n_mels,
-           WindowType window, float power, bool normalized, bool center, BorderType pad_mode, bool onesided,
-           NormType norm_mel, MelType mel_scale)
-    : data_(std::make_shared<Data>(sample_rate, n_mfcc, dct_type, norm, log_mels, n_fft, win_length, hop_length, f_min,
-                                   f_max, pad, n_mels, window, power, normalized, center, pad_mode, onesided, norm_mel,
-                                   mel_scale)) {}
-
-std::shared_ptr<TensorOperation> MFCC::Parse() {
-  return std::make_shared<MFCCOperation>(data_->sample_rate_, data_->n_mfcc_, data_->dct_type_, data_->norm_,
-                                         data_->log_mels_, data_->n_fft_, data_->win_length_, data_->hop_length_,
-                                         data_->f_min_, data_->f_max_, data_->pad_, data_->n_mels_, data_->window_,
-                                         data_->power_, data_->normalized_, data_->center_, data_->pad_mode_,
-                                         data_->onesided_, data_->norm_mel_, data_->mel_scale_);
 }
 
 // MuLawDecoding Transform Operation.
@@ -958,82 +468,6 @@ std::shared_ptr<TensorOperation> Phaser::Parse() {
                                            data_->decay_, data_->mod_speed_, data_->sinusoidal_);
 }
 
-// PhaseVocoder Transofrm Operation.
-struct PhaseVocoder::Data {
-  Data(float rate, const MSTensor &phase_advance) : rate_(rate), phase_advance_(phase_advance) {}
-  float rate_;
-  MSTensor phase_advance_;
-};
-
-PhaseVocoder::PhaseVocoder(float rate, const MSTensor &phase_advance)
-    : data_(std::make_shared<Data>(rate, phase_advance)) {}
-
-std::shared_ptr<TensorOperation> PhaseVocoder::Parse() {
-  std::shared_ptr<Tensor> phase_advance;
-  Status rc = Tensor::CreateFromMSTensor(data_->phase_advance_, &phase_advance);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "Error creating phase_vocoder constant tensor." << rc;
-    return nullptr;
-  }
-  return std::make_shared<PhaseVocoderOperation>(data_->rate_, phase_advance);
-}
-
-// pitchshift
-struct PitchShift::Data {
-  Data(int32_t sample_rate, int32_t n_steps, int32_t bins_per_octave, int32_t n_fft, int32_t win_length,
-       int32_t hop_length, WindowType window)
-      : sample_rate_(sample_rate),
-        n_steps_(n_steps),
-        bins_per_octave_(bins_per_octave),
-        n_fft_(n_fft),
-        win_length_(win_length),
-        hop_length_(hop_length),
-        window_(window) {}
-  int32_t sample_rate_;
-  int32_t n_steps_;
-  int32_t bins_per_octave_;
-  int32_t n_fft_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  WindowType window_;
-};
-
-PitchShift::PitchShift(int32_t sample_rate, int32_t n_steps, int32_t bins_per_octave, int32_t n_fft, int32_t win_length,
-                       int32_t hop_length, WindowType window)
-    : data_(std::make_shared<Data>(sample_rate, n_steps, bins_per_octave, n_fft, win_length, hop_length, window)) {}
-
-std::shared_ptr<TensorOperation> PitchShift::Parse() {
-  return std::make_shared<PitchShiftOperation>(data_->sample_rate_, data_->n_steps_, data_->bins_per_octave_,
-                                               data_->n_fft_, data_->win_length_, data_->hop_length_, data_->window_);
-}
-
-// Resample Transform Operation.
-struct Resample::Data {
-  Data(float orig_freq, float new_freq, ResampleMethod resample_method, int32_t lowpass_filter_width, float rolloff,
-       float beta)
-      : orig_freq_(orig_freq),
-        new_freq_(new_freq),
-        resample_method_(resample_method),
-        lowpass_filter_width_(lowpass_filter_width),
-        rolloff_(rolloff),
-        beta_(beta) {}
-  float orig_freq_;
-  float new_freq_;
-  ResampleMethod resample_method_;
-  int32_t lowpass_filter_width_;
-  float rolloff_;
-  float beta_;
-};
-
-Resample::Resample(float orig_freq, float new_freq, ResampleMethod resample_method, int32_t lowpass_filter_width,
-                   float rolloff, float beta)
-    : data_(std::make_shared<Data>(orig_freq, new_freq, resample_method, lowpass_filter_width, rolloff, beta)) {}
-
-std::shared_ptr<TensorOperation> Resample::Parse() {
-  return std::make_shared<ResampleOperation>(data_->orig_freq_, data_->new_freq_, data_->resample_method_,
-                                             data_->lowpass_filter_width_, data_->rolloff_, data_->beta_);
-}
-
 // RiaaBiquad Transform Operation.
 struct RiaaBiquad::Data {
   explicit Data(int32_t sample_rate) : sample_rate_(sample_rate) {}
@@ -1044,121 +478,6 @@ RiaaBiquad::RiaaBiquad(int32_t sample_rate) : data_(std::make_shared<Data>(sampl
 
 std::shared_ptr<TensorOperation> RiaaBiquad::Parse() {
   return std::make_shared<RiaaBiquadOperation>(data_->sample_rate_);
-}
-
-// SlidingWindowCmn Transform Operation.
-struct SlidingWindowCmn::Data {
-  Data(int32_t cmn_window, int32_t min_cmn_window, bool center, bool norm_vars)
-      : cmn_window_(cmn_window), min_cmn_window_(min_cmn_window), center_(center), norm_vars_(norm_vars) {}
-  int32_t cmn_window_;
-  int32_t min_cmn_window_;
-  bool center_;
-  bool norm_vars_;
-};
-
-SlidingWindowCmn::SlidingWindowCmn(int32_t cmn_window, int32_t min_cmn_window, bool center, bool norm_vars)
-    : data_(std::make_shared<Data>(cmn_window, min_cmn_window, center, norm_vars)) {}
-
-std::shared_ptr<TensorOperation> SlidingWindowCmn::Parse() {
-  return std::make_shared<SlidingWindowCmnOperation>(data_->cmn_window_, data_->min_cmn_window_, data_->center_,
-                                                     data_->norm_vars_);
-}
-
-// Spectrogram Transform Operation.
-struct Spectrogram::Data {
-  Data(int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window, float power,
-       bool normalized, bool center, BorderType pad_mode, bool onesided)
-      : n_fft_(n_fft),
-        win_length_(win_length),
-        hop_length_(hop_length),
-        pad_(pad),
-        window_(window),
-        power_(power),
-        normalized_(normalized),
-        center_(center),
-        pad_mode_(pad_mode),
-        onesided_(onesided) {}
-  int32_t n_fft_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  int32_t pad_;
-  WindowType window_;
-  float power_;
-  bool normalized_;
-  bool center_;
-  BorderType pad_mode_;
-  bool onesided_;
-};
-
-Spectrogram::Spectrogram(int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window,
-                         float power, bool normalized, bool center, BorderType pad_mode, bool onesided)
-    : data_(std::make_shared<Data>(n_fft, win_length, hop_length, pad, window, power, normalized, center, pad_mode,
-                                   onesided)) {}
-
-std::shared_ptr<TensorOperation> Spectrogram::Parse() {
-  return std::make_shared<SpectrogramOperation>(data_->n_fft_, data_->win_length_, data_->hop_length_, data_->pad_,
-                                                data_->window_, data_->power_, data_->normalized_, data_->center_,
-                                                data_->pad_mode_, data_->onesided_);
-}
-
-// SpectralCentroid Transform Operation.
-struct SpectralCentroid::Data {
-  Data(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length, int32_t pad, WindowType window)
-      : sample_rate_(sample_rate),
-        n_fft_(n_fft),
-        win_length_(win_length),
-        hop_length_(hop_length),
-        pad_(pad),
-        window_(window) {}
-  int32_t sample_rate_;
-  int32_t n_fft_;
-  int32_t win_length_;
-  int32_t hop_length_;
-  int32_t pad_;
-  WindowType window_;
-};
-
-SpectralCentroid::SpectralCentroid(int32_t sample_rate, int32_t n_fft, int32_t win_length, int32_t hop_length,
-                                   int32_t pad, WindowType window)
-    : data_(std::make_shared<Data>(sample_rate, n_fft, win_length, hop_length, pad, window)) {}
-
-std::shared_ptr<TensorOperation> SpectralCentroid::Parse() {
-  return std::make_shared<SpectralCentroidOperation>(data_->sample_rate_, data_->n_fft_, data_->win_length_,
-                                                     data_->hop_length_, data_->pad_, data_->window_);
-}
-
-// TimeMasking Transform Operation.
-struct TimeMasking::Data {
-  Data(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value)
-      : iid_masks_(iid_masks), time_mask_param_(time_mask_param), mask_start_(mask_start), mask_value_(mask_value) {}
-  bool iid_masks_;
-  int32_t time_mask_param_;
-  int32_t mask_start_;
-  float mask_value_;
-};
-
-TimeMasking::TimeMasking(bool iid_masks, int32_t time_mask_param, int32_t mask_start, float mask_value)
-    : data_(std::make_shared<Data>(iid_masks, time_mask_param, mask_start, mask_value)) {}
-
-std::shared_ptr<TensorOperation> TimeMasking::Parse() {
-  return std::make_shared<TimeMaskingOperation>(data_->iid_masks_, data_->time_mask_param_, data_->mask_start_,
-                                                data_->mask_value_);
-}
-
-// TimeStretch Transform Operation.
-struct TimeStretch::Data {
-  explicit Data(float hop_length, int32_t n_freq, float fixed_rate)
-      : hop_length_(hop_length), n_freq_(n_freq), fixed_rate_(fixed_rate) {}
-  float hop_length_;
-  int32_t n_freq_;
-  float fixed_rate_;
-};
-
-TimeStretch::TimeStretch(float hop_length, int32_t n_freq, float fixed_rate)
-    : data_(std::make_shared<Data>(hop_length, n_freq, fixed_rate)) {}
-
-std::shared_ptr<TensorOperation> TimeStretch::Parse() {
-  return std::make_shared<TimeStretchOperation>(data_->hop_length_, data_->n_freq_, data_->fixed_rate_);
 }
 
 // TrebleBiquad Transform Operation.
