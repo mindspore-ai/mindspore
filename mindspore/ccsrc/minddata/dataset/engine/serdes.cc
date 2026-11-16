@@ -193,8 +193,6 @@ Status Serdes::CreateDatasetNode(const nlohmann::json &json_obj, const std::stri
     RETURN_IF_NOT_OK(ImageFolderNode::from_json(json_obj, ds));
   } else if (op_type == kKITTINode) {
     RETURN_IF_NOT_OK(KITTINode::from_json(json_obj, ds));
-  } else if (op_type == kLJSpeechNode) {
-    RETURN_IF_NOT_OK(LJSpeechNode::from_json(json_obj, ds));
   } else if (op_type == kManifestNode) {
     RETURN_IF_NOT_OK(ManifestNode::from_json(json_obj, ds));
   } else if (op_type == kMnistNode) {

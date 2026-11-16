@@ -39,7 +39,6 @@ class DATASET_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class Cifar100Dataset;
   friend class CityscapesDataset;
   friend class CLUEDataset;
-  friend class CMUArcticDataset;
   friend class CocoDataset;
   friend class CSVDataset;
   friend class DIV2KDataset;
@@ -48,14 +47,11 @@ class DATASET_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class FashionMnistDataset;
   friend class FlickrDataset;
   friend class Food101Dataset;
-  friend class GTZANDataset;
   friend class ImageFolderDataset;
   friend class IMDBDataset;
   friend class KITTIDataset;
   friend class KMnistDataset;
   friend class LFWDataset;
-  friend class LibriTTSDataset;
-  friend class LJSpeechDataset;
   friend class LSUNDataset;
   friend class ManifestDataset;
   friend class MindDataDataset;
@@ -68,17 +64,14 @@ class DATASET_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class RenderedSST2Dataset;
   friend class SBUDataset;
   friend class SemeionDataset;
-  friend class SpeechCommandsDataset;
   friend class SST2Dataset;
   friend class STL10Dataset;
   friend class SUN397Dataset;
-  friend class TedliumDataset;
   friend class TextFileDataset;
   friend class TFRecordDataset;
   friend class USPSDataset;
   friend class VOCDataset;
   friend class WIDERFaceDataset;
-  friend class YesNoDataset;
 
   friend std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, dataset::ShuffleMode shuffle_mode,
                                                    int32_t num_shards, int32_t shard_id);

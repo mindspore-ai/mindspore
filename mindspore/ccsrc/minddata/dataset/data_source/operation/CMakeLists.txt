@@ -12,7 +12,6 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         cifar10_node.cc
         cityscapes_node.cc
         clue_node.cc
-        cmu_arctic_node.cc
         coco_node.cc
         conll2000_node.cc
         csv_node.cc
@@ -24,7 +23,6 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         fashion_mnist_node.cc
         flickr_node.cc
         food101_node.cc
-        gtzan_node.cc
         image_folder_node.cc
         imdb_node.cc
         iwslt2016_node.cc
@@ -32,8 +30,6 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         kitti_node.cc
         kmnist_node.cc
         lfw_node.cc
-        libri_tts_node.cc
-        lj_speech_node.cc
         lsun_node.cc
         manifest_node.cc
         minddata_node.cc
@@ -49,12 +45,10 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         sbu_node.cc
         semeion_node.cc
         sogou_news_node.cc
-        speech_commands_node.cc
         squad_node.cc
         sst2_node.cc
         stl10_node.cc
         sun397_node.cc
-        tedlium_node.cc
         text_file_node.cc
         tf_record_node.cc
         udpos_node.cc
@@ -64,7 +58,6 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         wiki_text_node.cc
         yahoo_answers_node.cc
         yelp_review_node.cc
-        yes_no_node.cc
         )
 
 if(ENABLE_PYTHON)

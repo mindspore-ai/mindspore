@@ -53,7 +53,6 @@
 #include "minddata/dataset/data_source/operation/flickr_node.h"
 #include "minddata/dataset/data_source/operation/image_folder_node.h"
 #include "minddata/dataset/data_source/operation/kitti_node.h"
-#include "minddata/dataset/data_source/operation/lj_speech_node.h"
 #include "minddata/dataset/data_source/operation/manifest_node.h"
 #include "minddata/dataset/data_source/operation/mnist_node.h"
 #include "minddata/dataset/data_source/operation/sst2_node.h"

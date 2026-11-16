@@ -308,24 +308,6 @@ def test_serdes_kitti_dataset(cleanup_tmp_file):
             np.testing.assert_array_equal(column1, column2)
 
 
-@pytest.mark.parametrize("cleanup_tmp_file", ["lj_speech_dataset*.json"], indirect=True)
-def test_serdes_lj_speech_dataset(cleanup_tmp_file):
-    """
-    Feature: Dataset serialization and deserialization.
-    Description: Test serializing and deserializing LJSpeechDataset.
-    Expectation: The samples in the original dataset and the deserialized one are the same.
-    """
-    dataset_dir = "../data/dataset/testLJSpeechData"
-    dataset = ds.LJSpeechDataset(dataset_dir, shuffle=False, num_shards=1, shard_id=0)
-    deserilized_dataset = util_check_serialize_deserialize_file(dataset, "lj_speech_dataset")
-
-    # Iterate and compare the data in the original dataset against the deserialized one.
-    for sample1, sample2 in zip(dataset.create_tuple_iterator(num_epochs=1, output_numpy=True),
-                                deserilized_dataset.create_tuple_iterator(num_epochs=1, output_numpy=True)):
-        for column1, column2 in zip(sample1, sample2):
-            np.testing.assert_array_equal(column1, column2)
-
-
 @pytest.mark.parametrize("cleanup_tmp_file", ["sst2_dataset*.json"], indirect=True)
 def test_serdes_sst2_dataset(cleanup_tmp_file):
     """
@@ -1206,7 +1188,6 @@ if __name__ == '__main__':
     test_serdes_csv_dataset(cleanup_tmp_file)
     test_serdes_voc_dataset(cleanup_tmp_file)
     test_serdes_kitti_dataset(cleanup_tmp_file)
-    test_serdes_lj_speech_dataset(cleanup_tmp_file)
     test_serdes_sst2_dataset(cleanup_tmp_file)
     test_serdes_wiki_text_dataset(cleanup_tmp_file)
     test_serdes_zip_dataset(cleanup_tmp_file)

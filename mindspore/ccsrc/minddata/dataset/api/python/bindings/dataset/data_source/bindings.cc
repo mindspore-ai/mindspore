@@ -32,7 +32,6 @@
 #include "minddata/dataset/data_source/operation/cifar100_node.h"
 #include "minddata/dataset/data_source/operation/cityscapes_node.h"
 #include "minddata/dataset/data_source/operation/clue_node.h"
-#include "minddata/dataset/data_source/operation/cmu_arctic_node.h"
 #include "minddata/dataset/data_source/operation/coco_node.h"
 #include "minddata/dataset/data_source/operation/conll2000_node.h"
 #include "minddata/dataset/data_source/operation/csv_node.h"
@@ -45,35 +44,29 @@
 #include "minddata/dataset/data_source/operation/flickr_node.h"
 #include "minddata/dataset/data_source/operation/food101_node.h"
 #include "minddata/dataset/data_source/operation/generator_node.h"
-#include "minddata/dataset/data_source/operation/gtzan_node.h"
 #include "minddata/dataset/data_source/operation/image_folder_node.h"
 #include "minddata/dataset/data_source/operation/imdb_node.h"
 #include "minddata/dataset/data_source/operation/iwslt2016_node.h"
 #include "minddata/dataset/data_source/operation/iwslt2017_node.h"
 #include "minddata/dataset/data_source/operation/kmnist_node.h"
 #include "minddata/dataset/data_source/operation/lfw_node.h"
-#include "minddata/dataset/data_source/operation/libri_tts_node.h"
 #include "minddata/dataset/data_source/operation/mnist_node.h"
 #include "minddata/dataset/data_source/operation/penn_treebank_node.h"
 #include "minddata/dataset/data_source/operation/random_node.h"
 #include "minddata/dataset/data_source/operation/rendered_sst2_node.h"
 #include "minddata/dataset/data_source/operation/semeion_node.h"
-#include "minddata/dataset/data_source/operation/speech_commands_node.h"
 #include "minddata/dataset/data_source/operation/squad_node.h"
 #include "minddata/dataset/data_source/operation/sst2_node.h"
 #include "minddata/dataset/data_source/operation/stl10_node.h"
 #include "minddata/dataset/data_source/operation/sun397_node.h"
-#include "minddata/dataset/data_source/operation/tedlium_node.h"
 #include "minddata/dataset/data_source/operation/text_file_node.h"
 #include "minddata/dataset/data_source/operation/udpos_node.h"
 #include "minddata/dataset/data_source/operation/wiki_text_node.h"
 #include "minddata/dataset/data_source/operation/yahoo_answers_node.h"
 #include "minddata/dataset/data_source/operation/yelp_review_node.h"
-#include "minddata/dataset/data_source/operation/yes_no_node.h"
 
 // IR leaf nodes disabled for android
 #include "minddata/dataset/data_source/operation/kitti_node.h"
-#include "minddata/dataset/data_source/operation/lj_speech_node.h"
 #include "minddata/dataset/data_source/operation/lsun_node.h"
 #include "minddata/dataset/data_source/operation/manifest_node.h"
 #include "minddata/dataset/data_source/operation/minddata_node.h"
@@ -190,18 +183,6 @@ PYBIND_REGISTER(CLUENode, 2, ([](const py::module *m) {
                       THROW_IF_ERROR(clue_node->ValidateParams());
                       return clue_node;
                     }));
-                }));
-
-PYBIND_REGISTER(CMUArcticNode, 2, ([](const py::module *m) {
-                  (void)py::class_<CMUArcticNode, DatasetNode, std::shared_ptr<CMUArcticNode>>(
-                    *m, "CMUArcticNode", "to create a CMUArcticNode")
-                    .def(
-                      py::init([](const std::string &dataset_dir, const std::string &name, const py::handle &sampler) {
-                        std::shared_ptr<CMUArcticNode> cmu_arctic =
-                          std::make_shared<CMUArcticNode>(dataset_dir, name, toSamplerObj(sampler), nullptr);
-                        THROW_IF_ERROR(cmu_arctic->ValidateParams());
-                        return cmu_arctic;
-                      }));
                 }));
 
 PYBIND_REGISTER(
@@ -383,17 +364,6 @@ PYBIND_REGISTER(GeneratorOp, 0, ([](const py::module *m) {
                     });
                 }));
 
-PYBIND_REGISTER(GTZANNode, 2, ([](const py::module *m) {
-                  (void)py::class_<GTZANNode, DatasetNode, std::shared_ptr<GTZANNode>>(*m, "GTZANNode",
-                                                                                       "to create a GTZANNode")
-                    .def(
-                      py::init([](const std::string &dataset_dir, const std::string &usage, const py::handle &sampler) {
-                        auto gtzan = std::make_shared<GTZANNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
-                        THROW_IF_ERROR(gtzan->ValidateParams());
-                        return gtzan;
-                      }));
-                }));
-
 PYBIND_REGISTER(ImageFolderNode, 2, ([](const py::module *m) {
                   (void)py::class_<ImageFolderNode, DatasetNode, std::shared_ptr<ImageFolderNode>>(
                     *m, "ImageFolderNode", "to create an ImageFolderNode")
@@ -483,28 +453,6 @@ PYBIND_REGISTER(LFWNode, 2, ([](const py::module *m) {
                                                            toSamplerObj(sampler), nullptr);
                       THROW_IF_ERROR(lfw->ValidateParams());
                       return lfw;
-                    }));
-                }));
-
-PYBIND_REGISTER(LibriTTSNode, 2, ([](const py::module *m) {
-                  (void)py::class_<LibriTTSNode, DatasetNode, std::shared_ptr<LibriTTSNode>>(*m, "LibriTTSNode",
-                                                                                             "to create a LibriTTSNode")
-                    .def(
-                      py::init([](const std::string &dataset_dir, const std::string &usage, const py::handle &sampler) {
-                        std::shared_ptr<LibriTTSNode> libri_tts =
-                          std::make_shared<LibriTTSNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
-                        THROW_IF_ERROR(libri_tts->ValidateParams());
-                        return libri_tts;
-                      }));
-                }));
-
-PYBIND_REGISTER(LJSpeechNode, 2, ([](const py::module *m) {
-                  (void)py::class_<LJSpeechNode, DatasetNode, std::shared_ptr<LJSpeechNode>>(*m, "LJSpeechNode",
-                                                                                             "to create a LJSpeechNode")
-                    .def(py::init([](const std::string &dataset_dir, const py::handle &sampler) {
-                      auto lj_speech = std::make_shared<LJSpeechNode>(dataset_dir, toSamplerObj(sampler), nullptr);
-                      THROW_IF_ERROR(lj_speech->ValidateParams());
-                      return lj_speech;
                     }));
                 }));
 
@@ -730,18 +678,6 @@ PYBIND_REGISTER(SogouNewsNode, 2, ([](const py::module *m) {
                     }));
                 }));
 
-PYBIND_REGISTER(SpeechCommandsNode, 2, ([](const py::module *m) {
-                  (void)py::class_<SpeechCommandsNode, DatasetNode, std::shared_ptr<SpeechCommandsNode>>(
-                    *m, "SpeechCommandsNode", "to create a SpeechCommandsNode")
-                    .def(
-                      py::init([](const std::string &dataset_dir, const std::string &usage, const py::handle &sampler) {
-                        auto speech_commands =
-                          std::make_shared<SpeechCommandsNode>(dataset_dir, usage, toSamplerObj(sampler), nullptr);
-                        THROW_IF_ERROR(speech_commands->ValidateParams());
-                        return speech_commands;
-                      }));
-                }));
-
 PYBIND_REGISTER(SQuADNode, 2, ([](const py::module *m) {
                   (void)py::class_<SQuADNode, DatasetNode, std::shared_ptr<SQuADNode>>(*m, "SQuADNode",
                                                                                        "to create a SQuADNode")
@@ -785,19 +721,6 @@ PYBIND_REGISTER(SUN397Node, 2, ([](const py::module *m) {
                       THROW_IF_ERROR(sun397->ValidateParams());
                       return sun397;
                     }));
-                }));
-
-PYBIND_REGISTER(TedliumNode, 2, ([](const py::module *m) {
-                  (void)py::class_<TedliumNode, DatasetNode, std::shared_ptr<TedliumNode>>(*m, "TedliumNode",
-                                                                                           "to create a TedliumNode")
-                    .def(
-                      py::init([](const std::string &dataset_dir, const std::string &release, const std::string &usage,
-                                  const std::string &extensions, const py::handle &sampler) {
-                        auto tedlium = std::make_shared<TedliumNode>(dataset_dir, release, usage, extensions,
-                                                                     toSamplerObj(sampler), nullptr);
-                        THROW_IF_ERROR(tedlium->ValidateParams());
-                        return tedlium;
-                      }));
                 }));
 
 PYBIND_REGISTER(TextFileNode, 2, ([](const py::module *m) {
@@ -924,14 +847,5 @@ PYBIND_REGISTER(YelpReviewNode, 2, ([](const py::module *m) {
                     }));
                 }));
 
-PYBIND_REGISTER(YesNoNode, 2, ([](const py::module *m) {
-                  (void)py::class_<YesNoNode, DatasetNode, std::shared_ptr<YesNoNode>>(*m, "YesNoNode",
-                                                                                       "to create a YesNoNode")
-                    .def(py::init([](const std::string &dataset_dir, const py::handle &sampler) {
-                      auto yes_no = std::make_shared<YesNoNode>(dataset_dir, toSamplerObj(sampler), nullptr);
-                      THROW_IF_ERROR(yes_no->ValidateParams());
-                      return yes_no;
-                    }));
-                }));
 }  // namespace dataset
 }  // namespace mindspore
