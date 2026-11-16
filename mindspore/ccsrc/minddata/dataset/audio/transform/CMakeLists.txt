@@ -16,25 +16,13 @@ else()
                 bandreject_biquad_ir.cc
                 bass_biquad_ir.cc
                 biquad_ir.cc
-                contrast_ir.cc
-                dc_shift_ir.cc
                 deemph_biquad_ir.cc
-                dither_ir.cc
                 equalizer_biquad_ir.cc
-                fade_ir.cc
                 filtfilt_ir.cc
-                flanger_ir.cc
-                gain_ir.cc
                 highpass_biquad_ir.cc
                 lfilter_ir.cc
                 lowpass_biquad_ir.cc
-                mu_law_decoding_ir.cc
-                mu_law_encoding_ir.cc
-                overdrive_ir.cc
-                phaser_ir.cc
                 riaa_biquad_ir.cc
                 treble_biquad_ir.cc
-                vad_ir.cc
-                vol_ir.cc
                 )
 endif()
