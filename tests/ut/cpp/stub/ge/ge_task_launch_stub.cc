@@ -23,7 +23,7 @@ HcclAdapter &HcclAdapter::GetInstance() {
   return instance;
 }
 bool HcclAdapter::InitHccl(uint32_t, std::string_view) { return true; }
-bool HcclAdapter::InitHccl(uint32_t, std::string_view, std::string_view, HcclMode) { return true; }
+bool HcclAdapter::InitHccl(uint32_t, std::string_view, std::string_view, HcclMode, const std::string &) { return true; }
 bool HcclAdapter::FinalizeHccl() { return true; }
 bool HcclAdapter::HcclWatchdogThread(HcclComm comm, std::string *error_info, bool *disable) { return true; }
 HcclResult HcclAdapter::HcclGetRankId(const std::string &, uint32_t *) const { return HCCL_SUCCESS; }

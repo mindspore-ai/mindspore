@@ -56,10 +56,13 @@ class AscendCommunicationGroup : public CommunicationGroup {
   // Return HCCL communicator because collective operations need it as a input.
   const HcclComm &hccl_communicator() const;
 
-  // Return communicator name maintained by HCCL. This is different from the group set by user.
+  // Return the actual HCCL communicator name. For MindSpore-created communicators it matches the group name.
   std::string inner_comm_name() const;
 
  private:
+  void RollbackHcclComm(uint32_t device_id);
+  bool DestroyHcclComm();
+
   // Initialize HCCL communicator by root info, using API HcclCommInitRootInfoConfig.
   bool InitByRootInfoConfig(void *root_info, uint32_t group_size, uint32_t group_rank, const HcclCommConfig &config);
 
@@ -81,6 +84,7 @@ class AscendCommunicationGroup : public CommunicationGroup {
 
   // HCCL communicator of this group.
   HcclComm comm_;
+  bool comm_created_{false};  // True only for a successfully created, owned communicator.
 
   // hccl_config pass from previous GroupOptions.
   std::unordered_map<std::string, std::variant<int64_t, uint32_t, std::string>> hccl_config_;

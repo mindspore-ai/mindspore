@@ -62,9 +62,11 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
   static HcclAdapter &GetInstance();
 
   // common
-  bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, HcclMode hccl_mode);
+  bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, HcclMode hccl_mode,
+                const std::string &group_name);
   bool InitHccl(uint32_t device_id, std::string_view rank_id);
   uint32_t HcclGetCommConfigCapability();
+  void SetHcclCommName(HcclCommConfig *config, const std::string &group_name);
   HcclResult HcclCommInitClusterInfoConfig(const char *rank_table, uint32_t rank_id, HcclCommConfig *config,
                                            HcclComm *hccl_comm_);
   HcclResult HcclCommInitRootInfoConfig(uint32_t n_ranks, const HcclRootInfo *root_info, uint32_t rank,
@@ -138,7 +140,7 @@ class ASCEND_RES_MANAGER_EXPORT HcclAdapter {
   void InitPlugin();
   void FinalizePlugin();
 
-  bool InitHcclComm(std::string_view rank_id, std::string_view rank_file);
+  bool InitHcclComm(std::string_view rank_id, std::string_view rank_file, const std::string &group_name);
   bool FinalizeHcclComm();
 
   static std::string GetHcclModeString(HcclMode hccl_mode);
