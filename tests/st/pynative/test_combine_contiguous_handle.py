@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Tests for combining tensors into contiguous storage on Ascend and GPU."""
 import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore import Tensor
-from mindspore.hal.contiguous_tensors_handle import combine_tensor_list_contiguous
+from mindspore.hal._contiguous_tensors_handle import combine_tensor_list_contiguous
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],

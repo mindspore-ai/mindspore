@@ -38,7 +38,7 @@ def combine_tensor_list_contiguous(tensor_list, enable_mem_align=True):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore import Tensor
-        >>> from mindspore.hal.contiguous_tensors_handle import combine_tensor_list_contiguous
+        >>> from mindspore.hal._contiguous_tensors_handle import combine_tensor_list_contiguous
         >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
         >>> handle = combine_tensor_list_contiguous([x, y], True)
@@ -68,7 +68,7 @@ class ContiguousTensorsHandle:
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore import Tensor
-        >>> from mindspore.hal.contiguous_tensors_handle import ContiguousTensorsHandle
+        >>> from mindspore.hal._contiguous_tensors_handle import ContiguousTensorsHandle
         >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
         >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
         >>> handle = ContiguousTensorsHandle([x, y], True)
@@ -147,7 +147,7 @@ class ContiguousTensorsHandle:
             >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore import Tensor
-            >>> from mindspore.hal.contiguous_tensors_handle import ContiguousTensorsHandle
+            >>> from mindspore.hal._contiguous_tensors_handle import ContiguousTensorsHandle
             >>> x = Tensor(np.array([1, 2, 3]).astype(np.float32))
             >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
             >>> handle = ContiguousTensorsHandle([x, y], True)

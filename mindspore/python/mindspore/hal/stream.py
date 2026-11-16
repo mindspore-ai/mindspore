@@ -337,13 +337,13 @@ def communication_stream():
 
     Examples:
         >>> import mindspore
-        >>> mindspore.hal.communication_stream()
+        >>> mindspore.runtime.communication_stream()
         Stream(device_name=Ascend, device_id:0, stream id:1)
     """
     if not function_stream_status['communication_stream']:
         function_stream_status['communication_stream'] = True
         logger.warning(
-            "WARN_DEPRECATED: The usage of mindspore.hal.communication_stream() is deprecated."
+            "WARN_DEPRECATED: The usage of mindspore.hal.stream.communication_stream() is deprecated."
             " Please use mindspore.runtime.communication_stream()"
         )
     return Stream(stream=communication_stream_())

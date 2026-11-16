@@ -12,11 +12,8 @@ Hal中封装了设备管理、流管理、事件管理与内存管理的接口�
     :template: classtemplate.rst
 
     mindspore.hal.device_count
-    mindspore.hal.get_arch_list
-    mindspore.hal.get_device_capability
     mindspore.hal.get_device_name
     mindspore.hal.get_device_properties
-    mindspore.hal.is_available
     mindspore.hal.is_initialized
 
 流管理
@@ -27,7 +24,6 @@ Hal中封装了设备管理、流管理、事件管理与内存管理的接口�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.hal.communication_stream
     mindspore.hal.current_stream
     mindspore.hal.default_stream
     mindspore.hal.set_cur_stream
@@ -53,8 +49,6 @@ Hal中封装了设备管理、流管理、事件管理与内存管理的接口�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.hal.contiguous_tensors_handle.combine_tensor_list_contiguous
-    mindspore.hal.contiguous_tensors_handle.ContiguousTensorsHandle
     mindspore.hal.max_memory_allocated
     mindspore.hal.max_memory_reserved
     mindspore.hal.memory_allocated
