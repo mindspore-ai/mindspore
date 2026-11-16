@@ -153,6 +153,11 @@ int BroadcastToCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
   size_t input_shape_size = input_shape_.size();
   size_t output_shape_size = output_shape_.size();
 
+  if (input_shape_size > MAX_SHAPE_SIZE || output_shape_size > MAX_SHAPE_SIZE) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input and output rank must not exceed " << MAX_SHAPE_SIZE
+                      << ", but got " << input_shape_size << " and " << output_shape_size << ".";
+  }
+
   for (size_t i = 0; i < input_shape_size; ++i) {
     shape_info_.input_shape_[i] = LongToInt(input_shape_[i]);
   }

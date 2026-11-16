@@ -158,7 +158,14 @@ MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
 
   // Handle system messages.
   if (std::all_of(name.begin(), name.end(), ::isdigit)) {
-    const auto &message_name = static_cast<MessageName>(std::stoi(message->Name()));
+    MessageName message_name;
+    try {
+      message_name = static_cast<MessageName>(std::stoi(name));
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Invalid system message name: " << name << ", " << e.what();
+      delete message;
+      return rpc::NULL_MSG;
+    }
     const auto &handler = system_msg_handlers_.find(message_name);
     if (handler == system_msg_handlers_.end()) {
       MS_LOG(ERROR) << "Unknown system message name: " << message->Name();
