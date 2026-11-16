@@ -32,7 +32,7 @@ MS_FL:
     tests/st/fl
 # cpu lite
 MS_CLOUD_CPU_AND_LITE:
-    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl
+    mindspore/ops/kernel/cpu/nnacl
 # cpu gpu ascend
 MS_CLOUD:
     mindspore/python
@@ -57,11 +57,10 @@ MS_LITE:
     include/api/kernel.h
     include/api/model_parallel_runner.h
     mindspore/lite/
-    cmake/package_lite.cmake
     mindspore/core/mindrt/src/thread/parallel_thread_pool_manager.cc
-    mindspore/core/mindrt/src/thread/parallel_thread_pool_manager.h
+    mindspore/core/mindrt/include/thread/parallel_thread_pool_manager.h
     mindspore/core/mindrt/src/thread/parallel_threadpool.cc
-    mindspore/core/mindrt/src/thread/parallel_threadpool.h
+    mindspore/core/mindrt/include/thread/parallel_threadpool.h
 MS_CLOUD_UT:
     tests/ut
 MS_CLOUD_UT_CPP:

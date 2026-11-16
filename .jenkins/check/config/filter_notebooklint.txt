@@ -1,0 +1,8 @@
+"mindspore/docs/api/api_python/samples/dataset/audio_gallery.ipynb"
+"mindspore/docs/api/api_python/samples/dataset/dataset_gallery.ipynb"
+"mindspore/docs/api/api_python/samples/dataset/text_gallery.ipynb"
+"mindspore/docs/api/api_python/samples/dataset/vision_gallery.ipynb"
+"mindspore/docs/api/api_python_en/samples/dataset/audio_gallery.ipynb"
+"mindspore/docs/api/api_python_en/samples/dataset/dataset_gallery.ipynb"
+"mindspore/docs/api/api_python_en/samples/dataset/text_gallery.ipynb"
+"mindspore/docs/api/api_python_en/samples/dataset/vision_gallery.ipynb"
