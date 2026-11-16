@@ -1814,6 +1814,11 @@ ValuePtr MSANFModelParser::ParseAttrInScalarForm(const mind_ir::AttributeProto &
       return ParseAttrInScalar_int32_t_bool(attr_proto, index);
     }
     case mind_ir::AttributeProto_AttributeType_TENSORS: {
+      if (index < 0 || index >= attr_proto.tensors_size()) {
+        MS_LOG(ERROR) << "Attr '" << attr_proto.name() << "' is of TENSORS type, but the tensor index " << index
+                      << " is out of range, tensors size: " << attr_proto.tensors_size() << ".";
+        return nullptr;
+      }
       const int attr_tensor_type = attr_proto.tensors(index).data_type();
       if (kDefaultValueSwitchMap.find(attr_tensor_type) == kDefaultValueSwitchMap.end()) {
         MS_LOG(ERROR) << "Obtain attr in type-form has not support input type:" << attr_tensor_type;
@@ -1833,6 +1838,13 @@ void MSANFModelParser::ObtainCNodeAttrInScalarForm(const mind_ir::AttributeProto
   auto func = [&name, &multi_value_map, this](const mind_ir::AttributeProto &attr_proto, int length) -> void {
     for (int i = 0; i < length; ++i) {
       auto res = this->ParseAttrInScalarForm(attr_proto, i);
+      if (res == nullptr) {
+        // An element that failed to parse (e.g. an out-of-range tensor index for a TENSORS-type
+        // attribute) must not be stored as a null ValuePtr, otherwise it poisons the value
+        // sequence built for the ref_attr_name. Stop at the first failure: with mismatched fields
+        // every remaining index fails the same way and would log one error per index.
+        return;
+      }
       name = "value" + std::to_string(i + 1);
       (void)multi_value_map->emplace(name, res);
     }
@@ -2005,9 +2017,20 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
   if (type == FORM_PARSE_SCALAR && multi_value_map.size() != 0) {
     if (ref_attr_name.find("Tuple") != std::string::npos) {
       auto value_tuple_ptr = ParserScalarAttrValue<ValueTuple>(ref_attr_name, multi_value_map);
+      if (value_tuple_ptr == nullptr) {
+        // An element referenced by ref_attr_name was dropped, never store a null attribute.
+        MS_LOG(ERROR) << "Failed to build the tuple value of the scalar-form attr, attr_proto:"
+                      << attr_proto.DebugString();
+        return false;
+      }
       (void)prim->AddAttr(attr_name, value_tuple_ptr);
     } else {
       auto value_list_ptr = ParserScalarAttrValue<ValueList>(ref_attr_name, multi_value_map);
+      if (value_list_ptr == nullptr) {
+        MS_LOG(ERROR) << "Failed to build the list value of the scalar-form attr, attr_proto:"
+                      << attr_proto.DebugString();
+        return false;
+      }
       (void)prim->AddAttr(attr_name, value_list_ptr);
     }
   }
