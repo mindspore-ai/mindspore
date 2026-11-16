@@ -28,7 +28,7 @@ def extract_and_process_lines(root_path):
         unique_directories = set()
         if filename.startswith('Compile') and filename.endswith('.json'):
             file_path = os.path.join(root_path, filename)
-            with open(file_path, 'r') as file:
+            with open(file_path, 'r', encoding='utf-8') as file:
                 for line in file:
                     if key in line:
                         parts = line.split('/')
@@ -59,7 +59,7 @@ def extract_and_process_lines(root_path):
                     final_lines.append(new_line)
 
         if not final_lines:
-            with open(output_file_path, 'w') as file:
+            with open(output_file_path, 'w', encoding='utf-8') as file:
                 file.writelines(final_lines)
 
 
