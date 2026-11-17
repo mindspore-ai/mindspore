@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Regression tests for datasets sharding."""
+from tests.dataset_mock import cifar100_source, cifar_source, mnist_source, voc_source
 import mindspore.dataset as ds
 from mindspore import log as logger
 
@@ -186,7 +188,7 @@ def test_voc_shardings(print_res=False):
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
         sampler = ds.DistributedSampler(num_shards, shard_id, shuffle=shuffle, num_samples=num_samples)
-        data1 = ds.VOCDataset(voc_dir, decode=True, sampler=sampler)
+        data1 = voc_source(voc_dir, decode=True, sampler=sampler)
         data1 = data1.repeat(repeat_cnt)
         res = []
         for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
@@ -218,7 +220,7 @@ def test_cifar10_shardings(print_res=False):
     cifar10_dir = "../data/dataset/testCifar10Data"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
-        data1 = ds.Cifar10Dataset(cifar10_dir, num_shards=num_shards, shard_id=shard_id, num_samples=num_samples,
+        data1 = cifar_source(cifar10_dir, num_shards=num_shards, shard_id=shard_id, num_samples=num_samples,
                                   shuffle=shuffle)
         data1 = data1.repeat(repeat_cnt)
         res = []
@@ -243,7 +245,7 @@ def test_cifar100_shardings(print_res=False):
     cifar100_dir = "../data/dataset/testCifar100Data"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
-        data1 = ds.Cifar100Dataset(cifar100_dir, num_shards=num_shards, shard_id=shard_id, num_samples=num_samples,
+        data1 = cifar100_source(cifar100_dir, num_shards=num_shards, shard_id=shard_id, num_samples=num_samples,
                                    shuffle=shuffle)
         data1 = data1.repeat(repeat_cnt)
         res = []
@@ -267,7 +269,7 @@ def test_mnist_shardings(print_res=False):
     mnist_dir = "../data/dataset/testMnistData"
 
     def sharding_config(num_shards, shard_id, num_samples, shuffle, repeat_cnt=1):
-        data1 = ds.MnistDataset(mnist_dir, num_shards=num_shards, shard_id=shard_id, num_samples=num_samples,
+        data1 = mnist_source(mnist_dir, num_shards=num_shards, shard_id=shard_id, num_samples=num_samples,
                                 shuffle=shuffle)
         data1 = data1.repeat(repeat_cnt)
         res = []

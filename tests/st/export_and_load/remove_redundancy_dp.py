@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression tests for remove redundancy dp."""
+from tests.dataset_mock import mnist_source
 import mindspore as ms
 import mindspore.dataset as ds
 from mindspore import nn, ops
@@ -54,7 +56,7 @@ class Network(nn.Cell):
 def create_dataset(batch_size):
     """create dataset"""
     dataset_path = "/home/workspace/mindspore_dataset/mnist/train"
-    data_set = ds.MnistDataset(dataset_path)
+    data_set = mnist_source(dataset_path)
     image_transforms = [
         ds.vision.Rescale(1.0 / 255.0, 0),
         ds.vision.Normalize(mean=(0.1307,), std=(0.3081,)),

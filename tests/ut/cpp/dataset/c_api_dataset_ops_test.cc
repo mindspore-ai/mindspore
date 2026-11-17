@@ -27,9 +27,9 @@ using mindspore::dataset::Tensor;
 namespace mindspore::dataset::test {
 class NoOp : public TensorOp {
  public:
-  NoOp(){};
+  NoOp() {};
 
-  ~NoOp(){};
+  ~NoOp() {};
 
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override {
     *output = std::move(input);
@@ -43,9 +43,9 @@ class NoOp : public TensorOp {
 
 class ThreeToOneOp : public TensorOp {
  public:
-  ThreeToOneOp(){};
+  ThreeToOneOp() {};
 
-  ~ThreeToOneOp(){};
+  ~ThreeToOneOp() {};
 
   uint32_t NumInput() override {
     uint32_t numInput = 3;
@@ -65,9 +65,9 @@ class ThreeToOneOp : public TensorOp {
 
 class OneToThreeOp : public TensorOp {
  public:
-  OneToThreeOp(){};
+  OneToThreeOp() {};
 
-  ~OneToThreeOp(){};
+  ~OneToThreeOp() {};
 
   uint32_t NumOutput() override {
     uint32_t numOutput = 3;
@@ -154,9 +154,8 @@ MSTensorVec BucketBatchTestFunction(MSTensorVec input) {
 TEST_F(MindDataTestPipeline, TestBatchAndRepeat) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBatchAndRepeat.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -199,9 +198,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess1) {
   // Calling with default values
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthSuccess1.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -238,9 +236,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthSuccess2) {
   // Calling with non-default values
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthSuccess2.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -279,9 +276,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail1) {
   // Calling with function pointer
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthFail1.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -302,9 +298,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail2) {
   // Calling with function pointer
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthFail2.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -325,9 +320,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail3) {
   // Calling with function pointer
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthFail3.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -348,9 +342,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail4) {
   // Calling with function pointer
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthFail4.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -371,9 +364,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail5) {
   // Calling with function pointer
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthFail5.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -394,9 +386,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail6) {
   // Calling with function pointer
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthFail6.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
   // Create a BucketBatchByLength operation on ds
   ds = ds->BucketBatchByLength({"image"}, {1, 2}, {1, -2, 3});
@@ -416,9 +407,8 @@ TEST_F(MindDataTestPipeline, TestBucketBatchByLengthFail7) {
   // Calling with function pointer
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestBucketBatchByLengthFail7.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a BucketBatchByLength operation on ds
@@ -579,10 +569,10 @@ TEST_F(MindDataTestPipeline, TestConcatSuccess) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
-  // Create a Cifar10 Dataset
+  // Create a synthetic image/label dataset
   // Column names: {"image", "label"}
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 9));
+  std::shared_ptr<Dataset> ds2 = test::ImageSource(9, {32, 32, 3});
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -633,10 +623,10 @@ TEST_F(MindDataTestPipeline, TestConcatGetDatasetSize) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
-  // Create a Cifar10 Dataset
+  // Create a synthetic image/label dataset
   // Column names: {"image", "label"}
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 9));
+  std::shared_ptr<Dataset> ds2 = test::ImageSource(9, {32, 32, 3});
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -665,10 +655,10 @@ TEST_F(MindDataTestPipeline, TestConcatSuccess2) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 10));
   EXPECT_NE(ds, nullptr);
 
-  // Create a Cifar10 Dataset
+  // Create a synthetic image/label dataset
   // Column names: {"image", "label"}
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 9));
+  std::shared_ptr<Dataset> ds2 = test::ImageSource(9, {32, 32, 3});
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -1886,9 +1876,8 @@ TEST_F(MindDataTestPipeline, TestTakeDatasetNormal) {
 TEST_F(MindDataTestPipeline, TestTensorOpsAndMap) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTensorOpsAndMap.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 20));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(20, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -2016,7 +2005,7 @@ TEST_F(MindDataTestPipeline, TestZipSuccess) {
   EXPECT_NE(ds1, nullptr);
 
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  std::shared_ptr<Dataset> ds2 = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds
@@ -2089,7 +2078,7 @@ TEST_F(MindDataTestPipeline, TestZipGetDatasetSize) {
   EXPECT_NE(ds1, nullptr);
 
   folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds2 = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 5));
+  std::shared_ptr<Dataset> ds2 = test::ImageSource(5, {32, 32, 3});
   EXPECT_NE(ds2, nullptr);
 
   // Create a Project operation on ds

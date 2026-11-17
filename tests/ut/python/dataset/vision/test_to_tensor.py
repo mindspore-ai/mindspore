@@ -15,6 +15,7 @@
 """
 Testing ToTensor op in DE
 """
+from tests.dataset_mock import mnist_source
 import numpy as np
 import os
 import pytest
@@ -44,13 +45,13 @@ def test_to_tensor_float32():
     Description: Test ToTensor C++ implementation with default float32 output_type in data pipeline
     Expectation: Dataset pipeline runs successfully and results are verified
     """
-    data1 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data1 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
 
-    data2 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data2 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
     # For ToTensor, use default float32 output_type
     data2 = data2.map(operations=[vision.ToTensor()], num_parallel_workers=1)
 
-    data3 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data3 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
     # For ToTensor, use ms_type float32 output_type
     data3 = data3.map(operations=[vision.ToTensor("float32")], num_parallel_workers=1)
 
@@ -71,13 +72,13 @@ def test_to_tensor_float64():
     Description: Test ToTensor C++ implementation with float64 output_type in data pipeline
     Expectation: Dataset pipeline runs successfully and results are verified
     """
-    data1 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data1 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
 
-    data2 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data2 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
     # For ToTensor, use ms_type float64 output_type
     data2 = data2.map(operations=[vision.ToTensor("float64")], num_parallel_workers=1)
 
-    data3 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data3 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
     # For ToTensor, use NumPy float64 output_type
     data3 = data3.map(operations=[vision.ToTensor(np.float64)], num_parallel_workers=1)
 
@@ -98,13 +99,13 @@ def test_to_tensor_int32():
     Description: Test ToTensor C++ implementation with int32 output_type in data pipeline
     Expectation: Dataset pipeline runs successfully and results are verified
     """
-    data1 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data1 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
 
-    data2 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data2 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
     # For ToTensor, use ms_type int32 output_type
     data2 = data2.map(operations=[vision.ToTensor("int32")], num_parallel_workers=1)
 
-    data3 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data3 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
     # For ToTensor, use NumPy int32 output_type
     data3 = data3.map(operations=[vision.ToTensor(np.dtype("int32"))], num_parallel_workers=1)
 
@@ -126,13 +127,13 @@ def test_to_tensor_float16():
     Description: Test ToTensor C++ implementation with float16 output_type in data pipeline
     Expectation: Dataset pipeline runs successfully and results are verified
     """
-    data1 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data1 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
 
-    data2 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data2 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
     # For ToTensor, use ms_type float16 output_type
     data2 = data2.map(operations=[vision.ToTensor("float16")], num_parallel_workers=1)
 
-    data3 = ds.MnistDataset(DATA_DIR, num_samples=10, shuffle=False)
+    data3 = mnist_source(DATA_DIR, num_samples=10, shuffle=False)
     # For ToTensor, use NumPy float16 output_type
     data3 = data3.map(operations=[vision.ToTensor(np.float16)], num_parallel_workers=1)
 

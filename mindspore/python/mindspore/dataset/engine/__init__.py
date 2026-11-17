@@ -34,42 +34,10 @@ from .iterators import *
 from .obs.obs_mindrecord_dataset import *
 from .samplers import *
 
-__all__ = ["Caltech101Dataset",        # Vision
-           "Caltech256Dataset",        # Vision
-           "CelebADataset",            # Vision
-           "Cifar10Dataset",           # Vision
-           "Cifar100Dataset",          # Vision
-           "CityscapesDataset",        # Vision
-           "CocoDataset",              # Vision
-           "DIV2KDataset",             # Vision
-           "EMnistDataset",            # Vision
-           "FakeImageDataset",         # Vision
-           "FashionMnistDataset",      # Vision
-           "FlickrDataset",            # Vision
-           "Flowers102Dataset",        # Vision
-           "Food101Dataset",           # Vision
+__all__ = [
            "ImageFolderDataset",       # Vision
-           "KITTIDataset",             # Vision
-           "KMnistDataset",            # Vision
-           "LFWDataset",               # Vision
-           "LSUNDataset",              # Vision
            "ManifestDataset",          # Vision
-           "MnistDataset",             # Vision
-           "OmniglotDataset",          # Vision
-           "PhotoTourDataset",         # Vision
-           "Places365Dataset",         # Vision
-           "QMnistDataset",            # Vision
            "RandomDataset",            # Vision
-           "RenderedSST2Dataset",      # Vision
-           "SBDataset",                # Vision
-           "SBUDataset",               # Vision
-           "SemeionDataset",           # Vision
-           "STL10Dataset",             # Vision
-           "SUN397Dataset",            # Vision
-           "SVHNDataset",              # Vision
-           "USPSDataset",              # Vision
-           "VOCDataset",               # Vision
-           "WIDERFaceDataset",         # Vision
            "AGNewsDataset",            # Text
            "AmazonReviewDataset",      # Text
            "CLUEDataset",              # Text

@@ -86,9 +86,8 @@ TEST_F(MindDataTestProfiler, TestProfilerManager2) {
   EXPECT_OK(profiler_manager->Start());
   EXPECT_TRUE(profiler_manager->IsProfilingEnable());
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<SequentialSampler>(0, 3));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(3, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   ds = ds->Skip(1);

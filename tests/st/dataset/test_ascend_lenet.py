@@ -21,6 +21,7 @@ import mindspore.dataset as ds
 from mindspore import nn
 from mindspore.common.initializer import Normal
 from mindspore.train import TimeMonitor, LossMonitor
+from tests.dataset_mock import mnist_source
 from tests.device_utils import set_device
 from tests.mark_utils import arg_mark
 
@@ -52,7 +53,7 @@ class LeNet5(nn.Cell):
 
 
 def proc_dataset(data_path, batch_size=32):
-    mnist_ds = ds.MnistDataset(data_path, shuffle=True)
+    mnist_ds = mnist_source(data_path, shuffle=True)
 
     # define map operations
     image_transforms = [

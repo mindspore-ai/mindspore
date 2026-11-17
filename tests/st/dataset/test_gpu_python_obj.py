@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression tests for gpu python obj."""
 import os
 import numpy as np
 import pytest
 
 import mindspore.nn as nn
 from mindspore.train import Model
-import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.common import Tensor
+from tests.dataset_mock import mnist_source
 from tests.mark_utils import arg_mark
 
 # pylint: disable=no-value-for-parameter
@@ -39,7 +40,7 @@ def create_dataset(size, needs_batch):
         return (col1, col2, col3)
 
     data_path = os.path.join("/home/workspace/mindspore_dataset/mnist", "train")
-    data = ds.MnistDataset(data_path, num_parallel_workers=8, num_samples=size)
+    data = mnist_source(data_path, num_parallel_workers=8, num_samples=size)
     data = data.project("image")
     data = data.map(operations=my_func, input_columns=["image"],
                     output_columns=["dict", "originally_tensor", "originally_numpy"])

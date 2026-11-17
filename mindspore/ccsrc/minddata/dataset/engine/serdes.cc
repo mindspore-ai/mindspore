@@ -162,7 +162,7 @@ Status Serdes::CreateNode(const std::shared_ptr<DatasetNode> &child_ds, nlohmann
   CHECK_FAIL_RETURN_UNEXPECTED(json_obj.find("op_type") != json_obj.end(), "Failed to find op_type in json.");
   std::string op_type = json_obj["op_type"];
   if (child_ds == nullptr) {
-    // if dataset doesn't have any child, then create a source dataset IR. e.g., ImageFolderNode, CocoNode
+    // if dataset doesn't have any child, then create a source dataset IR. e.g., ImageFolderNode, MindDataNode
     RETURN_IF_NOT_OK(CreateDatasetNode(json_obj, op_type, ds));
   } else {
     // if the dataset has at least one child, then create an operation dataset IR, e.g., BatchNode, MapNode
@@ -175,36 +175,20 @@ Status Serdes::CreateDatasetNode(const nlohmann::json &json_obj, const std::stri
                                  std::shared_ptr<DatasetNode> *ds) {
   if (op_type == kAlbumNode) {
     RETURN_IF_NOT_OK(AlbumNode::from_json(json_obj, ds));
-  } else if (op_type == kCelebANode) {
-    RETURN_IF_NOT_OK(CelebANode::from_json(json_obj, ds));
-  } else if (op_type == kCifar10Node) {
-    RETURN_IF_NOT_OK(Cifar10Node::from_json(json_obj, ds));
-  } else if (op_type == kCifar100Node) {
-    RETURN_IF_NOT_OK(Cifar100Node::from_json(json_obj, ds));
   } else if (op_type == kCLUENode) {
     RETURN_IF_NOT_OK(CLUENode::from_json(json_obj, ds));
-  } else if (op_type == kCocoNode) {
-    RETURN_IF_NOT_OK(CocoNode::from_json(json_obj, ds));
   } else if (op_type == kCSVNode) {
     RETURN_IF_NOT_OK(CSVNode::from_json(json_obj, ds));
-  } else if (op_type == kFlickrNode) {
-    RETURN_IF_NOT_OK(FlickrNode::from_json(json_obj, ds));
   } else if (op_type == kImageFolderNode) {
     RETURN_IF_NOT_OK(ImageFolderNode::from_json(json_obj, ds));
-  } else if (op_type == kKITTINode) {
-    RETURN_IF_NOT_OK(KITTINode::from_json(json_obj, ds));
   } else if (op_type == kManifestNode) {
     RETURN_IF_NOT_OK(ManifestNode::from_json(json_obj, ds));
-  } else if (op_type == kMnistNode) {
-    RETURN_IF_NOT_OK(MnistNode::from_json(json_obj, ds));
   } else if (op_type == kSST2Node) {
     RETURN_IF_NOT_OK(SST2Node::from_json(json_obj, ds));
   } else if (op_type == kTextFileNode) {
     RETURN_IF_NOT_OK(TextFileNode::from_json(json_obj, ds));
   } else if (op_type == kTFRecordNode) {
     RETURN_IF_NOT_OK(TFRecordNode::from_json(json_obj, ds));
-  } else if (op_type == kVOCNode) {
-    RETURN_IF_NOT_OK(VOCNode::from_json(json_obj, ds));
   } else if (op_type == kWikiTextNode) {
     RETURN_IF_NOT_OK(WikiTextNode::from_json(json_obj, ds));
   } else {
@@ -389,8 +373,6 @@ bool IsDatasetOpMatchIRNode(std::string_view ir_node_name, std::string_view data
   // Helper function to match IR Node name to its dataset op name
   if (ir_node_name == kSyncWaitNode) {
     return dataset_op_name == kBarrierOp;
-  } else if (ir_node_name == kCifar10Node || ir_node_name == kCifar100Node) {
-    return dataset_op_name == "CifarOp";
   } else if (ir_node_name == kMindDataNode) {
     return dataset_op_name == "MindRecordOp";
   } else if (ir_node_name == kRandomNode) {

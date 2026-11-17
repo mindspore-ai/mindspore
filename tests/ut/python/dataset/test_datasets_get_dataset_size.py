@@ -15,6 +15,7 @@
 
 """Dataset regression coverage for datasets get dataset size."""
 import mindspore.dataset as ds
+from tests.dataset_mock import mnist_source
 
 IMAGENET_RAWDATA_DIR = "../data/dataset/testImageNetData2/train"
 IMAGENET_TFFILE_DIR = ["../data/dataset/test_tf_file_3_images2/train-0000-of-0001.data",
@@ -96,46 +97,6 @@ def test_imagenet_tf_file_dataset_size():
     assert len(ds_shard_4_0) == count
 
 
-def test_mnist_dataset_size():
-    """
-    Feature: get_dataset_size
-    Description: Test get_dataset_size on MnistDataset
-    Expectation: The dataset is processed as expected
-    """
-    ds_total = ds.MnistDataset(MNIST_DATA_DIR)
-    assert ds_total.get_dataset_size() == 10000
-    assert len(ds_total) == 10000
-
-    # test get dataset_size with the usage arg
-    test_dataset = ds.MnistDataset(MNIST_DATA_DIR, usage="test")
-    train_dataset = ds.MnistDataset(MNIST_DATA_DIR, usage="train")
-    all_dataset = ds.MnistDataset(MNIST_DATA_DIR, usage="all")
-
-    test_size = test_dataset.get_dataset_size()
-    assert test_size == 10000
-    assert len(test_dataset) == 10000
-
-    train_size = train_dataset.get_dataset_size()
-    assert train_size == 0
-    assert len(train_dataset) == train_size
-
-    all_size = all_dataset.get_dataset_size()
-    assert all_size == 10000
-    assert len(all_dataset) == 10000
-
-    ds_shard_1_0 = ds.MnistDataset(MNIST_DATA_DIR, num_shards=1, shard_id=0)
-    assert ds_shard_1_0.get_dataset_size() == 10000
-    assert len(ds_shard_1_0) == 10000
-
-    ds_shard_2_0 = ds.MnistDataset(MNIST_DATA_DIR, num_shards=2, shard_id=0)
-    assert ds_shard_2_0.get_dataset_size() == 5000
-    assert len(ds_shard_2_0) == 5000
-
-    ds_shard_3_0 = ds.MnistDataset(MNIST_DATA_DIR, num_shards=3, shard_id=0)
-    assert ds_shard_3_0.get_dataset_size() == 3334
-    assert len(ds_shard_3_0) == 3334
-
-
 def test_mind_dataset_size():
     """
     Feature: get_dataset_size
@@ -172,133 +133,6 @@ def test_manifest_dataset_size():
     ds_shard_3_0 = ds.ManifestDataset(MANIFEST_DATA_FILE, num_shards=3, shard_id=0)
     assert ds_shard_3_0.get_dataset_size() == 2
     assert len(ds_shard_3_0) == 2
-
-
-def test_cifar10_dataset_size():
-    """
-    Feature: get_dataset_size
-    Description: Test get_dataset_size on Cifar10Dataset
-    Expectation: The dataset is processed as expected
-    """
-    ds_total = ds.Cifar10Dataset(CIFAR10_DATA_DIR)
-    assert ds_total.get_dataset_size() == 10000
-    assert len(ds_total) == 10000
-
-    # test get_dataset_size with usage flag
-    train_cifar10dataset = ds.Cifar10Dataset(CIFAR10_DATA_DIR, usage="train")
-    train_cifar100dataset = ds.Cifar100Dataset(CIFAR100_DATA_DIR, usage="train")
-    all_cifar10dataset = ds.Cifar10Dataset(CIFAR10_DATA_DIR, usage="all")
-
-    train_size = train_cifar100dataset.get_dataset_size()
-    assert train_size == 0
-    assert len(train_cifar100dataset) == train_size
-
-    train_size = train_cifar10dataset.get_dataset_size()
-    assert train_size == 10000
-    assert len(train_cifar10dataset) == 10000
-
-    all_size = all_cifar10dataset.get_dataset_size()
-    assert all_size == 10000
-    assert len(all_cifar10dataset) == 10000
-
-    ds_shard_1_0 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_shards=1, shard_id=0)
-    assert ds_shard_1_0.get_dataset_size() == 10000
-    assert len(ds_shard_1_0) == 10000
-
-    ds_shard_2_0 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_shards=2, shard_id=0)
-    assert ds_shard_2_0.get_dataset_size() == 5000
-    assert len(ds_shard_2_0) == 5000
-
-    ds_shard_3_0 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_shards=3, shard_id=0)
-    assert ds_shard_3_0.get_dataset_size() == 3334
-    assert len(ds_shard_3_0) == 3334
-
-    ds_shard_7_0 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_shards=7, shard_id=0)
-    assert ds_shard_7_0.get_dataset_size() == 1429
-    assert len(ds_shard_7_0) == 1429
-
-
-def test_cifar100_dataset_size():
-    """
-    Feature: get_dataset_size
-    Description: Test get_dataset_size on Cifar100Dataset
-    Expectation: The dataset is processed as expected
-    """
-    ds_total = ds.Cifar100Dataset(CIFAR100_DATA_DIR)
-    assert ds_total.get_dataset_size() == 10000
-    assert len(ds_total) == 10000
-
-    # test get_dataset_size with usage flag
-    test_cifar100dataset = ds.Cifar100Dataset(CIFAR100_DATA_DIR, usage="test")
-    all_cifar100dataset = ds.Cifar100Dataset(CIFAR100_DATA_DIR, usage="all")
-
-    test_size = test_cifar100dataset.get_dataset_size()
-    assert test_size == 10000
-    assert len(test_cifar100dataset) == 10000
-
-    all_size = all_cifar100dataset.get_dataset_size()
-    assert all_size == 10000
-    assert len(all_cifar100dataset) == 10000
-
-    ds_shard_1_0 = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_shards=1, shard_id=0)
-    assert ds_shard_1_0.get_dataset_size() == 10000
-    assert len(ds_shard_1_0) == 10000
-
-    ds_shard_2_0 = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_shards=2, shard_id=0)
-    assert ds_shard_2_0.get_dataset_size() == 5000
-    assert len(ds_shard_2_0) == 5000
-
-    ds_shard_3_0 = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_shards=3, shard_id=0)
-    assert ds_shard_3_0.get_dataset_size() == 3334
-    assert len(ds_shard_3_0) == 3334
-
-
-def test_voc_dataset_size():
-    """
-    Feature: get_dataset_size
-    Description: Test get_dataset_size on VOCDataset
-    Expectation: The dataset is processed as expected
-    """
-    dataset = ds.VOCDataset(VOC_DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
-    assert dataset.get_dataset_size() == 10
-    assert len(dataset) == 10
-
-    dataset_shard_2_0 = ds.VOCDataset(VOC_DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True,
-                                      num_shards=2, shard_id=0)
-    assert dataset_shard_2_0.get_dataset_size() == 5
-    assert len(dataset_shard_2_0) == 5
-
-
-def test_coco_dataset_size():
-    """
-    Feature: get_dataset_size
-    Description: Test get_dataset_size on CocoDataset
-    Expectation: The dataset is processed as expected
-    """
-    dataset = ds.CocoDataset(COCO_DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection",
-                             decode=True, shuffle=False)
-    assert dataset.get_dataset_size() == 6
-    assert len(dataset) == 6
-
-    dataset_shard_2_0 = ds.CocoDataset(COCO_DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True,
-                                       shuffle=False, num_shards=2, shard_id=0)
-    assert dataset_shard_2_0.get_dataset_size() == 3
-    assert len(dataset_shard_2_0) == 3
-
-
-def test_celeba_dataset_size():
-    """
-    Feature: get_dataset_size
-    Description: Test get_dataset_size on CelebADataset
-    Expectation: The dataset is processed as expected
-    """
-    dataset = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True)
-    assert dataset.get_dataset_size() == 4
-    assert len(dataset) == 4
-
-    dataset_shard_2_0 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True, num_shards=2, shard_id=0)
-    assert dataset_shard_2_0.get_dataset_size() == 2
-    assert len(dataset_shard_2_0) == 2
 
 
 def test_clue_dataset_size():
@@ -368,7 +202,7 @@ def test_distributed_get_dataset_size():
     Expectation: The dataset is processed as expected
     """
     # Test get dataset size when num_samples is less than num_per_shard (10000/4 = 2500)
-    dataset1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=2000, num_shards=4, shard_id=0)
+    dataset1 = mnist_source(MNIST_DATA_DIR, num_samples=2000, num_shards=4, shard_id=0)
     assert dataset1.get_dataset_size() == 2000
     assert len(dataset1) == 2000
 
@@ -378,7 +212,7 @@ def test_distributed_get_dataset_size():
     assert count1 == 2000
 
     # Test get dataset size when num_samples is more than num_per_shard (10000/4 = 2500)
-    dataset2 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=3000, num_shards=4, shard_id=0)
+    dataset2 = mnist_source(MNIST_DATA_DIR, num_samples=3000, num_shards=4, shard_id=0)
     assert dataset2.get_dataset_size() == 2500
     assert len(dataset2) == 2500
 

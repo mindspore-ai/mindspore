@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """resnet50"""
+from tests.dataset_mock import cifar_source
 import mindspore as ms
 from mindspore import nn
 from mindspore.ops import operations as P
@@ -69,7 +70,7 @@ class Config:
 
 def create_dataset(data_dir, batch_size=32, train_image_size=224):
     """Build Cifar10 dataset with preprocessing and batching."""
-    data_set = ds.Cifar10Dataset(data_dir, shuffle=True)
+    data_set = cifar_source(data_dir, shuffle=True)
     trans = []
     trans += [
         ds.vision.Resize((train_image_size, train_image_size)),

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Test export"""
+from tests.dataset_mock import mnist_source
 import os
 from io import BytesIO
 import numpy as np
@@ -20,7 +21,6 @@ import shutil
 
 import mindspore
 from mindspore import nn
-import mindspore.dataset as ds
 import mindspore.dataset.vision as CV
 import mindspore.dataset.transforms as CT
 from mindspore.dataset.vision import Inter
@@ -53,7 +53,7 @@ def fc_with_initialize(input_channels, out_channels):
 
 def create_dataset():
     # define dataset
-    mnist_ds = ds.MnistDataset("../data/dataset/testMnistData")
+    mnist_ds = mnist_source("../data/dataset/testMnistData")
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0

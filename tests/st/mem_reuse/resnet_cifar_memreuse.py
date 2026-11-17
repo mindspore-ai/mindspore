@@ -12,7 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Resnet cifar memreuse."""
+"""Regression tests for resnet cifar memreuse."""
+from tests.dataset_mock import cifar_source
+import os
+import random
+import argparse
+import numpy as np
+from resnet import resnet50
 from mindspore.ops.operations import _inner_ops
 import mindspore.common.dtype as mstype
 import mindspore.context as context
@@ -28,15 +34,11 @@ from mindspore.ops import operations as P
 from mindspore.train import ModelCheckpoint, CheckpointConfig, LossMonitor, Model
 from mindspore.context import ParallelMode
 
-import os
 
-import random
 
-import argparse
 
 import numpy as np
 
-from resnet import resnet50
 
 random.seed(1)
 np.random.seed(1)
@@ -66,12 +68,12 @@ def create_dataset(repeat_num=1, training=True):
     data_dir = data_home + "/cifar-10-batches-bin"
     if not training:
         data_dir = data_home + "/cifar-10-verify-bin"
-    ds = de.Cifar10Dataset(data_dir)
+    ds = cifar_source(data_dir)
 
     if args_opt.run_distribute:
         rank_id = int(os.getenv('RANK_ID'))
         rank_size = int(os.getenv('RANK_SIZE'))
-        ds = de.Cifar10Dataset(data_dir, num_shards=rank_size, shard_id=rank_id)
+        ds = cifar_source(data_dir, num_shards=rank_size, shard_id=rank_id)
 
     resize_height = 224
     resize_width = 224

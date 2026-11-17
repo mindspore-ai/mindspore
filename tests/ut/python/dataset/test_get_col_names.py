@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Regression tests for get col names."""
+from tests.dataset_mock import cifar_source
 import numpy as np
 
 import mindspore.dataset as ds
@@ -32,36 +34,6 @@ TFRECORD_SCHEMA = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 VOC_DIR = "../data/dataset/testVOC2012"
 
 
-def test_get_column_name_celeba():
-    """
-    Feature: get_col_names
-    Description: Test get_col_names with CelebADataset
-    Expectation: Output is equal to the expected output
-    """
-    data = ds.CelebADataset(CELEBA_DIR)
-    assert data.get_col_names() == ["image", "attr"]
-
-
-def test_get_column_name_cifar10():
-    """
-    Feature: get_col_names
-    Description: Test get_col_names with Cifar10Dataset
-    Expectation: Output is equal to the expected output
-    """
-    data = ds.Cifar10Dataset(CIFAR10_DIR)
-    assert data.get_col_names() == ["image", "label"]
-
-
-def test_get_column_name_cifar100():
-    """
-    Feature: get_col_names
-    Description: Test get_col_names with Cifar100Dataset
-    Expectation: Output is equal to the expected output
-    """
-    data = ds.Cifar100Dataset(CIFAR100_DIR)
-    assert data.get_col_names() == ["image", "coarse_label", "fine_label"]
-
-
 def test_get_column_name_clue():
     """
     Feature: get_col_names
@@ -70,17 +42,6 @@ def test_get_column_name_clue():
     """
     data = ds.CLUEDataset(CLUE_DIR, task="AFQMC", usage="train")
     assert data.get_col_names() == ["label", "sentence1", "sentence2"]
-
-
-def test_get_column_name_coco():
-    """
-    Feature: get_col_names
-    Description: Test get_col_names with CocoDataset
-    Expectation: Output is equal to the expected output
-    """
-    data = ds.CocoDataset(COCO_DIR, annotation_file=COCO_ANNOTATION, task="Detection",
-                          decode=True, shuffle=False)
-    assert data.get_col_names() == ["image", "bbox", "category_id", "iscrowd"]
 
 
 def test_get_column_name_csv():
@@ -125,7 +86,7 @@ def test_get_column_name_iterator():
     Description: Test get_col_names with iterator
     Expectation: Output is equal to the expected output
     """
-    data = ds.Cifar10Dataset(CIFAR10_DIR)
+    data = cifar_source(CIFAR10_DIR)
     itr = data.create_tuple_iterator(num_epochs=1)
     assert itr.get_col_names() == ["image", "label"]
     itr = data.create_dict_iterator(num_epochs=1)
@@ -148,30 +109,20 @@ def test_get_column_name_map():
     Description: Test get_col_names after a map operation
     Expectation: Output is equal to the expected output
     """
-    data = ds.Cifar10Dataset(CIFAR10_DIR)
+    data = cifar_source(CIFAR10_DIR)
     center_crop_op = vision.CenterCrop(10)
     data = data.map(operations=center_crop_op, input_columns=["image"])
     assert data.get_col_names() == ["image", "label"]
-    data = ds.Cifar10Dataset(CIFAR10_DIR)
+    data = cifar_source(CIFAR10_DIR)
     data = data.map(operations=center_crop_op, input_columns=["image"], output_columns=["image"])
     assert data.get_col_names() == ["image", "label"]
-    data = ds.Cifar10Dataset(CIFAR10_DIR)
+    data = cifar_source(CIFAR10_DIR)
     data = data.map(operations=center_crop_op, input_columns=["image"], output_columns=["col1"])
     assert data.get_col_names() == ["col1", "label"]
-    data = ds.Cifar10Dataset(CIFAR10_DIR)
+    data = cifar_source(CIFAR10_DIR)
     data = data.map(operations=center_crop_op, input_columns=["image"], output_columns=["col1", "col2"])
     data = data.project(["col2", "col1"])
     assert data.get_col_names() == ["col2", "col1"]
-
-
-def test_get_column_name_mnist():
-    """
-    Feature: get_col_names
-    Description: Test get_col_names with MnistDataset
-    Expectation: Output is equal to the expected output
-    """
-    data = ds.MnistDataset(MNIST_DIR)
-    assert data.get_col_names() == ["image", "label"]
 
 
 def test_get_column_name_numpy_slices():
@@ -218,21 +169,9 @@ def test_get_column_name_device_que():
     Description: Test get_col_names after device_que operation
     Expectation: Output is equal to the expected output
     """
-    data = ds.Cifar10Dataset(CIFAR10_DIR)
+    data = cifar_source(CIFAR10_DIR)
     data = data.device_que()
     assert data.get_col_names() == ["image", "label"]
-
-
-def test_get_column_name_voc():
-    """
-    Feature: get_col_names
-    Description: Test get_col_names with VOCDataset
-    Expectation: Output is equal to the expected output
-    """
-    data = ds.VOCDataset(VOC_DIR, task="Segmentation", usage="train", decode=True, shuffle=False)
-    assert data.get_col_names() == ["image", "target"]
-    data = ds.VOCDataset(VOC_DIR, task="Segmentation", usage="train", decode=True, shuffle=False, extra_metadata=True)
-    assert data.get_col_names() == ["image", "target", "_meta-filename"]
 
 
 def test_get_column_name_project():
@@ -241,7 +180,7 @@ def test_get_column_name_project():
     Description: Test get_col_names after project operation
     Expectation: Output is equal to the expected output
     """
-    data = ds.Cifar10Dataset(CIFAR10_DIR)
+    data = cifar_source(CIFAR10_DIR)
     assert data.get_col_names() == ["image", "label"]
     data = data.project(columns=["image"])
     assert data.get_col_names() == ["image"]
@@ -253,7 +192,7 @@ def test_get_column_name_rename():
     Description: Test get_col_names with after a rename operation
     Expectation: Output is equal to the expected output
     """
-    data = ds.Cifar10Dataset(CIFAR10_DIR)
+    data = cifar_source(CIFAR10_DIR)
     assert data.get_col_names() == ["image", "label"]
     data = data.rename(["image", "label"], ["test1", "test2"])
     assert data.get_col_names() == ["test1", "test2"]
@@ -265,7 +204,7 @@ def test_get_column_name_zip():
     Description: Test get_col_names after zip operation
     Expectation: Output is equal to the expected output
     """
-    data1 = ds.Cifar10Dataset(CIFAR10_DIR)
+    data1 = cifar_source(CIFAR10_DIR)
     assert data1.get_col_names() == ["image", "label"]
     data2 = ds.CSVDataset(CSV_DIR)
     assert data2.get_col_names() == ["1", "2", "3", "4"]
@@ -274,22 +213,16 @@ def test_get_column_name_zip():
 
 
 if __name__ == "__main__":
-    test_get_column_name_celeba()
-    test_get_column_name_cifar10()
-    test_get_column_name_cifar100()
     test_get_column_name_clue()
-    test_get_column_name_coco()
     test_get_column_name_csv()
     test_get_column_name_generator()
     test_get_column_name_imagefolder()
     test_get_column_name_iterator()
     test_get_column_name_manifest()
     test_get_column_name_map()
-    test_get_column_name_mnist()
     test_get_column_name_numpy_slices()
     test_get_column_name_tfrecord()
     test_get_column_name_device_que()
-    test_get_column_name_voc()
     test_get_column_name_project()
     test_get_column_name_rename()
     test_get_column_name_zip()

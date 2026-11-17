@@ -476,8 +476,10 @@ class GetNextSingleOp(Cell):
         >>> from mindspore import dataset as ds
         >>> from mindspore import dtype as mstype
         >>>
-        >>> data_path = "/path/to/MNIST_Data/train/"
-        >>> train_dataset = ds.MnistDataset(data_path, num_samples=10)
+        >>> import numpy as np
+        >>> samples = {"image": np.zeros((10, 28, 28, 1), np.uint8),
+        ...            "label": np.arange(10, dtype=np.uint32)}
+        >>> train_dataset = ds.NumpySlicesDataset(samples, shuffle=False)
         >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> dataset = dataset_helper.iter.dataset
         >>> dataset_types, dataset_shapes = dataset_helper.types_shapes()

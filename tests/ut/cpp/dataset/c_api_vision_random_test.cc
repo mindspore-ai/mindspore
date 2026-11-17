@@ -110,10 +110,8 @@ TEST_F(MindDataTestPipeline, TestRandomColorAdjust) {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropSuccess.";
-  // Create an VOC Dataset
-  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds =
-    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 10));
+  // Create synthetic images and valid xywh boxes
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {512, 512, 3}, true);
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -173,10 +171,8 @@ TEST_F(MindDataTestPipeline, TestRandomCropSuccess) {
 /// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestRandomCropFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomCropFail with invalid parameters.";
-  // Create an VOC Dataset
-  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds =
-    VOC(folder_path, "Detection", "train", {}, true, std::make_shared<SequentialSampler>(0, 3));
+  // Create synthetic images and valid xywh boxes
+  std::shared_ptr<Dataset> ds = test::ImageSource(3, {512, 512, 3}, true);
   EXPECT_NE(ds, nullptr);
 
   // Case 1: Testing the size parameter is negative.
@@ -342,9 +338,8 @@ TEST_F(MindDataTestPipeline, TestRandomHorizontalAndVerticalFlip) {
 TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropSuccess1.";
   // Testing RandomResizedCrop with default values
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -384,9 +379,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess1) {
 TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropSuccess2.";
   // Testing RandomResizedCrop with non-default values
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -428,9 +422,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropSuccess2) {
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with negative size.";
   // This should fail because size has negative value
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -451,9 +444,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail1) {
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with invalid scale input.";
   // This should fail because scale isn't in {min, max} format
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -475,9 +467,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail2) {
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with invalid ratio input.";
   // This should fail because ratio isn't in {min, max} format
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
@@ -499,9 +490,8 @@ TEST_F(MindDataTestPipeline, TestRandomResizedCropFail3) {
 TEST_F(MindDataTestPipeline, TestRandomResizedCropFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomResizedCropFail1 with invalid scale size.";
   // This should fail because scale has a size of more than 2
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops

@@ -655,6 +655,7 @@
       "mindspore/ops/ops_utils",
       "mindspore/ops/view",
       "tests/ut",
+      "tests/dataset_mock.py",
       "tests/vm_impl",
       "mindspore/python",
       ".gitignore"

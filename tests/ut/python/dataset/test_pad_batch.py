@@ -14,6 +14,7 @@
 # ==============================================================================
 
 """Dataset regression coverage for pad batch."""
+from tests.dataset_mock import cifar_source
 import time
 
 import numpy as np
@@ -139,7 +140,7 @@ def test_batch_padding_05():
 
 
 def batch_padding_performance_3d():
-    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
+    data1 = cifar_source(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
     pad_info = {"image": ([36, 36, 3], 0)}
     # pad_info = None
@@ -153,7 +154,7 @@ def batch_padding_performance_3d():
 
 
 def batch_padding_performance_1d():
-    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
+    data1 = cifar_source(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
     data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image")
     pad_info = {"image": ([3888], 0)}  # 3888 =36*36*3
@@ -168,7 +169,7 @@ def batch_padding_performance_1d():
 
 
 def batch_pyfunc_padding_3d():
-    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
+    data1 = cifar_source(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
     # pad_info = {"image": ([36, 36, 3], 0)}
     data1 = data1.map(operations=(lambda x: np.pad(x, ((0, 4), (0, 4), (0, 0)))), input_columns="image",
@@ -183,7 +184,7 @@ def batch_pyfunc_padding_3d():
 
 
 def batch_pyfunc_padding_1d():
-    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
+    data1 = cifar_source(CIFAR10_DIR, shuffle=False)  # shape = [32,32,3]
     data1 = data1.repeat(24)
     data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image")
     data1 = data1.map(operations=(lambda x: np.pad(x, (0, 816))), input_columns="image", python_multiprocessing=False)
@@ -197,7 +198,7 @@ def batch_pyfunc_padding_1d():
 
 
 def pad_map_config(my_num_workers=None, py_multiproc=False, my_max_rowsize=16):
-    data1 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False, num_samples=1000)  # shape = [32,32,3]
+    data1 = cifar_source(CIFAR10_DIR, shuffle=False, num_samples=1000)  # shape = [32,32,3]
     data1 = data1.map(operations=(lambda x: x.reshape(-1)), input_columns="image",
                       num_parallel_workers=my_num_workers, python_multiprocessing=py_multiproc,
                       max_rowsize=my_max_rowsize)  # reshape to 1d
@@ -211,7 +212,7 @@ def pad_map_config(my_num_workers=None, py_multiproc=False, my_max_rowsize=16):
     return res
 
 def pad_batch_config():
-    data2 = ds.Cifar10Dataset(CIFAR10_DIR, shuffle=False, num_samples=1000)  # shape = [32,32,3]
+    data2 = cifar_source(CIFAR10_DIR, shuffle=False, num_samples=1000)  # shape = [32,32,3]
     data2 = data2.map(operations=(lambda x: x.reshape(-1)), input_columns="image")  # reshape to 1d
     data2 = data2.padded_batch(batch_size=25, drop_remainder=True, pad_info={"image": ([3888], 0)})
     res = []

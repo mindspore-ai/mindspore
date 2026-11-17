@@ -37,9 +37,8 @@ class MindDataTestTreeAdapter : public UT::DatasetOpTesting {};
 TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
   MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestSimpleTreeAdapter.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<SequentialSampler>(0, 4));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(4, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   ds = ds->Batch(2);
@@ -78,9 +77,8 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeAdapter) {
 TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
   MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestTreeAdapterWithRepeat.";
 
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<SequentialSampler>(0, 3));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(3, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   ds = ds->Batch(2, false);
@@ -115,9 +113,9 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
 TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune) {
   MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestOptimizedTreeSerializeDeserializeForAutoTune.";
 
-  // Create three ordered numeric samples without depending on a text conversion.
-  std::string dataset_dir = datasets_root_path_ + "/testCifar10Data";
-  std::shared_ptr<Dataset> ds = Cifar10(dataset_dir, "all", std::make_shared<SequentialSampler>(0, 3));
+  // Read three ordered labels from the first ImageFolder fixture class.
+  std::string dataset_dir = datasets_root_path_ + "/testPK/data";
+  std::shared_ptr<Dataset> ds = ImageFolder(dataset_dir, false, std::make_shared<SequentialSampler>(0, 3));
   ASSERT_NE(ds, nullptr);
   ds = ds->Project({"label"});
   ASSERT_NE(ds, nullptr);
@@ -141,7 +139,7 @@ TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune
   tree_modifier->AddChangeRequest(0, std::make_shared<ResizeConnectorRequest>(100));
   tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(4));
 
-  std::vector<int32_t> expected_result = {0, 1, 2, 0, 1, 2};
+  std::vector<int32_t> expected_result = {0, 0, 0, 0, 0, 0};
   TensorRow row;
 
   uint64_t i = 0;
@@ -227,9 +225,9 @@ TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune
 TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
   MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestSimpleTreeModifier.";
 
-  // Create three ordered numeric samples without depending on a text conversion.
-  std::string dataset_dir = datasets_root_path_ + "/testCifar10Data";
-  std::shared_ptr<Dataset> ds = Cifar10(dataset_dir, "all", std::make_shared<SequentialSampler>(0, 3));
+  // Read three ordered labels from the first ImageFolder fixture class.
+  std::string dataset_dir = datasets_root_path_ + "/testPK/data";
+  std::shared_ptr<Dataset> ds = ImageFolder(dataset_dir, false, std::make_shared<SequentialSampler>(0, 3));
   ASSERT_NE(ds, nullptr);
   ds = ds->Project({"label"});
   ASSERT_NE(ds, nullptr);
@@ -259,7 +257,7 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
   tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>());
   tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(10));
 
-  std::vector<int32_t> expected_result = {0, 1, 2, 0, 1, 2};
+  std::vector<int32_t> expected_result = {0, 0, 0, 0, 0, 0};
   TensorRow row;
 
   uint64_t i = 0;

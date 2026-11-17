@@ -175,34 +175,6 @@ def test_numpyslices_sampler_chain_multi_add_child():
 
 
 
-def test_mnist_sampler_chain():
-    """
-    Feature: Chained Sampler
-    Description: MnistDataset with sampler chain; add child sampler with 2 statements
-    Expectation: Data verified to be correct
-    """
-    logger.info("test_mnist_sampler_chain")
-
-    sampler = ds.DistributedSampler(num_shards=1, shard_id=0, shuffle=False, num_samples=3, offset=1)
-    child_sampler = ds.RandomSampler(replacement=True, num_samples=4)
-    sampler.add_child(child_sampler)
-    data1 = ds.MnistDataset(MNIST_DATA_DIR, sampler=sampler)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 3
-    # Verify number of rows
-    assert sum((1 for _ in data1)) == 3
-
-    # Verify dataset contents
-    res = []
-    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        logger.info("item: {}".format(item))
-        res.append(item)
-    logger.info("dataset: {}".format(res))
-
-
 def test_manifest_sampler_chain():
     """
     Feature: Chained Sampler
@@ -222,96 +194,6 @@ def test_manifest_sampler_chain():
     assert data1_size == 2
     # Verify number of rows
     assert sum((1 for _ in data1)) == 2
-
-    # Verify dataset contents
-    res = []
-    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        logger.info("item: {}".format(item))
-        res.append(item)
-    logger.info("dataset: {}".format(res))
-
-
-def test_coco_sampler_chain():
-    """
-    Feature: Chained Sampler
-    Description: CocoDataset with sampler chain; add child sampler with 2 statements
-    Expectation: Data verified to be correct
-    """
-    logger.info("test_coco_sampler_chain")
-
-    sampler = ds.DistributedSampler(num_shards=2, shard_id=0, shuffle=False, num_samples=5)
-    child_sampler = ds.RandomSampler(replacement=True, num_samples=2)
-    sampler.add_child(child_sampler)
-    data1 = ds.CocoDataset(COCO_DATA_DIR, annotation_file=ANNOTATION_FILE, task="Detection", decode=True,
-                           sampler=sampler)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 1
-
-    # Verify number of rows
-    assert sum((1 for _ in data1)) == 1
-
-    # Verify dataset contents
-    res = []
-    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        logger.info("item: {}".format(item))
-        res.append(item)
-    logger.info("dataset: {}".format(res))
-
-
-def test_cifar_sampler_chain():
-    """
-    Feature: Chained Sampler
-    Description: CifarDataset with sampler chain, including nested child sampler
-    Expectation: Data verified to be correct
-    """
-    logger.info("test_cifar_sampler_chain")
-
-    sampler = ds.DistributedSampler(num_shards=2, shard_id=0, shuffle=False, num_samples=5)
-    child_sampler = ds.RandomSampler(replacement=True, num_samples=4)
-    child_sampler2 = ds.SequentialSampler(start_index=0, num_samples=2)
-    # Note: Add nested child_sampler2 to child_sampler
-    child_sampler.add_child(child_sampler2)
-    sampler.add_child(child_sampler)
-    data1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, sampler=sampler)
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 1
-
-    # Verify number of rows
-    assert sum((1 for _ in data1)) == 1
-
-    # Verify dataset contents
-    res = []
-    for item in data1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-        logger.info("item: {}".format(item))
-        res.append(item)
-    logger.info("dataset: {}".format(res))
-
-
-def test_voc_sampler_chain():
-    """
-    Feature: Chained Sampler
-    Description: VOCDataset with sampler chain; add child sampler with 2 statements
-    Expectation: Data verified to be correct
-    """
-    logger.info("test_voc_sampler_chain")
-
-    sampler = ds.DistributedSampler(num_shards=2, shard_id=0, shuffle=False, num_samples=5)
-    child_sampler = ds.SequentialSampler(start_index=0)
-    sampler.add_child(child_sampler)
-    data1 = ds.VOCDataset(VOC_DATA_DIR, task="Segmentation", sampler=sampler)
-
-    # Verify dataset size
-    data1_size = data1.get_dataset_size()
-    logger.info("dataset size is: {}".format(data1_size))
-    assert data1_size == 5
-
-    # Verify number of rows
-    assert sum((1 for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True))) == 5
 
     # Verify dataset contents
     res = []

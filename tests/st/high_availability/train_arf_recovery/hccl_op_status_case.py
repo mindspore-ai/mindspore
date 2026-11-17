@@ -16,10 +16,10 @@
 Test case for hccl status record
 """
 
+from tests.dataset_mock import mnist_source
 import os
 import glob
 from mindspore import context
-import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
 import mindspore.dataset.vision as CV
 from mindspore import nn
@@ -89,7 +89,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     Create dataset for train or test
     """
     # define dataset
-    mnist_ds = ds.MnistDataset(data_path, num_shards=get_group_size(),
+    mnist_ds = mnist_source(data_path, num_shards=get_group_size(),
                                shard_id=get_rank())
 
     resize_height, resize_width = 32, 32

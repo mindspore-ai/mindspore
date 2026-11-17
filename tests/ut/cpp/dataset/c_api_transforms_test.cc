@@ -83,9 +83,8 @@ TEST_F(MindDataTestPipeline, TestComposeSuccess) {
 TEST_F(MindDataTestPipeline, TestComposeFail1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail1 with invalid transform.";
 
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Resize: Non-positive size value: -1 at element: 0
@@ -109,9 +108,8 @@ TEST_F(MindDataTestPipeline, TestComposeFail1) {
 TEST_F(MindDataTestPipeline, TestComposeFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail2 with invalid transform.";
 
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Compose: transform ops must not be null
@@ -134,9 +132,8 @@ TEST_F(MindDataTestPipeline, TestComposeFail2) {
 TEST_F(MindDataTestPipeline, TestComposeFail3) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestComposeFail3 with invalid transform.";
 
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Compose: transform list must not be empty

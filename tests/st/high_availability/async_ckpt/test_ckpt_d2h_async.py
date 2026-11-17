@@ -15,7 +15,6 @@
 """test async d2h copy"""
 
 import os
-import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
 import mindspore.dataset.vision as CV
 from mindspore import context
@@ -26,6 +25,7 @@ from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter
 from mindspore.train import Model
 from mindspore.common.initializer import Normal
+from tests.dataset_mock import mnist_source
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -80,7 +80,7 @@ def create_dataset(data_path, batch_size=32, num_parallel_workers=1):
     create dataset for train or test
     """
     # define dataset
-    mnist_ds = ds.MnistDataset(data_path, shuffle=True, num_parallel_workers=num_parallel_workers)
+    mnist_ds = mnist_source(data_path, shuffle=True, num_parallel_workers=num_parallel_workers)
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0

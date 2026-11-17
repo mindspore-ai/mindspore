@@ -101,7 +101,7 @@ def select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
         # That means the following arguments: num_shards, shard_id, shuffle, num_samples should all
         # be None. Consider this example:
         #     sampler = ds.DistributedSampler(num_shards=8, shard_id=3, shuffle=shuffle)
-        #     data1 = ds.VOCDataset(voc_dir, decode=True, sampler=sampler, num_shards=4, shard_id=1)
+        #     data1 = ds.ImageFolderDataset(image_dir, decode=True, sampler=sampler, num_shards=4, shard_id=1)
         # In this case, the user has given different sample-related arguments that contradict each other.
         # To prevent this, only allow the user to manually specify the sampler if those arguments are all None
         if (isinstance(input_sampler, BuiltinSampler) and
@@ -170,7 +170,7 @@ class BuiltinSampler:
             >>> import mindspore.dataset as ds
             >>> sampler = ds.SequentialSampler(start_index=0, num_samples=3)
             >>> sampler.add_child(ds.RandomSampler(num_samples=4))
-            >>> dataset = ds.Cifar10Dataset(cifar10_dataset_dir, sampler=sampler)
+            >>> dataset = ds.ImageFolderDataset(image_dataset_dir, sampler=sampler)
         """
         if self.child_sampler is not None:
             raise RuntimeError("Cannot add child sampler, this sampler already has a child.")

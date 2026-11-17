@@ -66,13 +66,14 @@ class AutoParallel(Cell):
         >>> init()
         >>> ms.set_seed(1)
         >>>
-        >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # DATA_PATH points to image files grouped in class subdirectories.
         >>>
         >>> def create_dataset(batch_size):
         ...    dataset_path = os.getenv("DATA_PATH")
-        ...    dataset = ds.MnistDataset(dataset_path)
+        ...    dataset = ds.ImageFolderDataset(dataset_path, decode=True)
         ...    image_transforms = [
+        ...        ds.vision.Grayscale(1),
+        ...        ds.vision.Resize((28, 28)),
         ...        ds.vision.Rescale(1.0 / 255.0, 0),
         ...        ds.vision.Normalize(mean=(0.1307,), std=(0.3081,)),
         ...        ds.vision.HWC2CHW()

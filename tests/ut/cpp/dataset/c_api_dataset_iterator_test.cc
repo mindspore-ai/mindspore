@@ -27,9 +27,8 @@ class MindDataTestPipeline : public UT::DatasetOpTesting {
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorEmptyColumn.";
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 5));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(5, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Create a Rename operation on ds
@@ -67,9 +66,8 @@ TEST_F(MindDataTestPipeline, TestIteratorEmptyColumn) {
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorOneColumn.";
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 4));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(4, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Create a Batch operation on ds
@@ -110,9 +108,8 @@ TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorReOrder.";
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<SequentialSampler>(false, 4));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(4, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Create a Take operation on ds
@@ -153,10 +150,9 @@ TEST_F(MindDataTestPipeline, TestIteratorReOrder) {
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorTwoColumns.";
-  // Create a VOC Dataset
-  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds =
-    VOC(folder_path, "Detection", "train", {}, false, std::make_shared<SequentialSampler>(0, 4));
+  // Preserve variable-length image buffers when testing column projection.
+  std::shared_ptr<Dataset> ds = test::ImageSource(2, {173673}, true);
+  ds = ds->Concat({test::ImageSource(1, {147025}, true), test::ImageSource(1, {211653}, true)});
   EXPECT_NE(ds, nullptr);
 
   // Create a Repeat operation on ds
@@ -174,19 +170,17 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
   // Iterate the dataset and get each row
   std::vector<mindspore::MSTensor> row;
   ASSERT_OK(iter->GetNextRow(&row));
-  std::vector<std::vector<int64_t>> expect = {{173673}, {1, 4}, {173673}, {1, 4},
-                                              {147025}, {1, 4}, {211653}, {1, 4}};
+  std::vector<std::vector<int64_t>> image_shapes = {{173673}, {173673}, {147025}, {211653}};
+  std::vector<int64_t> bbox_shape = {1, 4};
 
   uint64_t i = 0;
-  uint64_t j = 0;
   while (row.size() != 0) {
     MS_LOG(INFO) << "row[0]:" << row[0].Shape() << ", row[1]:" << row[1].Shape();
     EXPECT_EQ(2, row.size());
-    EXPECT_EQ(expect[j++], row[0].Shape());
-    EXPECT_EQ(expect[j++], row[1].Shape());
+    EXPECT_EQ(image_shapes[i % image_shapes.size()], row[0].Shape());
+    EXPECT_EQ(bbox_shape, row[1].Shape());
     ASSERT_OK(iter->GetNextRow(&row));
     i++;
-    j = (j == expect.size()) ? 0 : j;
   }
 
   EXPECT_EQ(i, 8);
@@ -200,9 +194,8 @@ TEST_F(MindDataTestPipeline, TestIteratorTwoColumns) {
 /// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
 TEST_F(MindDataTestPipeline, TestIteratorWrongColumn) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorOneColumn.";
-  // Create a Mnist Dataset
-  std::string folder_path = datasets_root_path_ + "/testMnistData/";
-  std::shared_ptr<Dataset> ds = Mnist(folder_path, "all", std::make_shared<RandomSampler>(false, 4));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(4, {28, 28, 1});
   EXPECT_NE(ds, nullptr);
 
   // Pass wrong column name

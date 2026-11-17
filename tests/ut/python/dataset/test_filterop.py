@@ -14,6 +14,7 @@
 # ==============================================================================
 
 """Dataset filtering regression tests."""
+from tests.dataset_mock import cifar_source
 import numpy as np
 
 import mindspore.dataset as ds
@@ -519,7 +520,7 @@ def test_filte_case_dataset_cifar10():
     Expectation: Output is equal to the expected output
     """
     DATA_DIR_10 = "../data/dataset/testCifar10Data"
-    dataset_c = ds.Cifar10Dataset(dataset_dir=DATA_DIR_10, num_samples=100000, shuffle=False)
+    dataset_c = cifar_source(dataset_dir=DATA_DIR_10, num_samples=100000, shuffle=False)
     dataset_f1 = dataset_c.filter(input_columns=["image", "label"], predicate=filter_func_cifar, num_parallel_workers=1)
     for item in dataset_f1.create_dict_iterator(num_epochs=1, output_numpy=True):
         # in this example, each dictionary has keys "image" and "label"

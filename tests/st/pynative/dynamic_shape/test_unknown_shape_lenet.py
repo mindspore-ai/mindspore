@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
+"""Regression tests for unknown shape lenet."""
 import os
 
 import numpy as np
 
 import mindspore.context as context
-import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
 import mindspore.dataset.vision as CV
 import mindspore.nn as nn
@@ -34,6 +34,7 @@ from mindspore.common.initializer import TruncatedNormal
 from mindspore.train.callback._callback import _handle_loss
 from mindspore.common import JitConfig
 from mindspore.common import set_seed
+from tests.dataset_mock import mnist_source
 from tests.mark_utils import arg_mark
 
 
@@ -133,9 +134,9 @@ def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers
     """
     # define dataset
     if num_samples is None:
-        mnist_ds = ds.MnistDataset(data_path)
+        mnist_ds = mnist_source(data_path)
     else:
-        mnist_ds = ds.MnistDataset(data_path, num_samples=num_samples)
+        mnist_ds = mnist_source(data_path, num_samples=num_samples)
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0

@@ -51,15 +51,9 @@ class SyncWaitNode;
 #endif
 // Leaf IR node
 class AlbumNode;
-class CelebANode;
-class Cifar100Node;
-class Cifar10Node;
-class CocoNode;
 class ImageFolderNode;
 class ManifestNode;
-class MnistNode;
 class RandomNode;
-class VOCNode;
 #ifdef ENABLE_PYTHON
 class GeneratorNode;
 #endif
