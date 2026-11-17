@@ -33,14 +33,11 @@ class SamplerObj;
 /// \brief An abstract base class to represent a sampler in the data pipeline.
 class DATASET_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class AlbumDataset;
-  friend class CLUEDataset;
   friend class CSVDataset;
   friend class ImageFolderDataset;
-  friend class IMDBDataset;
   friend class ManifestDataset;
   friend class MindDataDataset;
   friend class RandomDataDataset;
-  friend class SST2Dataset;
   friend class TextFileDataset;
   friend class TFRecordDataset;
 

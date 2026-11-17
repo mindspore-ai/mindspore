@@ -9,33 +9,17 @@ SET(DE_UT_SRCS
         btree_test.cc
         buddy_test.cc
         c_api_cache_test.cc
-        c_api_dataset_ag_news_test.cc
         c_api_dataset_album_test.cc
-        c_api_dataset_amazon_review_test.cc
-        c_api_dataset_clue_test.cc
-        c_api_dataset_conll2000_test.cc
         c_api_dataset_config_test.cc
         c_api_dataset_csv_test.cc
-        c_api_dataset_dbpedia_test.cc
-        c_api_dataset_en_wik9_test.cc
-        c_api_dataset_imdb_test.cc
         c_api_dataset_iterator_test.cc
-        c_api_dataset_iwslt_test.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc
-        c_api_dataset_multi30k_test.cc
         c_api_dataset_ops_test.cc
-        c_api_dataset_penn_treebank_test.cc
         c_api_dataset_randomdata_test.cc
         c_api_dataset_save.cc
-        c_api_dataset_sogou_news_test.cc
-        c_api_dataset_squad_test.cc
         c_api_dataset_textfile_test.cc
         c_api_dataset_tfrecord_test.cc
-        c_api_dataset_udpos_test.cc
-        c_api_dataset_yahoo_answers_test.cc
-        c_api_dataset_yelp_review_test.cc
-        c_api_dataset_wiki_text_test.cc
         c_api_datasets_test.cc
         c_api_epoch_ctrl_test.cc
         c_api_pull_based_test.cc

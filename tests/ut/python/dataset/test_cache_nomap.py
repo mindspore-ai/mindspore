@@ -1706,84 +1706,6 @@ def test_cache_nomap_multiple_cache_eval():
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
-def test_cache_nomap_clue1():
-    """
-    Feature: DatasetCache op
-    Description: Test CLUEDataset (a non mappable dataset) with a Cache over it just after the leaf
-        In this one, the CLUEDataset will be given sharding configuration, however since a Cache is
-        used, the tree prepare should undo the sharding configuration and instead, a distributed
-        sampler will be chosen with the same shard config.
-
-       Cache
-         |
-       CLUE
-
-    Expectation: Output is equal to the expected output
-    """
-    logger.info("Test cache nomap clue 1")
-    if "SESSION_ID" in os.environ:
-        session_id = int(os.environ['SESSION_ID'])
-    else:
-        raise RuntimeError("Testcase requires SESSION_ID environment variable")
-
-    some_cache = ds.DatasetCache(session_id=session_id, size=0)
-
-    # With only 3 records shard into 3, we expect only 1 record returned for this shard
-    # However, the sharding will be done by the sampler, not by the clue leaf node
-    # In this case, it is a row-based sharding, not the file-based sharding that would happen if
-    # there was not any cache.
-    ds1 = ds.CLUEDataset(CLUE_DATA_DIR, task='AFQMC', usage='train', num_shards=3, shard_id=1, cache=some_cache)
-
-    num_epoch = 4
-    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
-
-    epoch_count = 0
-    for _ in range(num_epoch):
-        assert sum(1 for _ in iter1) == 1
-        epoch_count += 1
-    assert epoch_count == num_epoch
-
-    logger.info("test_cache_nomap_clue1 Ended.\n")
-
-
-@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
-def test_cache_nomap_clue2():
-    """
-    Feature: DatasetCache op
-    Description: Test CLUEDataset (a non mappable dataset) with a Cache over it after Map, num_samples arg is given
-
-       Cache
-         |
-    Map(lambda x: x)
-         |
-       CLUE
-
-    Expectation: Output is equal to the expected output
-    """
-    logger.info("Test cache nomap clue 2")
-    if "SESSION_ID" in os.environ:
-        session_id = int(os.environ['SESSION_ID'])
-    else:
-        raise RuntimeError("Testcase requires SESSION_ID environment variable")
-
-    some_cache = ds.DatasetCache(session_id=session_id, size=0)
-
-    ds1 = ds.CLUEDataset(CLUE_DATA_DIR, task='AFQMC', usage='train', num_samples=2)
-    ds1 = ds1.map(vision.not_random(lambda x: x), ["label"], cache=some_cache)
-
-    num_epoch = 4
-    iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
-
-    epoch_count = 0
-    for _ in range(num_epoch):
-        assert sum(1 for _ in iter1) == 2
-        epoch_count += 1
-    assert epoch_count == num_epoch
-
-    logger.info("test_cache_nomap_clue2 Ended.\n")
-
-
-@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_csv1():
     """
     Feature: DatasetCache op
@@ -2147,48 +2069,6 @@ def test_cache_nomap_failure2():
 
     assert num_iter == 0
     logger.info('test_cache_nomap_failure2 Ended.\n')
-
-
-@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
-def test_cache_nomap_failure3():
-    """
-    Feature: DatasetCache op
-    Description: Test Batch under Cache
-
-               Repeat
-                  |
-                Cache
-                  |
-             Map(Resize)
-                  |
-                Batch
-                  |
-                Clue
-
-    Expectation: Error is raised as expected
-    """
-    logger.info("Test cache nomap failure 3")
-    if "SESSION_ID" in os.environ:
-        session_id = int(os.environ['SESSION_ID'])
-    else:
-        raise RuntimeError("Testcase requires SESSION_ID environment variable")
-
-    some_cache = ds.DatasetCache(session_id=session_id, size=0)
-
-    ds1 = ds.CLUEDataset(CLUE_DATA_DIR, task='AFQMC', usage='train')
-    ds1 = ds1.batch(2)
-    resize_op = vision.Resize((224, 224))
-    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
-    ds1 = ds1.repeat(4)
-
-    with pytest.raises(RuntimeError) as e:
-        num_iter = 0
-        for _ in ds1.create_dict_iterator(num_epochs=1):
-            num_iter += 1
-    assert "BatchNode is not supported as a descendant operator under a cache" in str(e.value)
-
-    assert num_iter == 0
-    logger.info('test_cache_nomap_failure3 Ended.\n')
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
@@ -2574,8 +2454,6 @@ if __name__ == '__main__':
     test_cache_nomap_multiple_cache3()
     test_cache_nomap_multiple_cache_train()
     test_cache_nomap_multiple_cache_eval()
-    test_cache_nomap_clue1()
-    test_cache_nomap_clue2()
     test_cache_nomap_csv1()
     test_cache_nomap_csv2()
     test_cache_nomap_textfile1()
@@ -2585,7 +2463,6 @@ if __name__ == '__main__':
     test_cache_nomap_long_file_list()
     test_cache_nomap_failure1()
     test_cache_nomap_failure2()
-    test_cache_nomap_failure3()
     test_cache_nomap_failure4()
     test_cache_nomap_failure5()
     test_cache_nomap_pyfunc_lambda()

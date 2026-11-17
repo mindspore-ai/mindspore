@@ -127,24 +127,6 @@ TEST_F(MindDataTestDeserialize, TestDeserializeSubsetColorAdjust) {
 }
 
 /// Feature: Deserialize
-/// Description: Test Deserialize on CLUEDataset with Decode op
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestDeserialize, TestDeserializeCLUE) {
-  MS_LOG(INFO) << "Doing MindDataTestDeserialize-CLUE.";
-  std::string train_file = "./data/dataset/testCLUE/afqmc/train.json";
-  std::string task = "AFQMC";
-  std::string usage = "train";
-  std::vector<std::string> files = {train_file};
-  std::shared_ptr<DatasetCache> cache = nullptr;
-  std::shared_ptr<DatasetNode> ds = std::make_shared<CLUENode>(files, task, usage, 1, ShuffleMode::kFalse, 1, 0, cache);
-  ds = std::make_shared<RepeatNode>(ds, 1);
-  std::shared_ptr<TensorOperation> operation1 = std::make_shared<vision::DecodeOperation>(true);
-  std::vector<std::shared_ptr<TensorOperation>> ops = {operation1};
-  ds = std::make_shared<MapNode>(ds, ops);
-  compare_dataset(ds);
-}
-
-/// Feature: Deserialize
 /// Description: Test Deserialize with invalid json path or object
 /// Expectation: Throw correct error and message
 TEST_F(MindDataTestDeserialize, TestDeserializeInvalidJson) {

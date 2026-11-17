@@ -25,6 +25,7 @@ from PIL import Image
 import mindspore.dataset as ds
 from mindspore.mindrecord import FileWriter
 import mindspore.dataset.vision as V_C
+from util import sentence_pair_source
 
 FILES_NUM = 4
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"
@@ -536,12 +537,12 @@ def test_Mindrecord_Padded(remove_mindrecord_file):
 def test_clue_padded_and_skip_with_0_samples():
     """
     Feature: PaddedDataset
-    Description: Test padding a CLUEDataset with PaddedDataset with and without samples
+    Description: Test padding a text-based sentence-pair dataset with and without samples
     Expectation: Output is equal to the expected output except when dataset has no samples, in which error is raised
     """
     TRAIN_FILE = '../data/dataset/testCLUE/afqmc/train.json'
 
-    data = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train')
+    data = sentence_pair_source(TRAIN_FILE, task='AFQMC', usage='train')
     count = 0
     for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         count += 1

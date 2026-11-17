@@ -99,7 +99,7 @@ Others
     mindspore.dataset.Dataset.sync_wait
     mindspore.dataset.Dataset.to_json
 
-{% elif objname in ['ImageFolderDataset', 'ManifestDataset', 'SST2Dataset']%}
+{% elif objname in ['ImageFolderDataset', 'ManifestDataset']%}
 
 {{ fullname | underline }}
 
@@ -196,7 +196,7 @@ Others
     mindspore.dataset.Dataset.to_json
 
 
-{% elif objname in ['AGNewsDataset', 'AmazonReviewDataset', 'CLUEDataset', 'CoNLL2000Dataset', 'CSVDataset', 'DBpediaDataset', 'EnWik9Dataset', 'GeneratorDataset', 'IMDBDataset', 'IWSLT2016Dataset', 'IWSLT2017Dataset', 'Multi30kDataset', 'MindDataset', 'NumpySlicesDataset', 'OBSMindDataset', 'PaddedDataset', 'PennTreebankDataset', 'RandomDataset', 'SogouNewsDataset', 'SQuADDataset', 'TextFileDataset', 'TFRecordDataset', 'UDPOSDataset', 'WikiTextDataset', 'YahooAnswersDataset', 'YelpReviewDataset'] %}
+{% elif objname in ['CSVDataset', 'GeneratorDataset', 'MindDataset', 'NumpySlicesDataset', 'OBSMindDataset', 'PaddedDataset', 'RandomDataset', 'TextFileDataset', 'TFRecordDataset'] %}
 
 {{ fullname | underline }}
 

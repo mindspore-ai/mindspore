@@ -630,3 +630,16 @@ def dataset_equal_with_function(data_unchanged, data_target, mse_threshold, foo,
         if not equal:
             break
     return equal
+
+
+def sentence_pair_source(dataset_files, task='AFQMC', usage='train', **kwargs):
+    """Load the tiny sentence-pair fixture with the retained text reader."""
+    if task != 'AFQMC' or usage != 'train':
+        raise ValueError('Only the sentence-pair training fixture is supported')
+
+    def parse_record(line):
+        value = json.loads(str(line))
+        return tuple(np.array(value[key], np.str_) for key in ('label', 'sentence1', 'sentence2'))
+
+    return ds.TextFileDataset(dataset_files, **kwargs).map(
+        parse_record, input_columns=['text'], output_columns=['label', 'sentence1', 'sentence2'])

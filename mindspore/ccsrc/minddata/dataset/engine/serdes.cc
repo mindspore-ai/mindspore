@@ -175,22 +175,16 @@ Status Serdes::CreateDatasetNode(const nlohmann::json &json_obj, const std::stri
                                  std::shared_ptr<DatasetNode> *ds) {
   if (op_type == kAlbumNode) {
     RETURN_IF_NOT_OK(AlbumNode::from_json(json_obj, ds));
-  } else if (op_type == kCLUENode) {
-    RETURN_IF_NOT_OK(CLUENode::from_json(json_obj, ds));
   } else if (op_type == kCSVNode) {
     RETURN_IF_NOT_OK(CSVNode::from_json(json_obj, ds));
   } else if (op_type == kImageFolderNode) {
     RETURN_IF_NOT_OK(ImageFolderNode::from_json(json_obj, ds));
   } else if (op_type == kManifestNode) {
     RETURN_IF_NOT_OK(ManifestNode::from_json(json_obj, ds));
-  } else if (op_type == kSST2Node) {
-    RETURN_IF_NOT_OK(SST2Node::from_json(json_obj, ds));
   } else if (op_type == kTextFileNode) {
     RETURN_IF_NOT_OK(TextFileNode::from_json(json_obj, ds));
   } else if (op_type == kTFRecordNode) {
     RETURN_IF_NOT_OK(TFRecordNode::from_json(json_obj, ds));
-  } else if (op_type == kWikiTextNode) {
-    RETURN_IF_NOT_OK(WikiTextNode::from_json(json_obj, ds));
   } else {
     return Status(StatusCode::kMDUnexpectedError, "Invalid data, unsupported operation type: " + op_type);
   }
@@ -379,8 +373,6 @@ bool IsDatasetOpMatchIRNode(std::string_view ir_node_name, std::string_view data
     return dataset_op_name == "RandomDataOp";
   } else if (ir_node_name == kTFRecordNode) {
     return dataset_op_name == "TFReaderOp";
-  } else if (ir_node_name == kIWSLT2016Node || ir_node_name == kIWSLT2017Node) {
-    return dataset_op_name == "IWSLTOp";
   } else {
     // Generic way of matching, special cases handled above. Special cases will evolve over time.
     return ir_node_name.substr(0, ir_node_name.find("Dataset")) ==

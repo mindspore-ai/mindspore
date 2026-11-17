@@ -34,16 +34,6 @@ TFRECORD_SCHEMA = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
 VOC_DIR = "../data/dataset/testVOC2012"
 
 
-def test_get_column_name_clue():
-    """
-    Feature: get_col_names
-    Description: Test get_col_names with CLUEDataset
-    Expectation: Output is equal to the expected output
-    """
-    data = ds.CLUEDataset(CLUE_DIR, task="AFQMC", usage="train")
-    assert data.get_col_names() == ["label", "sentence1", "sentence2"]
-
-
 def test_get_column_name_csv():
     """
     Feature: get_col_names
@@ -213,7 +203,6 @@ def test_get_column_name_zip():
 
 
 if __name__ == "__main__":
-    test_get_column_name_clue()
     test_get_column_name_csv()
     test_get_column_name_generator()
     test_get_column_name_imagefolder()

@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Regression tests for opt pass."""
 import numpy as np
 
 import mindspore.dataset as ds
-from util import config_get_set_seed
+from util import config_get_set_seed, sentence_pair_source
 
 
 # tests the construction of multiple ops from a single dataset.
@@ -104,8 +105,8 @@ def test_shuffle():
 
     ds.config.set_seed(1)
     TRAIN_FILE = '../data/dataset/testCLUE/afqmc/train.json'
-    data1 = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train', shuffle=ds.Shuffle.GLOBAL)
-    data2 = ds.CLUEDataset(TRAIN_FILE, task='AFQMC', usage='train', shuffle=ds.Shuffle.FILES)
+    data1 = sentence_pair_source(TRAIN_FILE, task='AFQMC', usage='train', shuffle=ds.Shuffle.GLOBAL)
+    data2 = sentence_pair_source(TRAIN_FILE, task='AFQMC', usage='train', shuffle=ds.Shuffle.FILES)
     data2 = data2.shuffle(10000)
 
     for d1, d2 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),

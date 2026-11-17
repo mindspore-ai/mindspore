@@ -280,7 +280,7 @@ def test_autograd_saved_tensor_output_unpack_no_cycle():
 
     x = ops.rand(3, 3)
     ms.grad(ms.grad(func))(x)
-    ms.runtime.synchronize()
+    _pynative_executor.sync()
     assert DelRecordHook.record_list == [0]
 
 

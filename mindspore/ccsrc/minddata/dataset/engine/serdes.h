@@ -44,14 +44,11 @@
 #include "minddata/dataset/engine/operation/datasetops/zip_node.h"
 
 #include "minddata/dataset/data_source/operation/album_node.h"
-#include "minddata/dataset/data_source/operation/clue_node.h"
 #include "minddata/dataset/data_source/operation/csv_node.h"
 #include "minddata/dataset/data_source/operation/image_folder_node.h"
 #include "minddata/dataset/data_source/operation/manifest_node.h"
-#include "minddata/dataset/data_source/operation/sst2_node.h"
 #include "minddata/dataset/data_source/operation/text_file_node.h"
 #include "minddata/dataset/data_source/operation/tf_record_node.h"
-#include "minddata/dataset/data_source/operation/wiki_text_node.h"
 
 #include "minddata/dataset/data_source/operation/samplers/distributed_sampler_ir.h"
 #include "minddata/dataset/data_source/operation/samplers/pk_sampler_ir.h"

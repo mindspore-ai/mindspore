@@ -97,45 +97,6 @@ TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableImageFolder) {
 }
 
 /// Feature: PullBasedIterator GetNextRowPullMode
-/// Description: Test PullBasedIterator on IMDB
-/// Expectation: Output is the same as the normal iterator
-TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableIMDB) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetNextPullBasedMappableIMDB.";
-
-  std::string dataset_path = datasets_root_path_ + "/testIMDBDataset";
-  std::string usage = "all";  // 'train', 'test', 'all'
-
-  // Create a IMDB Dataset
-  std::shared_ptr<Dataset> ds = IMDB(dataset_path, usage);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<PullIterator> iter = ds->CreatePullBasedIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  // order: text, label
-  std::vector<mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto text = row[0];
-    MS_LOG(INFO) << "Tensor text shape: " << text.Shape();
-    auto label = row[1];
-    MS_LOG(INFO) << "Tensor label shape: " << label.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 8);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: PullBasedIterator GetNextRowPullMode
 /// Description: Test PullBasedIterator on Manifest
 /// Expectation: Output is the same as the normal iterator
 TEST_F(MindDataTestPipeline, TestGetNextPullBasedMappableManifest) {

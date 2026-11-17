@@ -61,10 +61,7 @@ from mindspore.dataset.core.datatypes import nptype_to_detype, mstype_to_detype,
 from mindspore.dataset.engine.cache_client import DatasetCache
 from mindspore.dataset.engine.iterators import Iterator
 from mindspore.dataset.engine.datasets_standard_format import CSVDataset, MindDataset, TFRecordDataset
-from mindspore.dataset.engine.datasets_text import AGNewsDataset, AmazonReviewDataset, CLUEDataset, CoNLL2000Dataset, \
-    DBpediaDataset, EnWik9Dataset, IMDBDataset, IWSLT2016Dataset, IWSLT2017Dataset, Multi30kDataset, WikiTextDataset, \
-    PennTreebankDataset, SogouNewsDataset, SQuADDataset, SST2Dataset, TextFileDataset, UDPOSDataset, \
-    YelpReviewDataset, YahooAnswersDataset
+from mindspore.dataset.engine.datasets_text import TextFileDataset
 from mindspore.dataset.engine.datasets_user_defined import GeneratorDataset
 from mindspore.dataset.engine.datasets_vision import ImageFolderDataset, ManifestDataset, RandomDataset
 from mindspore.dataset.engine.queue import _SharedQueue
@@ -131,11 +128,7 @@ def _get_dataset_forbidden_code():
     codes.extend([TensorOperation.__call__, _Compose.parse, Plugin.parse, TypeCast.parse])
     codes.extend([DatasetCache.__init__, Iterator.__init__])
     codes.extend([CSVDataset.parse, MindDataset.parse, TFRecordDataset.parse])
-    codes.extend([AGNewsDataset.parse, AmazonReviewDataset.parse, CLUEDataset.parse, CoNLL2000Dataset.parse, \
-                  DBpediaDataset.parse, EnWik9Dataset.parse, IMDBDataset.parse, IWSLT2016Dataset.parse, \
-                  IWSLT2017Dataset.parse, Multi30kDataset.parse, PennTreebankDataset.parse, SogouNewsDataset.parse, \
-                  SQuADDataset.parse, SST2Dataset.parse, TextFileDataset.parse, UDPOSDataset.parse, \
-                  WikiTextDataset.parse, YahooAnswersDataset.parse, YelpReviewDataset.parse])
+    codes.extend([TextFileDataset.parse])
     codes.extend([GeneratorDataset.parse, ImageFolderDataset.parse, ManifestDataset.parse, RandomDataset.parse])
     codes.extend([_SharedQueue.put, _SharedQueue.get])
     codes.extend([BucketBatchByLengthDataset.parse, BatchDataset.parse, \

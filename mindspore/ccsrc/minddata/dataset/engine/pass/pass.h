@@ -57,7 +57,6 @@ class RandomNode;
 #ifdef ENABLE_PYTHON
 class GeneratorNode;
 #endif
-class CLUENode;
 class CSVNode;
 class MindDataNode;
 class TextFileNode;
