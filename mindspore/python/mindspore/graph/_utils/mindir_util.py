@@ -86,7 +86,7 @@ def save_mindir(model, file_name):
     Examples:
         >>> import mindspore as ms
         >>> md = ms.load_mindir("test.mindir")
-        >>> md.user_info["version"]="pangu v100"
+        >>> md.user_info["version"]="v100"
         >>> ms.save_mindir(md,"test_new.mindir")
         >>> md_new = ms.load_mindir("test_new.mindir")
         >>> md_new.user_info

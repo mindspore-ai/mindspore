@@ -319,7 +319,7 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
         >>> rank_list = ms.parallel.rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
         >>> checkpoint_files_map = {}
         >>> for rank in rank_list:
-        ...     checkpoint_files_map[rank] = "./pangu{}-100_2.ckpt".format(rank)
+        ...     checkpoint_files_map[rank] = "./{}-100_2.ckpt".format(rank)
 
     """
     if not isinstance(rank_id, int):
@@ -388,8 +388,8 @@ def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_
         ...     rank_list = ms.rank_list_for_transform(rank_id, "./src_strategy.ckpt", "./dst_strategy.ckpt")
         ...     checkpoint_files_map = {}
         ...     for rank in rank_list:
-        ...         checkpoint_files_map[rank] = "./origin_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank)
-        ...     save_checkpoint_file_name = "./new_checkpoint_rank{}/pangu{}-100_2.ckpt".format(rank_id)
+        ...         checkpoint_files_map[rank] = "./origin_checkpoint_rank{}/{}-100_2.ckpt".format(rank, rank)
+        ...     save_checkpoint_file_name = "./new_checkpoint_rank{}/{}-100_2.ckpt".format(rank_id, rank_id)
         ...     ms.transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
         ...                                  "./src_strategy.ckpt", "./dst_strategy.ckpt")
 
