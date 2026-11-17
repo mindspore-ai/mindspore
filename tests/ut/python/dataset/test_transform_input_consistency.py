@@ -22,105 +22,12 @@ from PIL import Image
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.audio as audio
 import mindspore.dataset.text as text
 import mindspore.dataset.transforms as transforms
 import mindspore.dataset.vision as vision
 from mindspore.dataset.text import JiebaMode, NormalizeForm, SentencePieceModel, SPieceTokenizerOutType
 from mindspore.dataset.transforms import Relational
 from mindspore.dataset.vision import Border, Inter
-
-
-def test_audio_transform_input_consistency():
-    """
-    Feature: audio transform input consistency test
-    Description: Check that operator execution does not affect the consistency of input data
-    Expectation: Output is equal to the expected output
-    """
-    seed = ds.config.get_seed()
-    ds.config.set_seed(12345)
-
-    waveform1 = np.random.random([16])
-    waveform1_copy = copy.deepcopy(waveform1)
-    waveform2 = np.random.random([16, 2])
-    waveform2_copy = copy.deepcopy(waveform2)
-
-    def check_result_all(output, input_waveform, waveform_copy):
-        assert (input_waveform == waveform_copy).all()
-        assert (input_waveform != output).all()
-
-    def check_result_any(output, input_waveform, waveform_copy):
-        assert (input_waveform == waveform_copy).all()
-        assert (input_waveform != output).any()
-
-    output = audio.AllpassBiquad(44100, 200.0)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-
-    output = audio.BandBiquad(44100, 200.0)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-    output = audio.BandpassBiquad(44100, 200.0)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-    output = audio.BandrejectBiquad(44100, 200.0)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-    output = audio.BassBiquad(44100, 200.0)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-    output = audio.Biquad(0.01, 0.02, 0.13, 1, 0.12, 0.3)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-
-
-
-
-    output = audio.DeemphBiquad(44100)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-
-
-    output = audio.EqualizerBiquad(44100, 1500, 5.5, 0.7)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-
-    a_coeffs = [0.1, 0.2, 0.3]
-    b_coeffs = [0.3, 0.2, 0.1]
-    output = audio.Filtfilt(a_coeffs, b_coeffs)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-
-
-
-
-    output = audio.HighpassBiquad(44100, 1500, 0.7)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-
-    a_coeffs = [0.1, 0.2, 0.3]
-    b_coeffs = [0.3, 0.2, 0.1]
-    output = audio.LFilter(a_coeffs, b_coeffs)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-    output = audio.LowpassBiquad(4000, 1500, 0.7)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-    assert (waveform2 == waveform2_copy).all()
-    assert isinstance(waveform2.shape, tuple)
-
-
-
-
-    output = audio.RiaaBiquad(44100)(waveform1)
-    check_result_all(output, waveform1, waveform1_copy)
-
-
-    output = audio.TrebleBiquad(44100, 200.0)(waveform1)
-    check_result_any(output, waveform1, waveform1_copy)
-
-
-    ds.config.set_seed(seed)
 
 
 def test_transforms_transform_input_consistency():

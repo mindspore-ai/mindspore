@@ -18,14 +18,6 @@ mindspore.dataset.transforms
 - TensorOperation，所有C++实现的数据处理操作的基类。
 - PyTensorOperation，所有Python实现的数据处理操作的基类。
 
-变换
-^^^^^
-
-.. mscnautosummary::
-    :toctree: dataset_transforms
-    :nosignatures:
-    :template: classtemplate.rst
-
     mindspore.dataset.transforms.Compose
     mindspore.dataset.transforms.Concatenate
     mindspore.dataset.transforms.Duplicate
@@ -79,14 +71,6 @@ API样例中常用的导入模块如下：
 
 快速上手使用视觉类变换的API，跳转参考 `视觉变换样例库 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/vision_gallery.html>`_ 。
 此指南中展示了多个变换API的用法，以及输入输出结果。
-
-变换
-^^^^^
-
-.. mscnautosummary::
-    :toctree: dataset_vision
-    :nosignatures:
-    :template: classtemplate.rst
 
     mindspore.dataset.vision.AdjustBrightness
     mindspore.dataset.vision.AdjustContrast
@@ -297,29 +281,6 @@ API样例中常用的导入模块如下：
 
 快速上手使用音频变换的API，跳转参考 `音频变换样例库 <https://www.mindspore.cn/docs/zh-CN/master/api_python/samples/dataset/audio_gallery.html>`_ 。
 此指南中展示了多个变换API的用法，以及输入输出结果。
-
-变换
-^^^^^
-
-.. mscnautosummary::
-    :toctree: dataset_audio
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.dataset.audio.AllpassBiquad
-    mindspore.dataset.audio.BandBiquad
-    mindspore.dataset.audio.BandpassBiquad
-    mindspore.dataset.audio.BandrejectBiquad
-    mindspore.dataset.audio.BassBiquad
-    mindspore.dataset.audio.Biquad
-    mindspore.dataset.audio.DeemphBiquad
-    mindspore.dataset.audio.EqualizerBiquad
-    mindspore.dataset.audio.Filtfilt
-    mindspore.dataset.audio.HighpassBiquad
-    mindspore.dataset.audio.LFilter
-    mindspore.dataset.audio.LowpassBiquad
-    mindspore.dataset.audio.RiaaBiquad
-    mindspore.dataset.audio.TrebleBiquad
 
 工具
 ^^^^^^
