@@ -16,7 +16,6 @@
 #include "common/common.h"
 #include "include/dataset/ms_tensor.h"
 #include "minddata/dataset/core/de_tensor.h"
-#include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/execute.h"
 #include "minddata/dataset/include/dataset/transforms.h"
 #include "minddata/dataset/include/dataset/vision.h"

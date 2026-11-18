@@ -76,25 +76,6 @@ enum class DATASET_API ImageReadMode {
   kCOLOR = 2,      ///< Convert the output into three channels RGB color data.
 };
 
-// \brief Possible density function in Dither.
-enum DATASET_API DensityFunction {
-  kTPDF = 0,  ///< Use triangular probability density function.
-  kRPDF = 1,  ///< Use rectangular probability density function.
-  kGPDF = 2   ///< Use gaussian probability density function.
-};
-
-/// \brief Values of norm in CreateDct.
-enum class DATASET_API NormMode {
-  kNone = 0,  ///< None type norm.
-  kOrtho = 1  ///< Ortho type norm.
-};
-
-/// \brief Possible options for norm in MelscaleFbanks.
-enum class DATASET_API NormType {
-  kNone = 0,    ///< None type norm.
-  kSlaney = 1,  ///< Slaney type norm.
-};
-
 /// \brief The mode for manual offload.
 enum class DATASET_API ManualOffloadMode {
   kUnspecified,  ///< Not set, will use auto_offload setting instead.
@@ -109,12 +90,6 @@ enum class DATASET_API MapTargetDevice {
   kAscend310,   ///<
   kAscend910B,  ///<
   kInvalid = 100
-};
-
-/// \brief Possible options for mel_type in MelscaleFbanks.
-enum class DATASET_API MelType {
-  kHtk = 0,     ///< Htk scale type.
-  kSlaney = 1,  ///< Slaney scale type.
 };
 
 /// \brief The initial type of tensor implementation.
@@ -136,19 +111,6 @@ enum class DATASET_API ShuffleMode {
                  ///< When the number of dataset samples is greater than 100 million, partial shuffle is used.
 };
 
-/// \brief Possible scale for input audio.
-enum class DATASET_API ScaleType {
-  kMagnitude = 0,  ///< Audio scale is magnitude.
-  kPower = 1,      ///< Audio scale is power.
-};
-
-/// \brief The scale for gain type.
-enum class DATASET_API GainType {
-  kAmplitude = 0,  ///< Audio gain type is amplitude.
-  kPower = 1,      ///< Audio gain type is power.
-  kDb = 2,         ///< Audio gain type is db.
-};
-
 /// \brief The method of padding.
 enum class DATASET_API BorderType {
   kConstant = 0,  ///< Fill the border with constant values.
@@ -167,15 +129,6 @@ enum class DATASET_API FixRotationAngle {
   k90Degree = 6,            ///< Rotate 90 degree.
   k270DegreeAndMirror = 7,  ///< Rotate 270 degree and apply horizontal flip.
   k270Degree = 8,           ///< Rotate 270 degree.
-};
-
-/// \brief Possible types for windows function.
-enum class DATASET_API WindowType {
-  kBartlett = 0,  ///< Bartlett window function.
-  kBlackman = 1,  ///< Blackman window function.
-  kHamming = 2,   ///< Hamming window function.
-  kHann = 3,      ///< Hann window function.
-  kKaiser = 4     ///< Kaiser window function.
 };
 
 /// \brief Possible options for Image format types in a batch.
@@ -234,21 +187,6 @@ enum class DATASET_API SliceMode {
 enum class DATASET_API SamplingStrategy {
   kRandom = 0,     ///< Random sampling with replacement.
   kEdgeWeight = 1  ///< Sampling with edge weight as probability.
-};
-
-/// \brief Possible options for fade shape.
-enum class DATASET_API FadeShape {
-  kLinear = 0,       ///< Fade shape is linear mode.
-  kExponential = 1,  ///< Fade shape is exponential mode.
-  kLogarithmic = 2,  ///< Fade shape is logarithmic mode.
-  kQuarterSine = 3,  ///< Fade shape is quarter_sine mode.
-  kHalfSine = 4,     ///< Fade shape is half_sine mode.
-};
-
-/// \brief Sample method for audio resample.
-enum class DATASET_API ResampleMethod {
-  kSincInterpolation = 0,  ///< Resample audio by sinc interpolation method
-  kKaiserWindow = 1,       ///< Resample audio by Kaiser window
 };
 
 /// \brief Possible configuration methods for processing error samples.

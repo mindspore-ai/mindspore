@@ -76,9 +76,7 @@ The specific steps are as follows:
   … to further shuffle, filter, skip, and obtain the maximum number of samples of datasets.
 - Dataset sample transform operation: The user can add data transform operations
   (`vision transform <https://www.mindspore.cn/docs/en/master/api_python/
-  mindspore.dataset.transforms.html#module-mindspore.dataset.vision>`_,
-  `audio transform <https://www.mindspore.cn/docs/en/master/api_python/
-  mindspore.dataset.transforms.html#module-mindspore.dataset.audio>`_ )
+  mindspore.dataset.transforms.html#module-mindspore.dataset.vision>`_ )
   to the `.map <https://www.mindspore.cn/docs/en/master/api_python/dataset/dataset_method/operation/
   mindspore.dataset.Dataset.map.html#mindspore.dataset.Dataset.map>`_ operation to perform transforms.
   During data preprocessing, multiple map operations can be defined

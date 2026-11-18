@@ -8,8 +8,6 @@ SET(DE_UT_SRCS
         bit_functions_test.cc
         btree_test.cc
         buddy_test.cc
-        c_api_audio_a_to_q_test.cc
-        c_api_audio_r_to_z_test.cc
         c_api_cache_test.cc
         c_api_dataset_ag_news_test.cc
         c_api_dataset_album_test.cc
@@ -23,7 +21,6 @@ SET(DE_UT_SRCS
         c_api_dataset_imdb_test.cc
         c_api_dataset_iterator_test.cc
         c_api_dataset_iwslt_test.cc
-        c_api_dataset_libri_tts.cc
         c_api_dataset_manifest_test.cc
         c_api_dataset_minddata_test.cc
         c_api_dataset_multi30k_test.cc

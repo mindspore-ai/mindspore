@@ -85,7 +85,6 @@ add_subdirectory(kernels)
 add_subdirectory(engine)
 add_subdirectory(api)
 add_subdirectory(data_source)
-add_subdirectory(audio)
 add_subdirectory(vision)
 add_subdirectory(general)
 add_subdirectory(callback)
@@ -102,8 +101,6 @@ add_dependencies(engine-datasetops-mapop core)
 add_dependencies(engine-pass core)
 add_dependencies(engine core)
 add_dependencies(callback core)
-add_dependencies(audio-kernels core)
-add_dependencies(audio-transform core)
 add_dependencies(vision-transform core)
 add_dependencies(vision-kernels core)
 add_dependencies(vision-kernels-dvpp-image core)
@@ -163,8 +160,6 @@ set(dataengine_submodules
         $<TARGET_OBJECTS:engine-pass>
         $<TARGET_OBJECTS:engine-cache-client>
         $<TARGET_OBJECTS:engine>
-        $<TARGET_OBJECTS:audio-kernels>
-        $<TARGET_OBJECTS:audio-transform>
         $<TARGET_OBJECTS:vision-transform>
         $<TARGET_OBJECTS:vision-kernels>
         $<TARGET_OBJECTS:vision-kernels-dvpp-image>
