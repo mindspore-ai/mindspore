@@ -21,7 +21,8 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.communication.management import init, get_rank
-from mindspore.communication.comm_func import reduce_scatter_tensor
+from mindspore.ops.communication import reduce_scatter_tensor
+from mindspore.ops import zeros_like
 from mindspore import context
 from mindspore.ops import ReduceOp
 
@@ -47,7 +48,9 @@ class ReduceScatterFuncNet(nn.Cell):
         self.op = op
 
     def construct(self, x):
-        return reduce_scatter_tensor(x)
+        out = zeros_like(x[:1])
+        reduce_scatter_tensor(out, x, self.op)
+        return out
 
 
 def test_hccl_reduce_scatter_tensor_8p():
@@ -85,7 +88,8 @@ def test_hccl_reduce_scatter_func_8p():
     Expectation: expect correct result.
     """
     input_tensor = Tensor(np.ones([8, 8]).astype(np.float32))
-    output = reduce_scatter_tensor(input_tensor)
+    output = zeros_like(input_tensor[:1])
+    reduce_scatter_tensor(output, input_tensor)
     expect_output = (np.ones([1, 8]) * 8).astype(np.float32)
     print("all_gather_into_tensor func output is", output)
     assert np.allclose(output.asnumpy(), expect_output)
@@ -101,10 +105,10 @@ def test_hccl_reduce_scatter_diff_reduce_type():
     try:
         if get_rank() in [0, 1, 2, 3]:
             input_tensor = Tensor(np.ones([8, 8]).astype(np.float32))
-            _ = reduce_scatter_tensor(input_tensor)
+            reduce_scatter_tensor(zeros_like(input_tensor[:1]), input_tensor)
         else:
             input_tensor = Tensor(np.ones([8, 8]).astype(np.float16))
-            _ = reduce_scatter_tensor(input_tensor)
+            reduce_scatter_tensor(zeros_like(input_tensor[:1]), input_tensor)
     except RuntimeError as e:
         error_msg = str(e)
         print(error_msg)
@@ -118,7 +122,8 @@ def test_hccl_reduce_scatter_complex64():
     Expectation: expect type checking exception.
     """
     input_tensor = Tensor(np.ones([8, 8]).astype(np.complex64))
-    output = reduce_scatter_tensor(input_tensor)
+    output = zeros_like(input_tensor[:1])
+    reduce_scatter_tensor(output, input_tensor)
     expect_output = (np.ones([1, 8]) * 8).astype(np.complex64)
     print("all_gather_into_tensor func output is", output)
     assert np.allclose(output.asnumpy(), expect_output)

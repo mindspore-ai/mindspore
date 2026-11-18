@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test all-to-all-single communication with an explicit output tensor."""
+
 import numpy as np
 
 import mindspore as ms
 from mindspore import nn
 from mindspore.communication import init
-from mindspore.communication.comm_func import all_to_all_single_with_output_shape
+from mindspore.ops.communication import all_to_all_single
 from mindspore.communication.management import get_rank
 
 # 'all_to_all_single_with_output_shape' function only supports KernelByKernel mode by now.
@@ -29,7 +31,8 @@ init()
 
 class AllToAllSingleNet(nn.Cell):
     def construct(self, output_shape, tensor):
-        out, _ = all_to_all_single_with_output_shape(output_shape, tensor)
+        out = ms.ops.zeros(output_shape, tensor.dtype)
+        all_to_all_single(out, tensor)
         return out
 
 def test_hccl_all_to_all_single_with_output_shape_func_in_cell_2p():
@@ -64,7 +67,8 @@ def test_hccl_all_to_all_single_with_output_shape_func_2p():
     rank = get_rank()
     data = ms.Tensor(np.arange(8).reshape([2, 4]).astype(np.float32))
     output_shape = (2, 4)
-    out, _ = all_to_all_single_with_output_shape(output_shape, data)
+    out = ms.ops.zeros(output_shape, data.dtype)
+    all_to_all_single(out, data)
 
     if rank == 0:
         gt_rank0 = np.arange(0, 4).reshape([1, 4]).astype(np.float32)

@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test variable-count all-to-all communication with explicit output tensors."""
+
 import numpy as np
 import pytest
 import hashlib
 import mindspore as ms
 from mindspore.communication import init, create_group
-from mindspore.communication.comm_func import all_to_all_v_c
+from mindspore.ops.communication import all_to_all_v_c
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.graph.api import _pynative_executor
 

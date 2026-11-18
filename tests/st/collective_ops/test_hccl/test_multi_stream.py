@@ -18,7 +18,8 @@ import numpy as np
 import mindspore as ms
 from mindspore import nn
 from mindspore.communication import init
-from mindspore.communication.comm_func import isend, irecv, all_reduce
+from mindspore.communication.comm_func import all_reduce
+from mindspore.ops.communication import isend, irecv
 from mindspore.communication.management import get_rank, get_group_size, create_group
 from mindspore.ops import ReduceOp
 
@@ -32,15 +33,16 @@ if rank in [4, 5, 6, 7]:
 
 class SendNet(nn.Cell):
     def construct(self, tensor):
-        out = isend(tensor, rank + size // 2)
-        return out
+        handle = isend(tensor, rank + size // 2)
+        handle.wait()
+        return tensor
 
 
 class RecvNet(nn.Cell):
     def construct(self, tensor):
-        out, handle = irecv(tensor, rank - size // 2)
+        handle = irecv(tensor, rank - size // 2)
         handle.wait()
-        out, _ = all_reduce(out, ReduceOp.SUM, "group1")
+        out, _ = all_reduce(tensor, ReduceOp.SUM, "group1")
         return out
 
 
