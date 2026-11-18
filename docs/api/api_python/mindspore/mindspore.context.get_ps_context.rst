@@ -1,7 +1,7 @@
-mindspore.get_ps_context
-=========================
+mindspore.context.get_ps_context
+================================
 
-.. py:function:: mindspore.get_ps_context(attr_key)
+.. py:function:: mindspore.context.get_ps_context(attr_key)
 
     根据key获取参数服务器训练模式上下文中的属性值，此接口将在后续版本中废弃。
 

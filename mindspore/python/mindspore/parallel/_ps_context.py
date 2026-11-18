@@ -117,7 +117,7 @@ def _set_ps_context(**kwargs):
 
     Examples:
         >>> import mindspore as ms
-        >>> ms.set_ps_context(enable_ps=True, enable_ssl=True, client_password='', server_password='')
+        >>> ms.context.set_ps_context(enable_ps=True, enable_ssl=True, client_password='', server_password='')
     """
     for key, value in kwargs.items():
         if key not in _set_ps_context_func_map:

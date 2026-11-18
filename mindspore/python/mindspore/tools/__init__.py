@@ -15,8 +15,7 @@
 """Tools module."""
 from __future__ import absolute_import
 
-__all__ = ["stress_detect", "sdc_detect_start", "sdc_detect_stop", "get_sdc_detect_result", "set_dump"]
+__all__ = ["stress_detect", "set_dump"]
 
 from .stress_detect import stress_detect
-from .sdc_detect import sdc_detect_start, sdc_detect_stop, get_sdc_detect_result
 from .data_dump import set_dump

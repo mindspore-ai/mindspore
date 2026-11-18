@@ -21,7 +21,7 @@ import torch
 import mindspore
 from mindspore import nn, Tensor, jit
 from mindspore import ops as P
-from mindspore.tools import sdc_detect_start, sdc_detect_stop, get_sdc_detect_result
+from mindspore.tools.sdc_detect import sdc_detect_start, sdc_detect_stop, get_sdc_detect_result
 from tests.mark_utils import arg_mark
 
 

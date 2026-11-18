@@ -58,9 +58,9 @@ mindspore
     mindspore.get_auto_parallel_context
     mindspore.reset_auto_parallel_context
     mindspore.ParallelMode
-    mindspore.set_ps_context
-    mindspore.get_ps_context
-    mindspore.reset_ps_context
+    mindspore.context.set_ps_context
+    mindspore.context.get_ps_context
+    mindspore.context.reset_ps_context
     mindspore.set_algo_parameters
     mindspore.get_algo_parameters
     mindspore.reset_algo_parameters
@@ -191,7 +191,6 @@ mindspore
     mindspore.SummaryCollector
     mindspore.SummaryLandscape
     mindspore.SummaryRecord
-    mindspore.set_dump
     mindspore.Profiler
 
 日志

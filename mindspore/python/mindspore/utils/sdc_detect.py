@@ -13,58 +13,44 @@
 # limitations under the License.
 # ============================================================================
 """SDC detect."""
-import mindspore.tools
+from mindspore.tools import sdc_detect as _sdc_impl
 from mindspore.common._decorator import deprecated
 
 
-@deprecated("2.7.1", "mindspore.tools.sdc_detect_start", module_prefix="mindspore.utils.")
+@deprecated("2.7.1", "mindspore.tools.sdc_detect.sdc_detect_start", module_prefix="mindspore.utils.")
 def sdc_detect_start():
     """
     This api will be deprecated and removed in future versions, please use the api
-    :func:`mindspore.tools.sdc_detect_start` instead.
+    :func:`mindspore.tools.sdc_detect.sdc_detect_start` instead.
 
     Supported Platforms:
         ``Ascend``
-
-    Examples:
-        >>> from mindspore.utils import sdc_detect_start
-        >>> sdc_detect_start()
     """
-    return mindspore.tools.sdc_detect_start()
+    return _sdc_impl.sdc_detect_start()
 
 
-@deprecated("2.7.1", "mindspore.tools.sdc_detect_stop", module_prefix="mindspore.utils.")
+@deprecated("2.7.1", "mindspore.tools.sdc_detect.sdc_detect_stop", module_prefix="mindspore.utils.")
 def sdc_detect_stop():
     """
     This api will be deprecated and removed in future versions, please use the api
-    :func:`mindspore.tools.sdc_detect_stop` instead.
+    :func:`mindspore.tools.sdc_detect.sdc_detect_stop` instead.
 
     Supported Platforms:
         ``Ascend``
-
-    Examples:
-        >>> from mindspore.utils import sdc_detect_stop
-        >>> sdc_detect_stop()
     """
-    return mindspore.tools.sdc_detect_stop()
+    return _sdc_impl.sdc_detect_stop()
 
 
-@deprecated("2.7.1", "mindspore.tools.get_sdc_detect_result", module_prefix="mindspore.utils.")
+@deprecated("2.7.1", "mindspore.tools.sdc_detect.get_sdc_detect_result", module_prefix="mindspore.utils.")
 def get_sdc_detect_result():
     """
     This api will be deprecated and removed in future versions, please use the api
-    :func:`mindspore.tools.get_sdc_detect_result` instead.
+    :func:`mindspore.tools.sdc_detect.get_sdc_detect_result` instead.
 
     Returns:
         bool, indicating whether silent data corruption has occurred after detection start.
 
     Supported Platforms:
         ``Ascend``
-
-    Examples:
-        >>> from mindspore.utils import get_sdc_detect_result
-        >>> result = get_sdc_detect_result()
-        >>> print(result)
-        False
     """
-    return mindspore.tools.get_sdc_detect_result()
+    return _sdc_impl.get_sdc_detect_result()
