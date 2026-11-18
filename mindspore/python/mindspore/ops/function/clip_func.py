@@ -16,6 +16,7 @@
 """Defines clip operators with functional form."""
 from __future__ import absolute_import
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -44,7 +45,7 @@ hyper_map = C.HyperMap()
 max_op = P.Maximum()
 min_op = P.Minimum()
 partial_op = P.Partial()
-scalar2tensor_op = P.ScalarToTensor()
+scalar2tensor_op = _inner_ops.ScalarToTensor()
 
 
 def clip_by_value(x, clip_value_min=None, clip_value_max=None):

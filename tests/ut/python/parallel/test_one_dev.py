@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
-import numpy as np
-
+"""Test one dev."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -29,6 +28,11 @@ from mindspore.ops import functional as F
 from mindspore.parallel._utils import _reset_op_id
 from mindspore.train import Model
 from mindspore.context import ParallelMode
+
+import re
+
+import numpy as np
+
 from tests.dataset_mock import MindData
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -36,7 +40,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class Dataset(MindData):
     def __init__(self, predict, label, length=3):
-        super(Dataset, self).__init__(size=length)
+        super().__init__(size=length)
         self.predict = predict
         self.label = label
         self.index = 0
@@ -57,7 +61,7 @@ class Dataset(MindData):
 
 class AllToAllNet(nn.Cell):
     def __init__(self):
-        super(AllToAllNet, self).__init__()
+        super().__init__()
         self.matmul = P.MatMul()
         self.matmul_weight = Parameter(Tensor(np.ones([128, 32]), dtype=ms.float32), name="weight")
         self.transpose1 = P.Transpose()
@@ -72,17 +76,17 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
     def __init__(self,
                  sparse=False,
                  reduction='none'):
-        super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
+        super().__init__(reduction)
         self.sparse = sparse
         self.reduction = reduction
-        self.softmax_cross_entropy = P.SoftmaxCrossEntropyWithLogits()
+        self.softmax_cross_entropy = _inner_ops.SoftmaxCrossEntropyWithLogits()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0., mstype.float32)
         self.is_cpugpu = context.get_context('device_target') in ["CPU", "GPU"]
 
         if self.is_cpugpu:
-            self.sparse_softmax_cross_entropy = P.SparseSoftmaxCrossEntropyWithLogits()
+            self.sparse_softmax_cross_entropy = _inner_ops.SparseSoftmaxCrossEntropyWithLogits()
 
     def construct(self, logits, labels):
         if self.is_cpugpu and self.sparse and self.reduction == 'mean':

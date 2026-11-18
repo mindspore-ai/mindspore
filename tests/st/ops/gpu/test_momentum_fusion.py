@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test momentum fusion."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.common.parameter import Parameter
@@ -26,8 +28,8 @@ from mindspore.ops import operations as P
 
 class MomentumFusionNet(nn.Cell):
     def __init__(self, var, accum):
-        super(MomentumFusionNet, self).__init__()
-        self.op = P.ApplyMomentum()
+        super().__init__()
+        self.op = _inner_ops.ApplyMomentum()
         self.add = P.AddN()
         self.mul = P.Mul()
         self.var = Parameter(var, name="variable")

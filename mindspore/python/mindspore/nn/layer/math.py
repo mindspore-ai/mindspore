@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore import log as logger
 from mindspore import ops
 from mindspore.common.tensor import Tensor
@@ -218,7 +219,7 @@ class LGamma(Cell):
 
         # operations
         self.log = ops.Log()
-        self.log1p = ops.Log1p()
+        self.log1p = _private_math.Log1p()
         self.abs = ops.Abs()
         self.shape = ops.Shape()
         self.dtype = ops.DType()
@@ -329,7 +330,7 @@ class DiGamma(Cell):
         self.log_lanczos_gamma_plus_one_half = np.log(self.lanczos_gamma_plus_one_half)
 
         # operations
-        self.log1p = ops.Log1p()
+        self.log1p = _private_math.Log1p()
         self.abs = ops.Abs()
         self.shape = ops.Shape()
         self.dtype = ops.DType()
@@ -682,13 +683,13 @@ class LBeta(Cell):
 
         # operations
         self.log = ops.Log()
-        self.log1p = ops.Log1p()
+        self.log1p = _private_math.Log1p()
         self.less = ops.Less()
         self.select = ops.Select()
         self.shape = ops.Shape()
         self.dtype = ops.DType()
         self.lgamma = LGamma()
-        self.const = ops.ScalarToTensor()
+        self.const = ops.operations._inner_ops.ScalarToTensor()
 
     def construct(self, x, y):
         x_dtype = self.dtype(x)

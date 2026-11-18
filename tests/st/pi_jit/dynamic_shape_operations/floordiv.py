@@ -1,4 +1,6 @@
+"""Floordiv."""
 import numpy as np
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore import dtype
 from mindspore import Tensor, jit, context
 from mindspore.nn import Cell
@@ -69,7 +71,7 @@ class FloorDivDynamicShapeNetMS(Cell):
         super().__init__()
         self.reducesum = op.ReduceSum(keep_dims=False)
         self.relu = op.ReLU()
-        self.floordiv = op.FloorDiv()
+        self.floordiv = _private_math.FloorDiv()
         self.cast = op.Cast()
 
     def construct(self, x, y, indices):

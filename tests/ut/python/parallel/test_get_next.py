@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test get next."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -41,12 +43,12 @@ class Net(nn.Cell):
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network, types, shapes, output_num, strategy3=None, strategy4=None, axis=-1):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.get_next = P.GetNext(types, shapes, output_num, "")
         self.one_hot = P.OneHot(axis=axis).shard(strategy3)
         self.on_value = Tensor(1.0, ms.float32)
         self.off_value = Tensor(0.0, ms.float32)
-        self.loss = P.SoftmaxCrossEntropyWithLogits().shard(strategy4)
+        self.loss = _inner_ops.SoftmaxCrossEntropyWithLogits().shard(strategy4)
         self.network = network
 
     def construct(self):
@@ -58,7 +60,7 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
         self.weights = ParameterTuple(network.trainable_params())
 

@@ -13,19 +13,22 @@
 # limitations under the License.
 # ============================================================================
 
-import numpy as np
-from tests.mark_utils import arg_mark
-
+"""Test softmax cross entropy with logits."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
+
+import numpy as np
+
+from tests.mark_utils import arg_mark
 
 
 class NetSoftmaxCrossEntropyWithLogits(nn.Cell):
     def __init__(self):
-        super(NetSoftmaxCrossEntropyWithLogits, self).__init__()
-        self.loss = P.SoftmaxCrossEntropyWithLogits()
+        super().__init__()
+        self.loss = _inner_ops.SoftmaxCrossEntropyWithLogits()
 
     def construct(self, logits, labels):
         return self.loss(logits, labels)

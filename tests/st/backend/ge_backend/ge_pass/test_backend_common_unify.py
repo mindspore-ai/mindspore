@@ -190,7 +190,7 @@ def test_sparse_softmax_entropy():
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.op = ops.SparseSoftmaxCrossEntropyWithLogits()
+            self.op = ops.operations._inner_ops.SparseSoftmaxCrossEntropyWithLogits()
             self.relu = ops.ReLU()
 
         def construct(self, logits, labels):

@@ -15,6 +15,7 @@
 
 """Define the grad rules of math related operations."""
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops import functional as F
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
 from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
@@ -108,12 +109,12 @@ def get_bprop_sparse_to_dense_v2(self):
     return bprop
 
 
-@bprop_getters.register(P.SparseTensorDenseMatmul)
+@bprop_getters.register(_inner_ops.SparseTensorDenseMatmul)
 def get_bprop_sparse_tensor_dense_matmul(self):
     """Generate bprop for SparseTensorDenseMatmul"""
     adj_s = self.adjoint_st
     adj_d = self.adjoint_dt
-    sparse_tensor_dense_mat_mul = P.SparseTensorDenseMatmul(not adj_s)
+    sparse_tensor_dense_mat_mul = _inner_ops.SparseTensorDenseMatmul(not adj_s)
     split = P.Split(-1, 2)
     reduce_sum = P.ReduceSum()
 
@@ -144,7 +145,7 @@ def get_bprop_sparse_add(self):
     """Generate bprop for SparseAdd"""
     sparse_add_grad = SparseAddGrad()
     shape_op = P.Shape()
-    dyn_shape_op = P.TensorShape()
+    dyn_shape_op = _inner_ops.TensorShape()
     reshape = P.Reshape()
 
     def bprop(x1_indices, x1_values, x1_shape, x2_indices, x2_values, x2_shape, thresh, out, dout):

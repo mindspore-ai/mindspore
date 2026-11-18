@@ -12,21 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-
+"""Test crop and reszie."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.graph.api import jit
-from mindspore.ops import operations as P
+
+
+import numpy as np
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
     def __init__(self, crop_size):
-        super(Net, self).__init__()
-        self.crop_and_resize = P.CropAndResize()
+        super().__init__()
+        self.crop_and_resize = _inner_ops.CropAndResize()
         self.crop_size = crop_size
 
     @jit

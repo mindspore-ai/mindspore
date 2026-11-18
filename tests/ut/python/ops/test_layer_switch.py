@@ -24,24 +24,20 @@ class Layer1(nn.Cell):
     def __init__(self):
         super().__init__()
         self.net = nn.Conv2d(3, 1, 3, pad_mode='same')
-        self.pad = ops.Pad(
-            paddings=((0, 0), (0, 2), (0, 0), (0, 0)))
 
     def construct(self, x):
         y = self.net(x)
-        return self.pad(y)
+        return ops.pad(y, (0, 0, 0, 0, 0, 2))
 
 
 class Layer2(nn.Cell):
     def __init__(self):
         super().__init__()
         self.net = nn.Conv2d(3, 1, 7, pad_mode='same')
-        self.pad = ops.Pad(
-            paddings=((0, 0), (0, 2), (0, 0), (0, 0)))
 
     def construct(self, x):
         y = self.net(x)
-        return self.pad(y)
+        return ops.pad(y, (0, 0, 0, 0, 0, 2))
 
 
 class Layer3(nn.Cell):

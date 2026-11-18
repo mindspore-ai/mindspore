@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained primitive, dynamic-shape and vmap coverage after legacy function removal."""
 from tests.mark_utils import arg_mark
 import numpy as np
-import pytest
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
@@ -28,8 +28,9 @@ from mindspore.ops.functional import vmap
 
 class SpaceToBatchNDNet(nn.Cell):
     def __init__(self, nptype, block_size=2, input_shape=(1, 1, 4, 4)):
-        super(SpaceToBatchNDNet, self).__init__()
-        self.space_to_batch_nd = ops.SpaceToBatchND(block_shape=block_size, paddings=[[0, 0], [0, 0]])
+        super().__init__()
+        self.space_to_batch_nd = ops.operations._inner_ops.SpaceToBatchND(
+            block_shape=block_size, paddings=[[0, 0], [0, 0]])
         input_size = np.prod(input_shape)
         data_np = np.arange(input_size).reshape(input_shape).astype(nptype)
         self.x1 = Parameter(initializer(Tensor(data_np), input_shape), name='x1')
@@ -91,25 +92,6 @@ def test_space_to_batch_nd_pynative():
     space_to_batch_nd_all_dtype()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_space_to_batch_nd_function():
-    """
-    Feature: test SpaceToBatchND function interface.
-    Description: test interface.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    x = Tensor(np.arange(16).reshape((1, 1, 4, 4)).astype(np.float32), mindspore.float32)
-    output = ops.space_to_batch_nd(x, 2, [[0, 0], [0, 0]])
-    expect = np.array([[[[0, 2],
-                         [8, 10]]],
-                       [[[1, 3],
-                         [9, 11]]],
-                       [[[4, 6],
-                         [12, 14]]],
-                       [[[5, 7],
-                         [13, 15]]]]).astype(np.float32)
-    np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
 class SpaceToBatchNDDynamicShapeNetMS(nn.Cell):
@@ -117,7 +99,7 @@ class SpaceToBatchNDDynamicShapeNetMS(nn.Cell):
         super().__init__()
         self.unique = ops.Unique()
         self.gather = ops.Gather()
-        self.space_to_batch_nd = ops.SpaceToBatchND(block_size, paddings)
+        self.space_to_batch_nd = ops.operations._inner_ops.SpaceToBatchND(block_size, paddings)
         self.axis = axis
 
     def construct(self, x, indices):
@@ -161,15 +143,15 @@ def test_space_to_batch_nd_dynamic():
 def vmap_case():
     class Net(nn.Cell):
         def __init__(self, block_size, paddings):
-            super(Net, self).__init__()
-            self.space_to_batch_nd = ops.SpaceToBatchND(block_size, paddings)
+            super().__init__()
+            self.space_to_batch_nd = ops.operations._inner_ops.SpaceToBatchND(block_size, paddings)
 
         def construct(self, a):
             return self.space_to_batch_nd(a)
 
     class WrapNet(nn.Cell):
         def __init__(self, net, in_axes, out_axes):
-            super(WrapNet, self).__init__()
+            super().__init__()
             self.net = net
             self.in_axes = in_axes
             self.out_axes = out_axes

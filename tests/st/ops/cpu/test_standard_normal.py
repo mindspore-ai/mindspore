@@ -12,21 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""CPU regression tests for the retained StandardNormal primitive."""
 from tests.mark_utils import arg_mark
-
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class Net(nn.Cell):
     def __init__(self, shape, seed=0, seed2=0):
-        super(Net, self).__init__()
+        super().__init__()
         self.shape = shape
         self.seed = seed
         self.seed2 = seed2
@@ -62,16 +60,3 @@ def test_net():
     net = Net(shape, seed, seed2)
     output = net()
     assert output.shape == (130, 120, 141)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_standard_normal_functional():
-    """
-    Feature: Functional interface of StandardNormal CPU operation
-    Description: input the shape and random seed, test the output value and shape
-    Expectation: the value and shape of output tensor match the predefined values
-    """
-    seed = 10
-    shape = (5, 6, 8)
-    output = F.standard_normal(shape, seed)
-    assert output.shape == shape

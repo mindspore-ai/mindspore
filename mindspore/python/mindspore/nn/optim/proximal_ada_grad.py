@@ -15,6 +15,7 @@
 """PROXIMAL_ADA_GRAD"""
 from __future__ import absolute_import
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor
 from mindspore.common._decorator import deprecated
@@ -202,8 +203,8 @@ class ProximalAdagrad(Optimizer):
         self.l1 = Tensor(l1, mstype.float32)
         self.l2 = Tensor(l2, mstype.float32)
         self.use_locking = use_locking
-        self.opt = P.ApplyProximalAdagrad(use_locking=use_locking)
-        self.sparse_opt = P.SparseApplyProximalAdagrad(use_locking=use_locking)
+        self.opt = _inner_ops.ApplyProximalAdagrad(use_locking=use_locking)
+        self.sparse_opt = _inner_ops.SparseApplyProximalAdagrad(use_locking=use_locking)
 
     @jit(backend="ms_backend")
     def construct(self, grads):
@@ -242,6 +243,6 @@ class ProximalAdagrad(Optimizer):
             self.sparse_opt = P.FusedSparseProximalAdagrad(self.use_locking)
             self.sparse_opt.set_device("CPU")
         else:
-            self.sparse_opt = P.SparseApplyProximalAdagrad(self.use_locking)
+            self.sparse_opt = _inner_ops.SparseApplyProximalAdagrad(self.use_locking)
 
         self._target = value

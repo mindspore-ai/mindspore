@@ -21,7 +21,6 @@ mindspore
 
     mindspore.Tensor
     mindspore.tensor
-    mindspore.is_tensor
     mindspore.from_numpy
     mindspore.frombuffer
 

@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 from enum import Enum
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops.operations import _scatter_nd_ops, _scatter_ops
 import mindspore
 from mindspore import ops
@@ -37,30 +38,6 @@ from mindspore.ops._vmap.vmap_base import vmap_rules_getters, vmap_general_prepr
     get_unop_vmap_rule, _get_reduce_out_dim, _get_reduce_batch_axis, \
     _bdim_at_any
 from mindspore.ops.function import _VmapGeneralRule
-
-
-@vmap_rules_getters.register(P.NoRepeatNGram)
-def get_no_repeat_ngram_vmap_rule(prim, axis_size):
-    """VmapRule for `NoRepeatNGram` operation."""
-
-    def vmap_rule(state_seq_bdim, log_probs_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, state_seq_bdim, log_probs_bdim)
-        if is_all_none:
-            return result
-
-        state_seq, state_seq_dim = state_seq_bdim
-        log_probs, log_probs_dim = log_probs_bdim
-        state_seq = _bdim_at_front(state_seq, state_seq_dim, axis_size)
-        log_probs = _bdim_at_front(log_probs, log_probs_dim, axis_size)
-        s_ori_shape = F.shape(state_seq)
-        l_ori_shape = F.shape(log_probs)
-        state_seq = F.reshape(state_seq, (-1,) + s_ori_shape[-2:])
-        log_probs = F.reshape(log_probs, (-1,) + l_ori_shape[-2:])
-        out = prim(state_seq, log_probs)
-        out = F.reshape(out, l_ori_shape)
-        return out, 0
-
-    return vmap_rule
 
 
 @vmap_rules_getters.register("Cast")
@@ -1470,7 +1447,7 @@ def get_gatherd_grad_v2_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.SpaceToBatchND)
+@vmap_rules_getters.register(_inner_ops.SpaceToBatchND)
 def get_space_to_batch_nd_vmap_rule(prim, axis_size):
     """VmapRule for `SpaceToBatchND`."""
 
@@ -1487,7 +1464,7 @@ def get_space_to_batch_nd_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.BatchToSpaceND)
+@vmap_rules_getters.register(_inner_ops.BatchToSpaceND)
 def get_batch_to_space_nd_vmap_rule(prim, axis_size):
     """VmapRule for `BatchToSpaceND`."""
 
@@ -1504,11 +1481,11 @@ def get_batch_to_space_nd_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.GatherNd)
+@vmap_rules_getters.register(_inner_ops.GatherNd)
 def get_gather_nd_vmap_rule(prim, axis_size):
     """VmapRule for GatherND operations."""
     if isinstance(prim, str):
-        prim = P.GatherNd()
+        prim = _inner_ops.GatherNd()
     concat = P.Concat(-1)
 
     def vmap_rule(x_bdim, indices_bdim):
@@ -1812,29 +1789,6 @@ def get_index_fill_rule(prim, axis_size):
         x = _bdim_at_front(x, x_dim, axis_size)
         new_dim = F.select(dim < 0, dim, dim + 1)
         out = prim(x, new_dim, index, value)
-        return out, 0
-
-    return vmap_rule
-
-
-@vmap_rules_getters.register(P.DataFormatDimMap)
-def get_data_format_dim_map_vmap_rule(prim, axis_size):
-    """VmapRule for `DataFormatDimMap`"""
-    if hasattr(prim, 'batch_rank'):
-        batch_rank = prim.batch_rank + 1
-    else:
-        batch_rank = 1
-
-    batch_prim = P.DataFormatDimMap()
-    batch_prim.add_prim_attr('batch_rank', batch_rank)
-
-    def vmap_rule(x_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
-        if is_all_none:
-            return result
-        x, x_dim = x_bdim
-        x = _bdim_at_front(x, x_dim, axis_size)
-        out = batch_prim(x)
         return out, 0
 
     return vmap_rule

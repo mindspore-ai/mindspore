@@ -12,31 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
-
-import numpy as np
-import pytest
-
+"""Test softmax with cross entropy op."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
+
+
+from tests.mark_utils import arg_mark
+
+import numpy as np
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class NetSoftmaxWithCrossEntropy(nn.Cell):
     def __init__(self):
-        super(NetSoftmaxWithCrossEntropy, self).__init__()
+        super().__init__()
         logits = Tensor(np.array([[1, 1, 10],
                                   [1, 10, 1],
                                   [10, 1, 1]]).astype(np.float32))
         self.logits = Parameter(initializer(logits, logits.shape), name='logits')
         labels = Tensor(np.array([2, 1, 0]).astype(np.int32))
         self.labels = Parameter(initializer(labels, labels.shape), name='labels')
-        self.SoftmaxWithCrossEntropy = P.SparseSoftmaxCrossEntropyWithLogits(True)
+        self.SoftmaxWithCrossEntropy = _inner_ops.SparseSoftmaxCrossEntropyWithLogits(True)
 
     def construct(self):
         return self.SoftmaxWithCrossEntropy(self.logits, self.labels)

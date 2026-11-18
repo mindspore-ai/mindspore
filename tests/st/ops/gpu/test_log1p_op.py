@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test log1p op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
 from mindspore import dtype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -28,8 +29,8 @@ context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 class NetLog1p(nn.Cell):
     def __init__(self):
-        super(NetLog1p, self).__init__()
-        self.log1p = P.Log1p()
+        super().__init__()
+        self.log1p = _private_math.Log1p()
 
     def construct(self, x):
         return self.log1p(x)

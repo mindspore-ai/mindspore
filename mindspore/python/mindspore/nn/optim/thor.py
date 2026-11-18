@@ -18,7 +18,7 @@ from __future__ import absolute_import
 import numpy as np
 
 from mindspore.ops.function.clip_func import _clip_by_global_norm
-
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, ParameterTuple
@@ -363,7 +363,7 @@ class ThorGpu(Optimizer):
         self.use_nesterov = Validator.check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.hyper_map = C.HyperMap()
-        self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)
+        self.opt = _inner_ops.ApplyMomentum(use_nesterov=self.use_nesterov)
         self.net = net
         self.matrix_a_cov = ParameterTuple(filter(lambda x: 'matrix_a' in x.name, net.get_parameters()))
         self.matrix_g_cov = ParameterTuple(filter(lambda x: 'matrix_g' in x.name, net.get_parameters()))
@@ -650,7 +650,7 @@ class ThorAscend(Optimizer):
         self.params = self._parameters
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.hyper_map = C.HyperMap()
-        self.opt = P.ApplyMomentum()
+        self.opt = _inner_ops.ApplyMomentum()
         self.net = net
         self.matrix_a_cov = ParameterTuple(filter(lambda x: 'matrix_a' in x.name, net.get_parameters()))
         self.matrix_g_cov = ParameterTuple(filter(lambda x: 'matrix_g' in x.name, net.get_parameters()))
@@ -873,8 +873,8 @@ class ThorAscend(Optimizer):
         """process cholesky pad"""
         if pad_dim > 0:
             matrix_sup = self.eye(pad_dim, pad_dim, mstype.float32)
-            matrix_sup = P.Pad(((0, 0), (matrix_shape0, 0)))(matrix_sup)
-            input_matrix = P.Pad(((0, 0), (0, pad_dim)))(input_matrix)
+            matrix_sup = _inner_ops.Pad(((0, 0), (matrix_shape0, 0)))(matrix_sup)
+            input_matrix = _inner_ops.Pad(((0, 0), (0, pad_dim)))(input_matrix)
             input_matrix = self.concat((input_matrix, matrix_sup))
         return input_matrix
 
@@ -947,7 +947,7 @@ class ThorAscend(Optimizer):
                                             (matrix_a_inv_shape[0] // 16, 16,
                                              matrix_a_inv_shape[0] // 16, 16))
                 matrix_a_inv = self.transpose(matrix_a_inv, (2, 0, 1, 3))
-                matrix_g_inv = P.Pad(((0, 7), (0, 7)))(matrix_g_inv)
+                matrix_g_inv = _inner_ops.Pad(((0, 7), (0, 7)))(matrix_g_inv)
 
                 matrix_g_inv_shape = self.shape(matrix_g_inv)
                 matrix_g_inv = self.reshape(matrix_g_inv,
@@ -965,7 +965,7 @@ class ThorAscend(Optimizer):
             kernel_hw = weight_shape[2] * weight_shape[3]
             in_channels = weight_shape[1]
             matrix_a_inv = self.reshape(matrix_a_inv, (kernel_hw, in_channels, kernel_hw, in_channels))
-            matrix_a_inv = P.Pad(((0, 0), (0, self.c0 - in_channels), (0, 0),
+            matrix_a_inv = _inner_ops.Pad(((0, 0), (0, self.c0 - in_channels), (0, 0),
                                   (0, self.c0 - in_channels)))(matrix_a_inv)
         return matrix_a_inv
 

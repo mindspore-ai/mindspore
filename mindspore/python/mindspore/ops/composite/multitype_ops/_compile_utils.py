@@ -16,8 +16,10 @@
 """constexpr util"""
 from __future__ import absolute_import
 from enum import IntEnum
+
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
@@ -678,7 +680,7 @@ setattr(tensor_operator_registry, '__floordiv__', _tensor_floordiv)
 
 def _scalar_to_tensor(input_x):
     if ops.isconstant(input_x):
-        return P.ScalarToTensor()(input_x, ops.dtype(input_x))
+        return _inner_ops.ScalarToTensor()(input_x, ops.dtype(input_x))
     # use add Tensor([0]) cast scalar to tensor.
     return ops.add(input_x, mutable(Tensor(0)))
 

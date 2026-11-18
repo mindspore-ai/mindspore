@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test apply ftrl op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from mindspore.ops import operations as P
+
 from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -27,8 +29,8 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class ApplyFtrlTEST(nn.Cell):
     def __init__(self, data_type):
-        super(ApplyFtrlTEST, self).__init__()
-        self.apply_ftrl = P.ApplyFtrl()
+        super().__init__()
+        self.apply_ftrl = _inner_ops.ApplyFtrl()
         self.var_np = np.array([[0.6, 0.4], [0.1, 0.5]]).astype(data_type)
         self.var = Parameter(Tensor(self.var_np), name="var")
         self.accum_np = np.array([[0.6, 0.5], [0.2, 0.6]]).astype(data_type)
@@ -86,7 +88,7 @@ def test_apply_ftrl(data_type):
 
 class FtrlNetVmap(nn.Cell):
     def __init__(self, net):
-        super(FtrlNetVmap, self).__init__()
+        super().__init__()
         self.net = net
         self.var_np = np.array([[[0.6, 0.4], [0.1, 0.5]], [[1.6, 1.4], [1.1, 1.5]]]).astype(np.float32)
         self.accum_np = np.array([[[0.6, 0.5], [0.2, 0.6]], [[1.6, 1.5], [1.2, 1.6]]]).astype(np.float32)
@@ -110,7 +112,7 @@ def test_apply_ftrl_op_vmap():
     """
 
     def cal_ftrl(var, accum, linear, grad, lr, l1, l2, lr_power):
-        return P.ApplyFtrl()(var, accum, linear, grad, lr, l1, l2, lr_power)
+        return _inner_ops.ApplyFtrl()(var, accum, linear, grad, lr, l1, l2, lr_power)
 
     error = 1e-4
     grad_np = np.array([[[0.3, 0.7], [0.1, 0.8]], [[0.3, 0.7], [0.1, 0.8]]]).astype(np.float32)
@@ -131,7 +133,7 @@ def test_apply_ftrl_op_vmap():
 
 class FtrlNetVmap2(nn.Cell):
     def __init__(self, net):
-        super(FtrlNetVmap2, self).__init__()
+        super().__init__()
         self.net = net
         self.var_np = np.array([[[[0.6, 0.4], [0.1, 0.5]], [[1.6, 0.4], [0.1, 1.5]]],
                                 [[[0.6, 1.4], [1.1, 0.5]], [[2.6, 0.4], [0.1, 3.5]]]]).astype(np.float32)
@@ -158,7 +160,7 @@ def test_apply_ftrl_op_vmap2():
     """
 
     def cal_ftrl(var, accum, linear, grad, lr, l1, l2, lr_power):
-        return P.ApplyFtrl()(var, accum, linear, grad, lr, l1, l2, lr_power)
+        return _inner_ops.ApplyFtrl()(var, accum, linear, grad, lr, l1, l2, lr_power)
 
     error = 1e-4
     grad_np = np.array([[[[0.3, 0.7], [0.1, 0.8]], [[0.3, 0.7], [0.1, 0.8]]],

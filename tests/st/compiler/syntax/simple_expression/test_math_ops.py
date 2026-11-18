@@ -15,6 +15,7 @@
 """ test math ops """
 import pytest
 import numpy as np
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -700,7 +701,7 @@ def test_number_pow_tensor():
 class FloorDiv(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.floordiv = P.FloorDiv()
+        self.floordiv = _private_math.FloorDiv()
 
     def construct(self, x, y):
         z = self.floordiv(x, y)

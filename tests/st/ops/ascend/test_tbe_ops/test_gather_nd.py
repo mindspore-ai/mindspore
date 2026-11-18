@@ -12,15 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
-import numpy as np
-import pytest
+"""Test gather nd."""
+from mindspore.ops.operations import _inner_ops
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
+
+from tests.mark_utils import arg_mark
+
+import numpy as np
 
 
 class TensorTestNet(nn.Cell):
@@ -30,8 +33,8 @@ class TensorTestNet(nn.Cell):
 
 class GatherNdNet(nn.Cell):
     def __init__(self):
-        super(GatherNdNet, self).__init__()
-        self.gather_nd = P.GatherNd()
+        super().__init__()
+        self.gather_nd = _inner_ops.GatherNd()
 
     def construct(self, input_x, indices):
         return self.gather_nd(input_x, indices)

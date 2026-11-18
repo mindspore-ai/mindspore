@@ -12,21 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-
+"""Test sparsesoftmaxcrossentropywithlogits."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.graph.api import jit
-from mindspore.ops import operations as P
+
+
+import numpy as np
 
 context.set_context(device_target="Ascend")
 
 
 class Net(nn.Cell):
     def __init__(self, is_grad=False):
-        super(Net, self).__init__()
-        self.SparseSoftmaxCrossEntropyWithLogits = P.SparseSoftmaxCrossEntropyWithLogits(is_grad=is_grad)
+        super().__init__()
+        self.SparseSoftmaxCrossEntropyWithLogits = _inner_ops.SparseSoftmaxCrossEntropyWithLogits(is_grad=is_grad)
 
     @jit
     def construct(self, features, labels):
@@ -47,7 +49,7 @@ def np_sparse_softmax_cross_entropy_with_logits(labels_shape, logits_shape, logi
     probs = e / np.reshape(np.sum(e, axis=class_dim), [batch_size, 1])
     labels_mat = np.zeros_like(probs).astype(probs.dtype)
     labels_mat[np.arange(batch_size), labels_reshape] = 1.0
-    bp = (probs - labels_mat)
+    bp = probs - labels_mat
     loss = -np.sum(labels_mat * np.log(probs + 1.0e-20), axis=1)
     bp_res = np.reshape(bp, features.shape)
     loss_res = np.reshape(loss, labels.shape)

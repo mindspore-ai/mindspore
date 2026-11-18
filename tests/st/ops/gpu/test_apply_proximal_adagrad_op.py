@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test apply proximal adagrad op."""
 from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
-from mindspore.ops import operations as P
+
 from mindspore import Tensor, context, Parameter
 from mindspore.ops.functional import vmap
 
@@ -25,8 +27,8 @@ context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
 class ApplyProximalAdagradTEST(nn.Cell):
     def __init__(self):
-        super(ApplyProximalAdagradTEST, self).__init__()
-        self.apply_proximal_adagrad = P.ApplyProximalAdagrad()
+        super().__init__()
+        self.apply_proximal_adagrad = _inner_ops.ApplyProximalAdagrad()
         self.var = Parameter(
             Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32)), name="var")
         self.accum = Parameter(
@@ -72,7 +74,7 @@ def test_apply_proximal_adagrad_op(data_type):
 
 class AdgradNetVmap(nn.Cell):
     def __init__(self, net):
-        super(AdgradNetVmap, self).__init__()
+        super().__init__()
         self.net = net
         self.var = Parameter(
             Tensor(np.array([[[0.6, 0.4], [0.1, 0.5]], [[0.6, 0.4], [0.1, 0.5]]]).astype(np.float32)), name="var")
@@ -94,7 +96,7 @@ def test_apply_proximal_adagrad_op_vmap():
     """
 
     def cal_adagrad(var, accum, lr, l1, l2, grad):
-        return P.ApplyProximalAdagrad()(var, accum, lr, l1, l2, grad)
+        return _inner_ops.ApplyProximalAdagrad()(var, accum, lr, l1, l2, grad)
 
     error = 1e-3
     grad = Tensor(np.array([[[0.3, 0.7], [0.1, 0.8]],
@@ -123,7 +125,7 @@ def test_apply_proximal_adagrad_op_vmap():
 
 class AdgradNetVmap2(nn.Cell):
     def __init__(self, net):
-        super(AdgradNetVmap2, self).__init__()
+        super().__init__()
         self.net = net
         self.var = Parameter(
             Tensor(np.array([[[[0.6, 0.4], [0.1, 0.5]], [[0.7, 0.4], [0.1, 0.5]]],
@@ -147,7 +149,7 @@ def test_apply_proximal_adagrad_op_vmap2():
     """
 
     def cal_adagrad(var, accum, lr, l1, l2, grad):
-        return P.ApplyProximalAdagrad()(var, accum, lr, l1, l2, grad)
+        return _inner_ops.ApplyProximalAdagrad()(var, accum, lr, l1, l2, grad)
 
     error = 1e-3
     grad = Tensor(np.array([[[[0.3, 0.7], [0.1, 0.8]], [[0.3, 0.7], [0.1, 0.8]]],

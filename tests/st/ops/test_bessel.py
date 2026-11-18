@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test bessel."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -99,42 +100,8 @@ def test_bessel_i0e(dtype, eps):
     assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize('dtype, eps', [(np.float16, 1.0e-3), (np.float32, 1.0e-6), (np.float64, 1.0e-6)])
-def test_bessel_k0(dtype, eps):
-    """
-    Feature: bessel k0 function
-    Description: test cases for BesselK0
-    Expectation: the result matches scipy
-    """
-    x = Tensor(np.array([0.5, 1., 2., 4.]).astype(dtype))
-    expect = np.array(
-        [0.92441905, 0.42102444, 0.11389387, 0.01115968]).astype(dtype)
-    error = np.ones(shape=[4]) * eps
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-    output = F.bessel_k0(x)
-    diff = np.abs(output.asnumpy() - expect)
-    assert np.all(diff < error)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize('dtype, eps', [(np.float16, 1.0e-3), (np.float32, 1.0e-6), (np.float64, 1.0e-6)])
-def test_bessel_k0e(dtype, eps):
-    """
-    Feature: bessel k-e function
-    Description: test cases for BesselK0e
-    Expectation: the result matches scipy
-    """
-    x = Tensor(np.array([0.5, 1., 2., 4.]).astype(dtype))
-    expect = np.array(
-        [1.5241094, 1.1444631, 0.84156823, 0.6092977]).astype(dtype)
-    error = np.ones(shape=[4]) * eps
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-    output = F.bessel_k0e(x)
-    diff = np.abs(output.asnumpy() - expect)
-    assert np.all(diff < error)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -209,43 +176,5 @@ def test_bessel_i1e(dtype, eps):
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
     output = F.bessel_i1e(x)
-    diff = np.abs(output.asnumpy() - expect)
-    assert np.all(diff < error)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize('dtype, eps', [(np.float16, 1.0e-3), (np.float32, 1.0e-6), (np.float64, 1.0e-6)])
-def test_bessel_k1(dtype, eps):
-    """
-    Feature: bessel k1 function
-    Description: test cases for BesselK1
-    Expectation: the result matches scipy
-    """
-    x = Tensor(np.array([0.5, 1., 2., 4.]).astype(dtype))
-    expect = np.array(
-        [1.65644112, 0.60190723, 0.13986588, 0.0124835]).astype(dtype)
-    error = np.ones(shape=[4]) * eps
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-    output = F.bessel_k1(x)
-    diff = np.abs(output.asnumpy() - expect)
-    assert np.all(diff < error)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize('dtype, eps', [(np.float16, 1.0e-3), (np.float32, 1.0e-6), (np.float64, 1.0e-6)])
-def test_bessel_k1e(dtype, eps):
-    """
-    Feature: bessel k1e function
-    Description: test cases for BesselK1e
-    Expectation: the result matches scipy
-    """
-    x = Tensor(np.array([0.5, 1., 2., 4.]).astype(dtype))
-    expect = np.array(
-        [2.73100971, 1.63615349, 1.03347685, 0.68157595]).astype(dtype)
-    error = np.ones(shape=[4]) * eps
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-    output = F.bessel_k1e(x)
     diff = np.abs(output.asnumpy() - expect)
     assert np.all(diff < error)

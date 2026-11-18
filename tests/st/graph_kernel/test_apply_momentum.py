@@ -13,17 +13,19 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test apply momentum."""
 import numpy as np
 from tests.mark_utils import arg_mark
+from mindspore.ops.operations import _inner_ops
 import mindspore
-from mindspore import Tensor, nn, ops, Parameter
+from mindspore import Tensor, nn, Parameter
 from mindspore import context
 
 
 class ApplyMomentum(nn.Cell):
     def __init__(self):
-        super(ApplyMomentum, self).__init__()
-        self.apply_momentum = ops.ApplyMomentum()
+        super().__init__()
+        self.apply_momentum = _inner_ops.ApplyMomentum()
         self.variable = Parameter(Tensor(np.array([[0.6, 0.4], [0.1, 0.5]])
                                          .astype(np.float32)), name="variable")
         self.accumulate = Parameter(Tensor(np.array([[0.6, 0.5], [0.2, 0.6]])

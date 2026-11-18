@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test ceil op."""
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.context as context
 import mindspore.nn as nn
-import numpy as np
 from mindspore.ops.functional import vmap
-
 from mindspore import Tensor
 from mindspore import dtype
 from mindspore.ops import functional as F
-from mindspore.ops import operations as P
+
+import numpy as np
+
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -28,8 +30,8 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class NetCeil(nn.Cell):
     def __init__(self):
-        super(NetCeil, self).__init__()
-        self.ceil = P.Ceil()
+        super().__init__()
+        self.ceil = _private_math.Ceil()
 
     def construct(self, x):
         return self.ceil(x)
@@ -102,7 +104,7 @@ def test_vmap():
     """
 
     def cal_ceil(x):
-        return P.Ceil()(x)
+        return _private_math.Ceil()(x)
 
     np_x = np.array([[[1.1, 0.9], [2.2, 1.8]], [[4.6, 1.3], [2.4, 2.6]],
                      [[1.0, 1.0], [2.0, 2.7]], [[1.3, 1.7], [2.9, 2.8]],
@@ -125,7 +127,7 @@ def test_vmap2():
     """
 
     def cal_ceil(x):
-        return P.Ceil()(x)
+        return _private_math.Ceil()(x)
 
     np_x = np.array([[[1.1, 0.9], [2.2, 1.8]], [[4.6, 1.3], [2.4, 2.6]],
                      [[1.0, 1.0], [2.0, 2.7]], [[1.3, 1.7], [2.9, 2.8]],

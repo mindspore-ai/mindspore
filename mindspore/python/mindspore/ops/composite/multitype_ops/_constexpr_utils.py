@@ -196,7 +196,7 @@ def make_tensor(a, dtype=mstype.int64, data_shape=None, dim_size=None):
         a = check_range(a, dim_size)
 
     if isinstance(a, int):
-        return P.ScalarToTensor()(a, dtype)
+        return _inner_ops.ScalarToTensor()(a, dtype)
 
     if isinstance(a, (list, tuple)):
         if not a:

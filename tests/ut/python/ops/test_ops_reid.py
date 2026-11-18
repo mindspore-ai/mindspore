@@ -16,6 +16,7 @@
 import functools
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore import nn
 from mindspore.ops import operations as P
 from ....mindspore_test_framework.mindspore_test import mindspore_test
@@ -68,7 +69,7 @@ test_case_reid_ops = [
         'desc_bprop': [[4, 128, 1024]],
         'skip': ['backward']}),
     ('FloorDiv', {
-        'block': P.FloorDiv(),
+        'block': _private_math.FloorDiv(),
         'desc_inputs': [[4, 128, 1024], [4, 128, 1024]],
         'desc_bprop': [[4, 128, 1024]]}),
     ('Sigmoid', {

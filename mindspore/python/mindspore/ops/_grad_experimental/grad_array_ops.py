@@ -107,7 +107,7 @@ def get_bprop_masked_scatter(self):
     """Generate bprop for MaskedScatter"""
     masked_fill = P.MaskedFill()
     masked_select = P.MaskedSelect()
-    shape = P.TensorShape()
+    shape = inner.TensorShape()
     range_ = P.Range()
     scatter_update = P.TensorScatterElements()
     def bprop(x, mask, updates, out, dout):
@@ -166,7 +166,7 @@ def get_bprop_index_fill(self):
 @bprop_getters.register(IndexPut)
 def get_bprop_index_put(self):
     """Generate bprop for IndexPut"""
-    gather_nd = P.GatherNd()
+    gather_nd = inner.GatherNd()
     stack = P.Stack()
     tile = P.Tile()
     masked_select = MaskedSelect()
@@ -261,7 +261,7 @@ def get_bprop_matrix_set_diag_v3(self):
 
 def tensor_scatter_possible_replacement(x, indices, updates, out, dout):
     """bpropr for any TensorScatter* op that possibly replaces values in the input tensor"""
-    gather_nd = P.GatherNd()
+    gather_nd = inner.GatherNd()
     scatter_nd = P.ScatterNd()
     equal = P.Equal()
     shape = P.Shape()
@@ -616,7 +616,7 @@ def get_bprop_scatter_add_with_axis(self):
                 pad_list.append((0, pos - index_shape[i]))
                 slice_list.append(0)
             pad_tuple = tuple(pad_list)
-            out_index = P.Pad(pad_tuple)(indices)
+            out_index = inner.Pad(pad_tuple)(indices)
             out_gather = gather_d(dout, axis, out_index)
             update_grad = slice_op(out_gather, slice_list, index_shape)
         else:
@@ -777,18 +777,7 @@ def get_bprop_eye(self):
 @bprop_getters.register(P.ScatterNdUpdate)
 def get_bprop_scatter_nd_update(self):
     """Generate bprop for ScatterNdUpdate"""
-    op = P.GatherNd()
-
-    def bprop(x, indices, update, out, dout):
-        return dout, zeros_like(indices), op(dout, indices)
-
-    return bprop
-
-
-@bprop_getters.register(P.ScatterNonAliasingAdd)
-def get_bprop_scatter_non_aliasing_add_update(self):
-    """Generate bprop for ScatterNonAliasingAdd"""
-    op = P.GatherNd()
+    op = inner.GatherNd()
 
     def bprop(x, indices, update, out, dout):
         return dout, zeros_like(indices), op(dout, indices)

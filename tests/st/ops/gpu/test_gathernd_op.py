@@ -12,19 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test gathernd op."""
+from mindspore.ops.operations import _inner_ops
+from mindspore import Tensor
+
+import mindspore.nn as nn
+import mindspore.context as context
+
 from tests.mark_utils import arg_mark
 
 import numpy as np
-from mindspore import Tensor
-from mindspore.ops import operations as P
-import mindspore.nn as nn
-import mindspore.context as context
 
 
 class GatherNdNet(nn.Cell):
     def __init__(self):
-        super(GatherNdNet, self).__init__()
-        self.gathernd = P.GatherNd()
+        super().__init__()
+        self.gathernd = _inner_ops.GatherNd()
 
     def construct(self, x, indices):
         return self.gathernd(x, indices)
@@ -44,31 +47,61 @@ def gathernd0(nptype):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd0_float64():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather elements at [1, 1] and [0, 1] from a float64 matrix.
+    Expectation: The gathered values are [3, 1].
+    """
     gathernd0(np.float64)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd0_float32():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather elements at [1, 1] and [0, 1] from a float32 matrix.
+    Expectation: The gathered values are [3, 1].
+    """
     gathernd0(np.float32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd0_float16():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather elements at [1, 1] and [0, 1] from a float16 matrix.
+    Expectation: The gathered values are [3, 1].
+    """
     gathernd0(np.float16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd0_int32():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather elements at [1, 1] and [0, 1] from a int32 matrix.
+    Expectation: The gathered values are [3, 1].
+    """
     gathernd0(np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd0_int16():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather elements at [1, 1] and [0, 1] from a int16 matrix.
+    Expectation: The gathered values are [3, 1].
+    """
     gathernd0(np.int16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd0_uint8():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather elements at [1, 1] and [0, 1] from a uint8 matrix.
+    Expectation: The gathered values are [3, 1].
+    """
     gathernd0(np.uint8)
 
 
@@ -115,31 +148,61 @@ def gathernd1(nptype):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd1_float64():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather from a float64 tensor using batches of four-dimensional coordinates.
+    Expectation: The output matches the expected elements in coordinate order.
+    """
     gathernd1(np.float64)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd1_float32():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather from a float32 tensor using batches of four-dimensional coordinates.
+    Expectation: The output matches the expected elements in coordinate order.
+    """
     gathernd1(np.float32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd1_float16():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather from a float16 tensor using batches of four-dimensional coordinates.
+    Expectation: The output matches the expected elements in coordinate order.
+    """
     gathernd1(np.float16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd1_int32():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather from a int32 tensor using batches of four-dimensional coordinates.
+    Expectation: The output matches the expected elements in coordinate order.
+    """
     gathernd1(np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd1_int16():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather from a int16 tensor using batches of four-dimensional coordinates.
+    Expectation: The output matches the expected elements in coordinate order.
+    """
     gathernd1(np.int16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd1_uint8():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather from a uint8 tensor using batches of four-dimensional coordinates.
+    Expectation: The output matches the expected elements in coordinate order.
+    """
     gathernd1(np.uint8)
 
 
@@ -169,36 +232,71 @@ def gathernd2(nptype):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd2_float64():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather rows 0, 1 and 3 from a float64 matrix using single-component indices.
+    Expectation: The output contains the three expected rows in index order.
+    """
     gathernd2(np.float64)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd2_float32():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather rows 0, 1 and 3 from a float32 matrix using single-component indices.
+    Expectation: The output contains the three expected rows in index order.
+    """
     gathernd2(np.float32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd2_float16():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather rows 0, 1 and 3 from a float16 matrix using single-component indices.
+    Expectation: The output contains the three expected rows in index order.
+    """
     gathernd2(np.float16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd2_int32():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather rows 0, 1 and 3 from a int32 matrix using single-component indices.
+    Expectation: The output contains the three expected rows in index order.
+    """
     gathernd2(np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd2_int16():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather rows 0, 1 and 3 from a int16 matrix using single-component indices.
+    Expectation: The output contains the three expected rows in index order.
+    """
     gathernd2(np.int16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd2_uint8():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather rows 0, 1 and 3 from a uint8 matrix using single-component indices.
+    Expectation: The output contains the three expected rows in index order.
+    """
     gathernd2(np.uint8)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd_bool():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather all four elements of a boolean matrix using int32 coordinates.
+    Expectation: The output is [True, False, False, False].
+    """
     x = Tensor(np.array([[True, False], [False, False]]).astype(np.bool_))
     indices = Tensor(np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).astype(np.int32))
     expect = np.array([True, False, False, False]).astype(np.bool_)
@@ -212,6 +310,11 @@ def test_gathernd_bool():
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard')
 def test_gathernd_indices_int64():
+    """
+    Feature: GatherNd on GPU.
+    Description: Gather all four elements of a boolean matrix using int64 coordinates.
+    Expectation: The output is [True, False, False, False].
+    """
     x = Tensor(np.array([[True, False], [False, False]]).astype(np.bool_))
     indices = Tensor(np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).astype(np.int64))
     expect = np.array([True, False, False, False]).astype(np.bool_)

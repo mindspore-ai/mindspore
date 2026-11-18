@@ -12,21 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test random choice with mask."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore as ms
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
 
 
 class RandomChoiceWithMaskNet(nn.Cell):
     def __init__(self, count):
         super().__init__()
-        self.random_choice_with_mask = P.RandomChoiceWithMask(
+        self.random_choice_with_mask = _inner_ops.RandomChoiceWithMask(
             count=count, seed=1)
 
     def construct(self, x):

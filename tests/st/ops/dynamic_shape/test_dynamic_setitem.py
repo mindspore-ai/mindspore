@@ -14,14 +14,18 @@
 # ============================================================================
 """Tests Tensor setitem with dynamic shapes and dynamic ranks."""
 
-from tests.mark_utils import arg_mark
 import numpy as np
+
 import pytest
+
+from mindspore.ops.operations import _inner_ops
 from mindspore import context, nn, ops, jit
 from mindspore import Tensor, ParameterTuple, mutable
 from mindspore.ops.composite import GradOperation
 from mindspore.nn import Cell
 import mindspore.common.dtype as mstype
+
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
 context.set_context(jit_level='O0')
@@ -509,7 +513,7 @@ def test_dynamic_rank_setitem_with_single_basic_index():
             x[False] = 1
             x[None] = 1
             x[1:4:2] = 1
-            x[x.shape[0] - 3:ops.dyn_shape(x)[0]:Tensor(2)] = 1
+            x[x.shape[0] - 3:_inner_ops.TensorShape()(x)[0]:Tensor(2)] = 1
             x[True] = 1
             x[()] = 1
             return x

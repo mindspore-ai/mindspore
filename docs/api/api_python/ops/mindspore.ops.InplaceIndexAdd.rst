@@ -8,8 +8,6 @@ mindspore.ops.InplaceIndexAdd
     .. warning::
         这是一个实验性API，后续可能修改或删除。
 
-    更多参考详见 :func:`mindspore.ops.inplace_index_add`。
-
     参数：
         - **axis** (int) - 要执行添加操作的轴。应该在范围 :math:`[0, len(var.dim))` 内。
 

@@ -16,6 +16,7 @@
 import functools
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Parameter, ParameterTuple, Tensor
@@ -53,7 +54,7 @@ class OptimizerByMomentum(nn.Cell):
     """ OptimizerByMomentum definition """
 
     def __init__(self, weights):
-        super(OptimizerByMomentum, self).__init__()
+        super().__init__()
         self.learning_rate = Parameter(0.1, name="learning_rate")
         self.momentum = Parameter(0.05, name="momentum")
         self.iter = Parameter(0, name="iter")
@@ -62,7 +63,7 @@ class OptimizerByMomentum(nn.Cell):
         self.moments = weights.clone(prefix="moments", init='zeros')
 
         self.hyper_map = C.HyperMap()
-        self.opt = P.ApplyMomentum()
+        self.opt = _inner_ops.ApplyMomentum()
 
     def construct(self, grads):
         success = True
@@ -78,7 +79,7 @@ class TrainStepWrap(nn.Cell):
     """ TrainStepWrap definition """
 
     def __init__(self, network):
-        super(TrainStepWrap, self).__init__()
+        super().__init__()
         self.network = network
         self.weights = ParameterTuple(network.get_parameters())
         self.optimizer = OptimizerByMomentum(self.weights)
@@ -94,7 +95,7 @@ class NetWithLossClass(nn.Cell):
     """ NetWithLossClass definition """
 
     def __init__(self, network):
-        super(NetWithLossClass, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.loss = nn.SoftmaxCrossEntropyWithLogits()
         self.network = network
 
@@ -107,7 +108,7 @@ class Net(nn.Cell):
     """ Net definition """
 
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.weight = Parameter(Tensor(np.ones([64, 10]).astype(np.float32)), name="weight")
         self.bias = Parameter(Tensor(np.ones([10]).astype(np.float32)), name="bias")
         self.matmul = P.MatMul()

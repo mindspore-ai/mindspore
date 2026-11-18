@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test standard laplace."""
 from tests.mark_utils import arg_mark
 
-import pytest
+
 import numpy as np
 
 import mindspore.context as context
@@ -27,7 +28,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class NetStandardLaplace(nn.Cell):
     def __init__(self, shape, seed=0, seed2=0):
-        super(NetStandardLaplace, self).__init__()
+        super().__init__()
         self.shape = shape
         self.seed = seed
         self.seed2 = seed2
@@ -96,7 +97,7 @@ def test_standard_laplace_dynamic_shape():
             super().__init__()
             self.unique = ops.Unique()
             self.gather = ops.Gather()
-            self.get_shape = ops.TensorShape()
+            self.get_shape = ops.operations._inner_ops.TensorShape()
             self.random_op = ops.StandardLaplace()
             self.axis = axis
 

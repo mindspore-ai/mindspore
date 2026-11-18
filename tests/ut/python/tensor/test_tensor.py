@@ -567,7 +567,7 @@ def test_from_numpy():
     for dtype in numpy_types:
         np_array = np.array([1, 2, 3], dtype=dtype)
         ms_tensor = ms.from_numpy(np_array)
-        assert ms.is_tensor(ms_tensor)
+        assert ms.common.is_tensor(ms_tensor)
         assert np.all(ms_tensor.asnumpy() == np_array)
         # Test unsupported type.
     with pytest.raises(TypeError):

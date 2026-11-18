@@ -26,6 +26,7 @@ This test file covers:
 import os
 
 import numpy as np
+from mindspore.ops.operations import _inplace_ops
 from mindspore import nn, Tensor, context, ops
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter
@@ -801,7 +802,7 @@ class ViewInplaceNet(nn.Cell):
         self.weight2 = Parameter(Tensor(np.ones((1, 8, 8)).astype(np.float32) * 0.2), name='weight2')
         self.fc = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
-        self.inplace_add = ops.InplaceAdd((0,))
+        self.inplace_add = _inplace_ops.InplaceAdd((0,))
 
     def construct(self, x):
         """Forward pass with view followed by inplace operations."""
@@ -951,7 +952,7 @@ class InplaceOpsNet(nn.Cell):
     """Network with inplace operations for testing auto_offload.
 
     Note: ``ops.InplaceMul`` is not exposed in the ``mindspore.ops`` namespace (it only exists
-    as an auto-generated primitive), so this network uses the legacy ``ops.InplaceAdd`` Primitive
+    as an auto-generated primitive), so this network uses the legacy ``_inplace_ops.InplaceAdd`` Primitive
     (Ascend/GPU/CPU) to exercise in-place tensor modification that the offload tracer must track.
     """
 
@@ -963,9 +964,9 @@ class InplaceOpsNet(nn.Cell):
         self.weight3 = Parameter(Tensor(np.ones((1, 64)).astype(np.float32) * 0.3), name='weight3')
         self.fc = nn.Dense(64, 64, weight_init='ones', bias_init='zeros')
         self.relu = nn.ReLU()
-        # ops.InplaceAdd(indices): constructed with row indices, called as op(x, input_v) doing
+        # _inplace_ops.InplaceAdd(indices): constructed with row indices, called as op(x, input_v) doing
         # x[indices,] += input_v in place (same tensor object / device address reused).
-        self.inplace_add = ops.InplaceAdd((0,))
+        self.inplace_add = _inplace_ops.InplaceAdd((0,))
 
     def construct(self, x):
         """Forward pass with inplace operations."""

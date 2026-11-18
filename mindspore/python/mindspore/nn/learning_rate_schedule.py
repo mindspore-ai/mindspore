@@ -18,6 +18,7 @@ from __future__ import division
 
 import math
 
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore.common import dtype as mstype
 from mindspore import ops
 from mindspore.nn.cell import Cell
@@ -204,7 +205,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
     def construct(self, global_step):
         p = self.cast(global_step, mstype.float32)
         if self.is_stair:
-            p = ops.FloorDiv()(p, self.decay_steps) * self.decay_steps
+            p = _private_math.FloorDiv()(p, self.decay_steps) * self.decay_steps
         return self.learning_rate * self.pow(self.math_e, -self.decay_rate * p)
 
 
@@ -444,7 +445,7 @@ class PolynomialDecayLR(LearningRateSchedule):
         self.power = power
         self.update_decay_steps = update_decay_steps
         self.pow = ops.Pow()
-        self.ceil = ops.Ceil()
+        self.ceil = _private_math.Ceil()
         self.min = ops.Minimum()
         self.max = ops.Maximum()
 

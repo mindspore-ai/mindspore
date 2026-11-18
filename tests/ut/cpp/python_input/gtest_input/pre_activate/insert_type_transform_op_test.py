@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
+"""Insert type transform op test."""
+from mindspore.ops.operations import _inner_ops
 import mindspore
 from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 from mindspore.ops.operations import _sequence_ops as seq
+
+import numpy as np
 
 tuple_get_item = Primitive(Constants.kTupleGetItem)
 
@@ -229,7 +232,7 @@ def test_tensor_to_scalar_transform(tag):
     Expectation: The 'after' graph is identical to the graph after this pass.
     """
     fns = FnDict()
-    scalar_to_tensor = P.ScalarToTensor()
+    scalar_to_tensor = _inner_ops.ScalarToTensor()
     tensor_to_scalar = Primitive('TensorToScalar')
 
     @fns

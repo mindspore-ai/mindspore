@@ -17,10 +17,14 @@
 from __future__ import absolute_import
 
 import builtins
+
 import operator
+
 import numbers
+
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
@@ -32,55 +36,14 @@ from mindspore.ops.operations._inner_ops import DynamicBroadcastTo
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.operations._sequence_ops import TensorToList
-# 1
 from mindspore.ops.auto_generate import OnesLikeExt, ZerosLikeExt, FillScalar, FillTensor, Arange, UniqueDim, \
     Unique2, SortExt, NonZero, NonZeroExt, Scatter, ScatterValue, NewOnes, NewZeros
-# 2
 from mindspore.ops.auto_generate.pyboost_inner_prim import squeeze_impl
-# 3
-
-# 4
-
-# 5
-
-# 6
-
-# 7
-
-# 8
-
-# 9
-
-# 10
-
-# 11
-
-# 12
-
-# 13
-
-# 14
-
-# 15
-
-# 16
-
-# 17
-
-# 18
-
-# 19
-
-# 20
-
 from mindspore.ops.auto_generate.gen_ops_prim import SplitTensor, Meshgrid
 from mindspore.ops.auto_generate.gen_ops_prim import SplitWithSize, RepeatInterleaveInt, RepeatInterleaveTensor
 from mindspore.ops.auto_generate.pyboost_inner_prim import _PyboostSearchSortedPrim, meshgrid_impl, concat_impl, \
     unique_consecutive_impl
 from mindspore.ops.operations.array_ops import (
-    MatrixDiagV3,
-    MatrixDiagPartV3,
-    MatrixSetDiagV3,
     Fills,
     Col2Im,
     IndexFill,
@@ -98,7 +61,6 @@ from mindspore.common import Tensor
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore import _checkparam as validator
 from mindspore.ops._utils.utils import ms_arrange
-
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     flip, transpose, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, masked_select, \
     broadcast_to, strided_slice, ones, zeros, max_, min_, select, zero_, view_as, \
@@ -111,9 +73,7 @@ from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 from mindspore.ops.auto_generate.pyboost_inner_prim import _PyboostOneHotExtPrim
 from mindspore.common._decorator import deprecated
 
-arg_max_with_value_ = ArgMaxWithValue()
 arg_min_with_value_ = ArgMinWithValue()
-batch_to_space_nd_v2_ = P.BatchToSpaceNDV2()
 cast_ = P.Cast()
 diag_ = P.Diag()
 dynamic_broadcast_to_ = DynamicBroadcastTo()
@@ -123,18 +83,17 @@ fillv2_ = P.FillV2()
 flatten_ = P.Flatten()
 gather_ = P.Gather()
 gather_d_ = P.GatherD()
-gather_nd_ = P.GatherNd()
+gather_nd_ = _inner_ops.GatherNd()
 ger_ = P.Ger()
 index_fill_ = IndexFill()
 lstsq_ = Lstsq()
 ones_ = P.Ones()
-population_count_ = P.PopulationCount()
 range_ = P.Range()
 rank_ = P.Rank()
 reduce_max_ = P.ReduceMax()
 reduce_min_ = P.ReduceMin()
 reshape_ = P.Reshape()
-scalar_to_tensor_ = P.ScalarToTensor()
+scalar_to_tensor_ = _inner_ops.ScalarToTensor()
 scatter_add_ = P.ScatterAdd()
 scatter_nd_ = P.ScatterNd()
 scatter_update_ = P.ScatterUpdate()
@@ -144,7 +103,6 @@ split_tensor = SplitTensor()
 split_with_size = SplitWithSize()
 size_ = P.Size()
 tensor_select_ = P.Select()
-tensor_shape_ = P.TensorShape()
 tensor_slice = slice_op
 tile_ = P.Tile()
 transpose_ = P.Transpose()
@@ -1608,32 +1566,6 @@ def shape(input_x):
     return shape_(input_x)
 
 
-def dyn_shape(input_x):
-    """
-    Returns the shape of the input tensor.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        input_x (Tensor): The input tensor.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> input_x = mindspore.tensor(mindspore.ops.ones(shape=[3, 2, 1]), mindspore.float32)
-        >>> output = mindspore.ops.dyn_shape(input_x)
-        >>> print(output)
-        [3 2 1]
-    """
-    return tensor_shape_(input_x)
-
-
 def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
     r"""
     Partially reverse the input sequence.
@@ -2765,296 +2697,14 @@ def select_scatter(input, src, axis, index):
     return slice_scatter(input, src, axis, start=index, end=index + 1)
 
 
-def space_to_batch_nd(input_x, block_size, paddings):
-    r"""
-    Divides a tensor's spatial dimensions into blocks and combines the block sizes with the original batch.
-
-    .. math::
-        \begin{array}{ll} \\
-            n' = n*(block\_size[0] * ... * block\_size[M]) \\
-            w'_i = (w_i + paddings[i][0] + paddings[i][1])//block\_size[i]
-        \end{array}
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    .. note::
-        - This operation divides the spatial dimensions [1, ..., M] of the input into blocks of size `block_size` and
-          interleaves them into the batch dimension (default: dimension 0). Before splitting, the spatial dimensions are
-          padded with zeros according to `paddings`.
-        - If the input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)`, then the output shape will be
-          :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`.
-        - If `block_size` is a tuple or list, the length of `block_size` is M corresponding to the number of spatial
-          dimensions. If `block_size` is an int, the block size of M dimensions is the same, equal to `block_size`.
-          M must be 2 on Ascend.
-
-    Args:
-        input_x (Tensor): The input tensor, must be a 4-D tensor on Ascend.
-        block_size (Union[list(int), tuple(int), int]): Specifies the block size for spatial dimension division.
-        paddings (Union[tuple, list]): The padding size for each spatial dimension.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> block_size = [2, 2]
-        >>> paddings = [[0, 0], [0, 0]]
-        >>> input_x = mindspore.tensor([[[[1, 2], [3, 4]]]], mindspore.float32)
-        >>> output = mindspore.ops.space_to_batch_nd(input_x, block_size, paddings)
-        >>> print(output)
-        [[[[1.]]]
-         [[[2.]]]
-         [[[3.]]]
-         [[[4.]]]]
-    """
-    _space_to_batch_nd = _get_cache_prim(
-        P.SpaceToBatchND)(block_size, paddings)
-    return _space_to_batch_nd(input_x)
 
 
-def batch_to_space_nd(input_x, block_shape, crops):
-    r"""
-    Divides the batch dimension into blocks and interleaves these blocks back into spatial dimensions.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    This operation will divide the batch dimension N into blocks with block_shape, the output tensor's N dimension
-    is the corresponding number of blocks after division. The output tensor's :math:`w_1, ..., w_M` dimension is
-    the product of original :math:`w_1, ..., w_M` dimension and block_shape with given amount to crop from dimension,
-    respectively.
-
-    If the input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)`, the output shape is
-    :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`, where
-
-    .. math::
-        \begin{array}{ll} \\
-            n' = n//(block\_shape[0]*...*block\_shape[M-1]) \\
-            w'_i = w_i*block\_shape[i-1]-crops[i-1][0]-crops[i-1][1]
-        \end{array}
-
-    Args:
-        input_x (Tensor): The input tensor. It must be at least a 2-D tensor (equal to 4-D tensor on Ascend),
-            the batch dimension must be divisible by product of `block_shape`.
-        block_shape (Union[list(int), tuple(int), int]): The block shape for dividing the batch
-            into blocks with all values greater
-            than or equal to 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding
-            to the number of spatial dimensions. If `block_shape` is an int, the block sizes of M dimensions are the
-            same, equal to `block_shape`. In this case of Ascend, M must be 2.
-        crops (Union[list(int), tuple(int)]): The `crops` values for spatial dimensions, containing M subtraction list.
-            Each contains 2 integer values. All values must be >= 0. crops[i] specifies the crops values for spatial
-            dimension i, which corresponds to input dimension i + offset, where offset = N-M, and N is the number of
-            input dimensions. It is required that
-            :math:`input\_shape[i+offset]*block\_shape[i] > crops[i][0]+crops[i][1]`
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> block_shape = [2, 2]
-        >>> crops = [[0, 0], [0, 0]]
-        >>> input_x = mindspore.tensor([[[[1]]], [[[2]]], [[[3]]], [[[4]]]], mindspore.float32)
-        >>> output = mindspore.ops.batch_to_space_nd(input_x, block_shape, crops)
-        >>> print(output)
-        [[[[1.  2.]
-           [3.  4.]]]]
-    """
-    if isinstance(block_shape, Tensor):
-        return batch_to_space_nd_v2_(input_x, block_shape, crops)
-    _batch_to_space_nd = _get_cache_prim(P.BatchToSpaceND)(block_shape, crops)
-    return _batch_to_space_nd(input_x)
 
 
-def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT"):
-    r"""
-    Return a tensor with the contents in `x` as k[0]-th to k[1]-th diagonals of a matrix, with everything else padded
-    with `padding_value` .
-
-    `num_rows` and `num_cols` are tensors of type int32 with only one value, which is -1, indicating that the innermost
-    matrix of the output tensor is a square.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        x (Tensor): The input tensor.
-        k (Union[int, Tensor], optional): Diagonal offsets. Positive value means superdiagonal, and negative value
-            means subdiagonals. When `k` is a pair of integers specifying the low and high ends of a matrix band.
-            Default ``0`` .
-        num_rows (Union[int, Tensor], optional): The number of rows of the output tensor. Default ``-1`` .
-        num_cols (Union[int, Tensor], optional): The number of columns of the output tensor. Default ``-1`` .
-        padding_value (Union[int, float, Tensor], optional): The number to fill the area outside the specified
-            diagonal band. Default ``0`` .
-        align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
-            Supported values ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
-            Default ``"RIGHT_LEFT"`` .
-
-            - When set to "RIGHT_LEFT", the alignment of superdiagonals will be towards the right side
-              (padding the row on the left), while subdiagonals will be towards the left side
-              (padding the row on the right)
-            - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
-              (padding the row on the right), while subdiagonals will be towards the right side
-              (padding the row on the left)
-            - When set to "LEFT_LEFT", the alignment of both superdiagonals and subdiagonals will be towards
-              the left side(padding the row on the right).
-            - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
-              the right side(padding the row on the left).
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([[8., 9., 0.],
-        ...                      [1., 2., 3.],
-        ...                      [0., 4., 5.]])
-        >>> k = mindspore.tensor([-1, 1], mindspore.int32)
-        >>> padding_value = mindspore.tensor(11.)
-        >>> num_rows = mindspore.tensor(3, mindspore.int32)
-        >>> num_cols = mindspore.tensor(3, mindspore.int32)
-        >>> output = mindspore.ops.matrix_diag(x, k, num_rows, num_cols, padding_value, align='LEFT_RIGHT')
-        >>> print(output)
-        [[ 1.  8. 11.]
-         [ 4.  2.  9.]
-         [11.  5.  3.]]
-        >>> print(output.shape)
-        (3, 3)
-    """
-    if isinstance(k, int) and not isinstance(k, bool):
-        k = cast_(k, mstype.int32)
-    if isinstance(num_rows, int) and not isinstance(num_rows, bool):
-        num_rows = cast_(num_rows, mstype.int32)
-    if isinstance(num_cols, int) and not isinstance(num_cols, bool):
-        num_cols = cast_(num_cols, mstype.int32)
-    if isinstance(padding_value, (float, int)) and not isinstance(padding_value, bool):
-        padding_value = cast_(padding_value, x.dtype)
-    matrix_diag_v3 = _get_cache_prim(MatrixDiagV3)(align)
-    return matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
 
 
-def matrix_diag_part(x, k, padding_value, align="RIGHT_LEFT"):
-    r"""
-    Return a tensor that retains the values of the specified diagonal while setting all other elements to zero.
-
-    Input `k` and `padding_value` must be const tensor when taking graph mode.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        x (Tensor): The input tensor with rank r, where r >= 2.
-        k (Union[int, Tensor], optional): Diagonal offsets. Positive value means superdiagonal, and negative value
-            means subdiagonals. When `k` is a pair of integers specifying the low and high ends of a matrix band.
-        padding_value (Tensor): The number to fill the area outside the specified
-            diagonal band.
-        align (str, optional): Specifies how superdiagonals and subdiagonals should be aligned.
-            Supported values ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
-            Default ``"RIGHT_LEFT"`` .
-
-            - When set to "RIGHT_LEFT", the alignment of superdiagonals will be towards the right side
-              (padding the row on the left), while subdiagonals will be towards the left side
-              (padding the row on the right)
-            - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
-              (padding the row on the right), while subdiagonals will be towards the right side
-              (padding the row on the left)
-            - When set to "LEFT_LEFT", the alignment of both superdiagonals and subdiagonals will be towards
-              the left side (padding the row on the right).
-            - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
-              the right side (padding the row on the left).
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([[1., 2., 3., 4.],
-        ...                       [5., 6., 7., 8.],
-        ...                       [9., 8., 7., 6.]])
-        >>> k = mindspore.tensor([1, 3], mindspore.int32)
-        >>> output = mindspore.ops.matrix_diag_part(x, k, mindspore.tensor(9.), align='RIGHT_LEFT')
-        >>> print(output)
-        [[9. 9. 4.]
-         [9. 3. 8.]
-         [2. 7. 6.]]
-        >>> print(output.shape)
-        (3, 3)
-    """
-    matrix_diag_part_v3 = _get_cache_prim(MatrixDiagPartV3)(align)
-    return matrix_diag_part_v3(x, k, padding_value)
 
 
-@deprecated("2.9.0", None, False, "ops.")
-def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):  # pylint: disable=redefined-outer-name
-    r"""
-    `mindspore.ops.matrix_set_diag` is deprecated from version 2.9.0 and will be removed in a future version.
-
-    Return a tensor by replacing the elements on the k[0]-th to k[1]-th diagonals of the matrix `x` with the values
-    from the input `diagonal` .
-
-    Args:
-        x (Tensor): The input tensor with rank r, where r >= 2.
-        diagonal (Tensor): A diagonal tensor.
-        k (Union[int, Tensor], optional): Diagonal offsets. Positive value means superdiagonal, and negative value
-            means subdiagonals. When `k` is a pair of integers, it specifies the low and high ends of a matrix band.
-            Default ``0`` .
-        align (str, optional): specifies how superdiagonals and subdiagonals should be aligned.
-            Supported values ``"RIGHT_LEFT"`` , ``"LEFT_RIGHT"`` , ``"LEFT_LEFT"`` , ``"RIGHT_RIGHT"`` .
-            Default ``"RIGHT_LEFT"`` .
-
-            - When set to "RIGHT_LEFT", the alignment of superdiagonals will be towards the right side
-              (padding the row on the left), while subdiagonals will be towards the left side
-              (padding the row on the right)
-            - When set to "LEFT_RIGHT", the alignment of superdiagonals will be towards the left side
-              (padding the row on the right), while subdiagonals will be towards the right side
-              (padding the row on the left)
-            - When set to "LEFT_LEFT", the alignment of both superdiagonals and subdiagonals will be towards
-              the left side(padding the row on the right).
-            - When set to "RIGHT_RIGHT", the alignment of both superdiagonals and subdiagonals will be towards
-              the right side(padding the row on the left).
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> x = mindspore.tensor([[7., 7., 7., 7.],
-        ...                       [7., 7., 7., 7.],
-        ...                       [7., 7., 7., 7.]])
-        >>> diagonal = mindspore.tensor([[0., 9., 1.],
-        ...                    [6., 5., 8.],
-        ...                    [1., 2., 3.],
-        ...                    [4., 5., 0.]])
-        >>> k = mindspore.tensor(([-1, 2]), mindspore.int32)
-        >>> align = 'RIGHT_LEFT'
-        >>> output = ops.matrix_set_diag(x, diagonal, k, align)
-        >>> print(output)
-        [[1. 6. 9. 7.]
-         [4. 2. 5. 1.]
-         [7. 5. 3. 8.]]
-        >>> print(output.shape)
-        (3, 4)
-    """
-    matrix_set_diag_v3_op = _get_cache_prim(MatrixSetDiagV3)(align)
-    if isinstance(k, int) and not isinstance(k, bool):
-        k = cast_(k, mstype.int32)
-    return matrix_set_diag_v3_op(x, diagonal, k)
 
 
 def meshgrid_ext(*tensors, indexing=None):
@@ -3548,60 +3198,11 @@ def index_select(input, axis, index):
     return gather_(input, index, axis)
 
 
-def population_count(input_x):
-    r"""
-    Calculate the number of 1 bits in the binary representation of each element in the input tensor.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        input_x (Tensor): The input tensor.
-
-    Returns:
-        Tensor
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> input_x = mindspore.tensor([0, 1, 3], mindspore.int16)
-        >>> output = mindspore.ops.population_count(input_x)
-        >>> print(output)
-        [0 1 2]
-    """
-    return population_count_(input_x)
 
 
 ##############################
 # Type Conversion Functions.
 ##############################
-
-
-def is_tensor(obj):
-    r"""
-    Check whether the input object is a :class:`mindspore.Tensor` .
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        obj (Object): The input object to be checked.
-
-    Returns:
-        Bool. ``True`` if the input is a :class:`mindspore.Tensor` , ``False`` otherwise.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> a = mindspore.tensor([1.9, 2.2, 3.1])
-        >>> mindspore.is_tensor(a)
-        True
-    """
-    return isinstance(obj, Tensor)
 
 
 def is_nonzero(input):
@@ -5953,74 +5554,6 @@ def repeat_elements(x, rep, axis=0):
     return x_rep
 
 
-def sequence_mask(lengths, maxlen=None):
-    """
-    Returns a mask tensor representing the first N positions of each cell, with boolean elements internally.
-
-    If `lengths` has shape :math:`(d_1, d_2, ..., d_n)`, then the resulting tensor mask has type and shape
-    :math:`(d_1, d_2, ..., d_n, maxlen)`, with mask :math:`[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])`.
-
-    .. warning::
-        This interface is deprecated and will be removed after version 2.9.0.
-
-    Args:
-        lengths (Tensor): Tensor to calculate the mask for. All values in this tensor should be
-            less than or equal to `maxlen`. Values greater than `maxlen` will be treated as `maxlen`.
-        maxlen (int): Size of the last dimension of returned tensor. Must be positive and same
-            type as elements in `lengths`. Default ``None`` .
-
-    Returns:
-        Tensor, shape is `lengths.shape + (maxlen,)` .
-
-    Supported Platforms:
-        ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> # case 1: When maxlen is assigned
-        >>> x = mindspore.tensor([1, 2, 3, 4])
-        >>> output = mindspore.ops.sequence_mask(x, 5)
-        >>> print(output)
-        [[ True False False False False]
-         [ True  True False False False]
-         [ True  True  True False False]
-         [ True  True  True  True False]]
-        >>> # case 2: When there is 0 in x
-        >>> x = mindspore.tensor([[1, 3], [2, 0]])
-        >>> output = mindspore.ops.sequence_mask(x, 5)
-        >>> print(output)
-        [[[ True False False False False]
-          [ True  True  True False False]]
-         [[ True  True False False False]
-          [False False False False False]]]
-        >>> # case 3: When the maxlen is not assigned
-        >>> x = mindspore.tensor([[1, 3], [2, 4]])
-        >>> output = mindspore.ops.sequence_mask(x)
-        >>> print(output)
-        [[[ True False False False ]
-          [ True  True  True False ]]
-         [[ True  True False False ]
-          [ True  True  True  True ]]]
-    """
-    const_utils.check_type_valid(
-        ops.dtype(lengths), [mstype.int64, mstype.int32], 'lengths')
-
-    if maxlen is None:
-        flatten_data = reshape_(lengths, (-1,))
-        flatten_data = cast_(flatten_data, mstype.float32)
-        _, value = arg_max_with_value_(flatten_data)
-        maxlen = cast_(value, mstype.int32)
-    else:
-        maxlen = _check_positive_int(maxlen, "maxlen", "sequence_mask")
-        maxlen = scalar_to_tensor_(maxlen, mstype.int32)
-
-    range_vector = range_(scalar_to_tensor_(0, mstype.int32),
-                          maxlen, scalar_to_tensor_(1, mstype.int32))
-    mask = expand_dims(lengths, -1)
-    result = range_vector < mask
-    return result
-
-
 def top_k(input_x, k, sorted=True):
     r"""
     `top_k` is deprecated, please use `ops.topk` instead.
@@ -6244,7 +5777,6 @@ def from_numpy(array):
     return Tensor.from_numpy(array)
 
 
-
 def type_as(input, other):
     r"""
     Returns input cast to the type of the with the other.
@@ -6315,7 +5847,6 @@ __all__ = [
     'chunk',
     'full',
     'full_like',
-    'dyn_shape',
     'rank',
     'arange',
     'range',
@@ -6332,12 +5863,9 @@ __all__ = [
     'stack',
     'unbind',
     'unstack',
-    'is_tensor',
     'scalar_cast',
     'scalar_to_array',
     'scalar_to_tensor',
-    'space_to_batch_nd',
-    'batch_to_space_nd',
     'tuple_to_array',
     'expand_dims',
     'squeeze',
@@ -6372,9 +5900,6 @@ __all__ = [
     'triu',
     'nonzero',
     'is_nonzero',
-    'matrix_diag',
-    'matrix_diag_part',
-    'matrix_set_diag',
     'diag',
     'diagflat',
     'meshgrid',
@@ -6392,7 +5917,6 @@ __all__ = [
     'argmax',
     'min',
     'unsorted_segment_sum',
-    'population_count',
     'topk',
     'expand',
     'fold',
@@ -6405,7 +5929,6 @@ __all__ = [
     'swapdims',
     'searchsorted',
     'argsort',
-    'sequence_mask',
     'repeat_elements',
     'repeat_interleave',
     'argwhere',

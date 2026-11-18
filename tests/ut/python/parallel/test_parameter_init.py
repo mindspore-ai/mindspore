@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
-
+"""Test parameter init."""
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.ops import operations as P
+
+import numpy as np
 
 
 def setup_function():
@@ -27,8 +29,8 @@ def setup_function():
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
-        self.loss = P.SoftmaxCrossEntropyWithLogits()
+        super().__init__()
+        self.loss = _inner_ops.SoftmaxCrossEntropyWithLogits()
         self.network = network
 
     def construct(self, x, b):

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """OhemLoss."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
@@ -22,13 +23,13 @@ from mindspore.ops import functional as F
 class OhemLoss(nn.Cell):
     """Ohem loss cell."""
     def __init__(self, num, ignore_label):
-        super(OhemLoss, self).__init__()
+        super().__init__()
         self.mul = P.Mul()
         self.shape = P.Shape()
         self.one_hot = nn.OneHot(-1, num, 1.0, 0.0)
         self.squeeze = P.Squeeze()
         self.num = num
-        self.cross_entropy = P.SoftmaxCrossEntropyWithLogits()
+        self.cross_entropy = _inner_ops.SoftmaxCrossEntropyWithLogits()
         self.mean = P.ReduceMean()
         self.select = P.Select()
         self.reshape = P.Reshape()

@@ -101,7 +101,7 @@ class CrossEntropyLoss(nn.Cell):
 
     def __init__(self):
         super().__init__()
-        self.cross_entropy = P.SoftmaxCrossEntropyWithLogits()
+        self.cross_entropy = P._inner_ops.SoftmaxCrossEntropyWithLogits()
         self.mean = P.ReduceMean()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)

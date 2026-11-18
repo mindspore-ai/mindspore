@@ -12,22 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
-import numpy as np
-import pytest
+"""Test batchtospacend op."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.ops.operations as ops
+
 from mindspore import Tensor
 from mindspore.graph.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 
+from tests.mark_utils import arg_mark
+
+import numpy as np
+
 
 class BatchToSpaceNDNet(nn.Cell):
     def __init__(self, nptype, block_shape=2, input_shape=(4, 1, 1, 1)):
-        super(BatchToSpaceNDNet, self).__init__()
-        self.batch_to_space_nd = ops.BatchToSpaceND(block_shape=block_shape, crops=[[0, 0], [0, 0]])
+        super().__init__()
+        self.batch_to_space_nd = _inner_ops.BatchToSpaceND(block_shape=block_shape, crops=[[0, 0], [0, 0]])
         input_size = np.prod(input_shape)
         data_np = np.arange(input_size).reshape(input_shape).astype(nptype)
         self.x1 = Parameter(initializer(Tensor(data_np), input_shape), name='x1')

@@ -12,21 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test iou op."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
-import numpy as np
-import pytest
-
 import mindspore as ms
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
+
+import numpy as np
+
+import pytest
+
 from tests.mark_utils import arg_mark
 
 
 class NetIOU(nn.Cell):
     def __init__(self, mode):
-        super(NetIOU, self).__init__()
-        self.encode = P.IOU(mode=mode)
+        super().__init__()
+        self.encode = _inner_ops.IOU(mode=mode)
 
     def construct(self, anchor, groundtruth):
         return self.encode(anchor, groundtruth)

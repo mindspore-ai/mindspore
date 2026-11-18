@@ -12,23 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained random primitive coverage after legacy function removal."""
 from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 from mindspore import Tensor
 from mindspore import ops, int32
 
 
 class RandomGammaTEST(nn.Cell):
     def __init__(self, shape=None, seed=0):
-        super(RandomGammaTEST, self).__init__()
+        super().__init__()
         self.shape = shape
-        self.random_gamma = P.RandomGamma(seed)
+        self.random_gamma = _inner_ops.RandomGamma(seed)
 
     def construct(self, alpha):
         return self.random_gamma(self.shape, alpha)
@@ -37,12 +38,12 @@ class RandomGammaTEST(nn.Cell):
 class RandomGamma(nn.Cell):
 
     def construct(self, shape, alpha, seed=0):
-        return F.random_gamma(shape, alpha, seed)
+        return _inner_ops.RandomGamma(seed=seed)(shape, alpha)
 
 
 class RandomGammaDR(nn.Cell):
     def __init__(self):
-        super(RandomGammaDR, self).__init__()
+        super().__init__()
         self.reducesum = P.ReduceSum(keep_dims=False)
 
     def construct(self, shape, alpha, seed=0):
@@ -50,7 +51,7 @@ class RandomGammaDR(nn.Cell):
         rand_axis = ops.unique(axis)[0]
         outshape = self.reducesum(shape, rand_axis)
         outalpha = self.reducesum(alpha, rand_axis)
-        return F.random_gamma(outshape, outalpha, seed), outshape, outalpha
+        return _inner_ops.RandomGamma(seed=seed)(outshape, outalpha), outshape, outalpha
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
@@ -93,7 +94,7 @@ def test_random_gamma_op(dtype):
     print(output)
     assert (output.shape == expect).all()
 
-    gamma = P.RandomGamma(seed=3)
+    gamma = _inner_ops.RandomGamma(seed=3)
     output_2 = gamma(shape, alpha)
     print(output_2)
     assert (output_2.shape == expect).all()
@@ -105,31 +106,3 @@ def test_random_gamma_op(dtype):
                    Tensor(shape=alpha_dyn_shape, dtype=ms.float32), 1)
     output = net(shape, alpha, seed=1)
     print(output)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-@pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16])
-def test_random_gamma_functional(dtype):
-    """
-    Feature: Functional interface of RandomGamma cpu kernel
-    Description: test the random gamma alpha is a tensor.
-    Expectation: match to tensorflow benchmark.
-    """
-
-    ms.set_context(mode=ms.GRAPH_MODE, device_target='CPU')
-    shape = Tensor(np.array([10, 10]), ms.int32)
-    alpha = Tensor(np.array([[3, 4], [5, 6]]), dtype)
-    output = F.random_gamma(shape=shape, alpha=alpha, seed=2)
-    expect = np.array([10, 10, 2, 2])
-
-    print(output)
-    assert (output.shape == expect).all()
-
-    ms.set_context(mode=ms.PYNATIVE_MODE, device_target='CPU')
-    shape = Tensor(np.array([4, 2]), ms.int32)
-    alpha = Tensor(np.array([[3, 4], [5, 6]]), ms.float32)
-    output = F.random_gamma(shape=shape, alpha=alpha, seed=1)
-    expect = np.array([4, 2, 2, 2])
-
-    print(output)
-    assert (output.shape == expect).all()

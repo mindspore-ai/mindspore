@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test auto parallel arithmetic."""
 import re
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -37,7 +39,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -48,7 +50,7 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x, y, b):
@@ -71,7 +73,7 @@ def test_auto_parallel_arithmetic():
         def __init__(self):
             super().__init__()
             self.matmul = P.MatMul()
-            self.floordiv = P.FloorDiv()
+            self.floordiv = _private_math.FloorDiv()
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -100,7 +102,7 @@ def test_auto_parallel_arithmetic_broadcast_both():
         def __init__(self):
             super().__init__()
             self.matmul = P.MatMul()
-            self.floordiv = P.FloorDiv()
+            self.floordiv = _private_math.FloorDiv()
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -130,7 +132,7 @@ def test_auto_parallel_arithmetic_broadcast_right():
         def __init__(self):
             super().__init__()
             self.matmul = P.MatMul()
-            self.floordiv = P.FloorDiv()
+            self.floordiv = _private_math.FloorDiv()
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
@@ -159,7 +161,7 @@ def test_auto_parallel_arithmetic_broadcast_left():
         def __init__(self):
             super().__init__()
             self.matmul = P.MatMul()
-            self.floordiv = P.FloorDiv()
+            self.floordiv = _private_math.FloorDiv()
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)

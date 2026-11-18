@@ -14,9 +14,12 @@
 # ============================================================================
 """DeepLabv3."""
 
-import numpy as np
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
 from mindspore.ops import operations as P
+
+import numpy as np
+
 from .backbone.resnet_deeplab import _conv_bn_relu, resnet50_dl, _deep_conv_bn_relu, \
     DepthwiseConv2dNative, SpaceToBatch, BatchToSpace
 
@@ -24,7 +27,7 @@ from .backbone.resnet_deeplab import _conv_bn_relu, resnet50_dl, _deep_conv_bn_r
 class ASPPSampleBlock(nn.Cell):
     """ASPP sample block."""
     def __init__(self, feature_shape, scale_size, output_stride):
-        super(ASPPSampleBlock, self).__init__()
+        super().__init__()
         self.sample_h = (feature_shape[0] * scale_size + 1) / output_stride + 1
         self.sample_w = (feature_shape[1] * scale_size + 1) / output_stride + 1
         self.sample = P.ResizeBilinearV2(align_corners=True)
@@ -54,7 +57,7 @@ class ASPP(nn.Cell):
     """
     def __init__(self, channel, depth, feature_shape, scale_sizes,
                  atrous_rates, output_stride, fine_tune_batch_norm=False):
-        super(ASPP, self).__init__()
+        super().__init__()
         self.aspp0 = _conv_bn_relu(channel,
                                    depth,
                                    ksize=1,
@@ -142,7 +145,7 @@ class ASPP(nn.Cell):
 class DecoderSampleBlock(nn.Cell):
     """Decoder sample block."""
     def __init__(self, feature_shape, scale_size=1.0, decoder_output_stride=4):
-        super(DecoderSampleBlock, self).__init__()
+        super().__init__()
         self.sample_h = (feature_shape[0] * scale_size + 1) / decoder_output_stride + 1
         self.sample_w = (feature_shape[1] * scale_size + 1) / decoder_output_stride + 1
         self.sample = P.ResizeBilinearV2(align_corners=True)
@@ -175,7 +178,7 @@ class Decoder(nn.Cell):
                  scale_sizes,
                  decoder_output_stride,
                  fine_tune_batch_norm):
-        super(Decoder, self).__init__()
+        super().__init__()
         self.feature_projection = _conv_bn_relu(low_level_channel, 48, ksize=1, stride=1,
                                                 pad_mode="same", use_batch_statistics=fine_tune_batch_norm)
         self.decoder_depth0 = _deep_conv_bn_relu(channel + 48,
@@ -260,7 +263,7 @@ class SingleDeepLabV3(nn.Cell):
                  decoder_output_stride,
                  output_stride,
                  fine_tune_batch_norm=False):
-        super(SingleDeepLabV3, self).__init__()
+        super().__init__()
         self.num_classes = num_classes
         self.channel = channel
         self.depth = depth
@@ -297,7 +300,7 @@ class SingleDeepLabV3(nn.Cell):
         self.feature_shape = [float(feature_shape[0]), float(feature_shape[1]), float(feature_shape[2]),
                               float(feature_shape[3])]
 
-        self.pad = P.Pad(((0, 0), (0, 0), (1, 1), (1, 1)))
+        self.pad = _inner_ops.Pad(((0, 0), (0, 0), (1, 1), (1, 1)))
         self.dropout = nn.Dropout(p=0.1)
         self.shape = P.Shape()
         self.decoder_output_stride = decoder_output_stride
@@ -333,7 +336,7 @@ class SampleBlock(nn.Cell):
     def __init__(self,
                  feature_shape,
                  scale_size=1.0):
-        super(SampleBlock, self).__init__()
+        super().__init__()
 
         self.sample_h = np.ceil(float(feature_shape[2]) * scale_size)
         self.sample_w = np.ceil(float(feature_shape[3]) * scale_size)
@@ -347,7 +350,7 @@ class DeepLabV3(nn.Cell):
     """DeepLabV3 model."""
     def __init__(self, num_classes, feature_shape, backbone, channel, depth, infer_scale_sizes, atrous_rates,
                  decoder_output_stride, output_stride, fine_tune_batch_norm, image_pyramid):
-        super(DeepLabV3, self).__init__()
+        super().__init__()
         self.infer_scale_sizes = []
         if infer_scale_sizes is not None:
             self.infer_scale_sizes = infer_scale_sizes

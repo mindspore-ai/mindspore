@@ -12,11 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
-import time
-import random
-import numpy as np
-
+"""Test lenet."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
@@ -27,6 +24,15 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.common import set_seed
 from mindspore._extends import cell_attr_register
+
+import os
+
+import time
+
+import random
+
+import numpy as np
+
 from tests.mark_utils import arg_mark
 
 
@@ -59,7 +65,7 @@ def fc_with_initialize(input_channels, out_channels):
 class LeNetConvBlock(nn.Cell):
     @cell_attr_register
     def __init__(self, in_channels, out_channels, kernel_size):
-        super(LeNetConvBlock, self).__init__()
+        super().__init__()
         self.conv = conv(in_channels, out_channels, kernel_size)
         self.relu = nn.ReLU()
         self.max_pool2d = nn.MaxPool2d(kernel_size=2, stride=2)
@@ -74,7 +80,7 @@ class LeNetConvBlock(nn.Cell):
 class LeNetFcBlock(nn.Cell):
     @cell_attr_register
     def __init__(self, in_channels, out_channels):
-        super(LeNetFcBlock, self).__init__()
+        super().__init__()
         self.fc = fc_with_initialize(in_channels, out_channels)
         self.relu = nn.ReLU()
 
@@ -96,7 +102,7 @@ class LeNet(nn.Cell):
     """
 
     def __init__(self, num_class=10):
-        super(LeNet, self).__init__()
+        super().__init__()
         self.num_class = num_class
         self.batch_size = 32
         self.conv1 = LeNetConvBlock(1, 6, 5)
@@ -122,8 +128,8 @@ class CrossEntropyLoss(nn.Cell):
     """
 
     def __init__(self):
-        super(CrossEntropyLoss, self).__init__()
-        self.cross_entropy = P.SoftmaxCrossEntropyWithLogits()
+        super().__init__()
+        self.cross_entropy = _inner_ops.SoftmaxCrossEntropyWithLogits()
         self.mean = P.ReduceMean()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)

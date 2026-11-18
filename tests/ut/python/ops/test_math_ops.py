@@ -16,6 +16,7 @@
 import functools
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore as ms
 from mindspore import context
 from mindspore import nn
@@ -31,7 +32,7 @@ from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac, BatchMatMul
 from mindspore.ops.operations.math_ops import MatrixTriangularSolve
 from mindspore.ops.operations.sparse_ops import DenseToDenseSetOperation
 from mindspore.ops.operations.sparse_ops import DenseToSparseSetOperation
-from mindspore.ops.function.math_func import inplace_index_add, polar
+from mindspore.ops.function.math_func import polar
 
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
@@ -396,7 +397,7 @@ class FloorNet(nn.Cell):
 class Log1pNet(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.log1p = P.Log1p()
+        self.log1p = _private_math.Log1p()
 
     def construct(self, x):
         return self.log1p(x)
@@ -644,14 +645,6 @@ class Deg2radNet(nn.Cell):
         return self.deg2rad(x)
 
 
-class InplaceIndexAddFunc(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.inplace_index_add = inplace_index_add
-        self.var = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32)))
-
-    def construct(self, indices, updates, axis=1):
-        return self.inplace_index_add(self.var, indices, updates, axis)
 
 
 class IsRealFunc(nn.Cell):
@@ -831,11 +824,6 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1., 0., -2.]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1., 0., -2.]], np.float32))],
         'skip': ['backward']}),
-    ('InplaceIndexAdd', {
-        'block': InplaceIndexAddFunc(),
-        'desc_inputs': [Tensor(np.array([0, 1, 2], np.int32)),
-                        Tensor(np.array([[0.5, 1.0, 1.5], [1.0, 1.5, 2.0], [2.0, 2.5, 3.0]], np.float32))],
-        'desc_bprop': [Tensor(np.array([[1, 1, 1], [1, 1, 1], [1, 1, 1]], np.float32))]}),
     ('Log1p', {
         'block': Log1pNet(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],

@@ -23,7 +23,7 @@ from mindspore.graph.api import _cell_graph_executor
 from parallel.utils.utils import ParallelValidator
 
 scatter_ops_dict = {"Add": P.ScatterAdd(), "Mul": _scatter_ops.ScatterMul(), "Div": _scatter_ops.ScatterDiv(),
-                    "Min": _scatter_ops.ScatterMin(), "Max": _scatter_ops.ScatterMax(), "Sub": P.ScatterSub()}
+                    "Min": _scatter_ops.ScatterMin(), "Max": _scatter_ops.ScatterMax()}
 
 
 class Net(nn.Cell):
@@ -247,22 +247,4 @@ def test_scatter_div_mix_split_auto_parallel_rec():
     strategy1 = None
     strategy2 = None
     net = Net(input_shape, indices_shape, updates_shape, strategy1, strategy2, "Div")
-    compile_net(net, inputs)
-
-
-def test_scatter_sub_mix_split():
-    """
-    Feature: test scatter ops auto parallel
-    Description: test scatter sub mix split
-    Expectation: compile success
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=64, full_batch=True)
-    inputs = Tensor(np.ones([32 * 4, 64]).astype(np.float32))
-    input_shape = [32 * 4, 64]
-    indices_shape = [4, 4]
-    updates_shape = [4, 4, 64]
-    strategy1 = ((8, 8), (1, 1), (1, 1, 8))
-    strategy2 = ((1, 1), (1, 1))
-    net = Net(input_shape, indices_shape, updates_shape, strategy1, strategy2, "Sub")
     compile_net(net, inputs)

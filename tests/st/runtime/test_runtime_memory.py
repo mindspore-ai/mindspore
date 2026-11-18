@@ -18,8 +18,9 @@ import pytest
 import numpy as np
 from tests.mark_utils import arg_mark
 from tests.device_utils import set_device
+from mindspore.ops.operations import _inner_ops
 from mindspore import context, nn, Tensor
-from mindspore.ops import operations as P
+
 from mindspore.common.parameter import Parameter
 import mindspore.common.dtype as mstype
 import mindspore.runtime as rt
@@ -30,7 +31,7 @@ class SparseApplyFtrlNet(nn.Cell):
     """simple net"""
     def __init__(self, var, accum, linear, lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5):
         super().__init__()
-        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=lr, l1=l1, l2=l2, lr_power=lr_power)
+        self.sparse_apply_ftrl = _inner_ops.SparseApplyFtrl(lr=lr, l1=l1, l2=l2, lr_power=lr_power)
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
         self.linear = Parameter(linear, name="linear")

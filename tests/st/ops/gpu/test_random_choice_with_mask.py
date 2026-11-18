@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test random choice with mask."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
 
 
 class RCWM_count_in(nn.Cell):
     def __init__(self):
-        super(RCWM_count_in, self).__init__()
-        self.RCWM_count_in = P.RandomChoiceWithMask(count=4, seed=1)
+        super().__init__()
+        self.RCWM_count_in = _inner_ops.RandomChoiceWithMask(count=4, seed=1)
 
     def construct(self, x):
         return self.RCWM_count_in(x)
@@ -33,8 +35,8 @@ class RCWM_count_in(nn.Cell):
 
 class RCWM_count_out(nn.Cell):
     def __init__(self):
-        super(RCWM_count_out, self).__init__()
-        self.RCWM_count_out = P.RandomChoiceWithMask(count=10, seed=1)
+        super().__init__()
+        self.RCWM_count_out = _inner_ops.RandomChoiceWithMask(count=10, seed=1)
 
     def construct(self, x):
         return self.RCWM_count_out(x)
@@ -42,8 +44,8 @@ class RCWM_count_out(nn.Cell):
 
 class RCWM_3D(nn.Cell):
     def __init__(self):
-        super(RCWM_3D, self).__init__()
-        self.RCWM_3D = P.RandomChoiceWithMask(count=10, seed=1)
+        super().__init__()
+        self.RCWM_3D = _inner_ops.RandomChoiceWithMask(count=10, seed=1)
 
     def construct(self, x):
         return self.RCWM_3D(x)
@@ -51,8 +53,8 @@ class RCWM_3D(nn.Cell):
 
 class RCWM_1D(nn.Cell):
     def __init__(self):
-        super(RCWM_1D, self).__init__()
-        self.RCWM_1D = P.RandomChoiceWithMask(count=10, seed=9)
+        super().__init__()
+        self.RCWM_1D = _inner_ops.RandomChoiceWithMask(count=10, seed=9)
 
     def construct(self, x):
         return self.RCWM_1D(x)

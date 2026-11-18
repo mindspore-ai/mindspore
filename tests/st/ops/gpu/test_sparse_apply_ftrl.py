@@ -12,23 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test sparse apply ftrl."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
+
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
-from mindspore.ops import operations as P
+
 import mindspore.common.dtype as mstype
 
 
 class Net(nn.Cell):
 
     def __init__(self):
-        super(Net, self).__init__()
-        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.001,
+        super().__init__()
+        self.sparse_apply_ftrl = _inner_ops.SparseApplyFtrl(lr=0.001,
                                                    l1=0.0,
                                                    l2=0.0,
                                                    lr_power=-0.5,
@@ -49,8 +51,8 @@ class Net(nn.Cell):
 class NetHalf(nn.Cell):
 
     def __init__(self):
-        super(NetHalf, self).__init__()
-        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=0.001,
+        super().__init__()
+        self.sparse_apply_ftrl = _inner_ops.SparseApplyFtrl(lr=0.001,
                                                    l1=0.0,
                                                    l2=0.0,
                                                    lr_power=-0.5,

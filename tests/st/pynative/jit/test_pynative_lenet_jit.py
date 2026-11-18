@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import time
-import numpy as np
-
+"""Test pynative lenet jit."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.nn as nn
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -25,6 +24,11 @@ from mindspore.graph.api import jit
 from mindspore import context, Tensor, ParameterTuple
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore.common.initializer import TruncatedNormal
+
+import time
+
+import numpy as np
+
 from tests.mark_utils import arg_mark
 
 np.random.seed(1)
@@ -38,7 +42,7 @@ def weight_variable():
 
 class ConvReluMaxpool2d1(nn.Cell):
     def __init__(self):
-        super(ConvReluMaxpool2d1, self).__init__()
+        super().__init__()
         self.weight_variable = weight_variable()
         self.conv = nn.Conv2d(1, 6, kernel_size=5, stride=1, padding=0,
                               weight_init=self.weight_variable, pad_mode="valid")
@@ -55,7 +59,7 @@ class ConvReluMaxpool2d1(nn.Cell):
 
 class ConvReluMaxpool2d2(nn.Cell):
     def __init__(self):
-        super(ConvReluMaxpool2d2, self).__init__()
+        super().__init__()
         self.weight_variable = weight_variable()
         self.conv = nn.Conv2d(6, 16, kernel_size=5, stride=1, padding=0,
                               weight_init=self.weight_variable, pad_mode="valid")
@@ -72,7 +76,7 @@ class ConvReluMaxpool2d2(nn.Cell):
 
 class Fc(nn.Cell):
     def __init__(self):
-        super(Fc, self).__init__()
+        super().__init__()
         self.weight_variable = weight_variable()
         self.dense = nn.Dense(16 * 5 * 5, 120, self.weight_variable, self.weight_variable)
 
@@ -101,7 +105,7 @@ class LeNet(nn.Cell):
     """
 
     def __init__(self, num_class=10):
-        super(LeNet, self).__init__()
+        super().__init__()
         self.num_class = num_class
         self.batch_size = 32
         self.conv_relu_maxpool2d_1 = ConvReluMaxpool2d1()
@@ -131,8 +135,8 @@ class CrossEntropyLoss(nn.Cell):
     """
 
     def __init__(self):
-        super(CrossEntropyLoss, self).__init__()
-        self.cross_entropy = P.SoftmaxCrossEntropyWithLogits()
+        super().__init__()
+        self.cross_entropy = _inner_ops.SoftmaxCrossEntropyWithLogits()
         self.mean = P.ReduceMean()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
@@ -152,7 +156,7 @@ class GradWrap(nn.Cell):
     """
 
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
         self.weights = ParameterTuple(filter(lambda x: x.requires_grad, network.get_parameters()))
 

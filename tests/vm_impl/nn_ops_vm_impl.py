@@ -15,6 +15,7 @@
 """Generate vm_impl function for nn ops"""
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
@@ -295,7 +296,7 @@ def vm_impl_bias_add_grad(self):
     return vm_impl
 
 
-@vm_impl_getters.register(P.SoftmaxCrossEntropyWithLogits)
+@vm_impl_getters.register(_inner_ops.SoftmaxCrossEntropyWithLogits)
 def vm_impl_softmax_cross_entropy_with_logits(self):
     """Generate vm_impl function for SoftmaxCrossEntropyWithLogits"""
 
@@ -308,7 +309,7 @@ def vm_impl_softmax_cross_entropy_with_logits(self):
     return vm_impl
 
 
-@vm_impl_getters.register(P.SparseSoftmaxCrossEntropyWithLogits)
+@vm_impl_getters.register(_inner_ops.SparseSoftmaxCrossEntropyWithLogits)
 def vm_impl_sparse_softmax_cross_entropy_with_logits(self):
     """Generate vm_impl function for SparseSoftmaxCrossEntropyWithLogits"""
 
@@ -328,7 +329,7 @@ def vm_impl_sparse_softmax_cross_entropy_with_logits(self):
     return vm_impl
 
 
-@vm_impl_getters.register(P.ApplyMomentum)
+@vm_impl_getters.register(_inner_ops.ApplyMomentum)
 def vm_impl_momentum(self):
     """Generate vm_impl function for Momentum"""
 

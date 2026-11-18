@@ -12,12 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import os
-import random
-import argparse
-import numpy as np
-from resnet import resnet50
-
+"""Resnet cifar normal."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.dataset as de
@@ -31,6 +27,16 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.train import ModelCheckpoint, CheckpointConfig, LossMonitor, Model
 from mindspore.context import ParallelMode
+
+import os
+
+import random
+
+import argparse
+
+import numpy as np
+
+from resnet import resnet50
 
 random.seed(1)
 np.random.seed(1)
@@ -105,8 +111,8 @@ def create_dataset(repeat_num=1, training=True):
 
 class CrossEntropyLoss(nn.Cell):
     def __init__(self):
-        super(CrossEntropyLoss, self).__init__()
-        self.cross_entropy = P.SoftmaxCrossEntropyWithLogits()
+        super().__init__()
+        self.cross_entropy = _inner_ops.SoftmaxCrossEntropyWithLogits()
         self.mean = P.ReduceMean()
         self.one_hot = P.OneHot()
         self.one = Tensor(1.0, mstype.float32)

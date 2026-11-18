@@ -1,8 +1,9 @@
+"""Floordiv ops."""
 import numpy as np
+from mindspore.ops.operations import _inner_ops as _private_math
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Cell
 from mindspore import jit, context
-import mindspore.ops.operations as op
 from ...utils import allclose_nparray, is_empty
 from ...grad import GradOfAllInputs
 
@@ -10,7 +11,7 @@ from ...grad import GradOfAllInputs
 class FloorDiv(Cell):
     def __init__(self):
         super().__init__()
-        self.op = op.FloorDiv()
+        self.op = _private_math.FloorDiv()
 
     def construct(self, left_input, right_input):
         return self.op(left_input, right_input)

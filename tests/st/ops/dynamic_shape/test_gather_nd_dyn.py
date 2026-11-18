@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
-import numpy as np
-import pytest
+"""Test gather nd dyn."""
+from mindspore.ops.operations import _inner_ops
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+
+from tests.mark_utils import arg_mark
+
+import numpy as np
 
 
 class GatherNdDynamicShapeNetMS(nn.Cell):
@@ -28,7 +31,7 @@ class GatherNdDynamicShapeNetMS(nn.Cell):
         self.unique = P.Unique()
         self.gather = P.Gather()
         self.axis = axis
-        self.gather_nd = P.GatherNd()
+        self.gather_nd = _inner_ops.GatherNd()
 
     def construct(self, x, indices_in, indices):
         unique_indices, _ = self.unique(indices)

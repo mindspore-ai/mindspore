@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import numpy as np
-import pytest
-
+"""Test crop and resize."""
+from mindspore.ops.operations import _inner_ops
 from mindspore import Tensor, context
 from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import Cell
-from mindspore.ops import operations as P
+
 import mindspore.common.dtype as mstype
+
+import numpy as np
+
+import pytest
 
 
 def setup_function():
@@ -39,9 +42,9 @@ _crop_size = (24, 24)
 
 class Net(Cell):
     def __init__(self, crop_size, strategy=None):
-        super(Net, self).__init__()
+        super().__init__()
         self.crop_size = crop_size
-        self.crop_and_resize = P.CropAndResize().shard(strategy)
+        self.crop_and_resize = _inner_ops.CropAndResize().shard(strategy)
 
     def construct(self, images, boxes, box_index):
         output = self.crop_and_resize(images, boxes, box_index, self.crop_size)

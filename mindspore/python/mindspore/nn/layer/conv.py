@@ -16,8 +16,10 @@
 from __future__ import absolute_import
 
 import math
+
 import numpy as np
 
+from mindspore.ops.operations import _inner_ops
 from mindspore import context
 from mindspore import ops
 import mindspore.common.dtype as mstype
@@ -1351,7 +1353,8 @@ class Conv2dTranspose(_Conv):
             if not self.is_pad and (self.output_padding[0] > 0 or self.output_padding[1] > 0):
                 raise ValueError("when output_padding is not zero, pad_mode must be 'pad'")
 
-            pad = ops.Pad(paddings=((0, 0), (0, 0), (0, self.output_padding[0]), (0, self.output_padding[1])))
+            pad = _inner_ops.Pad(
+                paddings=((0, 0), (0, 0), (0, self.output_padding[0]), (0, self.output_padding[1])))
             return pad(conv2d_trans_ret)
 
         if self.output_padding == 0:
@@ -1363,7 +1366,8 @@ class Conv2dTranspose(_Conv):
             raise ValueError("output_padding must be in range of [0, max(stride_w, dilation_w)).")
         if not self.is_pad and self.output_padding > 0:
             raise ValueError("when output_padding is not zero, pad_mode must be 'pad'")
-        pad = ops.Pad(paddings=((0, 0), (0, 0), (0, self.output_padding), (0, self.output_padding)))
+        pad = _inner_ops.Pad(
+            paddings=((0, 0), (0, 0), (0, self.output_padding), (0, self.output_padding)))
         return pad(conv2d_trans_ret)
 
 

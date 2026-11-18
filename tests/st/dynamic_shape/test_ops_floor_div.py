@@ -23,28 +23,28 @@ from tests.mark_utils import arg_mark
 
 
 @test_utils.run_with_cell
-def floor_div_forward_func(x, y):
-    return ops.floor_div(x, y)
+def floor_divide_forward_func(x, y):
+    return ops.floor_divide(x, y)
 
 
 @test_utils.run_with_cell
-def floor_div_backward_func(x, y):
-    return ops.grad(floor_div_forward_func, (0,))(x, y)
+def floor_divide_backward_func(x, y):
+    return ops.grad(floor_divide_forward_func, (0,))(x, y)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
-def test_floor_div_forward(mode):
+def test_floor_divide_forward(mode):
     """
     Feature: Ops.
-    Description: test op floor_div.
+    Description: test op floor_divide.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
     x = Tensor(4.0, ms.float32)
     y = Tensor(3.0, ms.float32)
-    output = floor_div_forward_func(x, y)
+    output = floor_divide_forward_func(x, y)
     expect = 1.0
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
@@ -52,16 +52,16 @@ def test_floor_div_forward(mode):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
-def test_floor_div_vmap(mode):
+def test_floor_divide_vmap(mode):
     """
     Feature: test vmap function.
-    Description: test floor_div op vmap.
+    Description: test floor_divide op vmap.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
     x = Tensor(np.array([[[2, 4], [-1, 3]]]))
     y = Tensor(np.array([[[3, 3], [3, 3]]]))
-    nest_vmap = ops.vmap(ops.vmap(floor_div_forward_func, in_axes=(0, 0)), in_axes=(0, 0))
+    nest_vmap = ops.vmap(ops.vmap(floor_divide_forward_func, in_axes=(0, 0)), in_axes=(0, 0))
     output = nest_vmap(x, y)
     expect = [[[0, 1], [-1, 1]]]
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)

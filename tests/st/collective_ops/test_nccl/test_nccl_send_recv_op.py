@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-
+"""Test nccl send recv op."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -22,6 +22,8 @@ from mindspore.common.parameter import Parameter
 from mindspore.communication.management import init, NCCL_WORLD_COMM_GROUP, get_rank, get_group_size
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+
+import numpy as np
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -35,10 +37,10 @@ x = np.ones([3, 3, 3, 3]).astype(np.float32) * 0.01 * (rank + 1)
 
 class SendNet(nn.Cell):
     def __init__(self):
-        super(SendNet, self).__init__()
+        super().__init__()
         self.x = Parameter(initializer(Tensor(x), x.shape), name='x')
         self.depend = P.Depend()
-        self.send = P.Send(sr_tag=0, dest_rank=rank+size//2, group=NCCL_WORLD_COMM_GROUP)
+        self.send = _inner_ops.Send(sr_tag=0, dest_rank=rank+size//2, group=NCCL_WORLD_COMM_GROUP)
 
     def construct(self):
         out = self.depend(self.x, self.send(self.x))
@@ -46,8 +48,8 @@ class SendNet(nn.Cell):
 
 class RecvNet(nn.Cell):
     def __init__(self):
-        super(RecvNet, self).__init__()
-        self.recv = P.Receive(sr_tag=0, src_rank=rank-size//2, shape=[3, 3, 3, 3], dtype=mstype.float32,
+        super().__init__()
+        self.recv = _inner_ops.Receive(sr_tag=0, src_rank=rank-size//2, shape=[3, 3, 3, 3], dtype=mstype.float32,
                               group=NCCL_WORLD_COMM_GROUP)
 
     def construct(self):

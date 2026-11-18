@@ -53,18 +53,14 @@ Tensor创建
     mindspore.ops.gamma
     mindspore.ops.laplace
     mindspore.ops.multinomial
-    mindspore.ops.multinomial_with_replacement
     mindspore.ops.rand
     mindspore.ops.rand_like
     mindspore.ops.randint
     mindspore.ops.randint_like
     mindspore.ops.randn
     mindspore.ops.randn_like
-    mindspore.ops.random_gamma
-    mindspore.ops.random_poisson
     mindspore.ops.randperm
     mindspore.ops.standard_laplace
-    mindspore.ops.standard_normal
     mindspore.ops.uniform
 
 Array操作
@@ -76,7 +72,6 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.ops.argwhere
-    mindspore.ops.batch_to_space_nd
     mindspore.ops.bincount
     mindspore.ops.block_diag
     mindspore.ops.broadcast_to
@@ -93,7 +88,6 @@ Array操作
     mindspore.ops.diagonal
     mindspore.ops.diagonal_scatter
     mindspore.ops.diag_embed
-    mindspore.ops.dyn_shape
     mindspore.ops.dsplit
     mindspore.ops.dstack
     mindspore.ops.einsum
@@ -110,9 +104,6 @@ Array操作
     mindspore.ops.index_add
     mindspore.ops.index_fill
     mindspore.ops.index_select
-    mindspore.ops.inplace_add
-    mindspore.ops.inplace_index_add
-    mindspore.ops.inplace_sub
     mindspore.ops.inplace_update
     mindspore.ops.is_nonzero
     mindspore.ops.masked_fill
@@ -131,7 +122,6 @@ Array操作
     mindspore.ops.nsa_compress_attention
     mindspore.ops.numel
     mindspore.ops.permute
-    mindspore.ops.population_count
     mindspore.ops.rank
     mindspore.ops.repeat_elements
     mindspore.ops.repeat_interleave
@@ -143,15 +133,11 @@ Array操作
     mindspore.ops.scatter_nd
     mindspore.ops.select
     mindspore.ops.select_scatter
-    mindspore.ops.sequence_mask
     mindspore.ops.shape
-    mindspore.ops.shuffle
     mindspore.ops.size
     mindspore.ops.slice
     mindspore.ops.slice_scatter
     mindspore.ops.sort
-    mindspore.ops.space_to_batch_nd
-    mindspore.ops.sparse_segment_mean
     mindspore.ops.split
     mindspore.ops.squeeze
     mindspore.ops.stack
@@ -196,7 +182,6 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.ops.cast
-    mindspore.ops.is_tensor
     mindspore.ops.scalar_to_tensor
     mindspore.ops.tuple_to_array
 
@@ -223,7 +208,6 @@ Array操作
 
     mindspore.ops.abs
     mindspore.ops.absolute
-    mindspore.ops.accumulate_n
     mindspore.ops.acos
     mindspore.ops.arccos
     mindspore.ops.acosh
@@ -253,10 +237,6 @@ Array操作
     mindspore.ops.bessel_i1e
     mindspore.ops.bessel_j0
     mindspore.ops.bessel_j1
-    mindspore.ops.bessel_k0
-    mindspore.ops.bessel_k0e
-    mindspore.ops.bessel_k1
-    mindspore.ops.bessel_k1e
     mindspore.ops.bessel_y0
     mindspore.ops.bessel_y1
     mindspore.ops.bitwise_and
@@ -285,7 +265,6 @@ Array操作
     mindspore.ops.exp2
     mindspore.ops.expm1
     mindspore.ops.floor
-    mindspore.ops.floor_div
     mindspore.ops.floor_divide
     mindspore.ops.floor_mod
     mindspore.ops.float_power
@@ -350,7 +329,6 @@ Array操作
     mindspore.ops.triu_indices
     mindspore.ops.true_divide
     mindspore.ops.trunc
-    mindspore.ops.truncate_div
     mindspore.ops.truncate_mod
     mindspore.ops.xdivy
     mindspore.ops.xlogy
@@ -398,7 +376,6 @@ Reduction函数
     :template: classtemplate.rst
 
     mindspore.ops.argsort
-    mindspore.ops.approximate_equal
     mindspore.ops.bucketize
     mindspore.ops.eq
     mindspore.ops.equal
@@ -406,7 +383,6 @@ Reduction函数
     mindspore.ops.greater
     mindspore.ops.greater_equal
     mindspore.ops.gt
-    mindspore.ops.intopk
     mindspore.ops.isclose
     mindspore.ops.isfinite
     mindspore.ops.isinf
@@ -441,7 +417,6 @@ Reduction函数
     mindspore.ops.addr
     mindspore.ops.adjoint
     mindspore.ops.baddbmm
-    mindspore.ops.batch_dot
     mindspore.ops.bmm
     mindspore.ops.cholesky
     mindspore.ops.cholesky_solve
@@ -459,9 +434,6 @@ Reduction函数
     mindspore.ops.matmul
     mindspore.ops.matrix_band_part
     mindspore.ops.matrix_solve
-    mindspore.ops.matrix_diag
-    mindspore.ops.matrix_diag_part
-    mindspore.ops.matrix_set_diag
     mindspore.ops.mm
     mindspore.ops.mv
     mindspore.ops.outer
@@ -510,12 +482,9 @@ Reduction函数
     mindspore.ops.avg_pool3d
     mindspore.ops.batch_norm
     mindspore.ops.bias_add
-    mindspore.ops.bidense
     mindspore.ops.conv1d
     mindspore.ops.conv2d
     mindspore.ops.conv3d
-    mindspore.ops.ctc_greedy_decoder
-    mindspore.ops.deformable_conv2d
     mindspore.ops.dense
     mindspore.ops.dropout
     mindspore.ops.dropout1d
@@ -533,7 +502,6 @@ Reduction函数
     mindspore.ops.lightning_indexer
     mindspore.ops.lp_pool1d
     mindspore.ops.lp_pool2d
-    mindspore.ops.lrn
     mindspore.ops.max_pool2d
     mindspore.ops.max_pool3d
     mindspore.ops.max_unpool1d
@@ -634,10 +602,7 @@ Reduction函数
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.choice_with_mask
     mindspore.ops.random_categorical
-    mindspore.ops.log_uniform_candidate_sampler
-    mindspore.ops.uniform_candidate_sampler
 
 图像函数
 ^^^^^^^^^^
@@ -648,19 +613,13 @@ Reduction函数
     :template: classtemplate.rst
 
     mindspore.ops.affine_grid
-    mindspore.ops.bounding_box_decode
-    mindspore.ops.bounding_box_encode
-    mindspore.ops.check_valid
-    mindspore.ops.crop_and_resize
     mindspore.ops.grid_sample
     mindspore.ops.interpolate
-    mindspore.ops.iou
     mindspore.ops.pad
     mindspore.ops.padding
     mindspore.ops.pixel_shuffle
     mindspore.ops.pixel_unshuffle
     mindspore.ops.rotary_position_embedding
-    mindspore.ops.rotated_iou
     mindspore.ops.upsample
 
 Parameter操作函数

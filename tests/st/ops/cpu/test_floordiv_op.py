@@ -13,21 +13,22 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test floordiv op."""
 import numpy as np
 import pytest
 
+from mindspore.ops.operations import _inner_ops as _private_math
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class NetFloorDiv(nn.Cell):
     def __init__(self):
-        super(NetFloorDiv, self).__init__()
-        self.floordiv = P.FloorDiv()
+        super().__init__()
+        self.floordiv = _private_math.FloorDiv()
 
     def construct(self, x, y):
         return self.floordiv(x, y)

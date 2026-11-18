@@ -43,7 +43,7 @@ from mindspore.common.recompute import recompute
 from mindspore.common import generator
 from mindspore.common.generator import (
     Generator, default_generator, seed, manual_seed, initial_seed, get_rng_state, set_rng_state)
-from mindspore.ops.function.array_func import is_tensor, from_numpy
+from mindspore.ops.function.array_func import from_numpy
 from mindspore.common._grad_function import _Function
 from mindspore.graph.dynamic_shape.enable_dynamic import enable_dynamic
 
@@ -57,6 +57,32 @@ from mindspore.graph import jit_config
 from mindspore.graph import jit_context
 from mindspore.graph import jit_trace
 from mindspore.graph import symbol
+
+
+def is_tensor(obj):
+    r"""
+    Check whether the input object is a :class:`mindspore.Tensor` .
+
+    .. warning::
+        This interface is deprecated and will be removed after version 2.9.0.
+
+    Args:
+        obj (Object): The input object to be checked.
+
+    Returns:
+        Bool. ``True`` if the input is a :class:`mindspore.Tensor` , ``False`` otherwise.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> a = mindspore.tensor([1.9, 2.2, 3.1])
+        >>> mindspore.common.is_tensor(a)
+        True
+    """
+    return isinstance(obj, Tensor)
+
 
 try:
     import triton
@@ -130,7 +156,7 @@ __all__.extend([
     "no_inline",
     "Symbol",
     "recompute",
-    "is_tensor", "from_numpy", "_Function",
+    "from_numpy", "_Function",
     "set_mindio_server_info", "mindio_preload"
 ])
 __all__.extend(generator.__all__)

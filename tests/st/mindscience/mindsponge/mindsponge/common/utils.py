@@ -13,9 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """utils module"""
+from mindspore.ops.operations import _inner_ops
 from mindspore import nn, ops, Tensor, float32
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+
 from .tensor_utils import concat_features
 from . import geometry
 from . import residue_constants
@@ -84,7 +86,7 @@ def dgram_from_positions(positions, num_bins, min_bin, max_bin, ret_type):
     upper_breaks = concat_features([lower_breaks[1:], Tensor([1e8], dtype=float32)], axis=-1)
     dist2 = ops.sum(squared_difference(ops.expand_dims(positions, axis=-2),
                                        ops.expand_dims(positions, axis=-3)), dim=-1, keepdim=True)
-    dgram = ((dist2 > lower_breaks).astype(ret_type) * (dist2 < upper_breaks).astype(ret_type))
+    dgram = (dist2 > lower_breaks).astype(ret_type) * (dist2 < upper_breaks).astype(ret_type)
     return dgram
 
 
@@ -136,9 +138,9 @@ def atom37_to_torsion_angles(inputs):
     seq_length = all_atom_pos.shape[1]
     atom_indices = atom_indices.reshape((4, seq_length, 4, 4, 1)).astype("int32")
     new_indices = P.Concat(4)((indices0, indices1, atom_indices))  # 4, seq_length, 4, 4, 3
-    chis_atom_pos = P.GatherNd()(all_atom_pos, new_indices)
+    chis_atom_pos = _inner_ops.GatherNd()(all_atom_pos, new_indices)
     chis_mask = _take_residue_constants(chi_angles_mask, aatype)
-    chi_angle_atoms_mask = P.GatherNd()(all_atom_mask, new_indices)
+    chi_angle_atoms_mask = _inner_ops.GatherNd()(all_atom_mask, new_indices)
 
     # Check if all 4 chi angle atoms were set. Shape: [batch, num_res, chis=4].
     chi_angle_atoms_mask = P.ReduceProd()(chi_angle_atoms_mask, -1)
@@ -169,8 +171,9 @@ def atom37_to_torsion_angles(inputs):
     # Mirror psi, because we computed it from the Oxygen-atom.
     torsion_angles_sin_cos *= mirror_psi_mask
     chi_is_ambiguous = _take_residue_constants(chi_pi_periodic, aatype)
-    mirror_torsion_angles = concat_features([ops.ones((num_batch, num_res, 3), float32), 1.0 - 2.0 * chi_is_ambiguous], axis=-1)
-    alt_torsion_angles_sin_cos = (torsion_angles_sin_cos * mirror_torsion_angles[:, :, :, None])
+    mirror_torsion_angles = concat_features(
+        [ops.ones((num_batch, num_res, 3), float32), 1.0 - 2.0 * chi_is_ambiguous], axis=-1)
+    alt_torsion_angles_sin_cos = torsion_angles_sin_cos * mirror_torsion_angles[:, :, :, None]
     return torsion_angles_sin_cos, alt_torsion_angles_sin_cos, torsion_angles_mask
 
 
@@ -320,7 +323,7 @@ def atom14_to_atom37(atom14_data, residx_atom37_to_atom14, atom37_atom_exists, i
     residx_atom37_to_atom14 = residx_atom37_to_atom14.reshape((seq_length, 37, 1))
     new_indices = P.Concat(2)((indices0, residx_atom37_to_atom14))
 
-    atom37_data = P.GatherNd()(atom14_data, new_indices)
+    atom37_data = _inner_ops.GatherNd()(atom14_data, new_indices)
 
     if len(atom14_data.shape) == 2:
         atom37_data *= atom37_atom_exists
@@ -341,7 +344,7 @@ def find_optimal_renaming(
     """
 
     # Create the pred distance matrix.
-    atom14_pred_positions = P.Pad(((0, 0), (0, 0), (0, 5)))(atom14_pred_positions)
+    atom14_pred_positions = _inner_ops.Pad(((0, 0), (0, 0), (0, 5)))(atom14_pred_positions)
     pred_dists = ops.sqrt(1e-10 + ops.sum(
         ops.square(atom14_pred_positions[:, None, :, None, :] - atom14_pred_positions[None, :, None, :, :]), dim=-1))
 
@@ -368,6 +371,6 @@ def find_optimal_renaming(
     alt_per_res_lddt = P.ReduceSum()(mask * alt_lddt, (1, 2, 3))
 
     # Decide for each residue, whether alternative naming is better.
-    alt_naming_is_better = (alt_per_res_lddt < per_res_lddt)
+    alt_naming_is_better = alt_per_res_lddt < per_res_lddt
 
     return alt_naming_is_better

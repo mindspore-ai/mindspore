@@ -16,13 +16,13 @@
 from __future__ import absolute_import, division
 import math
 
+from mindspore.ops.operations import _inner_ops
 import mindspore.common.dtype as mstype
 from mindspore import ops
 from mindspore import log
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common._decorator import deprecated
-from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.nn.cell import Cell
 from mindspore import _checkparam as validator
@@ -719,12 +719,12 @@ class SoftmaxCrossEntropyWithLogits(LossBase):
         super().__init__(reduction)
         self.sparse = validator.check_bool(sparse, "sparse", self.cls_name)
         self.reduction = reduction
-        self.softmax_cross_entropy = ops.SoftmaxCrossEntropyWithLogits()
+        self.softmax_cross_entropy = ops.operations._inner_ops.SoftmaxCrossEntropyWithLogits()
         self.one_hot = ops.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0., mstype.float32)
         self.is_cpugpu = context.get_context('device_target') in ["CPU", "GPU"]
-        self.sparse_softmax_cross_entropy = ops.SparseSoftmaxCrossEntropyWithLogits()
+        self.sparse_softmax_cross_entropy = ops.operations._inner_ops.SparseSoftmaxCrossEntropyWithLogits()
 
     def construct(self, logits, labels):
         _check_is_tensor('logits', logits, self.cls_name)
@@ -837,7 +837,7 @@ class SampledSoftmaxLoss(LossBase):
         self.sampled_values = sampled_values
         self.remove_accidental_hits = remove_accidental_hits
         self.seed = seed
-        self.sampler = ops.UniformCandidateSampler(
+        self.sampler = _inner_ops.UniformCandidateSampler(
             num_true,
             num_sampled,
             True,
@@ -1491,7 +1491,7 @@ class CosineEmbeddingLoss(LossBase):
         _check_is_tensor('logits_x1', logits_x1, self.cls_name)
         _check_is_tensor('logits_x2', logits_x2, self.cls_name)
         _check_is_tensor('labels', labels, self.cls_name)
-        inner.same_type_shape_(logits_x1, logits_x2)
+        _inner_ops.same_type_shape_(logits_x1, logits_x2)
         # if labels > 0, 1-cosine(logits_x1, logits_x2)
         # else, max(0, cosine(logits_x1, logits_x2)-margin)
         prod_sum = self.reduce_sum(logits_x1 * logits_x2, (1,))

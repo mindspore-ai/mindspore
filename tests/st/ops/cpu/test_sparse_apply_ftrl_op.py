@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test sparse apply ftrl op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -26,7 +28,7 @@ import mindspore.common.dtype as mstype
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.sparse_apply_ftrl = P.FusedSparseFtrl(lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5)
         self.var = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="var")
         self.accum = Parameter(Tensor(np.ones([3, 3, 3]).astype(np.float32)), name="accum")
@@ -39,7 +41,7 @@ class Net(nn.Cell):
 
 class TestNet(nn.Cell):
     def __init__(self, var_np, accum_np, linear_np, lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5):
-        super(TestNet, self).__init__()
+        super().__init__()
         self.sparse_apply_ftrl = P.FusedSparseFtrl(lr=lr, l1=l1, l2=l2, lr_power=lr_power)
         self.var = Parameter(Tensor(var_np), name="var")
         self.accum = Parameter(Tensor(accum_np), name="accum")
@@ -52,8 +54,8 @@ class TestNet(nn.Cell):
 
 class SparseApplyFtrlNet(nn.Cell):
     def __init__(self, var, accum, linear, lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5):
-        super(SparseApplyFtrlNet, self).__init__()
-        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=lr, l1=l1, l2=l2, lr_power=lr_power)
+        super().__init__()
+        self.sparse_apply_ftrl = _inner_ops.SparseApplyFtrl(lr=lr, l1=l1, l2=l2, lr_power=lr_power)
         self.var = Parameter(var, name="var")
         self.accum = Parameter(accum, name="accum")
         self.linear = Parameter(linear, name="linear")
@@ -305,7 +307,7 @@ def test_fused_sparse_ftrl_dynamic():
 
     class DynamicNet(nn.Cell):
         def __init__(self):
-            super(DynamicNet, self).__init__()
+            super().__init__()
             self.unique = P.Unique()
             self.gather = P.Gather()
             self.axis = 0
@@ -393,8 +395,8 @@ def test_sparse_apply_ftrl():
 
 class VmapNetSparseApplyFtrl(nn.Cell):
     def __init__(self, lr=0.001, l1=0.0, l2=0.0, lr_power=-0.5):
-        super(VmapNetSparseApplyFtrl, self).__init__()
-        self.sparse_apply_ftrl = P.SparseApplyFtrl(lr=lr, l1=l1, l2=l2, lr_power=lr_power)
+        super().__init__()
+        self.sparse_apply_ftrl = _inner_ops.SparseApplyFtrl(lr=lr, l1=l1, l2=l2, lr_power=lr_power)
 
     def construct(self, var, accum, linear, grad, indices):
         out = self.sparse_apply_ftrl(var, accum, linear, grad, indices)

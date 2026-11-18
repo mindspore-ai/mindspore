@@ -325,51 +325,7 @@ class SampleDistortedBoundingBoxV2(Primitive):
 
 
 class CheckValid(Primitive):
-    """
-    `mindspore.ops.CheckValid` is deprecated from version 2.10.0 and will be removed in a future version.
-
-    Checks bounding box.
-
-    Checks whether the bounding boxes specified by `bboxes` is valid.
-    Returns True if the box is within borders specified by `img_metas`, False if not.
-
-    Inputs:
-        - **bboxes** (Tensor) - Bounding boxes tensor with shape :math:`(N, 4)`. :math:`N` indicates the number of
-          bounding boxes, the value "4" indicates "x0", "y0", "x1", and "y1". Data type must be float16 or float32.
-        - **img_metas** (Tensor) - Raw image size information with the format of :math:`(height, width, ratio)`,
-          specifying the valid boundary :math:`(height * ratio, width * ratio)`. Data type must be float16 or float32.
-
-    Outputs:
-        Tensor, with shape of :math:`(N,)` and dtype of bool, specifying whether the bounding boxes is in the image.
-        "True" indicates valid, while "False" indicates invalid.
-
-    Raises:
-        TypeError: If `bboxes` or `img_metas` is not a Tensor.
-        TypeError: If dtype of `bboxes` or `img_metas` is neither float16 nor float32.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> import mindspore.nn as nn
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> class Net(nn.Cell):
-        ...     def __init__(self):
-        ...         super(Net, self).__init__()
-        ...         self.check_valid = ops.CheckValid()
-        ...     def construct(self, x, y):
-        ...         valid_result = self.check_valid(x, y)
-        ...         return valid_result
-        ...
-        >>> bboxes = Tensor(np.linspace(0, 6, 12).reshape(3, 4), mindspore.float32)
-        >>> img_metas = Tensor(np.array([2, 1, 3]), mindspore.float32)
-        >>> net = Net()
-        >>> output = net(bboxes, img_metas)
-        >>> print(output)
-        [ True False False]
-    """
+    """Internal CheckValid primitive."""
 
     @deprecated("2.10.0", None, False)
     @prim_attr_register
@@ -379,43 +335,7 @@ class CheckValid(Primitive):
 
 
 class IOU(Primitive):
-    r"""
-    Calculates intersection over union for boxes.
-
-    Computes the intersection over union (IOU) or the intersection over foreground (IOF) based on the truth and
-    predicted regions.
-
-    Refer to :func:`mindspore.ops.iou` for more details.
-
-    Args:
-        mode (str): The mode is used to specify the calculation method,
-                       now supporting ``'iou'`` (intersection over union) or ``'iof'``
-                       (intersection over foreground) mode. Default: ``'iou'`` .
-
-    Inputs:
-        - **anchor_boxes** (Tensor) - Anchor boxes, tensor of shape :math:`(N, 4)`.
-          "N" indicates the number of anchor boxes,
-          and the value "4" refers to "x0", "y0", "x1", and "y1". Data type must be float16 or float32.
-        - **gt_boxes** (Tensor) - The truth boxes, tensor of shape :math:`(M, 4)`. "M" indicates the number of
-          truth boxes, and the value "4" refers to "x0", "y0", "x1", and "y1". Data type must be float16 or float32.
-
-    Outputs:
-        Tensor, the 'iou' values, tensor of shape :math:`(M, N)`, with the same data type as `anchor_boxes`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> iou = ops.IOU(mode='iou')
-        >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
-        >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
-        >>> output = iou(anchor_boxes, gt_boxes)
-        >>> print(output.shape)
-        (3, 3)
-    """
+    """Internal IOU primitive."""
 
     @prim_attr_register
     def __init__(self, mode='iou'):

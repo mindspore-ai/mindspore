@@ -499,12 +499,15 @@ def test_fstring_concat_and_indentation_parsing():
     """
 
     @jit
-    def fn(x: Tensor, seed=50, offset=20, numsamples=10, replacement=True):
-        out = ops.multinomial_with_replacement(
-            x=x, seed=seed, offset=offset, numsamples=numsamples, replacement=replacement
+    def fn(x: Tensor, seed=50, offset=20):
+        description = (
+            f"seed={seed}, "
+            f"offset={offset}"
         )
-        return out
+        out = x + 1
+        return out, description
 
     x = Tensor(np.random.randint(low=10, high=100, size=(2, 4)).astype(np.float32))
-    fn(x)
-    # expect no exception
+    out, description = fn(x)
+    np.testing.assert_array_equal(out.asnumpy(), x.asnumpy() + 1)
+    assert description == "seed=50, offset=20"

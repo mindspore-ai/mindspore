@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""RandomPoisson primitive dtype, validation and dynamic-shape regression coverage."""
 from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import nn
-from mindspore.ops.function import random_func as R
+from mindspore.ops.operations import _inner_ops
 from mindspore import Tensor
 from mindspore.graph.api import _pynative_executor
 
@@ -27,40 +28,40 @@ from mindspore.graph.api import _pynative_executor
 @pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16, ms.int64, ms.int32])
 @pytest.mark.parametrize("shape_dtype", [ms.int64, ms.int32])
 @pytest.mark.parametrize("rate_dtype", [ms.float64, ms.float32, ms.float16, ms.int64, ms.int32])
-def test_poisson_function(dtype, shape_dtype, rate_dtype):
+def test_poisson_primitive(dtype, shape_dtype, rate_dtype):
     """
-    Feature: Poisson functional interface
-    Description: Test output shape of the poisson functional interface.
+    Feature: RandomPoisson primitive
+    Description: Test output shape of the RandomPoisson primitive.
     Expectation: Output shape is correct.
     """
 
     # rate is a scalar Tensor
     shape = Tensor(np.array([3, 5]), shape_dtype)
     rate = Tensor(0.5, rate_dtype)
-    output = R.random_poisson(shape, rate, seed=1, dtype=dtype)
+    output = _inner_ops.RandomPoisson(seed=1, dtype=dtype)(shape, rate)
     assert output.shape == (3, 5)
     assert output.dtype == dtype
 
     # rate is a 2-D Tensor
     shape = Tensor(np.array([3, 2]), shape_dtype)
     rate = Tensor(np.array([[5.0, 10.0], [5.0, 1.0]]), rate_dtype)
-    output = R.random_poisson(shape, rate, seed=5, dtype=dtype)
+    output = _inner_ops.RandomPoisson(seed=5, dtype=dtype)(shape, rate)
     assert output.shape == (3, 2, 2, 2)
     assert output.dtype == dtype
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_poisson_function_shape_type_error():
+def test_poisson_primitive_shape_type_error():
     """
-    Feature: Poisson functional interface
-    Description: Feed tuple type `shape` into poisson functional interface.
+    Feature: RandomPoisson primitive
+    Description: Feed tuple type `shape` into RandomPoisson primitive.
     Expectation: Except TypeError.
     """
 
     shape = (3, 5)
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
-        R.random_poisson(shape, rate, seed=1)
+        _inner_ops.RandomPoisson(seed=1, dtype=ms.float32)(shape, rate)
         _pynative_executor.sync()
     except TypeError:
         return
@@ -68,17 +69,17 @@ def test_poisson_function_shape_type_error():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_poisson_function_shape_dim_error():
+def test_poisson_primitive_shape_dim_error():
     """
-    Feature: Poisson functional interface
-    Description: Feed 2-D Tensor type `shape` into poisson functional interface.
+    Feature: RandomPoisson primitive
+    Description: Feed 2-D Tensor type `shape` into RandomPoisson primitive.
     Expectation: Except TypeError.
     """
 
     shape = Tensor(np.array([[1, 2], [3, 5]]), ms.dtype.int32)
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
-        R.random_poisson(shape, rate, seed=1)
+        _inner_ops.RandomPoisson(seed=1, dtype=ms.float32)(shape, rate)
         _pynative_executor.sync()
     except ValueError:
         return
@@ -86,17 +87,17 @@ def test_poisson_function_shape_dim_error():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_poisson_function_shape_dtype_error():
+def test_poisson_primitive_shape_dtype_error():
     """
-    Feature: Poisson functional interface
-    Description: Feed Tensor[Float32] type `shape` into poisson functional interface.
+    Feature: RandomPoisson primitive
+    Description: Feed Tensor[Float32] type `shape` into RandomPoisson primitive.
     Expectation: Except TypeError.
     """
 
     shape = Tensor(np.array([3, 5]), ms.dtype.float32)
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
-        R.random_poisson(shape, rate, seed=1)
+        _inner_ops.RandomPoisson(seed=1, dtype=ms.float32)(shape, rate)
         _pynative_executor.sync()
     except TypeError:
         return
@@ -104,17 +105,17 @@ def test_poisson_function_shape_dtype_error():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_poisson_function_shape_value_error():
+def test_poisson_primitive_shape_value_error():
     """
-    Feature: Poisson functional interface
-    Description: Feed Tensor[Float32] type `shape` with negative element into poisson functional interface.
+    Feature: RandomPoisson primitive
+    Description: Feed Tensor[Float32] type `shape` with negative element into RandomPoisson primitive.
     Expectation: Except ValueError.
     """
 
     shape = Tensor(np.array([-3, 5]), ms.dtype.int32)
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
-        R.random_poisson(shape, rate, seed=1)
+        _inner_ops.RandomPoisson(seed=1, dtype=ms.float32)(shape, rate)
         _pynative_executor.sync()
     except ValueError:
         return
@@ -122,17 +123,17 @@ def test_poisson_function_shape_value_error():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_poisson_function_rate_type_error():
+def test_poisson_primitive_rate_type_error():
     """
-    Feature: Poisson functional interface
-    Description: Feed list type `rate` into poisson functional interface.
+    Feature: RandomPoisson primitive
+    Description: Feed list type `rate` into RandomPoisson primitive.
     Expectation: Except TypeError.
     """
 
     shape = Tensor(np.array([3, 5]), ms.dtype.int32)
     rate = [0.5]
     try:
-        R.random_poisson(shape, rate, seed=1)
+        _inner_ops.RandomPoisson(seed=1, dtype=ms.float32)(shape, rate)
         _pynative_executor.sync()
     except TypeError:
         return
@@ -140,17 +141,17 @@ def test_poisson_function_rate_type_error():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_poisson_function_rate_dtype_error():
+def test_poisson_primitive_rate_dtype_error():
     """
-    Feature: Poisson functional interface
-    Description: Feed Tensor[Bool] type `rate` into poisson functional interface.
+    Feature: RandomPoisson primitive
+    Description: Feed Tensor[Bool] type `rate` into RandomPoisson primitive.
     Expectation: Except TypeError.
     """
 
     shape = Tensor(np.array([3, 5]), ms.dtype.int32)
     rate = Tensor(np.array([0.5]), ms.dtype.bool_)
     try:
-        R.random_poisson(shape, rate, seed=1)
+        _inner_ops.RandomPoisson(seed=1, dtype=ms.float32)(shape, rate)
         _pynative_executor.sync()
     except TypeError:
         return
@@ -158,17 +159,17 @@ def test_poisson_function_rate_dtype_error():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_poisson_function_seed_type_error():
+def test_poisson_primitive_seed_type_error():
     """
-    Feature: Poisson functional interface
-    Description: Feed float type `seed` into poisson functional interface.
+    Feature: RandomPoisson primitive
+    Description: Feed float type `seed` into RandomPoisson primitive.
     Expectation: Except TypeError.
     """
 
     shape = Tensor(np.array([3, 5]), ms.dtype.int32)
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
-        R.random_poisson(shape, rate, seed=0.5)
+        _inner_ops.RandomPoisson(seed=0.5, dtype=ms.float32)(shape, rate)
         _pynative_executor.sync()
     except TypeError:
         return
@@ -176,17 +177,17 @@ def test_poisson_function_seed_type_error():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_poisson_function_out_dtype_error():
+def test_poisson_primitive_out_dtype_error():
     """
-    Feature: Poisson functional interface
-    Description: Feed Bool as `dtype` into poisson functional interface.
+    Feature: RandomPoisson primitive
+    Description: Feed Bool as `dtype` into RandomPoisson primitive.
     Expectation: Except TypeError.
     """
 
     shape = Tensor(np.array([3, 5]), ms.dtype.int32)
     rate = Tensor(np.array([0.5]), ms.dtype.float32)
     try:
-        R.random_poisson(shape, rate, seed=1, dtype=ms.dtype.bool_)
+        _inner_ops.RandomPoisson(seed=1, dtype=ms.dtype.bool_)(shape, rate)
         _pynative_executor.sync()
     except TypeError:
         return
@@ -202,7 +203,7 @@ class PoissonNet(nn.Cell):
         self.is_rate_scalar = is_rate_scalar
 
     def construct(self, shape, rate):
-        return R.random_poisson(shape, rate, seed=1, dtype=self.odtype)
+        return _inner_ops.RandomPoisson(seed=1, dtype=self.odtype)(shape, rate)
 
 
 class PoissonDSFactory:
@@ -250,7 +251,7 @@ class PoissonDSFactory:
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
 @pytest.mark.parametrize("max_dims", [2, 3, 4, 5, 6])
 @pytest.mark.parametrize("rate_dims", [1, 2, 3, 4, 5, 6])
-def test_poisson_function_dynamic_shape(max_dims, rate_dims):
+def test_poisson_primitive_dynamic_shape(max_dims, rate_dims):
     """
     Feature: Dynamic shape of functional interface RandomPoisson.
     Description:

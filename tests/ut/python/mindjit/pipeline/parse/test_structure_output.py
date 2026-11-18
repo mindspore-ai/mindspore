@@ -15,14 +15,17 @@
 """
 test_structure_output
 """
-import os
-import pytest
-import numpy as np
-
+from mindspore.ops.operations import _inner_ops
 import mindspore.ops.operations as P
 from mindspore import Tensor, context
 from mindspore.nn import Cell
 from mindspore.ops.functional import depend
+
+import os
+
+import pytest
+
+import numpy as np
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -30,7 +33,7 @@ context.set_context(mode=context.GRAPH_MODE)
 def test_output_const_tuple_0():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = (1, 2, 3)
 
         def construct(self):
@@ -44,7 +47,7 @@ def test_output_const_tuple_0():
 def test_output_const_tuple_1():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.tuple_1 = (1, 2, 3)
             self.tuple_2 = (4, 5, 6)
 
@@ -59,7 +62,7 @@ def test_output_const_tuple_1():
 def test_output_const_list():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.tuple_1 = [1, 2, 3]
 
         def construct(self):
@@ -75,7 +78,7 @@ def test_output_const_list():
 def test_output_const_int():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.number_1 = 2
             self.number_2 = 3
 
@@ -90,7 +93,7 @@ def test_output_const_int():
 def test_output_const_str():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.str = "hello world"
 
         def construct(self):
@@ -114,7 +117,7 @@ def test_output_parameter_int():
 def test_output_parameter_str():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.x = "hello world"
 
         def construct(self):
@@ -182,7 +185,7 @@ def test_output_getattr_function_tuple():
 def test_tuple_tuple_0():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.add = P.Add()
             self.sub = P.Sub()
 
@@ -204,7 +207,7 @@ def test_tuple_tuple_0():
 def test_tuple_tuple_1():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.add = P.Add()
             self.sub = P.Sub()
 
@@ -224,7 +227,7 @@ def test_tuple_tuple_1():
 def test_tuple_tuple_2():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.add = P.Add()
             self.sub = P.Sub()
             self.relu = P.ReLU()
@@ -250,7 +253,7 @@ def test_tuple_tuple_2():
 def test_tuple_tuple_3():
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.add = P.Add()
             self.sub = P.Sub()
             self.relu = P.ReLU()
@@ -274,8 +277,8 @@ def test_tuple_tuple_3():
 def test_soft():
     class SoftmaxCrossEntropyWithLogitsNet(Cell):
         def __init__(self):
-            super(SoftmaxCrossEntropyWithLogitsNet, self).__init__()
-            self.soft = P.SoftmaxCrossEntropyWithLogits()
+            super().__init__()
+            self.soft = _inner_ops.SoftmaxCrossEntropyWithLogits()
             self.value = (Tensor(np.zeros((2, 2)).astype(np.float32)), Tensor(np.ones((2, 2)).astype(np.float32)))
 
         def construct(self, x, y, z):
@@ -296,9 +299,9 @@ def test_soft():
 def test_const_depend():
     class ConstDepend(Cell):
         def __init__(self):
-            super(ConstDepend, self).__init__()
+            super().__init__()
             self.value = (Tensor(np.zeros((2, 3)).astype(np.float32)), Tensor(np.ones((2, 3)).astype(np.float32)))
-            self.soft = P.SoftmaxCrossEntropyWithLogits()
+            self.soft = _inner_ops.SoftmaxCrossEntropyWithLogits()
             self.depend = depend
 
         def construct(self, x, y, z):

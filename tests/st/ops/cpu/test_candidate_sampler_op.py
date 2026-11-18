@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained random primitive coverage after legacy function removal."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.ops.functional import vmap
@@ -28,8 +27,8 @@ from mindspore.ops.functional import vmap
 
 class UniformCandidateSamplerNet(nn.Cell):
     def __init__(self, num_true, num_sampled, unique, range_max):
-        super(UniformCandidateSamplerNet, self).__init__()
-        self.sampler = P.UniformCandidateSampler(num_true, num_sampled, unique, range_max)
+        super().__init__()
+        self.sampler = _inner_ops.UniformCandidateSampler(num_true, num_sampled, unique, range_max)
 
     def construct(self, x):
         return self.sampler(x)
@@ -41,11 +40,6 @@ def uniform_candidate_sampler(x, num_true, num_sampled, unique, range_max):
     return out1.shape, out2.shape, out3.shape
 
 
-def uniform_candidate_sampler_functional(x, num_true, num_sample, unique, range_max):
-    out1, out2, out3 = F.uniform_candidate_sampler(Tensor(x.astype(np.int32)), num_true, num_sample, unique, range_max)
-    return out1.shape, out2.shape, out3.shape
-
-
 def uniform_candidate_sampler_int64(x, num_true, num_sampled, unique, range_max):
     uniform_candidate_sampler_net = UniformCandidateSamplerNet(num_true, num_sampled, unique, range_max)
     out1, out2, out3 = uniform_candidate_sampler_net(Tensor(x.astype(np.int64)))
@@ -54,8 +48,8 @@ def uniform_candidate_sampler_int64(x, num_true, num_sampled, unique, range_max)
 
 class UniformCandidateSamplerHitNet(nn.Cell):
     def __init__(self, num_true, num_sampled, unique, range_max, seed, remove_accidental_hits):
-        super(UniformCandidateSamplerHitNet, self).__init__()
-        self.sampler = P.UniformCandidateSampler(num_true,
+        super().__init__()
+        self.sampler = _inner_ops.UniformCandidateSampler(num_true,
                                                  num_sampled,
                                                  unique,
                                                  range_max,
@@ -261,7 +255,7 @@ def test_uniform_candidate_sampler_not_unique_not_hit3():
 
 class UniformCandidateSamplerNetVmap(nn.Cell):
     def __init__(self, net, in_axes=None, out_axes=None):
-        super(UniformCandidateSamplerNetVmap, self).__init__()
+        super().__init__()
         self.vmap_net = vmap(net, in_axes=in_axes, out_axes=out_axes)
 
     def construct(self, x):
@@ -285,7 +279,7 @@ def test_uniform_candidate_sampler_vmap_unique_1_true():
     Expectation: The shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    in_axes = (0)
+    in_axes = 0
     ms1, ms2, ms3 = uniform_candidate_sampler_vmap(np.array([[[1], [3], [4], [6], [3]], [[1], [3], [4], [6], [3]]]), 1,
                                                    3, True, 4, in_axes)
 
@@ -299,7 +293,7 @@ def test_uniform_candidate_sampler_vmap_unique_1_true():
 
 class UniformCandidateSamplerNetVmap2(nn.Cell):
     def __init__(self, net, in_axes=None, out_axes=None):
-        super(UniformCandidateSamplerNetVmap2, self).__init__()
+        super().__init__()
         self.vmap2_net = vmap(vmap(net, in_axes=in_axes, out_axes=out_axes), in_axes=in_axes, out_axes=out_axes)
 
     def construct(self, x):
@@ -323,64 +317,12 @@ def test_uniform_candidate_sampler_vmap2_unique_1_true():
     Expectation: The shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    in_axes = (1)
+    in_axes = 1
     ms1, ms2, ms3 = uniform_candidate_sampler_vmap2_int64(np.arange(100).reshape(5, 10, 2, 1), 1, 3, True, 4, in_axes)
 
     expected_1 = (10, 2, 3)
     expected_2 = (10, 2, 5, 1)
     expected_3 = (10, 2, 3)
-    np.testing.assert_array_equal(ms1, expected_1)
-    np.testing.assert_array_equal(ms2, expected_2)
-    np.testing.assert_array_equal(ms3, expected_3)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_uniform_candidate_sampler_functional_unique_1_true():
-    """
-    Feature: Functional interface of UniformCandidateSampler CPU TEST.
-    Description: The unique is true for uniform_candidate_sampler
-    Expectation: The shape of output are the expected values.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler_functional(np.array([[1], [3], [4], [6], [3]]), 1, 3, True, 4)
-    expected_1 = (3,)
-    expected_2 = (5, 1)
-    expected_3 = (3,)
-    np.testing.assert_array_equal(ms1, expected_1)
-    np.testing.assert_array_equal(ms2, expected_2)
-    np.testing.assert_array_equal(ms3, expected_3)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_uniform_candidate_sampler_functional_not_unique_2_true():
-    """
-    Feature: Functional interface of UniformCandidateSampler CPU TEST.
-    Description: The unique is false and num_true is 2 for uniform_candidate_sampler
-    Expectation: The value and shape of output are the expected values.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler_functional(np.array([[1, 2], [3, 2], [4, 2], [6, 2], [3, 2]]), 2, 3,
-                                                         False, 4)
-    expected_1 = (3,)
-    expected_2 = (5, 2)
-    expected_3 = (3,)
-    np.testing.assert_array_equal(ms1, expected_1)
-    np.testing.assert_array_equal(ms2, expected_2)
-    np.testing.assert_array_equal(ms3, expected_3)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_uniform_candidate_sampler_functional_large_random():
-    """
-    Feature: Functional interface of UniformCandidateSampler CPU TEST.
-    Description: The input data is random large with type int32 for uniform_candidate_sampler
-    Expectation: The shape of output are the expected values.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    ms1, ms2, ms3 = uniform_candidate_sampler_functional(np.arange(2142).reshape(34, 63), 63, 10, False, 12)
-    expected_1 = (10,)
-    expected_2 = (34, 63)
-    expected_3 = (10,)
     np.testing.assert_array_equal(ms1, expected_1)
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
@@ -394,8 +336,9 @@ def test_log_uniform_candidate_sampler_unique():
     Expectation: The value and shape of output are the expected values.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    sampled_candidates, true_expected_count, sampled_expected_count = F.log_uniform_candidate_sampler(
-        Tensor(np.array([[1, 7], [0, 4], [3, 3]]), ms.int64), 2, 5, True, 5, 1)
+    sampler = _inner_ops.LogUniformCandidateSampler(2, 5, True, 5, 1)
+    sampled_candidates, true_expected_count, sampled_expected_count = sampler(
+        Tensor(np.array([[1, 7], [0, 4], [3, 3]]), ms.int64))
 
     expected_1 = np.array([4, 1, 2, 0, 3])
     expected_2 = np.array([[0.99236274, 0.7252593], [0.99990803, 0.8698345], [0.9201084, 0.9201084]])

@@ -12,21 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test uniform candidate sampler op."""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
+
+from mindspore.ops.operations import _inner_ops
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
 import mindspore.nn as nn
 import mindspore.context as context
 
 
 class UniformCandidateSamplerNet(nn.Cell):
     def __init__(self, num_true, num_sampled, unique, range_max):
-        super(UniformCandidateSamplerNet, self).__init__()
-        self.sampler = P.UniformCandidateSampler(num_true, num_sampled,
+        super().__init__()
+        self.sampler = _inner_ops.UniformCandidateSampler(num_true, num_sampled,
                                                  unique, range_max)
 
     def construct(self, x):
@@ -53,8 +55,8 @@ def uniform_candidate_sampler_int64(x, num_true, num_sampled, unique, range_max)
 
 class UniformCandidateSamplerHitNet(nn.Cell):
     def __init__(self, num_true, num_sampled, unique, range_max, seed, remove_accidental_hits):
-        super(UniformCandidateSamplerHitNet, self).__init__()
-        self.sampler = P.UniformCandidateSampler(num_true, num_sampled, unique,
+        super().__init__()
+        self.sampler = _inner_ops.UniformCandidateSampler(num_true, num_sampled, unique,
                                                  range_max, seed=seed,
                                                  remove_accidental_hits=remove_accidental_hits)
 

@@ -30,6 +30,8 @@ from mindspore.ops.op_info_register import op_info_register, custom_info_registe
     AiCPURegOp, TBERegOp, CpuRegOp, CustomRegOp, DataType
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import composite, operations, functional, function
+from mindspore.ops.operations._inner_ops import (
+    _PRIVATE_SHAPE_IMAGE, _PRIVATE_MATH_PRIMITIVES, _PRIVATE_PAD_LOSS_COMM)
 from mindspore.ops import signature
 from mindspore.ops.auto_generate import cpp_create_prim_instance_helper, \
     gen_extend_func, gen_ops_def, gen_ops_prim, pyboost_inner_prim
@@ -59,4 +61,7 @@ __all__.extend(operations.__all__)
 __all__.extend(functional.__all__)
 __all__.extend(function.__all__)
 __all__.extend(communication.__all__)
-__all__.extend(auto_generate.__all__)
+__all__.extend(name for name in auto_generate.__all__
+               if name not in (_PRIVATE_SHAPE_IMAGE |
+                            _PRIVATE_MATH_PRIMITIVES |
+                            _PRIVATE_PAD_LOSS_COMM))

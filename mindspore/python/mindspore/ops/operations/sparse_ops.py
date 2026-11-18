@@ -644,61 +644,7 @@ class SparseTensorDenseAdd(Primitive):
 
 
 class SparseTensorDenseMatmul(Primitive):
-    """
-    `ops.SparseTensorDenseMatmul` is deprecated from version 2.8.0 and will be
-    removed in a future version.
-
-    Multiplies sparse matrix `A` by dense matrix `B`.
-    The rank of sparse matrix and dense matrix must be equal to `2`.
-
-    Args:
-        adjoint_st (bool): If ``True`` , sparse tensor is transposed before multiplication. Default: ``False`` .
-        adjoint_dt (bool): If ``True`` , dense tensor is transposed before multiplication. Default: ``False`` .
-
-    Inputs:
-        - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
-          Support int32, int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
-        - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
-          Support float16, float32, float64, int32, int64, complex64, complex128. The shape should be :math:`(n,)`.
-        - **sparse_shape** (tuple(int) or (Tensor)) - A positive int tuple or tensor which specifies the shape of
-          sparse tensor, and only constant value is allowed when sparse_shape is a tensor, should have 2 elements,
-          represent sparse tensor shape is :math:`(N, C)`.
-        - **dense** (Tensor) - A 2-D Tensor, the dtype is same as `values`.
-          If `adjoint_st` is False and `adjoint_dt` is False, the shape must be :math:`(C, M)`.
-          If `adjoint_st` is False and `adjoint_dt` is True, the shape must be :math:`(M, C)`.
-          If `adjoint_st` is True and `adjoint_dt` is False, the shape must be :math:`(N, M)`.
-          If `adjoint_st` is True and `adjoint_dt` is True, the shape must be :math:`(M, N)`.
-
-    Outputs:
-        Tensor, the dtype is the same as `values`.
-        If `adjoint_st` is False, the shape is :math:`(N, M)`.
-        If `adjoint_st` is True, the shape is :math:`(C, M)`.
-
-    Raises:
-        TypeError: If the type of `adjoint_st` or `adjoint_dt` is not bool, or the dtype of `indices`,
-            dtype of `values` and dtype of `dense` don't meet the parameter description.
-        ValueError: If the shapes of `sparse_shape`, `indices`, `values`,
-            and `dense` don't meet the constraints in the parameter description.
-
-    Supported Platforms:
-        Deprecated
-
-    Examples:
-        >>> import mindspore
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops import operations as ops
-        >>> from mindspore import dtype as mstype
-        >>> indices = Tensor([[0, 1], [1, 2]], dtype=mindspore.int32)
-        >>> values = Tensor([1, 2], dtype=mindspore.float32)
-        >>> sparse_shape = (3, 4)
-        >>> dense = Tensor([[1, 1], [2, 2], [3, 3], [4, 4]], dtype=mindspore.float32)
-        >>> sparse_dense_matmul = ops.SparseTensorDenseMatmul()
-        >>> out = sparse_dense_matmul(indices, values, sparse_shape, dense)
-        >>> print(out)
-        [[2. 2.]
-         [6. 6.]
-         [0. 0.]]
-    """
+    """Internal SparseTensorDenseMatmul primitive."""
 
     @deprecated("2.8.0", None, False)
     @prim_attr_register

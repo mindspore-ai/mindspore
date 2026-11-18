@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Retained random primitive coverage after legacy function removal."""
 from tests.mark_utils import arg_mark
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, ops
+from mindspore import Tensor
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 class Net(nn.Cell):
     def __init__(self, numsamples, replacement):
-        super(Net, self).__init__()
+        super().__init__()
         self.numsamples = numsamples
         self.replacement = replacement
         self.multinomialwithreplacement = P.random_ops.MultinomialWithReplacement(numsamples, replacement)
@@ -54,17 +54,3 @@ def test_multinomial_with_replacement_net():
     assert out0.asnumpy().shape == (10, 5)
     assert out1.asnumpy().shape == (10, 10)
     assert out2.asnumpy().shape == (10, 15)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
-def test_multinomial_with_replacement_functional():
-    """
-    Feature: MultinomialWithReplacement cpu kernel
-    Description: test the correctness of shape and result
-    Expectation: success.
-    """
-    x = Tensor(np.random.randint(low=10, high=100, size=(10, 10)).astype(np.float32))
-    seed = Tensor([50])
-    offset = Tensor([20])
-    output = ops.multinomial_with_replacement(x, seed, offset, 10, True)
-    assert output.shape == (10, 10)

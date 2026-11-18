@@ -12,25 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test random poisson."""
 from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
+
 from mindspore.common import dtype as mstype
 
 
 class Net(nn.Cell):
     def __init__(self, shape, rate, seed=0, seed2=0):
-        super(Net, self).__init__()
+        super().__init__()
         self.shape = shape
         self.rate = rate
         self.seed = seed
         self.seed2 = seed2
-        self.random_poisson = P.RandomPoisson(seed, seed2)
+        self.random_poisson = _inner_ops.RandomPoisson(seed, seed2)
 
     def construct(self):
         return self.random_poisson(self.shape, self.rate)

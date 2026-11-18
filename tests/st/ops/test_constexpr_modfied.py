@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression coverage for constexpr-backed public and internal operations."""
 from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore as ms
@@ -32,7 +33,7 @@ def test_repeat_interleave():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = ops.repeat_interleave
 
         def construct(self, x):
@@ -58,7 +59,7 @@ def test_tensor_dot():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = ops.tensor_dot
 
         def construct(self, input_x1, input_x2):
@@ -84,7 +85,7 @@ def test_dot():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = ops.dot
 
         def construct(self, input_x1, input_x2):
@@ -93,32 +94,6 @@ def test_dot():
     input_x1 = Tensor(np.ones(shape=[1, 2, 3]), ms.float32)
     input_x2 = Tensor(np.ones(shape=[1, 3, 2]), ms.float32)
     expect = Tensor(np.array([[[[3, 3]], [[3, 3]]]]), ms.float32)
-    net = Net()
-    output = net(input_x1, input_x2)
-    assert np.allclose(output.asnumpy(), expect.asnumpy())
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard')
-def test_batch_dot():
-    """
-    Feature: batch_dot func
-    Description: Verify the result of batch_dot
-    Expectation: success
-    """
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super(Net, self).__init__()
-            self.func = ops.batch_dot
-
-        def construct(self, input_x1, input_x2):
-            return self.func(input_x1, input_x2, (-1, -2))
-
-    input_x1 = Tensor(np.ones(shape=[2, 2, 3]), ms.float32)
-    input_x2 = Tensor(np.ones(shape=[2, 3, 2]), ms.float32)
-    expect = Tensor(
-        np.array([[[3, 3], [3, 3]], [[3, 3], [3, 3]]]), ms.float32)
     net = Net()
     output = net(input_x1, input_x2)
     assert np.allclose(output.asnumpy(), expect.asnumpy())
@@ -135,7 +110,7 @@ def test_cummin():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = ops.cummin
 
         def construct(self, a):
@@ -161,7 +136,7 @@ def test_matmul():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = ops.matmul
 
         def construct(self, a, b):
@@ -186,7 +161,7 @@ def test_flip():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = ops.flip
 
         def construct(self, a):
@@ -212,7 +187,7 @@ def test_unsqueeze():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = unsqueeze
 
         def construct(self, x, dim):
@@ -236,7 +211,7 @@ def test_tensor_bool():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = tensor_bool
 
         def construct(self, x):
@@ -260,7 +235,7 @@ def test_topk():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = topk
 
         def construct(self, x, k):
@@ -284,7 +259,7 @@ def test_bernoulli():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = bernoulli
 
         def construct(self, x):
@@ -309,7 +284,7 @@ def test_view():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = view
 
         def construct(self, x, y):
@@ -334,7 +309,7 @@ def test_reshape():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = reshape
 
         def construct(self, x, y):
@@ -359,7 +334,7 @@ def test_swapaxes():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = swapaxes
 
         def construct(self, x, y, z):
@@ -390,7 +365,7 @@ def test_squeeze():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = squeeze
 
         def construct(self, x, y):
@@ -416,7 +391,7 @@ def test_argmax():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = argmax
 
         def construct(self, x, y):
@@ -441,7 +416,7 @@ def test_diagonal():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = diagonal
 
         def construct(self, x):
@@ -466,7 +441,7 @@ def test_take():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = take
 
         def construct(self, x, y):
@@ -492,7 +467,7 @@ def test_choose():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = choose
 
         def construct(self, x, y):
@@ -519,7 +494,7 @@ def test_var():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = var
 
         def construct(self, x,):
@@ -544,7 +519,7 @@ def test_searchsorted():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = searchsorted
 
         def construct(self, x, y):
@@ -570,7 +545,7 @@ def test_is_equal_one():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = _is_equal_one
 
         def construct(self, x):
@@ -753,7 +728,7 @@ def test_generate_inverse_index():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = _generate_inverse_index
 
         def construct(self, x_shape, axis):
@@ -777,7 +752,7 @@ def test_fft_rank_offset():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = _fft_rank_offset
 
         def construct(self, norm_shape, rank):
@@ -801,7 +776,7 @@ def test_rfft_reshape():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = _rfft_reshape
 
         def construct(self, shape_a, shape_b):
@@ -825,7 +800,7 @@ def test_rfft_tile_reshape():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = _rfft_tile_reshape
 
         def construct(self, shape_a):
@@ -848,7 +823,7 @@ def test_rfft_last_term_shape():
 
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.func = _rfft_last_term_shape
 
         def construct(self, shape_a, shape_b):

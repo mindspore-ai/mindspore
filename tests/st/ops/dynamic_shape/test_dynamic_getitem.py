@@ -13,15 +13,20 @@
 # limitations under the License.
 # ============================================================================
 """Test dynamic getitem."""
-from tests.mark_utils import arg_mark
 import numpy as np
+
 import pytest
+
 import torch
+
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, ops, ParameterTuple, mutable, context
 from mindspore.ops.composite import GradOperation
 from mindspore.nn import Cell
+
+from tests.mark_utils import arg_mark
 
 context.set_context(jit_level='O0')
 
@@ -423,7 +428,7 @@ def test_dynamic_rank_getitem_tuple_with_basic_index():
     class Net(Cell):
         def construct(self, x, axis):
             x = ops.reduce_sum(x, axis)
-            x_tensor_shape = ops.dyn_shape(x)[0]
+            x_tensor_shape = _inner_ops.TensorShape()(x)[0]
             x_shape = x.shape[0]
             x0 = x[1:x_shape:2, 1:x_tensor_shape:2, ..., x_shape - 2, None]
             return x0

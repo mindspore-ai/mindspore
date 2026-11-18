@@ -568,6 +568,13 @@ def _parameter_broadcast_check(parallel_mode, parameter_broadcast):
 
 def _get_python_op(op_name, op_path, instance_name, arglist):
     """Get python operator."""
+    if op_path == "mindspore.ops.operations":
+        from mindspore.ops.operations import _inner_ops
+        if op_name in (_inner_ops._PRIVATE_SHAPE_IMAGE |
+                       _inner_ops._PRIVATE_MATH_PRIMITIVES |
+                       _inner_ops._PRIVATE_UPDATE_AND_RANDOM |
+                       _inner_ops._PRIVATE_PAD_LOSS_COMM):
+            op_path = "mindspore.ops.operations._inner_ops"
     module = import_module(op_path)
     cls = getattr(module, op_name)
     if op_path != "mindspore.ops.functional":

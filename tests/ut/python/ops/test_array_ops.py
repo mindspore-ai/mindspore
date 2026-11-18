@@ -13,8 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test array ops """
-import functools
-import numpy as np
+from mindspore.ops.operations import _inner_ops
 import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor
@@ -26,6 +25,9 @@ from mindspore.ops import prim_attr_register
 from mindspore.ops.primitive import PrimitiveWithInfer
 from mindspore.ops.signature import sig_rw, sig_dtype, make_sig
 
+import functools
+
+import numpy as np
 
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
@@ -166,7 +168,7 @@ class CustomOP2(PrimitiveWithInfer):
 
 class CustNet1(Cell):
     def __init__(self):
-        super(CustNet1, self).__init__()
+        super().__init__()
         self.op = CustomOP()
         self.t1 = Tensor(np.ones([2, 2]), dtype=ms.int32)
         self.t2 = Tensor(np.ones([1, 5]), dtype=ms.float16)
@@ -182,7 +184,7 @@ class CustNet1(Cell):
 
 class CustNet2(Cell):
     def __init__(self):
-        super(CustNet2, self).__init__()
+        super().__init__()
         self.op = CustomOP2()
         self.t1 = Tensor(np.ones([2, 2]), dtype=ms.int32)
         self.t2 = Tensor(np.ones([1, 5]), dtype=ms.float16)
@@ -194,7 +196,7 @@ class CustNet2(Cell):
 
 class CustNet3(Cell):
     def __init__(self):
-        super(CustNet3, self).__init__()
+        super().__init__()
         self.op = P.ReduceSum()
         self.t1 = Tensor(np.ones([2, 2]), dtype=ms.int32)
         self.t2 = Tensor(np.ones([1, 5]), dtype=ms.float16)
@@ -206,7 +208,7 @@ class CustNet3(Cell):
 
 class MathBinaryNet1(Cell):
     def __init__(self):
-        super(MathBinaryNet1, self).__init__()
+        super().__init__()
         self.add = P.Add()
         self.mul = P.Mul()
         self.max = P.Maximum()
@@ -218,7 +220,7 @@ class MathBinaryNet1(Cell):
 
 class MathBinaryNet2(Cell):
     def __init__(self):
-        super(MathBinaryNet2, self).__init__()
+        super().__init__()
         self.less_equal = P.LessEqual()
         self.greater = P.Greater()
         self.logic_or = P.LogicalOr()
@@ -234,7 +236,7 @@ class MathBinaryNet2(Cell):
 
 class BatchToSpaceNet(Cell):
     def __init__(self):
-        super(BatchToSpaceNet, self).__init__()
+        super().__init__()
         block_size = 2
         crops = [[0, 0], [0, 0]]
         self.batch_to_space = P.BatchToSpace(block_size, crops)
@@ -245,7 +247,7 @@ class BatchToSpaceNet(Cell):
 
 class SpaceToBatchNet(Cell):
     def __init__(self):
-        super(SpaceToBatchNet, self).__init__()
+        super().__init__()
         block_size = 2
         paddings = [[0, 0], [0, 0]]
         self.space_to_batch = P.SpaceToBatch(block_size, paddings)
@@ -256,7 +258,7 @@ class SpaceToBatchNet(Cell):
 
 class PackNet(Cell):
     def __init__(self):
-        super(PackNet, self).__init__()
+        super().__init__()
         self.stack = P.Stack()
 
     def construct(self, x):
@@ -265,7 +267,7 @@ class PackNet(Cell):
 
 class UnpackNet(Cell):
     def __init__(self):
-        super(UnpackNet, self).__init__()
+        super().__init__()
         self.unstack = P.Unstack()
 
     def construct(self, x):
@@ -274,7 +276,7 @@ class UnpackNet(Cell):
 
 class SpaceToDepthNet(Cell):
     def __init__(self):
-        super(SpaceToDepthNet, self).__init__()
+        super().__init__()
         block_size = 2
         self.space_to_depth = P.SpaceToDepth(block_size)
 
@@ -284,7 +286,7 @@ class SpaceToDepthNet(Cell):
 
 class DepthToSpaceNet(Cell):
     def __init__(self):
-        super(DepthToSpaceNet, self).__init__()
+        super().__init__()
         block_size = 2
         self.depth_to_space = P.DepthToSpace(block_size)
 
@@ -294,10 +296,10 @@ class DepthToSpaceNet(Cell):
 
 class BatchToSpaceNDNet(Cell):
     def __init__(self):
-        super(BatchToSpaceNDNet, self).__init__()
+        super().__init__()
         block_shape = [2, 2]
         crops = [[0, 0], [0, 0]]
-        self.batch_to_space_nd = P.BatchToSpaceND(block_shape, crops)
+        self.batch_to_space_nd = _inner_ops.BatchToSpaceND(block_shape, crops)
 
     def construct(self, x):
         return self.batch_to_space_nd(x)
@@ -305,10 +307,10 @@ class BatchToSpaceNDNet(Cell):
 
 class SpaceToBatchNDNet(Cell):
     def __init__(self):
-        super(SpaceToBatchNDNet, self).__init__()
+        super().__init__()
         block_shape = [2, 2]
         paddings = [[0, 0], [0, 0]]
-        self.space_to_batch_nd = P.SpaceToBatchND(block_shape, paddings)
+        self.space_to_batch_nd = _inner_ops.SpaceToBatchND(block_shape, paddings)
 
     def construct(self, x):
         return self.space_to_batch_nd(x)
@@ -316,7 +318,7 @@ class SpaceToBatchNDNet(Cell):
 
 class UniqueFunc1(Cell):
     def __init__(self):
-        super(UniqueFunc1, self).__init__()
+        super().__init__()
         self.unique = ops.unique
 
     def construct(self, x):
@@ -326,7 +328,7 @@ class UniqueFunc1(Cell):
 
 class UniqueFunc2(Cell):
     def __init__(self):
-        super(UniqueFunc2, self).__init__()
+        super().__init__()
         self.unique = ops.unique
 
     def construct(self, x):
@@ -336,7 +338,7 @@ class UniqueFunc2(Cell):
 
 class ArgMaxWithValueFunc(Cell):
     def __init__(self):
-        super(ArgMaxWithValueFunc, self).__init__()
+        super().__init__()
         self.argmax_ = ops.function.max
 
     def construct(self, x):
@@ -345,7 +347,7 @@ class ArgMaxWithValueFunc(Cell):
 
 class ArgMinWithValueFunc(Cell):
     def __init__(self):
-        super(ArgMinWithValueFunc, self).__init__()
+        super().__init__()
         self.argmin_ = ops.function.min
 
     def construct(self, x):
@@ -354,7 +356,7 @@ class ArgMinWithValueFunc(Cell):
 
 class AminmaxFunc(Cell):
     def __init__(self):
-        super(AminmaxFunc, self).__init__()
+        super().__init__()
         self.aminmax_ = ops.function.array_func.aminmax
 
     def construct(self, x):
@@ -363,7 +365,7 @@ class AminmaxFunc(Cell):
 
 class RangeNet(Cell):
     def __init__(self):
-        super(RangeNet, self).__init__()
+        super().__init__()
         self.range_ops = P.Range()
 
     def construct(self, start, limit, delta):
@@ -372,7 +374,7 @@ class RangeNet(Cell):
 
 class MaskedFillFunc(Cell):
     def __init__(self):
-        super(MaskedFillFunc, self).__init__()
+        super().__init__()
         self.maskedfill_ = ops.function.masked_fill
 
     def construct(self, x, mask, value):

@@ -19,7 +19,6 @@ import numpy as np
 from mindspore.common._decorator import deprecated
 from mindspore import context
 from mindspore import _checkparam as validator
-from mindspore.ops import signature as sig
 from mindspore.ops.primitive import Primitive, prim_attr_register
 from mindspore.ops.operations.math_ops import _MathBinaryOp
 from mindspore.ops.operations.nn_ops import _check_positive_int_or_tuple
@@ -159,26 +158,6 @@ class TensorAdd(_MathBinaryOp):
         _MathBinaryOp.__init__(self)
 
 
-class InplaceUpdate(Primitive):
-    """
-    Please use :class:`mindspore.ops.InplaceUpdateV2` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-    @deprecated("2.0", "ops.InplaceUpdateV2", False)
-    @prim_attr_register
-    def __init__(self, indices):
-        """Initialize InplaceUpdate"""
-        self.init_prim_io_names(inputs=['x', 'v'], outputs=['y'])
-        self.indices = indices
-        validator.check_value_type("indices", indices, [int, tuple], self.name)
-        if isinstance(indices, int):
-            self.indices = (indices,)
-        for item in self.indices:
-            validator.check_value_type("item of indices", item, [int], self.name)
-
-
 class DynamicShape(Primitive):
     """
     `ops.DynamicShape` is deprecated from version 1.7 and will be removed in
@@ -245,37 +224,9 @@ class Unpack(Primitive):
         self.axis = axis
 
 
-class ScatterNonAliasingAdd(Primitive):
-    """
-    `ops.ScatterNonAliasingAdd` is deprecated from version 2.1 and will be
-    removed in a future version, please use :class:`mindspore.ops.TensorScatterAdd` instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-    __mindspore_signature__ = (
-        sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
-        sig.make_sig('updates', dtype=sig.sig_dtype.T)
-    )
-
-    @deprecated("2.1", "ops.TensorScatterAdd", False)
-    @prim_attr_register
-    def __init__(self):
-        """Initialize ScatterNonAliasingAdd"""
-        super().__init__(name="ScatterNonAliasingAdd")
-        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
-        self.add_prim_attr('side_effect_mem', True)
-
-
 class BatchToSpaceND(Primitive):
-    """
-    Please use batch_to_space_nd instead.
-
-    Supported Platforms:
-        Deprecated
-    """
-    @deprecated("2.0", "ops.batch_to_space_nd", False)
+    """Internal BatchToSpaceND primitive."""
+    @deprecated("2.0", None, False)
     @prim_attr_register
     def __init__(self, block_shape, crops):
         """Initialize BatchToSpaceND"""

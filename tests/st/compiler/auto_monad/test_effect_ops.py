@@ -116,33 +116,6 @@ def test_scatter_add():
     np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
 
 
-class ScatterSubNet(nn.Cell):
-    def __init__(self, input_x):
-        super().__init__()
-        self.input_x = Parameter(input_x, name="para")
-        self.scatter_sub = P.ScatterSub()
-
-    def construct(self, indices, updates):
-        self.scatter_sub(self.input_x, indices, updates)
-        return self.input_x
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard')
-def test_scatter_sub():
-    """
-    Feature: Auto monad feature.
-    Description: Verify scatter_sub.
-    Expectation: No exception.
-    """
-    input_x = Tensor(np.array([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]]), mstype.float32)
-    indices = Tensor(np.array([[0, 1]]), mstype.int32)
-    updates = Tensor(np.array([[[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]]), mstype.float32)
-    expect = Tensor(np.array([[-1.0, -1.0, -1.0], [-1.0, -1.0, -1.0]]), mstype.float32)
-    net = ScatterSubNet(input_x)
-    out = net(indices, updates)
-    np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
-
-
 class ScatterMulNet(nn.Cell):
     def __init__(self, input_x):
         super().__init__()
@@ -357,34 +330,6 @@ def test_scatter_nd_update():
     updates = Tensor(np.array([1.0, 2.2]), mstype.float32)
     expect = Tensor(np.array([[1., 0.3, 3.6], [0.4, 2.2, -3.2]]), mstype.float32)
     net = ScatterNdUpdateNet(input_x)
-    out = net(indices, updates)
-    np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
-
-
-class ScatterNonAliasingAddNet(nn.Cell):
-    def __init__(self, input_x):
-        super().__init__()
-        self.input_x = Parameter(input_x, name="para")
-        self.scatter_non_aliasing_add = P.ScatterNonAliasingAdd()
-
-    def construct(self, indices, updates):
-        out = self.scatter_non_aliasing_add(self.input_x, indices, updates)
-        return out
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1024.01)
-def test_scatter_non_aliasing_add():
-    """
-    Feature: Auto monad feature.
-    Description: Verify scatter_non_aliasing_add.
-    Expectation: No exception.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    input_x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mstype.float32)
-    indices = Tensor(np.array([[2], [4], [1], [7]]), mstype.int32)
-    updates = Tensor(np.array([6, 7, 8, 9]), mstype.float32)
-    expect = Tensor(np.array([1.0, 10.0, 9.0, 4.0, 12.0, 6.0, 7.0, 17.0]), mstype.float32)
-    net = ScatterNonAliasingAddNet(input_x)
     out = net(indices, updates)
     np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
 

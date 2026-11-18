@@ -12,21 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import numpy as np
-
+"""Test sparse softmax cross entropy with logits grad."""
+from mindspore.ops.operations import _inner_ops
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.graph.api import jit
-from mindspore.ops import operations as P
+
+
+import numpy as np
 
 context.set_context(device_target="Ascend")
 
 
 class Net(nn.Cell):
     def __init__(self, is_grad=False):
-        super(Net, self).__init__()
-        self.SparseSoftmaxCrossEntropyWithLogits = P.SparseSoftmaxCrossEntropyWithLogits(is_grad=is_grad)
+        super().__init__()
+        self.SparseSoftmaxCrossEntropyWithLogits = _inner_ops.SparseSoftmaxCrossEntropyWithLogits(is_grad=is_grad)
 
     @jit
     def construct(self, features, labels):
