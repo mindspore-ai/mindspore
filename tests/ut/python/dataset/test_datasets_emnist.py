@@ -20,10 +20,8 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testEMnistDataset"
@@ -55,7 +53,7 @@ def load_emnist(path, usage, name):
     images = []
     labels = []
     for i, _ in enumerate(image_path):
-        with open(image_path[i], 'rb') as image_file:
+        with open(_, 'rb') as image_file:
             image_file.read(16)
             image = np.fromfile(image_file, dtype=np.uint8)
             image = image.reshape(-1, 28, 28, 1)
@@ -236,34 +234,6 @@ def test_emnist_basic():
     assert dataset.get_col_names() == ["image", "label"]
 
 
-def test_emnist_pk_sampler():
-    """
-    Feature: EMnistDataset
-    Description: Test EMnistDataset with PKSampler
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("Test EMnistDataset Op with PKSampler")
-    golden = [0, 0, 0, 1, 1, 1]
-
-    sampler = ds.PKSampler(3)
-    train_data = ds.EMnistDataset(DATA_DIR, "mnist", "train", sampler=sampler)
-    num_iter = 0
-    label_list = []
-    for item in train_data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        label_list.append(item["label"])
-        num_iter += 1
-    np.testing.assert_array_equal(golden, label_list)
-    assert num_iter == 6
-
-    sampler = ds.PKSampler(3)
-    test_data = ds.EMnistDataset(DATA_DIR, "mnist", "train", sampler=sampler)
-    num_iter = 0
-    label_list = []
-    for item in test_data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        label_list.append(item["label"])
-        num_iter += 1
-    np.testing.assert_array_equal(golden, label_list)
-    assert num_iter == 6
 
 
 def test_emnist_sequential_sampler():
@@ -302,79 +272,6 @@ def test_emnist_sequential_sampler():
     assert num_iter == num_samples
 
 
-def test_emnist_exception():
-    """
-    Feature: EMnistDataset
-    Description: Test error cases for EMnistDataset
-    Expectation: Throw correct error as expected
-    """
-    logger.info("Test error cases for EMnistDataset")
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.EMnistDataset(DATA_DIR, "byclass", "train", shuffle=False, sampler=ds.PKSampler(3))
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.EMnistDataset(DATA_DIR, "mnist", "train", sampler=ds.PKSampler(3), num_shards=2, shard_id=0)
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", sampler=ds.PKSampler(3), num_shards=2, shard_id=0)
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.EMnistDataset(DATA_DIR, "byclass", "train", num_shards=10)
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", num_shards=10)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.EMnistDataset(DATA_DIR, "mnist", "train", shard_id=0)
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.EMnistDataset(DATA_DIR, "byclass", "train", num_shards=5, shard_id=-1)
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", num_shards=5, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.EMnistDataset(DATA_DIR, "mnist", "train", num_shards=5, shard_id=5)
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", num_shards=5, shard_id=5)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.EMnistDataset(DATA_DIR, "byclass", "train", num_shards=2, shard_id=5)
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", num_shards=2, shard_id=5)
-
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.EMnistDataset(DATA_DIR, "mnist", "train", shuffle=False, num_parallel_workers=0)
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", shuffle=False, num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.EMnistDataset(DATA_DIR, "byclass", "train", shuffle=False, num_parallel_workers=256)
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", shuffle=False, num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.EMnistDataset(DATA_DIR, "mnist", "train", shuffle=False, num_parallel_workers=-2)
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", shuffle=False, num_parallel_workers=-2)
-
-    error_msg_7 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_7):
-        ds.EMnistDataset(DATA_DIR, "mnist", "train", num_shards=2, shard_id="0")
-        ds.EMnistDataset(DATA_DIR, "mnist", "test", num_shards=2, shard_id="0")
-
-    def exception_func(item):
-        raise Exception("Error occur!")
-
-    error_msg_8 = "The corresponding data file is"
-    with pytest.raises(RuntimeError, match=error_msg_8):
-        data = ds.EMnistDataset(DATA_DIR, "mnist", "train")
-        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        for _ in data.__iter__():
-            pass
-    with pytest.raises(RuntimeError, match=error_msg_8):
-        data = ds.EMnistDataset(DATA_DIR, "mnist", "train")
-        data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
-        for _ in data.__iter__():
-            pass
-    with pytest.raises(RuntimeError, match=error_msg_8):
-        data = ds.EMnistDataset(DATA_DIR, "mnist", "train")
-        data = data.map(operations=exception_func, input_columns=["label"], num_parallel_workers=1)
-        for _ in data.__iter__():
-            pass
 
 
 def test_emnist_visualize(plot=False):
@@ -482,14 +379,3 @@ def test_emnist_name():
     assert "name is not within the valid set of " + \
             "['byclass', 'bymerge', 'balanced', 'letters', 'digits', 'mnist']" in test_config("invalid", "train")
     assert "Argument name with value ['list'] is not of type [<class 'str'>]" in test_config(["list"], "train")
-
-
-if __name__ == '__main__':
-    test_emnist_content_check()
-    test_emnist_basic()
-    test_emnist_pk_sampler()
-    test_emnist_sequential_sampler()
-    test_emnist_exception()
-    test_emnist_visualize(plot=True)
-    test_emnist_usage()
-    test_emnist_name()

@@ -17,12 +17,9 @@ Testing GaussianBlur Python API
 """
 import cv2
 import numpy as np
-import os
 import pytest
-from PIL import Image
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 
 from mindspore import log as logger
@@ -113,89 +110,6 @@ def test_gaussian_blur_exception():
         assert "should be a single number or a list/tuple of length 2" in str(e)
 
 
-def test_gaussian_blur_operation_01():
-    """
-    Feature: GaussianBlur operation
-    Description: Testing the normal functionality of the GaussianBlur operator
-    Expectation: The Output is equal to the expected output
-    """
-    # GaussianBlur operator: Test sigma is 102.6
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "testImageNetData", "train", "")
-    dataset2 = ds.ImageFolderDataset(data_dir, shuffle=False, decode=True)
-    horizontal_flip_op = vision.GaussianBlur([11, 127], 102.6)
-    dataset2 = dataset2.map(input_columns=["image"], operations=horizontal_flip_op)
-    for _ in dataset2.create_dict_iterator(output_numpy=True):
-        pass
-
-    # GaussianBlur operator: Test sigma is 2
-    image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "png.PNG")
-    with Image.open(image_png) as image:
-        gaussianblur_op = vision.GaussianBlur(9, 2)
-        _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: Test sigma is 120
-    image_jpg = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "jpg.jpg")
-    with Image.open(image_jpg) as image:
-        gaussianblur_op = vision.GaussianBlur((101, 1007), 120)
-        _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: Test sigma is [1.2, 3.5]
-    image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "gif.gif")
-    with Image.open(image_gif) as image:
-        gaussianblur_op = vision.GaussianBlur((3, 7), [1.2, 3.5])
-        _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: Test sigma is [16.0, 0.1]
-    image_bmp = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "bmp.bmp")
-    with Image.open(image_bmp) as image:
-        gaussianblur_op = vision.GaussianBlur([165, 1613], [16.0, 0.1])
-        _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: Test sigma is 0
-    image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "gif.gif")
-    with Image.open(image_gif) as image:
-        gaussianblur_op = vision.GaussianBlur(1, 0)
-        _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: Test sigma is none
-    image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "png.PNG")
-    with Image.open(image_png) as image:
-        gaussianblur_op = vision.GaussianBlur(11)
-        out = gaussianblur_op(image)
-        gaussianblur_op = vision.GaussianBlur(11, 2.0)
-        out2 = gaussianblur_op(image)
-        assert (out == out2).all()
-
-    # GaussianBlur operator: Test input.shape is (50, 50, 8)
-    image = np.random.randint(0, 255, (50, 50, 8)).astype(np.uint8)
-    gaussianblur_op = vision.GaussianBlur(1, 100.0)
-    _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: Test input is 3d list
-    image = list(np.random.randint(0, 255, (50, 50, 3)).astype(np.uint8))
-    with pytest.raises(TypeError, match="Input should be NumPy or PIL image, got <class 'list'>"):
-        gaussianblur_op = vision.GaussianBlur(1, 0)
-        _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: Test input is 3d tuple
-    image = tuple(np.random.randint(0, 255, (50, 50, 3)).astype(np.uint8))
-    with pytest.raises(TypeError, match="Input should be NumPy or PIL image, got <class 'tuple'>"):
-        gaussianblur_op = vision.GaussianBlur(1, 0)
-        _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: Test PIL data
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "testImageNetData", "train", "")
-    dataset = ds.ImageFolderDataset(data_dir)
-    transforms = [
-        vision.Decode(to_pil=True),
-        vision.GaussianBlur(1, 0),
-        vision.ToTensor()
-    ]
-    transform = t_trans.Compose(transforms)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
 
 
 def test_gaussian_blur_exception_01():

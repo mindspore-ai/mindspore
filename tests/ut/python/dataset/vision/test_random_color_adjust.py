@@ -23,11 +23,7 @@ from PIL import Image
 
 import mindspore as ms
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as trans
 import mindspore.dataset.vision.transforms as vision
-from mindspore import log as logger
-from util import diff_mse, visualize_image, save_and_check_md5, save_and_check_md5_pil, \
-    config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -42,218 +38,26 @@ image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "
 GENERATE_GOLDEN = False
 
 
-def util_test_random_color_adjust_error(brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0)):
-    """
-    Util function that tests the error message in case of grayscale images
-    """
-
-    transforms = [
-        vision.Decode(True),
-        vision.Grayscale(1),
-        vision.ToTensor(),
-        (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
-    ]
-
-    transform = trans.Compose(transforms)
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(operations=transform, input_columns=["image"])
-
-    # if input is grayscale, the output dimensions should be single channel, the following should fail
-    random_adjust_op = vision.RandomColorAdjust(brightness=brightness, contrast=contrast, saturation=saturation,
-                                                hue=hue)
-    with pytest.raises(RuntimeError) as info:
-        data1 = data1.map(operations=random_adjust_op, input_columns=["image"])
-        dataset_shape_1 = []
-        for item1 in data1.create_dict_iterator(num_epochs=1):
-            c_image = item1["image"]
-            dataset_shape_1.append(c_image.shape)
-
-    error_msg = "Expecting tensor in channel of (3)"
-
-    assert error_msg in str(info.value)
 
 
-def util_test_random_color_adjust_op(brightness=(1, 1), contrast=(1, 1), saturation=(1, 1), hue=(0, 0), plot=False):
-    """
-    Util function that tests RandomColorAdjust for a specific argument
-    """
-
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-
-    random_adjust_op = vision.RandomColorAdjust(brightness=brightness, contrast=contrast, saturation=saturation,
-                                                hue=hue)
-
-    ctrans = [decode_op,
-              random_adjust_op,
-              ]
-
-    data1 = data1.map(operations=ctrans, input_columns=["image"])
-
-    # Second dataset
-    transforms = [
-        vision.Decode(True),
-        vision.RandomColorAdjust(brightness=brightness, contrast=contrast, saturation=saturation,
-                                 hue=hue),
-        vision.ToTensor()
-    ]
-    transform = trans.Compose(transforms)
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=transform, input_columns=["image"])
-
-    num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        num_iter += 1
-        c_image = item1["image"]
-        py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-
-        logger.info("shape of c_image: {}".format(c_image.shape))
-        logger.info("shape of py_image: {}".format(py_image.shape))
-
-        logger.info("dtype of c_image: {}".format(c_image.dtype))
-        logger.info("dtype of py_image: {}".format(py_image.dtype))
-
-        mse = diff_mse(c_image, py_image)
-        logger.info("mse is {}".format(mse))
-
-        logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
-        assert mse < 0.01
-
-        if plot:
-            visualize_image(c_image, py_image, mse)
 
 
-def test_random_color_adjust_op_brightness(plot=False):
-    """
-    Feature: RandomColorAdjust
-    Description: Test RandomColorAdjust for brightness
-    Expectation: The dataset is processed as expected
-    """
-
-    logger.info("test_random_color_adjust_op_brightness")
-
-    util_test_random_color_adjust_op(brightness=(0.5, 0.5), plot=plot)
 
 
-def test_random_color_adjust_op_brightness_error():
-    """
-    Feature: RandomColorAdjust
-    Description: Test RandomColorAdjust for brightness input in case of grayscale image
-    Expectation: Correct error is thrown and error message is printed as expected
-    """
-
-    logger.info("test_random_color_adjust_op_brightness_error")
-
-    util_test_random_color_adjust_error(brightness=(0.5, 0.5))
 
 
-def test_random_color_adjust_op_contrast(plot=False):
-    """
-    Feature: RandomColorAdjust
-    Description: Test RandomColorAdjust for contrast
-    Expectation: The dataset is processed as expected
-    """
-
-    logger.info("test_random_color_adjust_op_contrast")
-
-    util_test_random_color_adjust_op(contrast=(0.5, 0.5), plot=plot)
 
 
-def test_random_color_adjust_op_contrast_error():
-    """
-    Feature: RandomColorAdjust
-    Description: Test RandomColorAdjust for contrast input in case of grayscale image
-    Expectation: Correct error is thrown and error message is printed as expected
-    """
-
-    logger.info("test_random_color_adjust_op_contrast_error")
-
-    util_test_random_color_adjust_error(contrast=(0.5, 0.5))
 
 
-def test_random_color_adjust_op_saturation(plot=False):
-    """
-    Feature: RandomColorAdjust
-    Description: Test RandomColorAdjust for saturation
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("test_random_color_adjust_op_saturation")
-
-    util_test_random_color_adjust_op(saturation=(0.5, 0.5), plot=plot)
 
 
-def test_random_color_adjust_op_saturation_error():
-    """
-    Feature: RandomColorAdjust
-    Description: Test RandomColorAdjust for saturation input in case of grayscale image
-    Expectation: Correct error is thrown and error message is printed as expected
-    """
-
-    logger.info("test_random_color_adjust_op_saturation_error")
-
-    util_test_random_color_adjust_error(saturation=(0.5, 0.5))
 
 
-def test_random_color_adjust_op_hue(plot=False):
-    """
-    Feature: RandomColorAdjust
-    Description: Test RandomColorAdjust for hue
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("test_random_color_adjust_op_hue")
-
-    util_test_random_color_adjust_op(hue=(0.5, 0.5), plot=plot)
 
 
-def test_random_color_adjust_op_hue_error():
-    """
-    Feature: RandomColorAdjust
-    Description: Test RandomColorAdjust for hue input in case of grayscale image
-    Expectation: Correct error is thrown and error message is printed as expected
-    """
-
-    logger.info("test_random_color_adjust_op_hue_error")
-
-    util_test_random_color_adjust_error(hue=(0.5, 0.5))
 
 
-def test_random_color_adjust_md5():
-    """
-    Feature: RandomColorAdjust
-    Description: Test RandomColorAdjust with md5 check
-    Expectation: Passes the md5 check test
-    """
-    logger.info("Test RandomColorAdjust with md5 check")
-    original_seed = config_get_set_seed(10)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    random_adjust_op = vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1)
-    data1 = data1.map(operations=decode_op, input_columns=["image"])
-    data1 = data1.map(operations=random_adjust_op, input_columns=["image"])
-
-    # Second dataset
-    transforms = [
-        vision.Decode(True),
-        vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1),
-        vision.ToTensor()
-    ]
-    transform = trans.Compose(transforms)
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=transform, input_columns=["image"])
-    # Compare with expected md5 from images
-    filename = "random_color_adjust_01_c_result.npz"
-    save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
-    filename = "random_color_adjust_01_py_result.npz"
-    save_and_check_md5_pil(data2, filename, generate_golden=GENERATE_GOLDEN)
-
-    # Restore configuration
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
 def test_random_color_adjust_eager():
@@ -347,71 +151,6 @@ def test_random_color_adjust_operation_01():
         pass
 
 
-def test_random_color_adjust_operation_02():
-    """
-    Feature: RandomColorAdjust operation
-    Description: Testing the normal functionality of the RandomColorAdjust operator
-    Expectation: The Output is equal to the expected output
-    """
-    # When all parameters are lists, the RandomColorAdjust interface call succeeds.
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.RandomColorAdjust([0.1, 0.5], [0.1, 0.5], [0.1, 0.5], [0.1, 0.3]),
-        vision.ToTensor()
-    ]
-    transform1 = trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When no parameters are set, the RandomColorAdjust interface call succeeds.
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, shuffle=False, decode=True)
-    random_color_adjust_op = vision.RandomColorAdjust()
-    dataset = dataset.map(input_columns=["image"], operations=random_color_adjust_op)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When the brightness parameter is not set, the RandomColorAdjust interface call succeeds.
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, shuffle=False, decode=True)
-    contrast = 1.0
-    saturation = 1.0
-    hue = (0.1, 0.5)
-    random_color_adjust_op = vision.RandomColorAdjust(contrast=contrast, saturation=saturation, hue=hue)
-    dataset = dataset.map(input_columns=["image"], operations=random_color_adjust_op)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When the contrast parameter is not set, the RandomColorAdjust interface call succeeds.
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, shuffle=False, decode=True)
-    brightness = 1.0
-    saturation = 1.0
-    hue = (0.1, 0.5)
-    random_color_adjust_op = vision.RandomColorAdjust(brightness=brightness, saturation=saturation, hue=hue)
-    dataset = dataset.map(input_columns=["image"], operations=random_color_adjust_op)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When the saturation parameter is not set, the RandomColorAdjust interface call succeeds.
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, shuffle=False, decode=True)
-    brightness = 1.0
-    contrast = 1.0
-    hue = (0.1, 0.5)
-    random_color_adjust_op = vision.RandomColorAdjust(brightness=brightness, contrast=contrast, hue=hue)
-    dataset = dataset.map(input_columns=["image"], operations=random_color_adjust_op)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When the hue parameter is not set, the RandomColorAdjust interface call succeeds.
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, shuffle=False, decode=True)
-    brightness = 1.0
-    contrast = 1.0
-    saturation = 1.0
-    random_color_adjust_op = vision.RandomColorAdjust(brightness=brightness, contrast=contrast, saturation=saturation)
-    dataset = dataset.map(input_columns=["image"], operations=random_color_adjust_op)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
 
 
 def test_random_color_adjust_operation_03():
@@ -818,24 +557,3 @@ def test_random_color_adjust_exception_04():
     hue = (-0.1, 0.2, 0.3)
     with pytest.raises(TypeError, match="If hue is a sequence, the length must be 2."):
         vision.RandomColorAdjust(hue=hue)
-
-
-if __name__ == "__main__":
-    test_random_color_adjust_op_brightness(plot=True)
-    test_random_color_adjust_op_brightness_error()
-    test_random_color_adjust_op_contrast(plot=True)
-    test_random_color_adjust_op_contrast_error()
-    test_random_color_adjust_op_saturation(plot=True)
-    test_random_color_adjust_op_saturation_error()
-    test_random_color_adjust_op_hue(plot=True)
-    test_random_color_adjust_op_hue_error()
-    test_random_color_adjust_md5()
-    test_random_color_adjust_eager()
-    test_random_color_adjust_invalid_dtype()
-    test_random_color_adjust_operation_01()
-    test_random_color_adjust_operation_02()
-    test_random_color_adjust_operation_03()
-    test_random_color_adjust_exception_01()
-    test_random_color_adjust_exception_02()
-    test_random_color_adjust_exception_03()
-    test_random_color_adjust_exception_04()

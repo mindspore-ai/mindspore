@@ -14,8 +14,7 @@
 # ==============================================================================
 """
 The sampler module provides several samplers to generate data from datasets.
-The provided samplers include: DistributedSampler, PKSampler, RandomSampler,
-SequentialSampler, SubsetRandomSampler, and WeightedRandomSampler.
+The provided samplers include: DistributedSampler, RandomSampler, and SequentialSampler.
 Users can also define a custom sampler by extending from the Sampler class.
 """
 
@@ -113,12 +112,12 @@ def select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id):
         if isinstance(input_sampler, BuiltinSampler):
             return input_sampler
         if not isinstance(input_sampler, str) and isinstance(input_sampler, (np.ndarray, list, tuple)):
-            return SubsetSampler(input_sampler, num_samples)
+            return _SubsetSampler(input_sampler, num_samples)
         if not isinstance(input_sampler, str) and validator.is_iterable(input_sampler):
             # in this case, the user passed in their own sampler object that's not of type BuiltinSampler
             return IterSampler(input_sampler, num_samples)
         if isinstance(input_sampler, int):
-            return SubsetSampler([input_sampler])
+            return _SubsetSampler([input_sampler])
         raise TypeError('Unsupported sampler object of type ({})'.format(type(input_sampler)))
     if shuffle is not Shuffle.FALSE:
         if num_shards is not None:
@@ -161,11 +160,11 @@ class BuiltinSampler:
         Args:
             sampler (Sampler): Object used to choose samples from the dataset. Only builtin
                 samplers(:class:`mindspore.dataset.DistributedSampler` ,
-                :class:`mindspore.dataset.PKSampler`,
+
                 :class:`mindspore.dataset.RandomSampler`,
                 :class:`mindspore.dataset.SequentialSampler`,
-                :class:`mindspore.dataset.SubsetRandomSampler`,
-                :class:`mindspore.dataset.WeightedRandomSampler` ) are supported.
+
+                ) are supported.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -594,98 +593,6 @@ class DistributedSampler(BuiltinSampler):
         return self.shuffle
 
 
-class PKSampler(BuiltinSampler):
-    """
-    Samples K elements for each P class in the dataset.
-
-    Args:
-        num_val (int): Number of elements to sample for each class.
-        num_class (int, optional): Number of classes to sample. Default: ``None`` , sample all classes.
-            This parameter is not currently supported.
-        shuffle (bool, optional): Whether to shuffle the class IDs. Default: ``False``.
-        class_column (str, optional): Name of column with class labels for MindDataset. Default: ``'label'``.
-        num_samples (int, optional): The number of samples to draw. Default: ``None`` , which means sample all elements.
-
-    Raises:
-        TypeError: If `shuffle` is not of type bool.
-        TypeError: If `class_column` is not of type str.
-        TypeError: If `num_samples` is not of type int.
-        NotImplementedError: If `num_class` is not ``None``.
-        RuntimeError: If `num_val` is not a positive value.
-        ValueError: If `num_samples` is a negative value.
-
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> # creates a PKSampler that will get 3 samples from every class.
-        >>> sampler = ds.PKSampler(3)
-        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-        ...                                 num_parallel_workers=8,
-        ...                                 sampler=sampler)
-    """
-
-    def __init__(self, num_val, num_class=None, shuffle=False, class_column='label', num_samples=None):
-        if not isinstance(num_val, int):
-            raise TypeError("num_val must be integer but was: {}.".format(num_val))
-
-        if num_class is not None:
-            raise NotImplementedError("Not supported to specify num_class for PKSampler.")
-
-        if not isinstance(shuffle, bool):
-            raise TypeError("shuffle must be a boolean value but was: {}.".format(shuffle))
-
-        if not isinstance(class_column, str):
-            raise TypeError("class_column must be a str value but was: {}.".format(class_column))
-
-        if num_samples is not None:
-            if not isinstance(num_samples, int):
-                raise TypeError("num_samples must be integer but was: {}.".format(num_samples))
-            if num_samples < 0 or num_samples > validator.INT64_MAX:
-                raise ValueError("num_samples exceeds the boundary between {} and {}(INT64_MAX)!"
-                                 .format(0, validator.INT64_MAX))
-
-        self.num_val = num_val
-        self.shuffle = shuffle
-        self.class_column = class_column  # work for minddataset
-        super().__init__(num_samples)
-
-    def parse(self):
-        """ Parse the sampler."""
-        num_samples = self.num_samples if self.num_samples is not None else 0
-        shuffle = self.shuffle if self.shuffle is not None else False
-        c_sampler = cde.PKSamplerObj(self.num_val, shuffle, num_samples)
-        c_child_sampler = self.parse_child()
-        c_sampler.add_child(c_child_sampler)
-        return c_sampler
-
-    def is_shuffled(self):
-        if self.child_sampler is None:
-            return self.shuffle
-
-        return self.child_sampler.is_shuffled()
-
-    def is_sharded(self):
-        if self.child_sampler is None:
-            return False
-
-        return self.child_sampler.is_sharded()
-
-    def parse_for_minddataset(self):
-        """Parse the sampler for MindRecord."""
-        if not self.class_column or not isinstance(self.class_column, str):
-            raise ValueError("class_column should be a not empty string value, \
-                    but got class_column: {}.".format(self.class_column))
-        num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.MindrecordPkSampler(self.num_val, self.class_column, self.shuffle, num_samples)
-        c_child_sampler = self.parse_child_for_minddataset()
-        c_sampler.add_child(c_child_sampler)
-        c_sampler.set_num_samples(num_samples)
-        return c_sampler
-
-    def get_shuffle_mode(self):
-        """Get the shuffle mode"""
-        return Shuffle.FALSE
-
-
 class RandomSampler(BuiltinSampler):
     """
     Samples the elements randomly.
@@ -894,7 +801,7 @@ class SequentialSampler(BuiltinSampler):
         return Shuffle.FALSE
 
 
-class SubsetSampler(BuiltinSampler):
+class _SubsetSampler(BuiltinSampler):
     """
     Samples the elements from a sequence of indices.
 
@@ -909,15 +816,6 @@ class SubsetSampler(BuiltinSampler):
         TypeError: If `num_samples` is not of type int.
         ValueError: If `num_samples` is a negative value.
 
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> indices = [0, 1, 2, 3, 4, 5]
-        >>>
-        >>> # creates a SubsetSampler, will sample from the provided indices
-        >>> sampler = ds.SubsetSampler(indices)
-        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-        ...                                 num_parallel_workers=8,
-        ...                                 sampler=sampler)
     """
 
     def __init__(self, indices, num_samples=None):
@@ -946,7 +844,7 @@ class SubsetSampler(BuiltinSampler):
 
         for i, item in enumerate(indices):
             if not isinstance(item, (int, np.integer)):
-                raise TypeError("SubsetSampler: Type of indices element must be int, "
+                raise TypeError("_SubsetSampler: Type of indices element must be int, "
                                 "but got list[{}]: {}, type: {}.".format(i, item, type(item)))
 
         self.indices = indices
@@ -989,7 +887,7 @@ class SubsetSampler(BuiltinSampler):
         return Shuffle.FALSE
 
 
-class SubsetRandomSampler(SubsetSampler):
+class _SubsetRandomSampler(_SubsetSampler):
     """
     Samples the elements randomly from a sequence of indices.
 
@@ -1004,13 +902,6 @@ class SubsetRandomSampler(SubsetSampler):
         TypeError: If `num_samples` is not of type int.
         ValueError: If `num_samples` is a negative value.
 
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> indices = [0, 1, 2, 3, 7, 88, 119]
-        >>>
-        >>> # create a SubsetRandomSampler, will sample from the provided indices
-        >>> sampler = ds.SubsetRandomSampler(indices)
-        >>> data = ds.ImageFolderDataset(image_folder_dataset_dir, num_parallel_workers=8, sampler=sampler)
     """
 
     def parse(self):
@@ -1071,77 +962,3 @@ class IterSampler(Sampler):
 
     def __iter__(self):
         return iter(self.sampler)
-
-
-class WeightedRandomSampler(BuiltinSampler):
-    """
-    Samples the elements from [0, len(weights) - 1] randomly with the given weights (probabilities).
-
-    Args:
-        weights (list[float, int]): A sequence of weights, not necessarily summing up to 1.
-        num_samples (int, optional): Number of elements to sample. Default: ``None`` ,
-            which means sample all elements.
-        replacement (bool, optional): If ``True``, put the sample ID back for the next draw. Default: ``True``.
-
-    Raises:
-        TypeError: If elements of `weights` are not of type number.
-        TypeError: If `num_samples` is not of type int.
-        TypeError: If `replacement` is not of type bool.
-        RuntimeError: If `weights` is empty or all zero.
-        ValueError: If `num_samples` is a negative value.
-
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> weights = [0.9, 0.01, 0.4, 0.8, 0.1, 0.1, 0.3]
-        >>>
-        >>> # creates a WeightedRandomSampler that will sample 4 elements without replacement
-        >>> sampler = ds.WeightedRandomSampler(weights, 4)
-        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
-        ...                                 num_parallel_workers=8,
-        ...                                 sampler=sampler)
-    """
-
-    def __init__(self, weights, num_samples=None, replacement=True):
-        if not isinstance(weights, list):
-            weights = [weights]
-
-        for ind, w in enumerate(weights):
-            if not isinstance(w, numbers.Number):
-                raise TypeError("type of weights element must be number, "
-                                "but got w[{}]: {}, type: {}.".format(ind, w, type(w)))
-
-        if num_samples is not None:
-            if not isinstance(num_samples, int):
-                raise TypeError("num_samples must be integer but was: {}.".format(num_samples))
-            if num_samples < 0 or num_samples > validator.INT64_MAX:
-                raise ValueError("num_samples exceeds the boundary between {} and {}(INT64_MAX)!"
-                                 .format(0, validator.INT64_MAX))
-
-        if not isinstance(replacement, bool):
-            raise TypeError("replacement must be a boolean value but was: {}.".format(replacement))
-
-        self.weights = weights
-        self.replacement = replacement
-        super().__init__(num_samples)
-
-    def parse(self):
-        """ Parse the sampler."""
-        num_samples = self.num_samples if self.num_samples is not None else 0
-        replacement = self.replacement if self.replacement is not None else True
-        c_sampler = cde.WeightedRandomSamplerObj(self.weights, num_samples, replacement)
-        c_child_sampler = self.parse_child()
-        c_sampler.add_child(c_child_sampler)
-        return c_sampler
-
-    def is_shuffled(self):
-        return True
-
-    def is_sharded(self):
-        if self.child_sampler is None:
-            return False
-
-        return self.child_sampler.is_sharded()
-
-    def get_shuffle_mode(self):
-        """Get the shuffle mode"""
-        return Shuffle.GLOBAL

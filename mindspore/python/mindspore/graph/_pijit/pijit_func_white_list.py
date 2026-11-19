@@ -56,8 +56,7 @@ from mindspore.parallel import _cost_model_context
 from mindspore.parallel._utils import _is_in_data_parallel_mode
 from mindspore.run_check._check_version import check_version_and_env_config
 from mindspore.dataset.callback.ds_callback import DSCallback, WaitedDSCallback
-from mindspore.dataset.transforms.transforms import TensorOperation, Compose, Concatenate, Duplicate, Fill, Mask, \
-    OneHot, PadEnd, Plugin, RandomApply, RandomChoice, Slice, TypeCast, Unique
+from mindspore.dataset.transforms.transforms import TensorOperation, _Compose, Plugin, TypeCast
 from mindspore.dataset.text.transforms import AddToken, JiebaTokenizer, Lookup, Ngram, SentencePieceTokenizer, \
     SlidingWindow, ToNumber, ToVectors, Truncate, TruncateSequencePair, UnicodeCharTokenizer, WordpieceTokenizer, \
     BasicTokenizer, BertTokenizer, CaseFold, FilterWikipediaXML, NormalizeUTF8, RegexReplace, RegexTokenizer, \
@@ -82,8 +81,9 @@ from mindspore.dataset.engine.queue import _SharedQueue
 from mindspore.dataset.engine.datasets import Dataset, BucketBatchByLengthDataset, BatchDataset, \
     PaddedBatchDataset, SyncWaitDataset, ShuffleDataset, MapDataset, FilterDataset, RepeatDataset, SkipDataset, \
     TakeDataset, ZipDataset, ConcatDataset, RenameDataset, ProjectDataset, _ToDevice, TransferDataset, Schema
-from mindspore.dataset.engine.samplers import Sampler, DistributedSampler, PKSampler, RandomSampler, SubsetSampler, \
-    SequentialSampler, SubsetRandomSampler, WeightedRandomSampler
+from mindspore.dataset.engine.samplers import (
+    Sampler, DistributedSampler, RandomSampler, SequentialSampler, _SubsetSampler, _SubsetRandomSampler,
+)
 from mindspore.dataset.vision.utils import encode_jpeg, encode_png, get_image_num_channels, get_image_size, \
     read_file, read_image, read_video, read_video_timestamps, write_file, write_jpeg, write_png
 from mindspore.dataset.vision.transforms import AdjustBrightness, AdjustContrast, AdjustGamma as VAdjustGamma, \
@@ -145,9 +145,7 @@ def _get_dataset_forbidden_code():
     """Get the forbidden function which should be broken in graph"""
     codes = []
     codes.extend([DSCallback.__init__, WaitedDSCallback.__init__])
-    codes.extend([TensorOperation.__call__, Compose.parse, Concatenate.__init__, Concatenate.parse, Duplicate.parse, \
-                  Fill.__init__, Fill.parse, Mask.__init__, Mask.parse, OneHot.parse, PadEnd.__init__, PadEnd.parse, \
-                  Plugin.parse, RandomApply.parse, RandomChoice.parse, Slice.parse, TypeCast.parse, Unique.parse])
+    codes.extend([TensorOperation.__call__, _Compose.parse, Plugin.parse, TypeCast.parse])
     codes.extend([AddToken.parse, JiebaTokenizer.parse, Lookup.parse, Ngram.parse, SentencePieceTokenizer.parse, \
                   SlidingWindow.parse, ToNumber.parse, ToVectors.parse, Truncate.parse, TruncateSequencePair.parse, \
                   UnicodeCharTokenizer.parse, WordpieceTokenizer.parse, BasicTokenizer.parse, BertTokenizer.parse, \
@@ -175,11 +173,11 @@ def _get_dataset_forbidden_code():
                   FilterDataset.parse, RepeatDataset.parse, SkipDataset.parse, TakeDataset.parse, ZipDataset.parse, \
                   ConcatDataset.parse, RenameDataset.parse, ProjectDataset.parse, _ToDevice.__init__, \
                   TransferDataset.parse, Schema.__init__, Schema.add_column, Dataset.save])
-    codes.extend([Sampler.parse, DistributedSampler.parse, DistributedSampler.parse_for_minddataset, PKSampler.parse, \
-                  PKSampler.parse_for_minddataset, RandomSampler.parse, RandomSampler.parse_for_minddataset, \
-                  SequentialSampler.parse, SequentialSampler.parse_for_minddataset, SubsetSampler.parse, \
-                  SubsetSampler.parse_for_minddataset, SubsetRandomSampler.parse, \
-                  SubsetRandomSampler.parse_for_minddataset, WeightedRandomSampler.parse])
+    codes.extend([Sampler.parse, DistributedSampler.parse, DistributedSampler.parse_for_minddataset, \
+                  RandomSampler.parse, RandomSampler.parse_for_minddataset, \
+                  SequentialSampler.parse, SequentialSampler.parse_for_minddataset, _SubsetSampler.parse, \
+                  _SubsetSampler.parse_for_minddataset, _SubsetRandomSampler.parse, \
+                  _SubsetRandomSampler.parse_for_minddataset])
     codes.extend([encode_jpeg, encode_png, get_image_num_channels, get_image_size, read_file, read_image, read_video, \
                   read_video_timestamps, write_file, write_jpeg, write_png])
     codes.extend([AdjustBrightness.parse, AdjustContrast.parse, VAdjustGamma.parse, AdjustHue.parse, \

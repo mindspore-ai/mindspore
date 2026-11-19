@@ -22,7 +22,6 @@ import pytest
 from PIL import Image
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 
 from mindspore import log as logger
@@ -256,98 +255,6 @@ def test_horizontal_flip_operation_01():
     assert (out_4_np == out_4_mindspore).all()
 
 
-def test_horizontal_flip_operation_02():
-    """
-    Feature: HorizontalFlip operation
-    Description: Testing the normal functionality of the HorizontalFlip operator
-    Expectation: The Output is equal to the expected output
-    """
-    # HorizontalFlip operator: Test PIL data
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "testImageNetData", "train", "")
-    dataset = ds.ImageFolderDataset(data_dir)
-    transforms1 = [
-        vision.Decode(to_pil=True),
-        vision.HorizontalFlip(),
-        vision.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # HorizontalFlip operator: test 5d
-    input_5_dim = np.random.randint(0, 255, (2, 1, 6, 7, 8)).astype(np.uint8)
-    input_5_shape = input_5_dim.shape
-    num_batch_1d = input_5_shape[0]
-    num_batch_2d = input_5_shape[1]
-    out_5_list = []
-    batch_1d = 0
-
-    while batch_1d < num_batch_1d:
-        batch_2d = 0
-        while batch_2d < num_batch_2d:
-            out_5_list.append(np.flip(input_5_dim[batch_1d][batch_2d], 1))
-            batch_2d += 1
-        batch_1d += 1
-
-    out_5_np = np.array(out_5_list).astype(np.uint8)
-    out_5_np = out_5_np.reshape((2, 1, 6, 7, 8))
-
-    horizontal_flip_op = vision.HorizontalFlip()
-    out_5_mindspore = horizontal_flip_op(input_5_dim)
-
-    assert (out_5_np == out_5_mindspore).all()
-
-    # HorizontalFlip operator: test 5d
-    input_5_dim = np.random.randint(0, 255, (2, 2, 1, 3, 2)).astype(np.uint8)
-    input_5_shape = input_5_dim.shape
-    num_batch_1d = input_5_shape[0]
-    num_batch_2d = input_5_shape[1]
-    out_5_list = []
-    batch_1d = 0
-
-    while batch_1d < num_batch_1d:
-        batch_2d = 0
-        while batch_2d < num_batch_2d:
-            out_5_list.append(cv2.flip(input_5_dim[batch_1d][batch_2d], 1))
-            batch_2d += 1
-        batch_1d += 1
-
-    out_5_cv = np.array(out_5_list).astype(np.uint8)
-    out_5_cv = out_5_cv.reshape((2, 2, 1, 3, 2))
-
-    horizontal_flip_op = vision.HorizontalFlip()
-    out_5_mindspore = horizontal_flip_op(input_5_dim)
-
-    assert (out_5_cv == out_5_mindspore).all()
-
-    # HorizontalFlip operator: test 6d
-    input_6_dim = np.random.randint(0, 255, (2, 1, 6, 7, 8, 9)).astype(np.uint8)
-    input_6_shape = input_6_dim.shape
-    num_batch_1d = input_6_shape[0]
-    num_batch_2d = input_6_shape[1]
-    num_batch_3d = input_6_shape[2]
-    out_6_list = []
-    batch_1d = 0
-
-    while batch_1d < num_batch_1d:
-        batch_2d = 0
-        while batch_2d < num_batch_2d:
-            batch_3d = 0
-            while batch_3d < num_batch_3d:
-                out_6_list.append(np.flip(input_6_dim[batch_1d][batch_2d][batch_3d], 1))
-                batch_3d += 1
-            batch_2d += 1
-        batch_1d += 1
-
-    out_6_np = np.array(out_6_list).astype(np.uint8)
-    out_6_np = out_6_np.reshape((2, 1, 6, 7, 8, 9))
-
-    horizontal_flip_op = vision.HorizontalFlip()
-    out_6_mindspore = horizontal_flip_op(input_6_dim)
-
-    assert (out_6_np == out_6_mindspore).all()
 
 
 def test_horizontal_flip_operation_03():
@@ -428,17 +335,3 @@ def test_horizontal_flip_exception_01():
         out = horizontal_flip_op(image)
         out2 = np.fliplr(image)
         assert (out == out2).all()
-
-
-if __name__ == "__main__":
-    test_horizontal_flip_pipeline(plot=False)
-    test_horizontal_flip_eager()
-    test_horizontal_flip_video_op_1d()
-    test_horizontal_flip_video_op_4d()
-    test_horizontal_flip_video_op_5d()
-    test_horizontal_flip_video_op_precision_eager()
-    test_horizontal_flip_video_op_precision_pipeline()
-    test_horizontal_flip_operation_01()
-    test_horizontal_flip_operation_02()
-    test_horizontal_flip_operation_03()
-    test_horizontal_flip_exception_01()

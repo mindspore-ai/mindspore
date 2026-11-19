@@ -93,7 +93,8 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCelebA) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-CelebA.";
   std::string data_dir = "./data/dataset/testCelebAData/";
   std::string usage = "all";
-  std::shared_ptr<SamplerObj> sampler = std::make_shared<DistributedSamplerObj>(1, 0, ShuffleMode::kGlobal, 2, 1, 1, true);
+  std::shared_ptr<SamplerObj> sampler =
+    std::make_shared<DistributedSamplerObj>(1, 0, ShuffleMode::kGlobal, 2, 1, 1, true);
   bool decode = true;
   std::set<std::string> extensions = {};
   std::shared_ptr<DatasetCache> cache = nullptr;
@@ -496,20 +497,6 @@ TEST_F(MindDataTestDeserialize, TestDeserializeInvalidJson) {
 /// Feature: Deserialize
 /// Description: Test Deserialize on TextFileDataset with Fill op
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestDeserialize, TestDeserializeFill) {
-  MS_LOG(INFO) << "Doing MindDataTestDeserialize-Fill.";
-  std::vector<std::string> dataset_files = {"./data/dataset/testTextFileDataset/1.txt"};
-  std::shared_ptr<DatasetCache> cache = nullptr;
-  std::shared_ptr<DatasetNode> ds = std::make_shared<TextFileNode>(dataset_files, 2, ShuffleMode::kFiles, 1, 0, cache);
-  std::shared_ptr<Tensor> fill_value;
-  ASSERT_OK(Tensor::CreateScalar(true, &fill_value));
-  std::shared_ptr<TensorOperation> operation1 = std::make_shared<transforms::FillOperation>(fill_value);
-  std::shared_ptr<TensorOperation> operation2 = std::make_shared<text::ToNumberOperation>("int32_t");
-  std::vector<std::shared_ptr<TensorOperation>> ops = {operation1, operation2};
-  ds = std::make_shared<MapNode>(ds, ops);
-  ds = std::make_shared<DataQueueNode>(ds, "queue", "type", 1, true, 10, true);
-  compare_dataset(ds);
-}
 
 /// Feature: Deserialize
 /// Description: Test Deserialize on Tensor

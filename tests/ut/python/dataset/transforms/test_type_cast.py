@@ -50,9 +50,8 @@ def test_type_cast():
     transforms = [vision.Decode(True),
                   vision.ToTensor()
                   ]
-    transform = data_trans.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=transform, input_columns=["image"])
+    data2 = data2.map(operations=transforms, input_columns=["image"])
 
     # Third dataset - Use TypeCast with Numpy datatype
     data3 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -102,9 +101,8 @@ def test_type_cast_string():
     transforms = [vision.Decode(True),
                   vision.ToTensor()
                   ]
-    transform = data_trans.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=transform, input_columns=["image"])
+    data2 = data2.map(operations=transforms, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
@@ -184,8 +182,7 @@ def test_type_cast_invalid_arg():
             # Note: if argument name is not correct
             data_trans.TypeCast(output_type="float32")
         ]
-        transform = data_trans.Compose(transforms)
-        _ = data.map(operations=transform, input_columns=["image"])
+        _ = data.map(operations=transforms, input_columns=["image"])
     assert "missing a required argument: 'data_type'" in str(error_info.value)
 
 
@@ -206,8 +203,7 @@ def test_type_cast_err_missing_arg():
             # Note: if data_type is not explicitly given
             data_trans.TypeCast()
         ]
-        transform = data_trans.Compose(transforms)
-        _ = data.map(operations=transform, input_columns=["image"])
+        _ = data.map(operations=transforms, input_columns=["image"])
     assert "missing a required argument: 'data_type'" in str(error_info.value)
 
 
@@ -228,8 +224,7 @@ def test_type_cast_err_invalid_arg():
             # Note: if data_type is not valid
             data_trans.TypeCast("junk")
         ]
-        transform = data_trans.Compose(transforms)
-        _ = data.map(operations=transform, input_columns=["image"])
+        _ = data.map(operations=transforms, input_columns=["image"])
     assert "Argument data_type with value junk is not of type" in str(error_info.value)
 
 

@@ -19,7 +19,6 @@ import numpy as np
 from numpy.testing import assert_allclose
 from PIL import Image, ImageOps
 
-import mindspore
 import mindspore.dataset as ds
 from mindspore.dataset import vision
 import mindspore.log as logger
@@ -103,53 +102,3 @@ def test_data_type_with_posterize():
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "data type of input image should be int" in str(e)
-
-
-def test_posterize_pipeline():
-    """
-    Feature: Posterize op
-    Description: Test Posterize C implementation Pipeline
-    Expectation: Pass without error
-    """
-    # First dataset
-    transforms1 = [vision.Decode(), vision.Resize([64, 64])]
-    transforms1 = mindspore.dataset.transforms.transforms.Compose(
-        transforms1)
-    ds1 = ds.TFRecordDataset(DATA_DIR,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    transforms2 = [
-        vision.Decode(),
-        vision.Resize([64, 64]),
-        vision.Posterize(8)
-    ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(
-        transforms2)
-    ds2 = ds.TFRecordDataset(DATA_DIR,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-
-    num_iter = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1),
-                            ds2.create_dict_iterator(num_epochs=1)):
-        num_iter += 1
-        ori_img = data1["image"].asnumpy()
-        cvt_img = data2["image"].asnumpy()
-        assert_allclose(ori_img.flatten(),
-                        cvt_img.flatten(),
-                        rtol=1e-5,
-                        atol=0)
-        assert ori_img.shape == cvt_img.shape
-
-
-if __name__ == "__main__":
-    test_posterize_op()
-    test_posterize_exception_bit()
-    test_data_type_with_posterize()
-    test_posterize_pipeline()

@@ -65,9 +65,7 @@ void MonitorLoop(std::mutex *monitor_mtx, std::condition_variable *monitor_cv, b
                     << low_op_type
                     << " operation is hanging. "
                        "Check whether the user defined data transform is too slow or the "
-                       "output data is too large. You can also set the timeout interval by "
-                       "ds.config.set_multiprocessing_timeout_interval to adjust the output frequency "
-                       "of this log.";
+                       "output data is too large.";
     MS_LOG(WARNING) << op_type << " worker subprocess ID " << worker_pid << " is stuck.";
 
     int status = 0;

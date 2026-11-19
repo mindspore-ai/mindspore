@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 import mindspore.dataset as ds
+from mindspore.dataset.core.config import _get_enable_shared_mem, _set_enable_shared_mem
 import mindspore.dataset.vision as vision
 from util import config_get_set_num_parallel_workers, config_get_set_seed
 
@@ -698,8 +699,8 @@ def test_split_numpyslices_num_workers():
     # python_multiprocessing=True as default, need to disable shared memory when running this test in CI
     # since NumpySlicesDataset using num_parallel_workers > 1.
     # Reduce memory required by disabling the shared memory optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
 
     # construct data and label
     data1 = np.array(np.random.sample(size=(300, 300, 3)) * 255, dtype=np.uint8)
@@ -741,7 +742,7 @@ def test_split_numpyslices_num_workers():
     assert count == 4
 
     # Restore configuration
-    ds.config.set_enable_shared_mem(mem_original)
+    _set_enable_shared_mem(mem_original)
 
 
 if __name__ == '__main__':

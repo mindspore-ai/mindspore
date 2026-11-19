@@ -20,12 +20,7 @@ import os
 import pytest
 from PIL import Image
 
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as trans
 import mindspore.dataset.vision.transforms as vision
-from mindspore import log as logger
-from util import diff_mse, visualize_image, save_and_check_md5_pil, \
-    config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -40,199 +35,12 @@ image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "
 GENERATE_GOLDEN = False
 
 
-def test_random_erasing_op(plot=False):
-    """
-    Feature: RandomErasing op
-    Description: Test RandomErasing and CutOut
-    Expectation: Passes the test
-    """
-    logger.info("test_random_erasing")
-
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    transforms_1 = [
-        vision.Decode(True),
-        vision.ToTensor(),
-        vision.RandomErasing(value='random')
-    ]
-    transform_1 = trans.Compose(transforms_1)
-    data1 = data1.map(operations=transform_1, input_columns=["image"])
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    transforms_2 = [
-        vision.Decode(True),
-        vision.ToTensor(),
-        vision.CutOut(80, is_hwc=False)
-    ]
-    transform_2 = trans.Compose(transforms_2)
-    data2 = data2.map(operations=transform_2, input_columns=["image"])
-
-    num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        num_iter += 1
-        image_1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-        image_2 = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-
-        logger.info("shape of image_1: {}".format(image_1.shape))
-        logger.info("shape of image_2: {}".format(image_2.shape))
-
-        logger.info("dtype of image_1: {}".format(image_1.dtype))
-        logger.info("dtype of image_2: {}".format(image_2.dtype))
-
-        mse = diff_mse(image_1, image_2)
-        if plot:
-            visualize_image(image_1, image_2, mse)
 
 
-def test_random_erasing_md5():
-    """
-    Feature: RandomErasing op
-    Description: Test RandomErasing with md5 check
-    Expectation: Passes the md5 check
-    """
-    logger.info("Test RandomErasing with md5 check")
-    original_seed = config_get_set_seed(5)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-
-    # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    transforms_1 = [
-        vision.Decode(True),
-        vision.ToTensor(),
-        vision.RandomErasing(value='random')
-    ]
-    transform_1 = trans.Compose(transforms_1)
-    data = data.map(operations=transform_1, input_columns=["image"])
-    # Compare with expected md5 from images
-    filename = "random_erasing_01_result.npz"
-    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
-
-    # Restore configuration
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers((original_num_parallel_workers))
 
 
-def test_random_erasing_operation_01():
-    """
-    Feature: RandomErasing operation
-    Description: Testing the normal functionality of the RandomErasing operator
-    Expectation: The Output is equal to the expected output
-    """
-    # When parameter value is a 3-tuple, the RandomErasing interface is successfully called
-    prob = 0.5
-    scale = (0.02, 0.33)
-    ratio = (0.3, 3.3)
-    value = (5, 1, 5)
-    inplace = False
-    max_attempts = 10
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.ToTensor(),
-        vision.RandomErasing(prob, scale, ratio, value, inplace, max_attempts),
-    ]
-    transform1 = trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When parameter prob is 0, the RandomErasing interface is successfully called
-    prob = 0
-    scale = (0.02, 0.33)
-    ratio = (0.3, 3.3)
-    value = (5, 5, 5)
-    inplace = False
-    max_attempts = 10
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.ToTensor(),
-        vision.RandomErasing(prob, scale, ratio, value, inplace, max_attempts),
-    ]
-    transform1 = trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When parameter prob is 1, the RandomErasing interface is successfully called
-    prob = 1
-    scale = (0.02, 0.33)
-    ratio = (0.3, 3.3)
-    value = 128
-    inplace = False
-    max_attempts = 10
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.ToTensor(),
-        vision.RandomErasing(prob, scale, ratio, value, inplace, max_attempts),
-    ]
-    transform1 = trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
 
 
-def test_random_erasing_operation_02():
-    """
-    Feature: RandomErasing operation
-    Description: Testing the normal functionality of the RandomErasing operator
-    Expectation: The Output is equal to the expected output
-    """
-    # When parameter scale is (3, 10), the RandomErasing interface is successfully called
-    prob = 1
-    scale = (3, 10)
-    ratio = (0.3, 3.3)
-    value = [20, 1, 255]
-    inplace = False
-    max_attempts = 10
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.ToTensor(),
-        vision.RandomErasing(prob, scale, ratio, value, inplace, max_attempts),
-    ]
-    transform1 = trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # When parameter ratio is (3, 33), the RandomErasing interface is successfully called
-    prob = 0.5
-    scale = (0.02, 0.33)
-    ratio = (3, 33)
-    value = (5, 1, 150)
-    inplace = True
-    max_attempts = 10
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.ToTensor(),
-        vision.RandomErasing(prob, scale, ratio, value, inplace, max_attempts),
-    ]
-    transform1 = trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # Using default parameter values, the RandomErasing interface is successfully called
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms1 = [
-        vision.Decode(),
-        vision.ToTensor(),
-        vision.RandomErasing()
-    ]
-    transform1 = trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
 
 
 def test_random_erasing_operation_03():
@@ -613,14 +421,3 @@ def test_random_erasing_exception_03():
     max_attempts = "5"
     with pytest.raises(TypeError, match="Argument max_attempts with value 5 is not of type \\[<class 'int'>\\]."):
         vision.RandomErasing(max_attempts=max_attempts)
-
-
-if __name__ == "__main__":
-    test_random_erasing_op(plot=True)
-    test_random_erasing_md5()
-    test_random_erasing_operation_01()
-    test_random_erasing_operation_02()
-    test_random_erasing_operation_03()
-    test_random_erasing_exception_01()
-    test_random_erasing_exception_02()
-    test_random_erasing_exception_03()

@@ -442,294 +442,6 @@ TEST_F(MindDataTestPipeline, TestCropParamCheck) {
   EXPECT_EQ(iter4, nullptr);
 }
 
-/// Feature: CutMixBatch op
-/// Description: Test CutMixBatch op on a batch of CHW images
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchSuccess1.";
-  // Testing CutMixBatch on a batch of CHW images
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  int number_of_classes = 10;
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> hwc_to_chw = std::make_shared<vision::HWC2CHW>();
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({hwc_to_chw}, {"image"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 5;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(number_of_classes);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<TensorTransform> cutmix_batch_op =
-    std::make_shared<vision::CutMixBatch>(mindspore::dataset::ImageBatchFormat::kNCHW, 1.0, 1.0);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({cutmix_batch_op}, {"image", "label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    auto label = row["label"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    MS_LOG(INFO) << "Label shape: " << label.Shape();
-    EXPECT_EQ(image.Shape().size() == 4 && batch_size == image.Shape()[0] && 3 == image.Shape()[1] &&
-                32 == image.Shape()[2] && 32 == image.Shape()[3],
-              true);
-    EXPECT_EQ(label.Shape().size() == 2 && batch_size == label.Shape()[0] && number_of_classes == label.Shape()[1],
-              true);
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 2);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: CutMixBatch op
-/// Description: Test CutMixBatch op on a batch of HWC images with default values of alpha and prob
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestCutMixBatchSuccess2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchSuccess2.";
-  // Calling CutMixBatch on a batch of HWC images with default values of alpha and prob
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  int number_of_classes = 10;
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 5;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(number_of_classes);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<TensorTransform> cutmix_batch_op =
-    std::make_shared<vision::CutMixBatch>(mindspore::dataset::ImageBatchFormat::kNHWC);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({cutmix_batch_op}, {"image", "label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    auto label = row["label"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    MS_LOG(INFO) << "Label shape: " << label.Shape();
-    EXPECT_EQ(image.Shape().size() == 4 && batch_size == image.Shape()[0] && 32 == image.Shape()[1] &&
-                32 == image.Shape()[2] && 3 == image.Shape()[3],
-              true);
-    EXPECT_EQ(label.Shape().size() == 2 && batch_size == label.Shape()[0] && number_of_classes == label.Shape()[1],
-              true);
-
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 2);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: CutMixBatch op
-/// Description: Test CutMixBatch op with invalid negative alpha parameter
-/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestCutMixBatchFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchFail1 with invalid negative alpha parameter.";
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 5;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create CutMixBatch operation with invalid input, alpha<0
-  std::shared_ptr<TensorTransform> cutmix_batch_op =
-    std::make_shared<vision::CutMixBatch>(mindspore::dataset::ImageBatchFormat::kNHWC, -1, 0.5);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({cutmix_batch_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  // Expect failure: Invalid CutMixBatch input
-  EXPECT_EQ(iter, nullptr);
-}
-
-/// Feature: CutMixBatch op
-/// Description: Test CutMixBatch op with invalid negative prob parameter
-/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestCutMixBatchFail2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchFail2 with invalid negative prob parameter.";
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 5;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create CutMixBatch operation with invalid input, prob<0
-  std::shared_ptr<TensorTransform> cutmix_batch_op =
-    std::make_shared<vision::CutMixBatch>(mindspore::dataset::ImageBatchFormat::kNHWC, 1, -0.5);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({cutmix_batch_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  // Expect failure: Invalid CutMixBatch input
-  EXPECT_EQ(iter, nullptr);
-}
-
-/// Feature: CutMixBatch op
-/// Description: Test CutMixBatch op with invalid zero alpha parameter
-/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestCutMixBatchFail3) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchFail3 with invalid zero alpha parameter.";
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 5;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create CutMixBatch operation with invalid input, alpha=0 (boundary case)
-  std::shared_ptr<TensorTransform> cutmix_batch_op =
-    std::make_shared<vision::CutMixBatch>(mindspore::dataset::ImageBatchFormat::kNHWC, 0.0, 0.5);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({cutmix_batch_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  // Expect failure: Invalid CutMixBatch input
-  EXPECT_EQ(iter, nullptr);
-}
-
-/// Feature: CutMixBatch op
-/// Description: Test CutMixBatch op with invalid prob parameter that is greater than 1
-/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestCutMixBatchFail4) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutMixBatchFail4 with invalid greater than 1 prob parameter.";
-
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 10;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create CutMixBatch operation with invalid input, prob>1
-  std::shared_ptr<TensorTransform> cutmix_batch_op =
-    std::make_shared<vision::CutMixBatch>(mindspore::dataset::ImageBatchFormat::kNHWC, 1, 1.5);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({cutmix_batch_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  // Expect failure: Invalid CutMixBatch input
-  EXPECT_EQ(iter, nullptr);
-}
-
 /// Feature: CutOut op
 /// Description: Test CutOut op basic usage with default HWC parameter
 /// Expectation: Output is equal to the expected output
@@ -1071,188 +783,6 @@ TEST_F(MindDataTestPipeline, TestInvert) {
     ASSERT_OK(iter->GetNextRow(&row));
   }
   EXPECT_EQ(i, 20);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: MixUpBatch op
-/// Description: Test MixUpBatch op with negative alpha parameter
-/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestMixUpBatchFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMixUpBatchFail1 with negative alpha parameter.";
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 5;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create MixUpBatch operation with invalid input, alpha<0
-  std::shared_ptr<TensorTransform> mixup_batch_op = std::make_shared<vision::MixUpBatch>(-1);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({mixup_batch_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  // Expect failure: Invalid MixUpBatch input
-  EXPECT_EQ(iter, nullptr);
-}
-
-/// Feature: MixUpBatch op
-/// Description: Test MixUpBatch op with zero alpha parameter
-/// Expectation: Error message is logged, and CreateIterator() for invalid pipeline returns nullptr
-TEST_F(MindDataTestPipeline, TestMixUpBatchFail2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMixUpBatchFail2 with zero alpha parameter.";
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 5;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create MixUpBatch operation with invalid input, alpha<0 (boundary case)
-  std::shared_ptr<TensorTransform> mixup_batch_op = std::make_shared<vision::MixUpBatch>(0.0);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({mixup_batch_op});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  // Expect failure: Invalid MixUpBatch input
-  EXPECT_EQ(iter, nullptr);
-}
-
-/// Feature: MixUpBatch op
-/// Description: Test MixUpBatch op with explicit valid alpha parameter
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMixUpBatchSuccess1 with explicit alpha parameter.";
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 5;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<TensorTransform> mixup_batch_op = std::make_shared<vision::MixUpBatch>(2.0);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({mixup_batch_op}, {"image", "label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 2);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: MixUpBatch op
-/// Description: Test MixUpBatch op with default alpha parameter
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess2) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestMixUpBatchSuccess1 with default alpha parameter.";
-
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Batch operation on ds
-  int32_t batch_size = 5;
-  ds = ds->Batch(batch_size);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10);
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({one_hot_op}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<TensorTransform> mixup_batch_op = std::make_shared<vision::MixUpBatch>();
-  // Note: No need to check for output after calling API class constructor
-
-  // Create a Map operation on ds
-  ds = ds->Map({mixup_batch_op}, {"image", "label"});
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    auto image = row["image"];
-    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 2);
 
   // Manually terminate the pipeline
   iter->Stop();
@@ -2417,8 +1947,7 @@ TEST_F(MindDataTestPipeline, TestTrivialAugmentWideInvalidFillValue) {
   std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
   EXPECT_NE(ds, nullptr);
 
-  auto trivial_augment_wide_op = vision::TrivialAugmentWide(31,
-                                             InterpolationMode::kNearestNeighbour, {20, 20});
+  auto trivial_augment_wide_op = vision::TrivialAugmentWide(31, InterpolationMode::kNearestNeighbour, {20, 20});
 
   ds = ds->Map({trivial_augment_wide_op});
   EXPECT_NE(ds, nullptr);
@@ -2429,7 +1958,7 @@ TEST_F(MindDataTestPipeline, TestTrivialAugmentWideInvalidFillValue) {
 
 /// Feature: AdjustSharpness op
 /// Description: Test AdjustSharpness pipeline
-/// Expectation: Create an ImageFolder dataset then do auto AjustSharpness on it 
+/// Expectation: Create an ImageFolder dataset then do auto AjustSharpness on it
 TEST_F(MindDataTestPipeline, TestAdjustSharpness) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSharpness.";
   std::string MindDataPath = "data/dataset";
@@ -2481,7 +2010,7 @@ TEST_F(MindDataTestPipeline, TestAdjustSharpnessParamCheck) {
 
 /// Feature: AdjustSaturation op
 /// Description: Test AdjustSaturation pipeline
-/// Expectation: Create an ImageFolder dataset then do auto AjustSaturation on it 
+/// Expectation: Create an ImageFolder dataset then do auto AjustSaturation on it
 TEST_F(MindDataTestPipeline, TestAdjustSaturation) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSaturation.";
   std::string MindDataPath = "data/dataset";
@@ -2718,7 +2247,7 @@ TEST_F(MindDataTestPipeline, TestAdjustContrastParamCheck) {
 /// Feature: Perspective
 /// Description: Test Perspective pipeline
 /// Expectation: The returned result is as expected
-TEST_F(MindDataTestPipeline, TestPerspective){
+TEST_F(MindDataTestPipeline, TestPerspective) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPerspective.";
 
   // Create an ImageFolder Dataset
@@ -2826,15 +2355,15 @@ TEST_F(MindDataTestPipeline, TestEncodeJpegNormal) {
   auto input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
 
   ASSERT_OK(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output));
-  data = (const UINT8 *) (output.Data().get());
+  data = (const UINT8 *)(output.Data().get());
   EXPECT_EQ(data[0], 255);
   EXPECT_EQ(data[1], 216);
   EXPECT_EQ(data[2], 255);
 
   int quality;
-  for (quality = 20; quality <= 100 ; quality+= 40) {
+  for (quality = 20; quality <= 100; quality += 40) {
     ASSERT_OK(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output, quality));
-    data = (const UINT8 *) (output.Data().get());
+    data = (const UINT8 *)(output.Data().get());
     EXPECT_EQ(data[1], 216);
   }
 }
@@ -2864,7 +2393,7 @@ TEST_F(MindDataTestPipeline, TestEncodeJpegException) {
 
   // Test with an invalid image containing float32 elements
   std::shared_ptr<Tensor> float32_de_tensor;
-  Tensor::CreateEmpty(TensorShape({5, 4, 3 }), DataType(DataType::DE_FLOAT32), &float32_de_tensor);
+  Tensor::CreateEmpty(TensorShape({5, 4, 3}), DataType(DataType::DE_FLOAT32), &float32_de_tensor);
   input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(float32_de_tensor));
   ASSERT_ERROR(mindspore::dataset::vision::EncodeJpeg(input_ms_tensor, &output));
 
@@ -2907,16 +2436,16 @@ TEST_F(MindDataTestPipeline, TestEncodePngNormal) {
   auto input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
 
   ASSERT_OK(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output));
-  data = (const UINT8 *) (output.Data().get());
+  data = (const UINT8 *)(output.Data().get());
   EXPECT_EQ(data[0], 137);
   EXPECT_EQ(data[1], 80);
   EXPECT_EQ(data[2], 78);
   EXPECT_EQ(data[3], 71);
 
   int compression_level;
-  for (compression_level = 0; compression_level <= 9 ; compression_level++) {
+  for (compression_level = 0; compression_level <= 9; compression_level++) {
     ASSERT_OK(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output, compression_level));
-    data = (const UINT8 *) (output.Data().get());
+    data = (const UINT8 *)(output.Data().get());
     EXPECT_EQ(data[1], 80);
   }
 }
@@ -2946,7 +2475,7 @@ TEST_F(MindDataTestPipeline, TestEncodePngException) {
 
   // Test with an invalid image with the type of float
   std::shared_ptr<Tensor> float32_de_tensor;
-  Tensor::CreateEmpty(TensorShape({5, 4, 3 }), DataType(DataType::DE_FLOAT32), &float32_de_tensor);
+  Tensor::CreateEmpty(TensorShape({5, 4, 3}), DataType(DataType::DE_FLOAT32), &float32_de_tensor);
   input_ms_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(float32_de_tensor));
   ASSERT_ERROR(mindspore::dataset::vision::EncodePng(input_ms_tensor, &output));
 

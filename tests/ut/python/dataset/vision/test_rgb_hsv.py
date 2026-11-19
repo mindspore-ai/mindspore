@@ -23,8 +23,6 @@ import os
 import pytest
 from PIL import Image
 
-import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 import mindspore.dataset.vision.py_transforms_util as util
 
@@ -169,106 +167,8 @@ def test_rgb_hsv_batch_chw():
     assert_allclose(rgb_base.flatten(), rgb_de.flatten(), rtol=1e-5, atol=0)
 
 
-def test_rgb_hsv_pipeline():
-    """
-    Feature: RgbToHsv and HsvToRgb ops
-    Description: Test RgbToHsv and HsvToRgb ops in data pipeline
-    Expectation: Output is equal to the expected output
-    """
-    # First dataset
-    transforms1 = [
-        vision.Decode(True),
-        vision.Resize([64, 64]),
-        vision.ToTensor()
-    ]
-    transforms1 = t_trans.Compose(transforms1)
-    ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    transforms2 = [
-        vision.Decode(True),
-        vision.Resize([64, 64]),
-        vision.ToTensor(),
-        vision.RgbToHsv(),
-        vision.HsvToRgb()
-    ]
-    transform2 = t_trans.Compose(transforms2)
-    ds2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-
-    num_iter = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1), ds2.create_dict_iterator(num_epochs=1)):
-        num_iter += 1
-        ori_img = data1["image"].asnumpy()
-        cvt_img = data2["image"].asnumpy()
-        assert_allclose(ori_img.flatten(), cvt_img.flatten(), rtol=1e-5, atol=0)
-        assert ori_img.shape == cvt_img.shape
 
 
-def test_hsv_to_rgb_operation_01():
-    """
-    Feature: HsvToRgb operation
-    Description: Testing the normal functionality of the HsvToRgb operator
-    Expectation: The Output is equal to the expected output
-    """
-    # HsvToRgb Operator: Test normally
-    transforms = [
-        vision.Decode(True),
-        vision.Resize([64, 64]),
-        vision.ToTensor(),
-        vision.RgbToHsv(),
-        vision.HsvToRgb()
-    ]
-    transform = t_trans.Compose(transforms)
-    dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # HsvToRgb Operator: Normal testing, is_hwc=False
-    transforms = [
-        vision.Decode(True),
-        vision.Resize([64, 64]),
-        vision.ToTensor(),
-        vision.HsvToRgb(is_hwc=False)
-    ]
-    transform = t_trans.Compose(transforms)
-    dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # HsvToRgb Operator: Normal testing, is_hwc=False
-    transforms = [
-        vision.Decode(True),
-        vision.Resize([64, 64]),
-        vision.ToTensor(),
-        chw_to_hwc,
-        vision.HsvToRgb(is_hwc=True),
-        vision.HWC2CHW()
-    ]
-    transform = t_trans.Compose(transforms)
-    dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # HsvToRgb Operator: Normal testing, eager mode, jpg image
-    image_file = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "jpg.jpg")
-    is_hwc = True
-    hsv_to_rgb_op = vision.HsvToRgb(is_hwc)
-    with Image.open(image_file) as image:
-        _ = hsv_to_rgb_op(np.array(image))
-
-    # HsvToRgb Operator: Normal testing, eager mode, bmp image
-    image_file3 = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "bmp.bmp")
-    is_hwc = True
-    hsv_to_rgb_op = vision.HsvToRgb(is_hwc)
-    with Image.open(image_file3) as image:
-        _ = hsv_to_rgb_op(np.array(image))
 
 
 def test_hsv_to_rgb_operation_02():
@@ -364,62 +264,6 @@ def test_hsv_to_rgb_exception_01():
         hsv_to_rgb_op(np.array(image))
 
 
-def test_rgb_to_hsv_operation_01():
-    """
-    Feature: RgbToHsv operation
-    Description: Testing the normal functionality of the RgbToHsv operator
-    Expectation: The Output is equal to the expected output
-    """
-    # Test RgbToHsv func to convert ten Numpy RGB images to HSV images.
-    transforms = [
-        vision.Decode(),
-        vision.Resize([64, 64]),
-        vision.ToTensor(),
-        vision.RgbToHsv()
-    ]
-    transforms = t_trans.Compose(transforms)
-    dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    dataset = dataset.map(input_columns=["image"], operations=transforms)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # Test RgbToHsv func ten images and is_hwc=False.
-    transforms2 = [
-        vision.Decode(),
-        vision.Resize([64, 64]),
-        vision.ToTensor(),
-        vision.RgbToHsv(is_hwc=False)
-    ]
-    transform = t_trans.Compose(transforms2)
-    dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # Test RgbToHsv func ten images and is_hwc=True.
-    transforms2 = [
-        vision.Decode(),
-        vision.Resize([64, 64]),
-        vision.ToTensor(),
-        chw_to_hwc,
-        vision.RgbToHsv(is_hwc=True),
-        vision.HWC2CHW()
-    ]
-    transform = t_trans.Compose(transforms2)
-    dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # Test RgbToHsv func normal: image_path
-    image_file = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "jpg.jpg")
-    image = Image.open(image_file)
-    is_hwc = True
-    rgb_to_hsv_op = vision.RgbToHsv(is_hwc)
-    _ = rgb_to_hsv_op(np.array(image))
-    image.close()
 
 
 def test_rgb_to_hsv_operation_02():
@@ -572,17 +416,3 @@ def test_rgb_to_hsv_exception_01():
     rgb_to_hsv_op = vision.RgbToHsv(is_hwc)
     with pytest.raises(TypeError, match=r'img should be 3 channels RGB img'):
         rgb_to_hsv_op(np.array(image))
-
-
-if __name__ == "__main__":
-    test_rgb_hsv_hwc()
-    test_rgb_hsv_batch_hwc()
-    test_rgb_hsv_chw()
-    test_rgb_hsv_batch_chw()
-    test_rgb_hsv_pipeline()
-    test_hsv_to_rgb_operation_01()
-    test_hsv_to_rgb_operation_02()
-    test_hsv_to_rgb_exception_01()
-    test_rgb_to_hsv_operation_01()
-    test_rgb_to_hsv_operation_02()
-    test_rgb_to_hsv_exception_01()

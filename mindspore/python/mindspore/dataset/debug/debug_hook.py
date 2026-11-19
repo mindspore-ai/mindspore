@@ -31,28 +31,6 @@ class DebugHook(ABC):
     Args:
         prev_op_name (str, optional): name of the operation before the current debugging point. Default: ``None``.
 
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.debug as debug
-        >>> import mindspore.dataset.vision as vision
-        >>>
-        >>> class CustomizedHook(debug.DebugHook):
-        ...     def __init__(self):
-        ...         super().__init__()
-        ...
-        ...     def compute(self, *args):
-        ...         import pdb
-        ...         pdb.set_trace()
-        ...         print("Data after decode", *args)
-        ...         return args
-        >>>
-        >>> # Enable debug mode
-        >>> ds.config.set_debug_mode(True, debug_hook_list=[CustomizedHook()])
-        >>>
-        >>> # Define dataset pipeline
-        >>> dataset = ds.ImageFolderDataset(dataset_dir="/path/to/image_folder_dataset_directory")
-        >>> # Insert debug hook after `Decode` operation.
-        >>> dataset = dataset.map([vision.Decode(), CustomizedHook(), vision.CenterCrop(100)])
     """
     def __init__(self, prev_op_name=None):
         self.prev_op_name = prev_op_name

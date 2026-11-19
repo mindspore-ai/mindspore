@@ -631,7 +631,8 @@ def test_rendered_sst2_dataset_exception_02():
 
     # test ampler and shuffle are specified at the same time
     with pytest.raises(RuntimeError, match="sampler and shuffle cannot be specified at the same time"):
-        _ = ds.RenderedSST2Dataset(IMAGE_DATA_DIR, usage="all", shuffle=False, sampler=ds.SequentialSampler(1))
+        _ = ds.RenderedSST2Dataset(IMAGE_DATA_DIR, usage="all", shuffle=False,
+                                   sampler=ds.SequentialSampler(1))
 
     # test sampler and sharding are specified at the same time
     with pytest.raises(RuntimeError, match="sampler and sharding cannot be specified at the same time"):

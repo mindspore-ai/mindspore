@@ -42,6 +42,8 @@ from ...mindrecord.config import _get_enc_key, _get_dec_mode, decrypt, cleanup_d
 
 from ..core.validator_helpers import replace_none
 from . import samplers
+from .samplers import _SubsetRandomSampler
+from .samplers import _SubsetSampler
 
 
 class CSVDataset(SourceDataset, UnionBaseDataset):
@@ -160,8 +162,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
             argument can only be specified when `num_shards` is also specified.
         sampler (Sampler, optional): Object used to choose samples from the
             dataset. Default: ``None`` , sampler is exclusive
-            with shuffle. Support list: :class:`mindspore.dataset.SubsetRandomSampler`,
-            :class:`mindspore.dataset.PKSampler`, :class:`mindspore.dataset.RandomSampler`,
+            with shuffle. Support list: :class:`mindspore.dataset.RandomSampler`,
             :class:`mindspore.dataset.SequentialSampler`, :class:`mindspore.dataset.DistributedSampler`.
         padded_sample (dict, optional): Samples will be appended to dataset, where
             keys are the same as columns_list. Default: ``None``.
@@ -351,7 +352,7 @@ class MindDataset(MappableDataset, UnionBaseDataset):
         if sampler is None:
             return
         valid_samplers = (
-            samplers.SubsetRandomSampler, samplers.SubsetSampler, samplers.PKSampler,
+            _SubsetRandomSampler, _SubsetSampler,
             samplers.DistributedSampler, samplers.RandomSampler, samplers.SequentialSampler)
         if not isinstance(sampler, valid_samplers):
             raise ValueError("The sampler is not supported yet.")

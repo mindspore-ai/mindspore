@@ -48,9 +48,18 @@ from . import samplers
 from .datasets import UnionBaseDataset, MappableDataset, Schema, to_list, _PythonMultiprocessing
 from .queue import _SharedQueue
 from .validators import check_generator_dataset, check_numpy_slices_dataset, check_padded_dataset
-from ..core.config import _get_enable_shared_mem, get_prefetch_size, get_multiprocessing_timeout_interval, \
-    get_enable_watchdog, get_debug_mode, get_seed, set_seed, get_multiprocessing_start_method, get_video_backend, \
-    set_video_backend
+from ..core.config import (
+    _get_enable_shared_mem,
+    _get_prefetch_size,
+    _get_multiprocessing_timeout_interval as get_multiprocessing_timeout_interval,
+    get_enable_watchdog,
+    _get_debug_mode,
+    get_seed,
+    set_seed,
+    get_multiprocessing_start_method,
+    get_video_backend,
+    set_video_backend,
+)
 from ..core.datatypes import mstypelist_to_detypelist
 from ..core.py_util_helpers import ExceptionHandler
 from ..core.validator_helpers import type_check
@@ -80,8 +89,7 @@ def _check_shm_usage(num_worker, queue_size, in_rowsize, out_rowsize):
                     f"Available: {shm_available}. The required memory can't exceed 80% of the available " +
                     "shared memory, it's recommended to reduce memory usage by following methods:\n" +
                     "1. reduce value of parameter max_rowsize or num_parallel_workers.\n" +
-                    "2. reduce prefetch size by set_prefetch_size().\n" +
-                    "3. disable shared memory by set_enable_shared_mem().")
+                    "2. reduce prefetch size by set_prefetch_size().")
         except FileNotFoundError as exc:
             raise RuntimeError("Expected /dev/shm to exist.") from exc
 
@@ -265,7 +273,7 @@ class SamplerFn(cde.PythonMultiprocessingRuntime):
 
             # Create workers
             # get default queue size and adjust queue size per worker if there are large # workers
-            queue_size = get_prefetch_size()
+            queue_size = _get_prefetch_size()
             queue_size = min(queue_size, queue_size * 4 // self.num_worker)
             queue_size = max(2, queue_size)
 
@@ -453,8 +461,6 @@ class SamplerFn(cde.PythonMultiprocessingRuntime):
         else:
             warning_message += "You can install py-spy via `pip install py-spy`, then " \
                                "stop and rerun your script to get the current stack. "
-        warning_message += "If it is not a problem, you can adjust the printing frequency of this log via " \
-                           "the `mindspore.dataset.config.set_multiprocessing_timeout_interval` interface."
         logger.warning(warning_message)
 
     def _launch_monitor(self):
@@ -869,9 +875,6 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
 
           You can use the following classes/functions to reduce the size of member variables:
 
-          :class:`mindspore.dataset.utils.LineReader`: Use this class to initialize your text file object in the
-          `__init__` function. Then read the file content based on the line number of the object with the `__getitem__`
-          function.
 
         - Input `source` accepts user-defined Python functions (PyFuncs), and sets the multiprocessing start method
           to `spawn` mode by ds.config.set_multiprocessing_start_method("spawn") with `python_multiprocessing=True`
@@ -1000,7 +1003,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         self._check_operator_mixed()
         self._check_windows(self.num_parallel_workers, python_multiprocessing)
 
-        if self.python_multiprocessing and get_debug_mode():
+        if self.python_multiprocessing and _get_debug_mode():
             logger.warning("Python multiprocessing is not supported in debug mode."
                            " Ignoring Python multiprocessing for GeneratorDataset.")
 
@@ -1106,7 +1109,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             if self.source_len == -1:
                 raise RuntimeError("Attempt to construct a random access dataset, '__len__' method is required!")
 
-            if self.num_parallel_workers > 1 and not get_debug_mode():
+            if self.num_parallel_workers > 1 and not _get_debug_mode():
                 self.__validate_memory_usage()
                 # Starting multiple processes in spawn mode requires pickling source object
                 self.source = _PickleGeneratorSource(self.source)
@@ -1168,30 +1171,6 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
                                                                                  valid_num_worker)
                 logger.warning(info)
 
-    def add_sampler(self, new_sampler):
-        """
-        Add a child sampler for the current dataset.
-
-        Note:
-            - If the sampler is added and it has a shuffle option, its value must be ``Shuffle.GLOBAL`` .
-              Additionally, the original sampler's shuffle value cannot be ``Shuffle.PARTIAL`` .
-
-        Args:
-            new_sampler (Sampler): The child sampler to be added.
-
-        Examples:
-            >>> import mindspore.dataset as ds
-            >>> dataset = ds.GeneratorDataset([i for i in range(10)], "column1")
-            >>>
-            >>> new_sampler = ds.DistributedSampler(10, 2)
-            >>> dataset.add_sampler(new_sampler)
-        """
-        # check PKSampler
-        if isinstance(new_sampler, samplers.PKSampler):
-            raise RuntimeError("GeneratorDataset doesn't support PKSampler")
-
-        # call parent class
-        super().add_sampler(new_sampler)
 
 
 class _NumpySlicesDataset:

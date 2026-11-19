@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Dataset regression coverage for dataset mltiprocessing spawn."""
 import os
 
 import numpy as np
@@ -21,7 +22,6 @@ import mindspore
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 from mindspore import nn, ops, Tensor
-from mindspore.dataset.transforms import transforms
 from tests.mark_utils import arg_mark
 
 
@@ -128,68 +128,3 @@ def test_generator_dataset_and_map_with_dvpp_nn_ops_with_spawn(ms_independent_da
 
     os.environ['MS_INDEPENDENT_DATASET'] = "False"
     ds.config.set_multiprocessing_start_method("fork")
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
-@pytest.mark.parametrize("python_multiprocessing", [True, False])
-def test_generator_dataset_with_dvpp_with_spawn(python_multiprocessing):
-    """
-    Feature: GeneratorDataset op
-    Description: Test GeneratorDataset with dvpp with multi process and map with dvpp with multi-thread in spawn mode
-    Expectation: The result is equal to the expected
-    """
-    ds.config.set_multiprocessing_start_method("spawn")
-
-    # Random-accessible object as input source
-    class RandomAccessDataset:
-        def __init__(self):
-            self._data = np.ones((100, 2))
-            self._label = np.zeros((100, 1))
-
-        def __getitem__(self, index):
-            image = np.fromfile(input_apple_jpg, dtype=np.uint8)
-            image = vision.Decode()(image)
-            image = vision.Crop((0, 0), 224)(image)
-            image = vision.Resize((192, 192)).device("Ascend")(image)
-            return image, self._label[index]
-
-        def __len__(self):
-            return len(self._data)
-
-    def func(data):
-        data = vision.Resize((128, 128)).device("Ascend")(data)
-        return (data,)
-
-    # map with multi process by spawn
-    loader1 = RandomAccessDataset()
-    dataset1 = ds.GeneratorDataset(source=loader1, column_names=["data", "label"], python_multiprocessing=True,
-                                   num_parallel_workers=2)
-    dataset1 = dataset1.map(func, input_columns=["data"], python_multiprocessing=python_multiprocessing,
-                            num_parallel_workers=2)
-
-    count = 0
-    for _ in dataset1:
-        count += 1
-    assert count == 100
-
-    # compose map with multi process by spawn
-    loader2 = RandomAccessDataset()
-    dataset2 = ds.GeneratorDataset(source=loader2, column_names=["data", "label"], python_multiprocessing=True,
-                                   num_parallel_workers=2)
-    transform_ops = [
-        vision.Resize((128, 128)).device("Ascend")
-        ]
-    dataset2 = dataset2.map(transforms.Compose(transform_ops), input_columns=["data"],
-                            python_multiprocessing=python_multiprocessing, num_parallel_workers=2)
-
-    count = 0
-    for _ in dataset2:
-        count += 1
-    assert count == 100
-    ds.config.set_multiprocessing_start_method("fork")
-
-
-if __name__ == '__main__':
-    test_generator_dataset_with_dvpp_with_spawn_independent_mode(python_multiprocessing)
-    test_generator_dataset_and_map_with_dvpp_nn_ops_with_spawn(ms_independent_dataset)
-    test_generator_dataset_with_dvpp_with_spawn(python_multiprocessing)

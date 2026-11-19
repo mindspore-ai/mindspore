@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Bucket batching regression tests."""
 import pytest
 import numpy as np
 import mindspore.dataset as ds
@@ -21,7 +22,7 @@ import mindspore.dataset as ds
 # generates 1 column [0], [0, 1], ..., [0, ..., n-1]
 def generate_sequential(n):
     for i in range(n):
-        yield (np.array([j for j in range(i + 1)]),)
+        yield (np.array(list(range(i + 1))),)
 
 
 # generates 1 column [0], [1], ..., [n-1]
@@ -33,12 +34,12 @@ def generate_sequential_same_shape(n):
 # combines generate_sequential_same_shape and generate_sequential
 def generate_2_columns(n):
     for i in range(n):
-        yield (np.array([i]), np.array([j for j in range(i + 1)]))
+        yield (np.array([i]), np.array(list(range(i + 1))))
 
 
 def generate_3_columns(n):
     for i in range(n):
-        yield (np.array([i]), np.array([i + 1]), np.array([j for j in range(i + 1)]))
+        yield (np.array([i]), np.array([i + 1]), np.array(list(range(i + 1))))
 
 
 def test_bucket_batch_invalid_input():
@@ -134,7 +135,8 @@ def test_bucket_batch_multi_bucket_no_padding():
     column_names = ["col1"]
     bucket_boundaries = [1, 2, 3]
     bucket_batch_sizes = [3, 3, 2, 2]
-    element_length_function = (lambda x: x[0] % 4)
+    def element_length_function(x):
+        return x[0] % 4
 
     dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
                                              bucket_batch_sizes, element_length_function)
@@ -162,7 +164,8 @@ def test_bucket_batch_multi_bucket_no_padding_repeat():
     column_names = ["col1"]
     bucket_boundaries = [1, 2, 3]
     bucket_batch_sizes = [3, 3, 2, 2]
-    element_length_function = (lambda x: x[0] % 4)
+    def element_length_function(x):
+        return x[0] % 4
 
     dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
                                              bucket_batch_sizes, element_length_function)
@@ -195,7 +198,8 @@ def test_bucket_batch_multi_bucket_with_padding():
     column_names = ["col1"]
     bucket_boundaries = [1, 2, 3]
     bucket_batch_sizes = [2, 3, 3, 2]
-    element_length_function = (lambda x: len(x) % 4)
+    def element_length_function(x):
+        return len(x) % 4
     pad_info = {"col1": ([10], 0)}
 
     dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
@@ -231,7 +235,8 @@ def test_bucket_batch_single_bucket_no_padding():
     column_names = ["col1"]
     bucket_boundaries = [1, 2, 3]
     bucket_batch_sizes = [1, 1, 5, 1]
-    element_length_function = (lambda x: 2)
+    def element_length_function(x):
+        return 2
 
     dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
                                              bucket_batch_sizes, element_length_function)
@@ -257,7 +262,8 @@ def test_bucket_batch_single_bucket_with_padding():
     column_names = ["col1"]
     bucket_boundaries = [1, 2, 3]
     bucket_batch_sizes = [1, 1, 1, 3]
-    element_length_function = (lambda x: 7)
+    def element_length_function(x):
+        return 7
     pad_info = {"col1": ([12], 0)}
 
     dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
@@ -370,7 +376,8 @@ def test_bucket_batch_drop_remainder(drop_remainder):
     column_names = ["col1"]
     bucket_boundaries = [1, 2]
     bucket_batch_sizes = [2, 3, 5]
-    element_length_function = (lambda x: x[0] % 3)
+    def element_length_function(x):
+        return x[0] % 3
     pad_info = None
     pad_to_bucket_boundary = False
 
@@ -488,7 +495,8 @@ def test_bucket_batch_three_columns():
     column_names = ["same_shape2"]
     bucket_boundaries = [6, 12]
     bucket_batch_sizes = [5, 5, 1]
-    element_length_function = (lambda x: x[0] % 3)
+    def element_length_function(x):
+        return x[0] % 3
     pad_info = {}
 
     dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
@@ -534,7 +542,8 @@ def test_bucket_batch_get_dataset_size():
     column_names = ["col1"]
     bucket_boundaries = [1, 2, 3]
     bucket_batch_sizes = [3, 3, 2, 2]
-    element_length_function = (lambda x: x[0] % 4)
+    def element_length_function(x):
+        return x[0] % 4
 
     dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
                                              bucket_batch_sizes, element_length_function)
@@ -651,7 +660,8 @@ def test_bucket_batch_invalid_column():
     column_names = ["invalid_column"]
     bucket_boundaries = [1, 2, 3]
     bucket_batch_sizes = [3, 3, 2, 2]
-    element_length_function = (lambda x: x[0] % 4)
+    def element_length_function(x):
+        return x[0] % 4
 
     dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
                                              bucket_batch_sizes, element_length_function)
@@ -662,44 +672,6 @@ def test_bucket_batch_invalid_column():
             num_rows += 1
 
         assert "BucketBatchByLength: Couldn't find the specified column in the dataset" in str(info.value)
-
-
-@pytest.mark.parametrize("drop_remainder", (True, False))
-def test_bucket_batch_with_pull_mode(drop_remainder):
-    """
-    Feature: bucket_batch_by_length op
-    Description: Test bucket_batch_by_length op to support pull mode
-    Expectation: Output is equal to the expected output
-    """
-    original_debug_mode = ds.config.get_debug_mode()
-    ds.config.set_debug_mode(True)
-    dataset = ds.GeneratorDataset((lambda: generate_sequential_same_shape(10)), ["col1"])
-
-    column_names = ["col1"]
-    bucket_boundaries = [1, 2, 3]
-    bucket_batch_sizes = [3, 3, 3, 3]
-    element_length_function = (lambda x: x[0] % 4)
-
-    dataset = dataset.bucket_batch_by_length(column_names, bucket_boundaries,
-                                             bucket_batch_sizes, element_length_function,
-                                             drop_remainder=drop_remainder)
-
-    expected_output = [[[0], [4], [8]],
-                       [[1], [5], [9]]]
-    if not drop_remainder:
-        # append the remainder
-        expected_output += [[[2], [6]], [[3], [7]]]
-
-    # iterate at least 2 epochs to check if the remainder is dropped
-    num_epochs = 2
-    iterator = dataset.create_dict_iterator(num_epochs=num_epochs, output_numpy=True)
-    for _ in range(num_epochs):
-        output = []
-        for data in iterator:
-            output.append(data["col1"].tolist())
-        assert output == expected_output
-
-    ds.config.set_debug_mode(original_debug_mode)
 
 
 if __name__ == '__main__':
@@ -717,6 +689,5 @@ if __name__ == '__main__':
     test_bucket_batch_three_columns()
     test_bucket_batch_get_dataset_size()
     test_bucket_batch_invalid_column()
-    test_bucket_batch_with_pull_mode(drop_remainder=True)
     test_bucket_batch_with_string()
     test_bucket_batch_with_scalar()

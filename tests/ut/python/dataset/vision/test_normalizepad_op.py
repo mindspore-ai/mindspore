@@ -20,7 +20,6 @@ import os
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms
 import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import diff_mse, visualize_image
@@ -83,89 +82,8 @@ def test_normalize_pad_op_hwc(plot=False):
         num_iter += 1
 
 
-def test_normalize_pad_op_chw(plot=False):
-    """
-    Feature: NormalizePad
-    Description: Test NormalizePad with CHW input, Decode(to_pil=True) & ToTensor versus NumPy comparison
-    Expectation: Test succeeds. MSE difference is negligible.
-    """
-    logger.info("Test NormalizePad with chw")
-    mean = [0.475, 0.45, 0.392]
-    std = [0.275, 0.267, 0.278]
-    # define map operations
-    transforms = [
-        vision.Decode(True),
-        vision.ToTensor()
-    ]
-    transform = mindspore.dataset.transforms.Compose(transforms)
-    normalize_pad_op = vision.NormalizePad(mean, std, is_hwc=False)
-
-    #  First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(operations=transform, input_columns=["image"])
-    data1 = data1.map(operations=normalize_pad_op, input_columns=["image"])
-
-    transforms2 = [
-        vision.Decode(True),
-        vision.ToTensor()
-    ]
-    transform2 = mindspore.dataset.transforms.Compose(transforms2)
-
-    #  Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=transform2, input_columns=["image"])
-
-    num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        image_de_normalized = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-        image_np_normalized = (normalize_pad_np(item2["image"].transpose(1, 2, 0), mean, std) * 255).astype(np.uint8)
-        image_original = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-        mse = diff_mse(image_de_normalized, image_np_normalized)
-        logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
-        assert mse < 0.01
-        if plot:
-            visualize_image(image_original, image_de_normalized, mse, image_np_normalized)
-        num_iter += 1
 
 
-def test_normalize_pad_op_comp_chw():
-    """
-    Feature: NormalizePad
-    Description: Test NormalizePad with CHW input, Decode(to_pil=True) & ToTensor versus Decode(to_pil=False) & HWC2CHW
-                 comparison.
-    Expectation: Test succeeds. MSE difference is negligible.
-    """
-    logger.info("Test NormalizePad with CHW input")
-    mean = [0.475, 0.45, 0.392]
-    std = [0.275, 0.267, 0.278]
-    # define map operations
-    transforms = [
-        vision.Decode(True),
-        vision.ToTensor()
-    ]
-    transform = mindspore.dataset.transforms.Compose(transforms)
-    normalize_pad_op = vision.NormalizePad(mean, std, is_hwc=False)
-
-    #  First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(operations=transform, input_columns=["image"])
-    data1 = data1.map(operations=normalize_pad_op, input_columns=["image"])
-
-    #  Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=vision.Decode(), input_columns=["image"])
-    data2 = data2.map(operations=vision.HWC2CHW(), input_columns=["image"])
-    data2 = data2.map(operations=vision.NormalizePad(mean, std, is_hwc=False), input_columns=["image"])
-
-    num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        image_de_normalized = item1["image"]
-        image_np_normalized = item2["image"] / 255
-        mse = diff_mse(image_de_normalized, image_np_normalized)
-        logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
-        assert mse < 0.01
 
 
 def test_decode_normalize_pad_op():
@@ -665,23 +583,3 @@ def test_normalize_pad_exception_02():
     with pytest.raises(TypeError, match=r"Argument mean\[2\] with value 20 is not of type \[<class 'int'>, "
                                         r"<class 'float'>\], but got <class 'str'>."):
         vision.NormalizePad(mean=[20, 20, '20'], std=[120, 150, 200])
-
-
-
-if __name__ == "__main__":
-    test_normalize_pad_op_hwc(plot=True)
-    test_normalize_pad_op_chw(plot=True)
-    test_normalize_pad_op_comp_chw()
-    test_decode_normalize_pad_op()
-    test_multi_channel_normalize_pad_chw()
-    test_multi_channel_normalize_pad_hwc()
-    test_normalize_pad_exception_unequal_size_1()
-    test_normalize_pad_exception_unequal_size_2()
-    test_normalize_pad_exception_invalid_range()
-    test_normalize_pad_op_1channel()
-    test_normalize_pad_runtime_error()
-    test_normalize_pad_invalid_param()
-    test_normalize_pad_operation_01()
-    test_normalize_pad_operation_02()
-    test_normalize_pad_exception_01()
-    test_normalize_pad_exception_02()

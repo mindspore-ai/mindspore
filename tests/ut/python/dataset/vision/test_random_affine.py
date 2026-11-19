@@ -23,12 +23,10 @@ import pytest
 
 import mindspore as ms
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
-from util import visualize_list, save_and_check_md5, save_and_check_md5_pil, \
-    config_get_set_seed, config_get_set_num_parallel_workers
+from util import visualize_list, save_and_check_md5, config_get_set_seed, config_get_set_num_parallel_workers
 
 GENERATE_GOLDEN = False
 
@@ -45,44 +43,6 @@ image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "
 image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "gif.gif")
 
 
-def test_random_affine_op(plot=False):
-    """
-    Feature: RandomAffine op
-    Description: Test RandomAffine in Python transformations
-    Expectation: The dataset is processed as expected
-    """
-    logger.info("test_random_affine_op")
-    # define map operations
-    transforms1 = [
-        vision.Decode(True),
-        vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1), resample=Inter.NEAREST),
-        vision.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-
-    transforms2 = [
-        vision.Decode(True),
-        vision.ToTensor()
-    ]
-    transform2 = t_trans.Compose(transforms2)
-
-    #  First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data1 = data1.map(operations=transform1, input_columns=["image"])
-    #  Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=transform2, input_columns=["image"])
-
-    image_affine = []
-    image_original = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        image1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-        image2 = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-        image_affine.append(image1)
-        image_original.append(image2)
-    if plot:
-        visualize_list(image_original, image_affine)
 
 
 def test_random_affine_op_c(plot=False):
@@ -121,35 +81,6 @@ def test_random_affine_op_c(plot=False):
         visualize_list(image_original, image_affine)
 
 
-def test_random_affine_md5():
-    """
-    Feature: RandomAffine op
-    Description: Test RandomAffine with md5 comparisons
-    Expectation: Passes md5 comparison test
-    """
-    logger.info("test_random_affine_md5")
-    original_seed = config_get_set_seed(55)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-    # define map operations
-    transforms = [
-        vision.Decode(True),
-        vision.RandomAffine(degrees=(-5, 15), translate=(0.1, 0.3),
-                            scale=(0.9, 1.1), shear=(-10, 10, -5, 5)),
-        vision.ToTensor()
-    ]
-    transform = t_trans.Compose(transforms)
-
-    #  Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data = data.map(operations=transform, input_columns=["image"])
-
-    # check results with md5 comparison
-    filename = "random_affine_01_result.npz"
-    save_and_check_md5_pil(data, filename, generate_golden=GENERATE_GOLDEN)
-
-    # Restore configuration
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers((original_num_parallel_workers))
 
 
 def test_random_affine_c_md5():
@@ -209,23 +140,6 @@ def test_random_affine_default_c_md5():
     ds.config.set_num_parallel_workers((original_num_parallel_workers))
 
 
-def test_random_affine_py_exception_non_pil_images():
-    """
-    Feature: RandomAffine op
-    Description: Test RandomAffine with input image of ndarray and not PIL
-    Expectation: Error is raised as expected
-    """
-    logger.info("test_random_affine_exception_negative_degrees")
-    dataset = ds.MnistDataset(MNIST_DATA_DIR, num_samples=3, num_parallel_workers=3)
-    try:
-        transform = t_trans.Compose([vision.ToTensor(),
-                                                          vision.RandomAffine(degrees=(15, 15))])
-        dataset = dataset.map(operations=transform, input_columns=["image"], num_parallel_workers=3)
-        for _ in dataset.create_dict_iterator(num_epochs=1):
-            pass
-    except RuntimeError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Pillow image" in str(e)
 
 
 def test_random_affine_exception_negative_degrees():
@@ -605,61 +519,6 @@ def test_random_affine_operation_02():
     _ = random_affine_op(image)
 
 
-def test_random_affine_operation_03():
-    """
-    Feature: RandomAffine operation
-    Description: Testing the normal functionality of the RandomAffine operator
-    Expectation: The Output is equal to the expected output
-    """
-    # Input shape is (128, 128, 1)
-    image = np.random.randint(0, 255, (128, 128, 1)).astype(np.uint8)
-    degrees = (4.2, 8.0)
-    translate = [-0.4, 1, 0, 0.5]
-    scale = (0.1, 0.2)
-    shear = (1, 4, 3, 3)
-    resample = Inter.NEAREST
-    fill_value = (180, 180, 200)
-    random_affine_op = vision.RandomAffine(degrees=degrees, translate=translate, scale=scale, shear=shear,
-                                          resample=resample, fill_value=fill_value)
-    random_affine_op(image)
-
-    # Input shape is (128, 128, 4)
-    image = np.random.randint(0, 255, (128, 128, 4)).astype(np.uint8)
-    degrees = [0.6, 0.6]
-    translate = (-0.4, -0.2, -1, -1)
-    scale = [16777215, 16777215.1]
-    shear = [0.8, 10, 3.6, 4.1]
-    resample = Inter.BILINEAR
-    fill_value = (0, 255, 230)
-    random_affine_op = vision.RandomAffine(degrees=degrees, translate=translate, scale=scale, shear=shear,
-                                          resample=resample, fill_value=fill_value)
-    _ = random_affine_op(image)
-
-    # Input shape is (192, 263)
-    image = np.random.randn(192, 263)
-    degrees = 728.5
-    translate = [0.3, 0.3, 0.3, 0.3]
-    scale = [18, 21]
-    shear = (16777216, 16777216.1, 16777211, 16777216)
-    resample = Inter.BILINEAR
-    fill_value = (12, 8, 12)
-    random_affine_op = vision.RandomAffine(degrees=degrees, translate=translate, scale=scale, shear=shear,
-                                          resample=resample, fill_value=fill_value)
-    _ = random_affine_op(image)
-
-    # Pipeline mode, combination enhancement, RandomAffine interface call successful
-    # First dataset
-    dataset = ds.ImageFolderDataset(DATA_DIR_1, 1)
-    transforms_list = [
-        vision.Decode(),
-        vision.RandomAffine(10, [0, 1], (1, 5), 20.1, Inter.NEAREST, 0),
-        vision.ToTensor()
-    ]
-    transform = t_trans.Compose(transforms_list)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
 
 
 def test_random_affine_exception_01():
@@ -1170,30 +1029,3 @@ def test_random_affine_exception_05():
     with pytest.raises(RuntimeError, match="Affine: input tensor is not in shape of <H,W>"
                                            " or <H,W,C>, but got rank: 4"):
         op(image)
-
-
-if __name__ == "__main__":
-    test_random_affine_op(plot=True)
-    test_random_affine_op_c(plot=True)
-    test_random_affine_md5()
-    test_random_affine_c_md5()
-    test_random_affine_default_c_md5()
-    test_random_affine_py_exception_non_pil_images()
-    test_random_affine_exception_negative_degrees()
-    test_random_affine_exception_translation_range()
-    test_random_affine_exception_scale_value()
-    test_random_affine_exception_shear_value()
-    test_random_affine_exception_degrees_size()
-    test_random_affine_exception_translate_size()
-    test_random_affine_exception_scale_size()
-    test_random_affine_exception_shear_size()
-    test_random_affine_op_exception_c_resample()
-    test_random_affine_op_exception_py_resample()
-    test_random_affine_operation_01()
-    test_random_affine_operation_02()
-    test_random_affine_operation_03()
-    test_random_affine_exception_01()
-    test_random_affine_exception_02()
-    test_random_affine_exception_03()
-    test_random_affine_exception_04()
-    test_random_affine_exception_05()

@@ -40,14 +40,15 @@ def load_sbu(path):
     file1 = os.path.realpath(os.path.join(path, 'SBU_captioned_photo_dataset_urls.txt'))
     file2 = os.path.realpath(os.path.join(path, 'SBU_captioned_photo_dataset_captions.txt'))
 
-    for line1, line2 in zip(open(file1), open(file2)):
-        url = line1.rstrip()
-        image = url[23:].replace("/", "_")
-        filename = os.path.join(path, 'sbu_images', image)
-        if os.path.exists(filename):
-            caption = line2.rstrip()
-            images.append(np.asarray(Image.open(filename).convert('RGB')).astype(np.uint8))
-            captions.append(caption)
+    with open(file1, encoding="utf-8") as first_input, open(file2, encoding="utf-8") as second_input:
+        for line1, line2 in zip(first_input, second_input):
+            url = line1.rstrip()
+            image = url[23:].replace("/", "_")
+            filename = os.path.join(path, 'sbu_images', image)
+            if os.path.exists(filename):
+                caption = line2.rstrip()
+                images.append(np.asarray(Image.open(filename).convert('RGB')).astype(np.uint8))
+                captions.append(caption)
     return images, captions
 
 

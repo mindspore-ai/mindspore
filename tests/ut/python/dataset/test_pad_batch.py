@@ -13,11 +13,13 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Dataset regression coverage for pad batch."""
 import time
 
 import numpy as np
 
 import mindspore.dataset as ds
+from mindspore.dataset.core.config import _get_enable_shared_mem, _set_enable_shared_mem
 
 CIFAR10_DIR = "../data/dataset/testCifar10Data"
 
@@ -41,7 +43,7 @@ def gen_2cols(num):
 # col: [0], [0,1], [0,1,2], [0,1,2,3]
 def gen_var_col(num):
     for i in range(num):
-        yield (np.array([j for j in range(i + 1)]),)
+        yield (np.array(list(range(i + 1))),)
 
 
 # this generator function yield two columns of variable shapes
@@ -49,7 +51,7 @@ def gen_var_col(num):
 # col2: [100], [100,101], [100,101,102], [100,110,102,103]
 def gen_var_cols(num):
     for i in range(num):
-        yield (np.array([j for j in range(i + 1)]), np.array([100 + j for j in range(i + 1)]))
+        yield (np.array(list(range(i + 1))), np.array([100 + j for j in range(i + 1)]))
 
 
 # this generator function yield two columns of variable shapes
@@ -57,7 +59,7 @@ def gen_var_cols(num):
 # col2: [[100]], [[100,101]], [[100,101,102]], [[100,110,102,103]]
 def gen_var_cols_2d(num):
     for i in range(num):
-        yield (np.array([[j for j in range(i + 1)]]), np.array([[100 + j for j in range(i + 1)]]))
+        yield (np.array([list(range(i + 1))]), np.array([[100 + j for j in range(i + 1)]]))
 
 
 def test_batch_padding_01():
@@ -98,7 +100,7 @@ def test_batch_padding_03():
     data1 = ds.GeneratorDataset((lambda: gen_var_col(4)), ["col"])
     data1 = data1.padded_batch(batch_size=2, drop_remainder=False, pad_info={"col": (None, -1)})  # pad automatically
     data1 = data1.repeat(2)
-    res = dict()
+    res = {}
     for ind, data in enumerate(data1.create_dict_iterator(num_epochs=1, output_numpy=True)):
         res[ind] = data["col"].copy()
     np.testing.assert_array_equal(res[0], [[0, -1], [0, 1]])
@@ -228,7 +230,7 @@ def test_pad_via_map():
     res_from_batch = pad_batch_config()
     assert len(res_from_batch) == len(res_from_batch)
     for i, _ in enumerate(res_from_map):
-        np.testing.assert_array_equal(res_from_map[i], res_from_batch[i])
+        np.testing.assert_array_equal(_, res_from_batch[i])
 
 
 def test_pad_via_map_multiproc():
@@ -239,14 +241,14 @@ def test_pad_via_map_multiproc():
     """
     # Note: Reduce shared memory needed (for CI) by using small num_parallel_workers and max_rowsize values
     # and disabling the shared memory optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
     res_from_map = pad_map_config(2, True, 1)
     res_from_batch = pad_batch_config()
     assert len(res_from_batch) == len(res_from_batch)
     for i, _ in enumerate(res_from_map):
-        np.testing.assert_array_equal(res_from_map[i], res_from_batch[i])
-    ds.config.set_enable_shared_mem(mem_original)
+        np.testing.assert_array_equal(_, res_from_batch[i])
+    _set_enable_shared_mem(mem_original)
 
 
 if __name__ == '__main__':

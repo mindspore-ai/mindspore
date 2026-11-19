@@ -38,13 +38,14 @@ Constants:
 """
 import os
 import mindspore.dataset.vision as deMap
-import mindspore.dataset.transforms as C
+import mindspore.dataset.transforms.transforms as C
 import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
 from mindspore.communication.management import init
 from mindspore.communication.management import get_rank
 from mindspore.communication.management import get_group_size
 from mindspore import log as logger
+import numpy as np
 
 
 CUR_DIR = os.path.split(__file__)[0]
@@ -89,13 +90,19 @@ def create_animal_dataset(epoch_size=2, batch_size=32, step_size=1, resize_heigh
     type_cast_op = None
     if label_dtype == 'FP32':
         type_cast_op = C.TypeCast(mstype.float32)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'FP16':
         type_cast_op = C.TypeCast(mstype.float16)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'FP64':
         type_cast_op = C.TypeCast(mstype.float64)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'INT32':
         type_cast_op = C.TypeCast(mstype.int32)
     elif label_dtype == 'INT64':
@@ -157,10 +164,14 @@ def create_animal_no_random_dataset(epoch_size=1, batch_size=32, step_size=1, re
 
     if label_dtype == 'FP32':
         type_cast_op = C.TypeCast(mstype.float32)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'FP16':
         type_cast_op = C.TypeCast(mstype.float16)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'INT32':
         type_cast_op = C.TypeCast(mstype.int32)
     elif label_dtype == 'INT64':
@@ -223,7 +234,7 @@ def create_splited_data_dataset(img_h=1, img_w=1, mask_h=1, mask_w=1, batch_size
     dataset = dataset.map(input_columns="image", operations=vertical_flip_op)
     dataset = dataset.map(input_columns="image", operations=rescale_op)
 
-    dataset = dataset.map(operations=C.Duplicate(),
+    dataset = dataset.map(operations=lambda image: (image, image.copy()),
                           input_columns=["image"],
                           output_columns=["image", "mask"])
     dataset = dataset.project(["image", "mask"])
@@ -397,7 +408,7 @@ def create_no_splited_data_dataset(batch_size=64, resize_height=224, resize_widt
     dataset = dataset.map(input_columns="image", operations=vertical_flip_op)
     dataset = dataset.map(input_columns="image", operations=rescale_op)
 
-    dataset = dataset.map(operations=C.Duplicate(),
+    dataset = dataset.map(operations=lambda image: (image, image.copy()),
                           input_columns=["image"],
                           output_columns=["image", "mask"])
     dataset = dataset.project(["image", "mask"])

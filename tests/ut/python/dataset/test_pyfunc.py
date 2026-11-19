@@ -19,6 +19,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
+from mindspore.dataset.core.config import _get_enable_shared_mem, _set_enable_shared_mem
 import mindspore.dataset.engine.iterators as it
 from mindspore import log as logger
 
@@ -204,8 +205,8 @@ def test_case_7():
     logger.info("Test 1-1 PyFunc Multiprocess: lambda x : x + x")
 
     # Reduce memory required by disabling the shared memory optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -220,7 +221,7 @@ def test_case_7():
         np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
-    ds.config.set_enable_shared_mem(mem_original)
+    _set_enable_shared_mem(mem_original)
 
 
 def test_case_8():
@@ -232,8 +233,8 @@ def test_case_8():
     logger.info("Test Multiprocess n-m PyFunc : lambda x, y : (x , x + 1, x + y)")
 
     # Reduce memory required by disabling the shared memory optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
 
     col = ["col0", "col1"]
 
@@ -255,7 +256,7 @@ def test_case_8():
         np.testing.assert_array_equal(item["out2"], golden)
         i = i + 4
 
-    ds.config.set_enable_shared_mem(mem_original)
+    _set_enable_shared_mem(mem_original)
 
 
 def test_case_9():
@@ -267,8 +268,8 @@ def test_case_9():
     logger.info("Test multiple 1-1 PyFunc Multiprocess: lambda x : x + x")
 
     # Reduce memory required by disabling the shared memory optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -283,7 +284,7 @@ def test_case_9():
         np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
-    ds.config.set_enable_shared_mem(mem_original)
+    _set_enable_shared_mem(mem_original)
 
 
 def test_case_10():
@@ -295,8 +296,8 @@ def test_case_10():
     logger.info("Test multiple map with multiprocess: lambda x : x + x")
 
     # Reduce memory required by disabling the shared memory optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
 
     # apply dataset operations
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -313,7 +314,7 @@ def test_case_10():
         np.testing.assert_array_equal(item["out"], golden)
         i = i + 4
 
-    ds.config.set_enable_shared_mem(mem_original)
+    _set_enable_shared_mem(mem_original)
 
 
 def test_pyfunc_implicit_compose():
@@ -381,8 +382,8 @@ def test_pyfunc_exception_multiprocess():
         raise Exception("MP Pyfunc Throw")
 
     # Reduce memory required by disabling the shared memory optimization
-    mem_original = ds.config.get_enable_shared_mem()
-    ds.config.set_enable_shared_mem(False)
+    mem_original = _get_enable_shared_mem()
+    _set_enable_shared_mem(False)
 
     with pytest.raises(RuntimeError) as info:
         # apply dataset operations
@@ -393,7 +394,7 @@ def test_pyfunc_exception_multiprocess():
             pass
     assert "Exception thrown from user defined Python function in dataset" in str(info.value)
 
-    ds.config.set_enable_shared_mem(mem_original)
+    _set_enable_shared_mem(mem_original)
 
 
 def test_func_with_yield_manifest_dataset_01():
@@ -540,8 +541,8 @@ def test_pyfunc_returned_list_types_mixed(python_multiproc):
 
         if python_multiproc:
             # Reduce memory required by disabling the shared memory optimization
-            mem_original = ds.config.get_enable_shared_mem()
-            ds.config.set_enable_shared_mem(False)
+            mem_original = _get_enable_shared_mem()
+            _set_enable_shared_mem(False)
 
         data1 = ds.NumpySlicesDataset([1, 2, 3, 4, 5, 6, 7, 8], num_parallel_workers=1, shuffle=False)
         data1 = data1.map(operations=myfunc, num_parallel_workers=num_workers, python_multiprocessing=python_multiproc)
@@ -572,7 +573,7 @@ def test_pyfunc_returned_list_types_mixed(python_multiproc):
 
         if python_multiproc:
             # Restore configuration
-            ds.config.set_enable_shared_mem(mem_original)
+            _set_enable_shared_mem(mem_original)
 
     # Test mixed types in list
     test_config_mixed([1, True], 'Int64', python_multiproc)

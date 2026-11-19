@@ -360,8 +360,6 @@ FuncResult Serdes::InitializeFuncPtr() {
   ops_ptr[vision::kToTensorOperation] = &(vision::ToTensorOperation::from_json);
   ops_ptr[vision::kUniformAugOperation] = &(vision::UniformAugOperation::from_json);
   ops_ptr[vision::kVerticalFlipOperation] = &(vision::VerticalFlipOperation::from_json);
-  ops_ptr[transforms::kFillOperation] = &(transforms::FillOperation::from_json);
-  ops_ptr[transforms::kOneHotOperation] = &(transforms::OneHotOperation::from_json);
   ops_ptr[transforms::kTypeCastOperation] = &(transforms::TypeCastOperation::from_json);
   ops_ptr[text::kToNumberOperation] = &(text::ToNumberOperation::from_json);
 #ifndef _WIN32

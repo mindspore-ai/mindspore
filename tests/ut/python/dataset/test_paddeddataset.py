@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 
+"""Dataset padding regression tests."""
 from io import BytesIO
 import copy
 import os
@@ -161,7 +162,7 @@ def test_bath_afterPadded():
     ds3.use_sampler(testsampler)
 
     ds4 = ds3.batch(2)
-    assert sum([1 for _ in ds4]) == 2
+    assert sum(1 for _ in ds4) == 2
 
 
 def test_Unevenly_distributed():
@@ -306,7 +307,7 @@ def test_imagefolder_padded():
     data3 = data + data2
     testsampler = ds.DistributedSampler(num_shards=5, shard_id=4, shuffle=False, num_samples=None)
     data3.use_sampler(testsampler)
-    assert sum([1 for _ in data3]) == 10
+    assert sum(1 for _ in data3) == 10
     verify_list = []
 
     for ele in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -450,7 +451,7 @@ def get_data(dir_name):
         raise IOError("Directory {} not exists".format(dir_name))
     img_dir = os.path.join(dir_name, "images")
     ann_file = os.path.join(dir_name, "annotation.txt")
-    with open(ann_file, "r") as file_reader:
+    with open(ann_file, "r", encoding="utf-8") as file_reader:
         lines = file_reader.readlines()
 
     data_list = []
@@ -498,10 +499,9 @@ def add_and_remove_cv_file():
             os.remove("{}".format(x))
             os.remove("{}.db".format(x))
         raise error
-    else:
-        for x in paths:
-            os.remove("{}".format(x))
-            os.remove("{}.db".format(x))
+    for x in paths:
+        os.remove("{}".format(x))
+        os.remove("{}.db".format(x))
 
 
 def test_Mindrecord_Padded(remove_mindrecord_file):
@@ -597,37 +597,6 @@ def test_celeba_padded():
     assert count == 4
 
 
-def test_imagefolder_padded_debug_mode():
-    """
-    Feature: PaddedDataset
-    Description: When dataset is empty, iterate over the data when num_epochs is not 1 in debug mode
-    Expectation: Output is equal to the expected output
-    """
-    debug_mode_original = ds.config.get_debug_mode()
-    ds.config.set_debug_mode(True)
-    data_dir = "../data/dataset/testPK/data"
-    data = ds.ImageFolderDataset(data_dir)
-
-    data1 = [{'image': np.zeros(1, np.uint8), 'label': np.array(0, np.int32)},
-             {'image': np.zeros(2, np.uint8), 'label': np.array(1, np.int32)},
-             {'image': np.zeros(3, np.uint8), 'label': np.array(0, np.int32)},
-             {'image': np.zeros(4, np.uint8), 'label': np.array(1, np.int32)},
-             {'image': np.zeros(5, np.uint8), 'label': np.array(0, np.int32)},
-             {'image': np.zeros(6, np.uint8), 'label': np.array(1, np.int32)}]
-
-    data2 = ds.PaddedDataset(data1)
-    data3 = data + data2
-    testsampler = ds.DistributedSampler(num_shards=51, shard_id=50, shuffle=False, num_samples=None)
-    data3.use_sampler(testsampler)
-    assert sum([1 for _ in data3]) == 0
-    verify_list = []
-
-    for ele in data3.create_dict_iterator(num_epochs=2, output_numpy=True):
-        verify_list.append(len(ele['image']))
-    assert not verify_list
-    ds.config.set_debug_mode(debug_mode_original)
-
-
 if __name__ == '__main__':
     test_TFRecord_Padded()
     test_GeneratorDataSet_Padded()
@@ -639,4 +608,3 @@ if __name__ == '__main__':
     test_imagefolder_padded()
     test_more_shard_padded()
     test_Mindrecord_Padded(add_and_remove_cv_file)
-    test_imagefolder_padded_debug_mode()

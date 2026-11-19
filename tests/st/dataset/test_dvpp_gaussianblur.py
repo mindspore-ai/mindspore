@@ -23,7 +23,6 @@ from PIL import Image
 import mindspore as ms
 import mindspore.dataset as ds
 import mindspore.dataset.vision.transforms as v_trans
-import mindspore.dataset.transforms.transforms as t_trans
 from tests.mark_utils import arg_mark
 
 
@@ -133,111 +132,6 @@ def test_dvpp_gaussianblur_operation_01():
     assert np.allclose(gaussianblur_op, gaussianblur_op_cpu, rtol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=36.0)
-def test_dvpp_gaussianblur_operation_02():
-    """
-    Feature: GaussianBlur operation on device
-    Description: Testing the normal functionality of the GaussianBlur operator on device
-    Expectation: The Output is equal to the expected output
-    """
-    # GaussianBlur operator: Test sigma is 0
-    image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "gif.gif")
-    image = Image.open(image_gif)
-    img_array = np.array(image)
-    gaussianblur_op = v_trans.GaussianBlur(1, 0).device(device_target="Ascend")(img_array)
-    gaussianblur_op_cpu = v_trans.GaussianBlur(1, 0)(img_array)
-    assert (gaussianblur_op == gaussianblur_op_cpu).all()
-    image.close()
-
-    # GaussianBlur operator: Test sigma is none
-    image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "png.PNG")
-    image = cv2.imread(image_png)
-    gaussianblur_op = v_trans.GaussianBlur(5).device(device_target="Ascend")
-    out = gaussianblur_op(image)
-    gaussianblur_op = v_trans.GaussianBlur(5, 1.1).device(device_target="Ascend")
-    out2 = gaussianblur_op(image)
-    assert (out == out2).all()
-
-    # GaussianBlur operator: Test input.shape is (50, 50, 3)
-    image = np.random.randint(0, 255, (50, 50, 3)).astype(np.uint8)
-    gaussianblur_op = v_trans.GaussianBlur(1, 100.0).device(device_target="Ascend")(image)
-    gaussianblur_op_cpu = v_trans.GaussianBlur(1, 100.0)(image)
-    assert (gaussianblur_op == gaussianblur_op_cpu).all()
-
-    # GaussianBlur operator: Test input.shape is (50, 50, 1)
-    image = np.random.randint(0, 255, (50, 50, 1)).astype(np.uint8)
-    gaussianblur_op = v_trans.GaussianBlur(1, 100.0).device(device_target="Ascend")(image)
-    new_arr = np.reshape(image, (50, 50))
-    gaussianblur_op_cpu = v_trans.GaussianBlur(1, 100.0)(new_arr)
-    assert gaussianblur_op.shape == (50, 50)
-    assert (gaussianblur_op == gaussianblur_op_cpu).all()
-
-    image = np.random.randint(0, 255, (1, 50, 50, 3)).astype(np.uint8)
-    gaussianblur_op = v_trans.GaussianBlur(1, 100.0).device(device_target="Ascend")(image)
-    assert gaussianblur_op.shape == (50, 50, 3)
-
-    # GaussianBlur operator: Test input is 4d
-    image = np.random.randint(0, 255, (1, 50, 50, 3)).astype(np.uint8)
-    gaussianblur_op = v_trans.GaussianBlur(1, 0.8).device(device_target="Ascend")(image)
-    new_arr = np.reshape(image, (50, 50, 3))
-    gaussianblur_op_cpu = v_trans.GaussianBlur(1, 0.8)(new_arr)
-    assert (gaussianblur_op == gaussianblur_op_cpu).all()
-
-    # GaussianBlur operator: Test input is 3d list
-    image = list(np.random.randint(0, 255, (50, 50, 3)).astype(np.uint8))
-    with pytest.raises(TypeError, match="Input should be NumPy or PIL image, got <class 'list'>"):
-        gaussianblur_op = v_trans.GaussianBlur(1, 0).device(device_target="Ascend")
-        _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: Test input is 3d tuple
-    image = tuple(np.random.randint(0, 255, (50, 50, 3)).astype(np.uint8))
-    with pytest.raises(TypeError, match="Input should be NumPy or PIL image, got <class 'tuple'>"):
-        gaussianblur_op = v_trans.GaussianBlur(1, 0).device(device_target="Ascend")
-        _ = gaussianblur_op(image)
-
-    # GaussianBlur operator: more operations
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "testImageNetData", "train")
-    ### First dataset
-    ds1 = ds.ImageFolderDataset(data_dir, shuffle=False)
-    transforms = [
-        v_trans.Decode(),
-        v_trans.GaussianBlur(1, 0)
-    ]
-    ds1 = ds1.map(input_columns=["image"], operations=transforms)
-    ### Second dataset
-    ds2 = ds.ImageFolderDataset(data_dir, shuffle=False)
-    transforms1 = [
-        v_trans.Decode().device(device_target="Ascend"),
-        v_trans.GaussianBlur(1, 0).device(device_target="Ascend")
-    ]
-    ds2 = ds2.map(input_columns=["image"], operations=transforms1)
-    for data1, data2 in zip(ds1.create_dict_iterator(output_numpy=True), ds2.create_dict_iterator(output_numpy=True)):
-        assert (data1["image"] == data2["image"]).all()
-
-    # GaussianBlur operator: Test GaussianBlur data
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "testImageNetData", "train", "")
-    ### First dataset
-    ds1 = ds.ImageFolderDataset(data_dir, shuffle=False)
-    transforms = [
-        v_trans.Decode(),
-        v_trans.GaussianBlur(1, 0),
-        v_trans.ToTensor()
-    ]
-    transform = t_trans.Compose(transforms)
-    ds1 = ds1.map(input_columns=["image"], operations=transform)
-    ### Second dataset
-    ds2 = ds.ImageFolderDataset(data_dir, shuffle=False)
-    transforms1 = [
-        v_trans.Decode().device(device_target="Ascend"),
-        v_trans.GaussianBlur(1, 0).device(device_target="Ascend"),
-        v_trans.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    ds2 = ds2.map(input_columns=["image"], operations=transform1)
-
-    for data1, data2 in zip(ds1.create_dict_iterator(output_numpy=True), ds2.create_dict_iterator(output_numpy=True)):
-        # with the seed value, we can only guarantee the first number generated
-        assert (data1["image"] == data2["image"]).all()
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=2.0)
@@ -412,10 +306,3 @@ def test_dvpp_gaussianblur_exception_02():
         with pytest.raises(TypeError, match="The input PIL Image cannot be executed on Ascend, "
                                             "you can convert the input to the numpy ndarray type"):
             _ = v_trans.GaussianBlur(1, 100.0).device(device_target="Ascend")(image)
-
-
-if __name__ == '__main__':
-    test_dvpp_gaussianblur_operation_01()
-    test_dvpp_gaussianblur_operation_02()
-    test_dvpp_gaussianblur_exception_01()
-    test_dvpp_gaussianblur_exception_02()

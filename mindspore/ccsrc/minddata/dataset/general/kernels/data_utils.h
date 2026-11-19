@@ -29,23 +29,6 @@
 
 namespace mindspore {
 namespace dataset {
-// Returns Onehot encoding of the input tensor.
-//          Example: if input=2 and numClasses=3, the output is [0 0 1].
-// @param input: Tensor has type DE_UINT64, the non-one hot values are stored
-//               along the first dimensions or rows..
-//               If the rank of input is not 1 or the type is not DE_UINT64,
-//               then it will fail.
-// @param output: Tensor. The shape of the output tensor is <input_shape, numClasses>
-//                and the type is same as input.
-// @param num_classes: Number of classes in dataset.
-// @param smoothing_rate: Adjustable hyperparameter for label smoothing level.
-Status OneHotEncoding(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
-                      double smoothing_rate = 0.);
-
-template <typename T>
-Status OneHotEncodingImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, dsize_t num_classes,
-                          int64_t index, double smoothing_rate);
-
 // Returns a tensor of shape input filled with the passed fill_value
 // @param input  Tensor
 // @param output Tensor. The shape and type of the output tensor is same as input

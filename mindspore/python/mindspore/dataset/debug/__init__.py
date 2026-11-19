@@ -15,7 +15,6 @@
 """Init file for dataset pipeline debug mode"""
 from __future__ import absolute_import
 
-from mindspore.dataset.debug.debug_hook import DebugHook
 from mindspore.dataset.debug.pre_defined_hook import PrintMetaDataHook, PrintDataHook
 
-__all__ = ["DebugHook", "PrintMetaDataHook", "PrintDataHook"]
+__all__ = ["PrintMetaDataHook", "PrintDataHook"]

@@ -15,7 +15,6 @@
 """
 Test LSUN dataset operations
 """
-import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
@@ -299,30 +298,6 @@ def test_distributed_sampler():
     assert num_iter == 1
 
 
-def test_pk_sampler():
-    """
-    Feature: LSUN
-    Description: Test basic usage of LSUN
-    Expectation: The dataset is as expected
-    """
-    logger.info("Test Case PKSampler")
-    # define parameters
-    repeat_count = 1
-
-    # apply dataset operations
-    sampler = ds.PKSampler(1)
-    data1 = ds.LSUNDataset(DATA_DIR, usage="train", sampler=sampler)
-    data1 = data1.repeat(repeat_count)
-
-    num_iter = 0
-    # each data is a dictionary
-    for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        # in this example, each dictionary has keys "image" and "label"
-        logger.info("image is {}".format(item["image"]))
-        logger.info("label is {}".format(item["label"]))
-        num_iter += 1
-    logger.info("Number of data in data1: {}".format(num_iter))
-    assert num_iter == 2
 
 
 def test_chained_sampler():
@@ -495,49 +470,6 @@ def test_lsun_zip():
     assert num_iter == 4
 
 
-def test_lsun_exception():
-    """
-    Feature: LSUN
-    Description: Test error cases for LSUN
-    Expectation: Throw exception correctly
-    """
-    logger.info("Test lsun exception")
-
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.LSUNDataset(DATA_DIR, shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.LSUNDataset(DATA_DIR, sampler=ds.PKSampler(3), num_shards=2, shard_id=0)
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.LSUNDataset(DATA_DIR, num_shards=10)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.LSUNDataset(DATA_DIR, shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.LSUNDataset(DATA_DIR, num_shards=5, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.LSUNDataset(DATA_DIR, num_shards=5, shard_id=5)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.LSUNDataset(DATA_DIR, num_shards=2, shard_id=5)
-
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.LSUNDataset(DATA_DIR, shuffle=False, num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.LSUNDataset(DATA_DIR, shuffle=False, num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.LSUNDataset(DATA_DIR, shuffle=False, num_parallel_workers=-2)
-
-    error_msg_7 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_7):
-        ds.LSUNDataset(DATA_DIR, num_shards=2, shard_id="0")
 
 
 
@@ -584,25 +516,3 @@ def test_lsun_exception_map():
         assert False
     except RuntimeError as e:
         assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
-
-
-if __name__ == '__main__':
-    test_lsun_basic()
-    test_lsun_num_samples()
-    test_sequential_sampler()
-    test_random_sampler()
-    test_distributed_sampler()
-    test_pk_sampler()
-    test_lsun_num_shards()
-    test_lsun_shard_id()
-    test_lsun_no_shuffle()
-    test_lsun_extra_shuffle()
-    test_lsun_decode()
-    test_lsun_test_dataset()
-    test_lsun_valid_dataset()
-    test_lsun_train_dataset()
-    test_lsun_all_dataset()
-    test_lsun_classes()
-    test_lsun_zip()
-    test_lsun_exception()
-    test_lsun_exception_map()

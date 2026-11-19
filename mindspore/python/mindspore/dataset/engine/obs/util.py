@@ -33,7 +33,12 @@ from functools import wraps
 from mindspore import log as logger
 
 from ..datasets import Shuffle
-from ..samplers import RandomSampler, SequentialSampler, SubsetRandomSampler, SubsetSampler
+from ..samplers import (
+    RandomSampler,
+    SequentialSampler,
+    _SubsetRandomSampler as SubsetRandomSampler,
+    _SubsetSampler as SubsetSampler,
+)
 
 if os.name == "nt":
     import msvcrt  # pylint: disable=import-error

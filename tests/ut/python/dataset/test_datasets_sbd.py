@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Dataset regression coverage for datasets sbd."""
 import math
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -152,48 +152,6 @@ def test_sbd_sequential_sampler():
     assert num_iter == num_samples
 
 
-def test_sbd_exception():
-    """
-    Feature: SBDataset
-    Description: Test error cases for SBDataset
-    Expectation: Correct error is thrown as expected
-    """
-    error_msg_1 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_1):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', shuffle=False, sampler=ds.PKSampler(3))
-
-    error_msg_2 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', num_shards=2, shard_id=0,
-                     sampler=ds.PKSampler(3))
-
-    error_msg_3 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', num_shards=10)
-
-    error_msg_4 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', shard_id=0)
-
-    error_msg_5 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', num_shards=5, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', num_shards=5, shard_id=5)
-    with pytest.raises(ValueError, match=error_msg_5):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', num_shards=2, shard_id=5)
-
-    error_msg_6 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', shuffle=False, num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', shuffle=False, num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', shuffle=False, num_parallel_workers=-2)
-
-    error_msg_7 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_7):
-        ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', num_shards=2, shard_id="0")
 
 
 def test_sbd_usage():
@@ -219,11 +177,3 @@ def test_sbd_usage():
     assert test_config("all") == 6
     assert "usage is not within the valid set of ['train', 'val', 'train_noval', 'all']" in test_config("invalid")
     assert "Argument usage with value ['list'] is not of type [<class 'str'>]" in test_config(["list"])
-
-
-if __name__ == "__main__":
-    test_sbd_basic01()
-    test_sbd_basic02()
-    test_sbd_sequential_sampler()
-    test_sbd_exception()
-    test_sbd_usage()

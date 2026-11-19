@@ -33,7 +33,6 @@ from .datasets_user_defined import *
 from .iterators import *
 from .obs.obs_mindrecord_dataset import *
 from .samplers import *
-from .serializer_deserializer import compare, deserialize, serialize, show
 
 __all__ = ["Caltech101Dataset",        # Vision
            "Caltech256Dataset",        # Vision
@@ -100,17 +99,9 @@ __all__ = ["Caltech101Dataset",        # Vision
            "DistributedSampler",       # Sampler
            "RandomSampler",            # Sampler
            "SequentialSampler",        # Sampler
-           "SubsetRandomSampler",      # Sampler
-           "SubsetSampler",            # Sampler
-           "PKSampler",                # Sampler
-           "WeightedRandomSampler",    # Sampler
            "DatasetCache",
            "DSCallback",
            "WaitedDSCallback",
            "Schema",
-           "compare",
-           "deserialize",
-           "serialize",
-           "show",
            "sync_wait_for_dataset",
            "zip"]

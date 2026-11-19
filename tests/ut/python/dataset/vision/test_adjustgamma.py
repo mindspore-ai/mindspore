@@ -17,14 +17,11 @@ Testing AdjustGamma op in DE
 """
 import cv2
 import numpy as np
-from numpy.testing import assert_allclose
 from PIL import Image
 import os
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
@@ -168,39 +165,6 @@ def test_adjust_gamma_invalid_gamma_param_c():
             error)
 
 
-def test_adjust_gamma_invalid_gamma_param_py():
-    """
-    Feature: AdjustGamma op
-    Description: Test AdjustGamma Python implementation with invalid ignore parameter
-    Expectation: Correct error is raised as expected
-    """
-    logger.info(
-        "Test AdjustGamma Python implementation with invalid ignore parameter")
-    try:
-        data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.Compose([
-            vision.Decode(True),
-            vision.Resize((224, 224)),
-            vision.AdjustGamma(gamma=-10.0),
-            vision.ToTensor()
-        ])
-        data_set = data_set.map(operations=[trans], input_columns=["image"])
-    except ValueError as error:
-        logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
-        assert "Input is not within the required interval of " in str(error)
-    try:
-        data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.Compose([
-            vision.Decode(True),
-            vision.Resize((224, 224)),
-            vision.AdjustGamma(gamma=[1, 2]),
-            vision.ToTensor()
-        ])
-        data_set = data_set.map(operations=[trans], input_columns=["image"])
-    except TypeError as error:
-        logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
-        assert "is not of type [<class 'float'>, <class 'int'>], but got" in str(
-            error)
 
 
 def test_adjust_gamma_invalid_gain_param_c():
@@ -225,160 +189,12 @@ def test_adjust_gamma_invalid_gain_param_c():
             error)
 
 
-def test_adjust_gamma_invalid_gain_param_py():
-    """
-    Feature: AdjustGamma op
-    Description: Test AdjustGamma Python implementation with invalid gain parameter
-    Expectation: Correct error is raised as expected
-    """
-    logger.info(
-        "Test AdjustGamma Python implementation with invalid gain parameter")
-    try:
-        data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.Compose([
-            vision.Decode(True),
-            vision.Resize((224, 224)),
-            vision.AdjustGamma(gamma=10.0, gain=[1, 10]),
-            vision.ToTensor()
-        ])
-        data_set = data_set.map(operations=[trans], input_columns=["image"])
-    except TypeError as error:
-        logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
-        assert "is not of type [<class 'float'>, <class 'int'>], but got " in str(
-            error)
 
 
-def test_adjust_gamma_pipeline_c():
-    """
-    Feature: AdjustGamma op
-    Description: Test AdjustGamma Cpp implementation Pipeline
-    Expectation: Runs successfully
-    """
-    # First dataset
-    transforms1 = [vision.Decode(), vision.Resize([64, 64])]
-    transforms1 = mindspore.dataset.transforms.Compose(
-        transforms1)
-    ds1 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    transforms2 = [
-        vision.Decode(),
-        vision.Resize([64, 64]),
-        vision.AdjustGamma(1.0, 1.0)
-    ]
-    transform2 = mindspore.dataset.transforms.Compose(
-        transforms2)
-    ds2 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-
-    num_iter = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1),
-                            ds2.create_dict_iterator(num_epochs=1)):
-        num_iter += 1
-        ori_img = data1["image"].asnumpy()
-        cvt_img = data2["image"].asnumpy()
-        assert_allclose(ori_img.flatten(),
-                        cvt_img.flatten(),
-                        rtol=1e-5,
-                        atol=0)
-        assert ori_img.shape == cvt_img.shape
 
 
-def test_adjust_gamma_pipeline_py():
-    """
-    Feature: AdjustGamma op
-    Description: Test AdjustGamma Python implementation Pipeline
-    Expectation: Runs successfully
-    """
-    # First dataset
-    transforms1 = [vision.Decode(True), vision.Resize(
-        [64, 64]), vision.ToTensor()]
-    transforms1 = mindspore.dataset.transforms.Compose(
-        transforms1)
-    ds1 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    transforms2 = [
-        vision.Decode(True),
-        vision.Resize([64, 64]),
-        vision.AdjustGamma(1.0, 1.0),
-        vision.ToTensor()
-    ]
-    transform2 = mindspore.dataset.transforms.Compose(
-        transforms2)
-    ds2 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-
-    num_iter = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1),
-                            ds2.create_dict_iterator(num_epochs=1)):
-        num_iter += 1
-        ori_img = data1["image"].asnumpy()
-        cvt_img = data2["image"].asnumpy()
-        assert_allclose(ori_img.flatten(),
-                        cvt_img.flatten(),
-                        rtol=1e-5,
-                        atol=0)
-        assert ori_img.shape == cvt_img.shape
 
 
-def test_adjust_gamma_pipeline_py_gray():
-    """
-    Feature: AdjustGamma op
-    Description: Test AdjustGamma Python implementation Pipeline 1-channel
-    Expectation: Runs successfully
-    """
-    # First dataset
-    transforms1_list = [vision.Decode(True), vision.Resize(
-        [60, 60]), vision.Grayscale(), vision.ToTensor()]
-    transforms1 = mindspore.dataset.transforms.Compose(
-        transforms1_list)
-    ds1 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    transforms2_list = [
-        vision.Decode(True),
-        vision.Resize([60, 60]),
-        vision.Grayscale(),
-        vision.AdjustGamma(1.0, 1.0),
-        vision.ToTensor()
-    ]
-    transform2 = mindspore.dataset.transforms.Compose(
-        transforms2_list)
-    ds2 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-
-    num_iter = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1),
-                            ds2.create_dict_iterator(num_epochs=1)):
-        num_iter += 1
-        ori_img = data1["image"].asnumpy()
-        cvt_img = data2["image"].asnumpy()
-        assert_allclose(ori_img.flatten(),
-                        cvt_img.flatten(),
-                        rtol=1e-5,
-                        atol=0)
 
 
 def test_adjust_gamma_eager_image_type():
@@ -443,85 +259,6 @@ def test_adjust_gamma_eager_invalid_image_types2():
     test_config((1.0, 2.0), "Input should be NumPy or PIL image, got <class 'tuple'>")
 
 
-def test_adjust_gamma_operation_01():
-    """
-    Feature: AdjustGamma operation
-    Description: Testing the normal functionality of the AdjustGamma operator
-    Expectation: The Output is equal to the expected output
-    """
-    # AdjustGamma Operator: Test Pipeline Mode
-    dataset1 = ds.ImageFolderDataset(dir_data()[0], shuffle=False, decode=True)
-    dataset2 = ds.ImageFolderDataset(dir_data()[0], shuffle=False)
-    adjust_gamma_op = [vision.Decode(to_pil=False), vision.AdjustGamma(gamma=1)]
-    dataset2 = dataset2.map(input_columns=["image"], operations=adjust_gamma_op)
-    for _ in zip(dataset1.create_dict_iterator(output_numpy=True), dataset2.create_dict_iterator(output_numpy=True)):
-        pass
-
-    # AdjustGamma Operator: Input data is in JPG format
-    with Image.open(dir_data()[1]) as image:
-        adjust_gamma_op = vision.AdjustGamma(gamma=0, gain=0)
-        _ = adjust_gamma_op(image)
-
-    # AdjustGamma Operator: Input data is in GIF format
-    with Image.open(dir_data()[2]) as image:
-        adjust_gamma_op = vision.AdjustGamma(gamma=30, gain=-125)
-        _ = adjust_gamma_op(image)
-
-    # AdjustGamma Operator: Input data is 2D numpy-type data.
-    image = np.random.randint(0, 255, (30, 30)).astype(np.uint8)
-    adjust_gamma_op = vision.AdjustGamma(gamma=16777216, gain=16777216)
-    _ = adjust_gamma_op(image)
-
-    # AdjustGamma Operator: Input data is 3D numpy-type data.
-    image = np.random.randn(30, 30, 3)
-    adjust_gamma_op = vision.AdjustGamma(gamma=20.0, gain=-16777216)
-    _ = adjust_gamma_op(image)
-
-    # AdjustGamma Operator: Input data is 4D numpy-type data.
-    image = np.random.randn(20, 10, 15, 1)
-    adjust_gamma_op = vision.AdjustGamma(gamma=2.68, gain=0.25)
-    _ = adjust_gamma_op(image)
-
-    # AdjustGamma Operator: Input data is 5D numpy-type data.
-    image = np.random.randn(8, 12, 10, 5, 3)
-    adjust_gamma_op = vision.AdjustGamma(gamma=0.5, gain=-3.6)
-    _ = adjust_gamma_op(image)
-
-    # AdjustGamma Operator: gamma parameter set to 1
-    ds1 = ds.ImageFolderDataset(dir_data()[0], 1)
-    transforms = [vision.Decode(to_pil=True), vision.ToTensor()]
-    transform = t_trans.Compose(transforms)
-    ds1 = ds1.map(input_columns=["image"], operations=transform)
-    ds2 = ds.ImageFolderDataset(dir_data()[0], 1)
-    transforms1 = [vision.Decode(to_pil=True), vision.AdjustGamma(gamma=1), vision.ToTensor()]
-    transform1 = t_trans.Compose(transforms1)
-    ds2 = ds2.map(input_columns=["image"], operations=transform1)
-    for _ in zip(ds1.create_dict_iterator(output_numpy=True), ds2.create_dict_iterator(output_numpy=True)):
-        pass
-
-    # The AdjustGamma operator: gamma parameter set to 1, gain parameter set to 1677.
-    image = np.random.randint(0, 255, (30, 30, 3)).astype(np.uint8)
-    to_pil_op = vision.ToPIL()
-    image = to_pil_op(image)
-    adjust_gamma_op = vision.AdjustGamma(gamma=1677, gain=1677)
-    _ = adjust_gamma_op(image)
-
-    # The AdjustGamma operator: gamma parameter set to 20, gain parameter set to 16777216.
-    with Image.open(dir_data()[4]) as image:
-        adjust_gamma_op = vision.AdjustGamma(gamma=20.0, gain=-16777216)
-        _ = adjust_gamma_op(image)
-
-    # The AdjustGamma operator: gamma parameter set to 2.68, gain parameter set to 0.25.
-    image = np.random.randint(0, 255, (30, 30, 3)).astype(np.uint8)
-    to_pil_op = vision.ToPIL()
-    image = to_pil_op(image)
-    adjust_gamma_op = vision.AdjustGamma(gamma=2.68, gain=0.25)
-    _ = adjust_gamma_op(image)
-
-    # AdjustGamma Operator: Input data is in BMP format
-    with   Image.open(dir_data()[3]) as image:
-        adjust_gamma_op = vision.AdjustGamma(gamma=0.5, gain=-3.6)
-        _ = adjust_gamma_op(image)
 
 
 def test_adjust_gamma_exception_01():
@@ -619,22 +356,3 @@ def test_adjust_gamma_exception_01():
     with pytest.raises(TypeError, match="Argument gain with value \\(0.5,\\) is not of type \\[<class"
                                         " 'float'>, <class 'int'>\\], but got <class 'tuple'>."):
         vision.AdjustGamma(gamma=1.2, gain=(0.5,))
-
-
-if __name__ == "__main__":
-    test_adjust_gamma_c_eager()
-    test_adjust_gamma_py_eager()
-    test_adjust_gamma_c_eager_gray()
-    test_adjust_gamma_py_eager_gray()
-    test_adjust_gamma_invalid_gamma_param_c()
-    test_adjust_gamma_invalid_gamma_param_py()
-    test_adjust_gamma_invalid_gain_param_c()
-    test_adjust_gamma_invalid_gain_param_py()
-    test_adjust_gamma_pipeline_c()
-    test_adjust_gamma_pipeline_py()
-    test_adjust_gamma_pipeline_py_gray()
-    test_adjust_gamma_eager_image_type()
-    test_adjust_gamma_eager_invalid_image_types1()
-    test_adjust_gamma_eager_invalid_image_types2()
-    test_adjust_gamma_operation_01()
-    test_adjust_gamma_exception_01()

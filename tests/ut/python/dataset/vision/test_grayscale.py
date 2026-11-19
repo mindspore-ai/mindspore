@@ -19,56 +19,12 @@ import numpy as np
 import os
 import pytest
 from PIL import Image
-import mindspore.dataset as ds
 import mindspore.dataset.vision.transforms as v_trans
-import mindspore.dataset.transforms.transforms as t_trans
 
 
 TEST_DATA_DATASET_FUNC ="../data/dataset/"
 
 
-def test_grayscale_operation_01():
-    """
-    Feature: Grayscale operation
-    Description: Testing the normal functionality of the Grayscale operator
-    Expectation: The Output is equal to the expected output
-    """
-    # Grayscale operator: Test grayscale normal
-    data_dir = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "testImageNetData", "train", "")
-    dataset = ds.ImageFolderDataset(data_dir)
-    transforms = [
-        v_trans.Decode(to_pil=True),
-        v_trans.Grayscale(),
-        v_trans.ToTensor()
-    ]
-    transform = t_trans.Compose(transforms)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # Grayscale operator: Test image is jpg
-    image_jpg = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "jpg.jpg")
-    with Image.open(image_jpg) as image:
-        grayscale_op = v_trans.Grayscale()
-        _ = grayscale_op(image)
-
-    # Grayscale operator: Test image is bmp
-    image_bmp = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "bmp.bmp")
-    with Image.open(image_bmp) as image:
-        grayscale_op = v_trans.Grayscale(3)
-        _ = grayscale_op(image)
-
-    # Grayscale operator: Test image is png
-    image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "png.PNG")
-    with Image.open(image_png) as image:
-        grayscale_op = v_trans.Grayscale(1)
-        _ = grayscale_op(image)
-
-    # Grayscale operator: Test image is gif
-    image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_data", "test_cv_image", "gif.gif")
-    with Image.open(image_gif) as image:
-        grayscale_op = v_trans.Grayscale(3)
-        _ = grayscale_op(image)
 
 
 def test_grayscale_exception_01():

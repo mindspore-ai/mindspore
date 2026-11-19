@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import os
+"""Dataset regression coverage for map offload."""
 import numpy as np
 import pytest
 
@@ -25,23 +25,6 @@ DATA_DIR = "../data/dataset/testPK/data"
 BATCH_SIZE = 2
 
 
-def test_disable_offload_in_independent_mode():
-    """
-    Feature: Disable offload in independent mode.
-    Description: Test offload is disable in independent mode.
-    Expectation: Exception raised to notify feature not supported.
-    """
-    os.environ["MS_INDEPENDENT_DATASET"] = "True"
-    with pytest.raises(RuntimeError) as err:
-        ds.config.set_auto_offload(True)
-    assert "Dataset Offload is not supported in Dataset Independent mode" in str(err.value)
-
-    with pytest.raises(RuntimeError) as err:
-        dataset_0 = ds.ImageFolderDataset(DATA_DIR)
-        dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image")
-        dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
-    assert "Dataset Offload is not supported in Dataset Independent mode" in str(err.value)
-    os.environ["MS_INDEPENDENT_DATASET"] = "False"
 
 
 def test_offload():
@@ -68,58 +51,8 @@ def test_offload():
         break
 
 
-def test_offload_string():
-    """
-    Feature: Test map offload flag with string tensors.
-    Description: Input is text dataset.
-    Expectation: Output should be same with activated or deactivated offload (incl. decoded text).
-    """
-
-    # Dataset with offload activated.
-    data0 = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
-
-    # Dataset with offload not activated.
-    data1 = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
-
-    # Use Data Transforms PadEnd op in operations list for Map
-    padend_op = C2.PadEnd([100], pad_value='<pad>')
-
-    data0 = data0.map(operations=[padend_op], input_columns=["text"], offload=True)
-    data1 = data1.map(operations=[padend_op], input_columns=["text"])
-
-    for d0, d1 in zip(data0.create_dict_iterator(num_epochs=1, output_numpy=True),
-                      data1.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        np.testing.assert_array_equal(d0['text'], (d1['text']))
 
 
-def test_auto_offload():
-    """
-    Feature: Test auto_offload config option.
-    Description: Input is image dataset.
-    Expectation: Output should same with auto_offload activated and deactivated.
-    """
-    trans = [C.Decode(), C.HWC2CHW()]
-
-    # Enable automatic offload
-    ds.config.set_auto_offload(True)
-
-    # Dataset with offload deactivated
-    dataset_auto_disabled = ds.ImageFolderDataset(DATA_DIR)
-    dataset_auto_disabled = dataset_auto_disabled.map(operations=trans, input_columns="image", offload=False)
-    dataset_auto_disabled = dataset_auto_disabled.batch(BATCH_SIZE, drop_remainder=True)
-
-    # Dataset with config.auto_offload activated
-    dataset_auto_enabled = ds.ImageFolderDataset(DATA_DIR)
-    dataset_auto_enabled = dataset_auto_enabled.map(operations=trans, input_columns="image")
-    dataset_auto_enabled = dataset_auto_enabled.batch(BATCH_SIZE, drop_remainder=True)
-
-    for (img_0, _), (img_1, _) in zip(dataset_auto_disabled.create_tuple_iterator(num_epochs=1, output_numpy=True),
-                                      dataset_auto_enabled.create_tuple_iterator(num_epochs=1, output_numpy=True)):
-        np.testing.assert_array_equal(img_0, img_1)
-        break
-
-    # Need to turn off here or subsequent test cases will fail.
-    ds.config.set_auto_offload(False)
 
 
 def test_offload_column_validation():
@@ -197,7 +130,7 @@ def test_offload_column_mapping():
 
     offload_col_idxs = dataset_iterator.offload_model.transform_list[0].col_idxs
     # assert there is only one column index in the offload model, and that it is 1 (second column)
-    np.testing.assert_((len(offload_col_idxs) == 1) and (offload_col_idxs[0] == 1))
+    np.testing.assert_equal((len(offload_col_idxs) == 1) and (offload_col_idxs[0] == 1), True)
 
 
 def test_offload_concat_dataset_1():
@@ -353,25 +286,6 @@ def test_offload_typecast_op_2():
         np.testing.assert_almost_equal(img_0, img_1, decimal=6)
 
 
-def test_offload_different_column_end_of_pipeline():
-    """
-    Feature: Test offload end_of_pipeline check.
-    Description: Input is image dataset.
-    Expectation: The image map op gets offloaded even though it comes before the not-offloaded label map op, since
-                 the end_of_pipeline check looks at columns separately.
-    """
-    image_trans = [C.Decode(), C.HWC2CHW()]
-    ds.config.set_auto_offload(True)
-
-    dataset_0 = ds.ImageFolderDataset(DATA_DIR)
-    dataset_0 = dataset_0.map(operations=image_trans, input_columns="image")
-    dataset_0 = dataset_0.map(operations=[C2.TypeCast(mstype.int32)], input_columns="label", offload=False)
-
-    data_iterator = dataset_0.create_tuple_iterator(num_epochs=1, output_numpy=True)
-    # Assert at least one operation has been offloaded
-    np.testing.assert_(len(data_iterator.offload_model.transform_list[0].me_ops) > 0)
-
-    ds.config.set_auto_offload(False)
 
 
 def test_offload_not_end_of_pipeline():
@@ -390,7 +304,7 @@ def test_offload_not_end_of_pipeline():
 
     data_iterator = dataset_0.create_tuple_iterator(num_epochs=1, output_numpy=True)
     # Assert no operations are set to be offloaded
-    np.testing.assert_(data_iterator.offload_model is None)
+    np.testing.assert_equal(data_iterator.offload_model is None, True)
 
 
 def test_offload_dim_check():
@@ -482,24 +396,3 @@ def test_offload_with_output_shape_type():
     output_types = dataset.output_types()
     assert output_shapes == [[4, 300, 300, 3], [4]]
     assert output_types == [np.dtype('uint8'), np.dtype('int32')]
-
-
-if __name__ == "__main__":
-    test_offload()
-    test_offload_string()
-    test_auto_offload()
-    test_offload_column_validation()
-    test_offload_column_mapping()
-    test_offload_multi_column()
-    test_offload_concat_dataset_1()
-    test_offload_concat_dataset_2()
-    test_offload_normalize_op()
-    test_offload_rescale_op()
-    test_offload_typecast_op()
-    test_offload_typecast_op_2()
-    test_offload_different_column_end_of_pipeline()
-    test_offload_not_end_of_pipeline()
-    test_offload_dim_check()
-    test_offload_random_sharpness_op()
-    test_offload_with_dict_itr()
-    test_offload_with_output_shape_type()

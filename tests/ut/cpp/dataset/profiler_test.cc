@@ -49,11 +49,12 @@ class MindDataTestProfiler : public UT::DatasetOpTesting {
     EXPECT_NE(ds, nullptr);
 
     // Create objects for the tensor ops
-    std::shared_ptr<TensorTransform> one_hot = std::make_shared<transforms::OneHot>(op_input);
-    EXPECT_NE(one_hot, nullptr);
+    std::shared_ptr<TensorTransform> type_cast =
+      std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeInt32);
+    EXPECT_NE(type_cast, nullptr);
 
     // Create a Map operation, this will automatically add a project after map
-    ds = ds->Map({one_hot}, {"label"}, {"label"});
+    ds = ds->Map({type_cast}, {"label"}, {"label"});
     EXPECT_NE(ds, nullptr);
 
     ds = ds->Project({"label"});
@@ -71,68 +72,6 @@ class MindDataTestProfiler : public UT::DatasetOpTesting {
     return ds;
   }
 };
-
-/// Feature: MindData Profiling Support
-/// Description: Test MindData Profiling with profiling enabled for pipeline with ImageFolder
-/// Expectation: Profiling files are created.
-TEST_F(MindDataTestProfiler, TestProfilerManager1) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProfilerManager1.";
-
-  // Enable profiler and check
-  common::SetEnv("RANK_ID", "1");
-  std::shared_ptr<ProfilingManager> profiler_manager = GlobalContext::profiling_manager();
-  EXPECT_OK(profiler_manager->Init());
-  EXPECT_OK(profiler_manager->Start());
-  EXPECT_TRUE(profiler_manager->IsProfilingEnable());
-
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(0, 2));
-  EXPECT_NE(ds, nullptr);
-
-  ds = ds->Repeat(2);
-  EXPECT_NE(ds, nullptr);
-
-  ds = ds->Shuffle(4);
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot = std::make_shared<transforms::OneHot>(10);
-  EXPECT_NE(one_hot, nullptr);
-
-  // Create a Map operation, this will automatically add a project after map
-  ds = ds->Map({one_hot}, {"label"}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  ds = ds->Take(4);
-  EXPECT_NE(ds, nullptr);
-
-  ds = ds->Batch(2, true);
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::vector<mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    ASSERT_OK(iter->GetNextRow(&row));
-    i++;
-  }
-  EXPECT_EQ(i, 2);
-  // Manually terminate the pipeline
-  iter->Stop();
-
-  // Stop MindData Profiling and save output files to current working directory
-  EXPECT_OK(profiler_manager->Stop());
-  EXPECT_FALSE(profiler_manager->IsProfilingEnable());
-  EXPECT_OK(profiler_manager->Save("."));
-
-  // File_id is expected to equal RANK_ID
-  EXPECT_OK(DeleteFiles(1));
-}
 
 /// Feature: MindData Profiling Support
 /// Description: Test MindData Profiling with profiling enabled for pipeline with Mnist
@@ -341,9 +280,9 @@ TEST_F(MindDataTestProfiler, DISABLED_TestProfilerManagerByStep) {
   }
   // Iterate by op_id
   for (int i = 0; i < 8; i++) {
-    ASSERT_OK(profiler_manager->GetUserCpuUtilByStep(i, i+1, i+1, &op_result));
-    ASSERT_OK(profiler_manager->GetSysCpuUtilByStep(i, i+1, i+1, &op_result));
-    ASSERT_OK(profiler_manager->GetConnectorSizeByStep(i, i+1, i+1, &connector_result));
+    ASSERT_OK(profiler_manager->GetUserCpuUtilByStep(i, i + 1, i + 1, &op_result));
+    ASSERT_OK(profiler_manager->GetSysCpuUtilByStep(i, i + 1, i + 1, &op_result));
+    ASSERT_OK(profiler_manager->GetConnectorSizeByStep(i, i + 1, i + 1, &connector_result));
     EXPECT_GT(connector_result.size(), 0);  // Connector size is expected to be greater than 0
     connector_result.clear();
   }

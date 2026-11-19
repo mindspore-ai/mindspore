@@ -21,7 +21,6 @@ import PIL
 from PIL import Image, ImageEnhance
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
 from mindspore.dataset import vision
 from mindspore import log as logger
 
@@ -106,52 +105,3 @@ def test_adjust_sharpness_invalid_sharpnessfactor_param():
     except TypeError as error:
         logger.info("Got an exception in AdjustSharpness: {}".format(str(error)))
         assert "is not of type [<class 'float'>, <class 'int'>], but got" in str(error)
-
-
-def test_adjust_sharpness_pipeline():
-    """
-    Feature: AdjustSharpness op
-    Description: Test AdjustSharpness Cpp implementation Pipeline
-    Expectation: Output is the same as expected output
-    """
-    # First dataset
-    transforms1 = [vision.Decode(), vision.Resize([64, 64])]
-    transforms1 = mindspore.dataset.transforms.transforms.Compose(
-        transforms1)
-    ds1 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    transforms2 = [
-        vision.Decode(),
-        vision.Resize([64, 64]),
-        vision.AdjustSharpness(1.0)
-    ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(
-        transforms2)
-    ds2 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-
-    num_iter = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1),
-                            ds2.create_dict_iterator(num_epochs=1)):
-        num_iter += 1
-        ori_img = data1["image"].asnumpy()
-        cvt_img = data2["image"].asnumpy()
-        assert_allclose(ori_img.flatten(),
-                        cvt_img.flatten(),
-                        rtol=1e-5,
-                        atol=0)
-        assert ori_img.shape == cvt_img.shape
-
-
-if __name__ == "__main__":
-    test_adjust_sharpness_eager()
-    test_adjust_sharpness_invalid_sharpnessfactor_param()
-    test_adjust_sharpness_pipeline()

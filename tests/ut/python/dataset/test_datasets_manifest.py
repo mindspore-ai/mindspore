@@ -24,7 +24,6 @@ import pytest
 from mindspore import log as logger
 import mindspore.dataset as ds
 from mindspore.dataset import vision
-from mindspore.dataset import transforms
 
 DATA_FILE = "../data/dataset/testManifestData/test.manifest"
 
@@ -132,23 +131,6 @@ def multi_label_hot(x):
     return result
 
 
-def test_manifest_dataset_multi_label_onehot():
-    """
-    Feature: ManifestDataset
-    Description: Test ManifestDataset with multi labels in OneHot
-    Expectation: The dataset is processed as expected
-    """
-    data = ds.ManifestDataset(DATA_FILE, decode=True, shuffle=False)
-    expect_label = [[[0, 1, 0], [1, 0, 0]], [[1, 0, 0], [1, 0, 1]]]
-    one_hot_encode = transforms.OneHot(3)
-    data = data.map(operations=one_hot_encode, input_columns=["label"])
-    data = data.map(operations=multi_label_hot, input_columns=["label"])
-    data = data.batch(2)
-    count = 0
-    for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        assert item["label"].tolist() == expect_label[count]
-        logger.info("item[image] is {}".format(item["image"]))
-        count = count + 1
 
 
 def test_manifest_dataset_get_num_class():
@@ -393,19 +375,3 @@ def test_manifest_dataset_raise_error_with_invalid_utf8():
         if result.stderr:
             raise RuntimeError(result.stderr)
     assert result.returncode == 0
-
-
-if __name__ == "__main__":
-    test_manifest_dataset_train()
-    test_manifest_dataset_eval()
-    test_manifest_dataset_class_index()
-    test_manifest_dataset_get_class_index()
-    test_manifest_dataset_multi_label()
-    test_manifest_dataset_multi_label_onehot()
-    test_manifest_dataset_get_num_class()
-    test_manifest_dataset_exception()
-    test_manifest_dataset_error_sample_empty()
-    test_manifest_dataset_error_sample_sourceop()
-    test_manifest_dataset_error_sample_mapop_c()
-    test_manifest_dataset_error_sample_mapop_py()
-    test_manifest_dataset_raise_error_with_invalid_utf8()

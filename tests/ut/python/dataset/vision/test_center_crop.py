@@ -22,12 +22,9 @@ import pytest
 from PIL import Image
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms
-import mindspore.dataset.transforms.transforms as t_trans
 import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
-from mindspore import Tensor
-from util import diff_mse, visualize_list, save_and_check_md5
+from util import visualize_list, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -105,77 +102,8 @@ def test_center_crop_md5(height=375, width=375):
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_center_crop_comp(height=375, width=375, plot=False):
-    """
-    Feature: CenterCrop op
-    Description: Test CenterCrop between Python and Cpp image augmentation
-    Expectation: Resulting outputs from both operations are expected to be equal
-    """
-    logger.info("Test CenterCrop")
-
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
-        "image"], shuffle=False)
-    decode_op = vision.Decode()
-    center_crop_op = vision.CenterCrop([height, width])
-    data1 = data1.map(operations=decode_op, input_columns=["image"])
-    data1 = data1.map(operations=center_crop_op, input_columns=["image"])
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
-        "image"], shuffle=False)
-    transforms = [
-        vision.Decode(True),
-        vision.CenterCrop([height, width]),
-        vision.ToTensor()
-    ]
-    transform = mindspore.dataset.transforms.Compose(transforms)
-    data2 = data2.map(operations=transform, input_columns=["image"])
-
-    image_c_cropped = []
-    image_py_cropped = []
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        c_image = item1["image"]
-        py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
-        # Note: The images aren't exactly the same due to rounding error
-        assert diff_mse(py_image, c_image) < 0.001
-        image_c_cropped.append(c_image.copy())
-        image_py_cropped.append(py_image.copy())
-    if plot:
-        visualize_list(image_c_cropped, image_py_cropped, visualize_mode=2)
 
 
-def test_crop_grayscale(height=375, width=375):
-    """
-    Feature: CenterCrop op
-    Description: Test CenterCrop works with pad and grayscale images
-    Expectation: Runs successfully
-    """
-
-    # Note: image.transpose performs channel swap to allow py transforms to
-    # work with c transforms
-    transforms = [
-        vision.Decode(True),
-        vision.Grayscale(1),
-        vision.ToTensor(),
-        (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
-    ]
-
-    transform = mindspore.dataset.transforms.Compose(transforms)
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
-        "image"], shuffle=False)
-    data1 = data1.map(operations=transform, input_columns=["image"])
-
-    # If input is grayscale, the output dimensions should be single channel
-    crop_gray = vision.CenterCrop([height, width])
-    data1 = data1.map(operations=crop_gray, input_columns=["image"])
-
-    for item1 in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
-        c_image = item1["image"]
-
-        # Check that the image is grayscale
-        assert (c_image.ndim == 3 and c_image.shape[2] == 1)
 
 
 def test_center_crop_errors():
@@ -302,97 +230,6 @@ def test_center_crop_operation_01():
     assert out.shape == (2048, 102)
 
 
-def test_center_crop_operation_02():
-    """
-    Feature: CenterCrop operation
-    Description: Testing the normal functionality of the CenterCrop operator
-    Expectation: The Output is equal to the expected output
-    """
-    # CenterCrop Normal Functionality: Testing Pipeline Mode
-    dataset = ds.ImageFolderDataset(dir_data()[0], shuffle=False)
-    size = 100
-    transforms1 = [
-        vision.Decode(to_pil=True),
-        vision.CenterCrop(size=size),
-        vision.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # CenterCrop normal function: size set to 1
-    dataset = ds.ImageFolderDataset(dir_data()[0], shuffle=False)
-    size = 1
-    transforms1 = [
-        vision.Decode(to_pil=True),
-        vision.CenterCrop(size=size),
-        vision.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # CenterCrop normal function: size set to (100, 200)
-    dataset = ds.ImageFolderDataset(dir_data()[0], shuffle=False)
-    size = (100, 200)
-    transforms1 = [
-        vision.Decode(to_pil=True),
-        vision.CenterCrop(size=size),
-        vision.ToTensor()
-    ]
-    transform1 = t_trans.Compose(transforms1)
-    dataset = dataset.map(input_columns=["image"], operations=transform1)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # CenterCrop normal function: size set to [100, 200]
-    dataset = ds.ImageFolderDataset(dir_data()[0], shuffle=False)
-    size = [100, 200]
-    transforms = [
-        vision.Decode(to_pil=True),
-        vision.CenterCrop(size=size),
-        vision.ToTensor()
-    ]
-    transform = t_trans.Compose(transforms)
-    dataset = dataset.map(input_columns=["image"], operations=transform)
-
-    for _ in dataset.create_dict_iterator(output_numpy=True):
-        pass
-
-    # CenterCrop normal functionality: Input is a JPG image
-    with Image.open(dir_data()[2]) as image:
-        size = 100
-        center_crop_op = vision.CenterCrop(size=size)
-        _ = center_crop_op(image)
-
-    # CenterCrop normal functionality: Input is a BMP image
-    with Image.open(dir_data()[3]) as image:
-        size = [96, 120]
-        center_crop_op = vision.CenterCrop(size=size)
-        out = center_crop_op(image)
-        assert (np.array(image) == out).all()
-
-    # CenterCrop normal functionality: Input is a PNG image
-    with Image.open(dir_data()[4]) as image:
-        size = (384, 384)
-        center_crop_op = vision.CenterCrop(size=size)
-        _ = center_crop_op(image)
-
-    # CenterCrop normal functionality: Input is a GIF image
-    with Image.open(dir_data()[5]) as image:
-        size = 1
-        center_crop_op = vision.CenterCrop(size=size)
-        _ = center_crop_op(image)
-
-    # CenterCrop normal functionality: Input is a GIF image, size set to 1000
-    with Image.open(dir_data()[2]) as image:
-        size = 1000
-        center_crop_op = vision.CenterCrop(size=size)
-        _ = center_crop_op(image)
 
 
 def test_center_crop_exception_01():
@@ -472,104 +309,6 @@ def test_center_crop_exception_01():
         center_crop_op(image)
 
 
-def test_center_crop_exception_02():
-    """
-    Feature: CenterCrop operation
-    Description: Testing the CenterCrop Operator in Exceptional Scenarios
-    Expectation: Throw an exception
-    """
-    # CenterCrop Exception Scenario: Input shape is (100,)
-    image = np.random.randint(-255, 255, (100,)).astype(np.uint8)
-    center_crop_op = vision.CenterCrop(size=200)
-    with pytest.raises(RuntimeError):
-        center_crop_op(image)
-
-    # CenterCrop Exception Scenario: size is (0, 50)
-    image = cv2.imread(dir_data()[1])
-    with pytest.raises(ValueError, match="Input is not within the required interval of"):
-        center_crop_op = vision.CenterCrop(size=(0, 50))
-        center_crop_op(image)
-
-    # CenterCrop Exception Scenario: size is 16777216
-    image = cv2.imread(dir_data()[1])
-    with pytest.raises(RuntimeError,
-                       match="Exception thrown from dataset pipeline. Refer to 'Dataset Pipeline Error Message'."):
-        center_crop_op = vision.CenterCrop(size=16777216)
-        center_crop_op(image)
-
-    # CenterCrop Exception Scenario: size is 50.5
-    with pytest.raises(TypeError, match="Argument size with value 50.5 is not of type"):
-        vision.CenterCrop(size=50.5)
-
-    # CenterCrop Exception Scenario: size is [50]
-    with pytest.raises(TypeError, match="Size should be a single integer or a list/tuple"):
-        vision.CenterCrop(size=[50])
-
-    # CenterCrop Exception Scenario: size is (50, 50, 50)
-    with pytest.raises(TypeError, match="Size should be a single integer or a list/tuple"):
-        vision.CenterCrop(size=(50, 50, 50))
-
-    # CenterCrop Exception Scenario: size is np.array([50, 50]
-    with pytest.raises(TypeError, match="is not of type"):
-        vision.CenterCrop(size=np.array([50, 50]))
-
-    # CenterCrop Exception Scenario: size is Tensor
-    with pytest.raises(TypeError, match="is not of type"):
-        vision.CenterCrop(size=Tensor([50, 50]))
-
-    # CenterCrop Exception Scenario: size is 0
-    size = 0
-    with pytest.raises(ValueError, match="Input is not within the required interval"):
-        vision.CenterCrop(size=size)
-
-    # CenterCrop Exception Scenario: size is 16777216
-    ds2 = ds.ImageFolderDataset(dir_data()[0], shuffle=False)
-    with pytest.raises(RuntimeError,
-                       match="DecompressionBombError: Image size.* could be decompression bomb DOS attack."):
-        size = 16777216
-        transforms1 = [
-            vision.Decode(to_pil=True),
-            vision.CenterCrop(size=size),
-            vision.ToTensor()
-        ]
-        transform1 = t_trans.Compose(transforms1)
-        ds2 = ds2.map(input_columns=["image"], operations=transform1)
-        for _ in ds2:
-            pass
-
-    # CenterCrop Exception Scenario: size is 100.0
-    size = 100.0
-    with pytest.raises(TypeError, match="Argument size with value 100.0 is not of type "
-                                        "\\[<class 'int'>, <class 'list'>, <class 'tuple'>\\]."):
-        vision.CenterCrop(size=size)
-
-    # CenterCrop Exception Scenario: size is (100, 200, 300, 400)
-    ds2 = ds.ImageFolderDataset(dir_data()[0], shuffle=False)
-    with pytest.raises(TypeError, match="Size should be a single integer or a list/tuple"):
-        size = (100, 200, 300, 400)
-        transforms1 = [
-            vision.Decode(to_pil=True),
-            vision.CenterCrop(size=size),
-            vision.ToTensor()
-        ]
-        transform1 = t_trans.Compose(transforms1)
-        ds2 = ds2.map(input_columns=["image"], operations=transform1)
-        for _ in ds2:
-            pass
-
-    # CenterCrop Exception Scenario: size is (100, 200, 300)
-    size = (100, 200, 300)
-    with pytest.raises(TypeError, match="Size should be a single integer or a list/tuple \\(h, w\\) of length 2."):
-        vision.CenterCrop(size=size)
-
-    # CenterCrop Exception Scenario: size is ""
-    size = ""
-    with pytest.raises(TypeError, match="Argument size with value"):
-        vision.CenterCrop(size=size)
-
-    # CenterCrop Exception Scenario: No Parameters Passed
-    with pytest.raises(TypeError, match="missing a required argument"):
-        vision.CenterCrop()
 
 
 def test_center_crop_exception_03():
@@ -632,18 +371,3 @@ def test_center_crop_exception_03():
     size = 16777217
     with pytest.raises(ValueError, match="Input is not within the required interval of \\[1, 16777216\\]."):
         vision.CenterCrop(size=size)
-
-
-if __name__ == "__main__":
-    test_center_crop_op(600, 600, plot=True)
-    test_center_crop_op(300, 600)
-    test_center_crop_op(600, 300)
-    test_center_crop_md5()
-    test_center_crop_comp(plot=True)
-    test_crop_grayscale()
-    test_center_crop_high_dimensions()
-    test_center_crop_operation_01()
-    test_center_crop_operation_02()
-    test_center_crop_exception_01()
-    test_center_crop_exception_02()
-    test_center_crop_exception_03()

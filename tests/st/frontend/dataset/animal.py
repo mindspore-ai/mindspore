@@ -19,6 +19,7 @@ import mindspore.dataset as ds
 from mindspore import dtype as mstype
 import mindspore.dataset.transforms as C
 import mindspore.dataset.vision as deMap
+import numpy as np
 
 logger = logging.getLogger(__name__)
 CUR_DIR = os.path.split(__file__)[0]
@@ -53,13 +54,19 @@ def create_animal_dataset(epoch_size=2, batch_size=32, step_size=1, resize_heigh
     type_cast_op = None
     if label_dtype == 'FP32':
         type_cast_op = C.TypeCast(mstype.float32)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'FP16':
         type_cast_op = C.TypeCast(mstype.float16)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'FP64':
         type_cast_op = C.TypeCast(mstype.float64)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'INT32':
         type_cast_op = C.TypeCast(mstype.int32)
     elif label_dtype == 'INT64':
@@ -105,10 +112,14 @@ def create_animal_no_random_dataset(epoch_size=1, batch_size=32, step_size=1, re
     type_cast_op = None
     if label_dtype == 'FP32':
         type_cast_op = C.TypeCast(mstype.float32)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'FP16':
         type_cast_op = C.TypeCast(mstype.float16)
-        dataset = dataset.map(input_columns="label", operations=C.OneHot(dataset.num_classes()))
+        dataset = dataset.map(input_columns="label", operations=lambda label, classes=dataset.num_classes():
+                                  (np.expand_dims(np.asarray(label).squeeze(), -1) == np.arange(classes))
+                                  .astype(label.dtype).squeeze())
     elif label_dtype == 'INT32':
         type_cast_op = C.TypeCast(mstype.int32)
     elif label_dtype == 'INT64':

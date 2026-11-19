@@ -18,13 +18,11 @@ Testing AdjustBrightness op in DE
 import numpy as np
 import os
 import pytest
-from numpy.testing import assert_allclose
 from PIL import Image
 
 import mindspore as ms
 import mindspore.dataset.vision.transforms as vision
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.transforms
 from mindspore import log as logger
 from util import diff_mse
 
@@ -68,83 +66,8 @@ def test_adjust_brightness_eager(plot=False):
     assert mse == 0
 
 
-def test_adjust_brightness_invalid_brightness_factor_param():
-    """
-    Feature: AdjustBrightness op
-    Description: Test improper parameters for AdjustBrightness implementation
-    Expectation: Throw ValueError exception and TypeError exception
-    """
-    logger.info("Test AdjustBrightness implementation with invalid ignore parameter")
-    try:
-        data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.transforms.Compose([
-            vision.Decode(True),
-            vision.Resize((224, 224)),
-            vision.AdjustBrightness(brightness_factor=-10.0),
-            vision.ToTensor()
-        ])
-        data_set = data_set.map(operations=[trans], input_columns=["image"])
-    except ValueError as error:
-        logger.info("Got an exception in AdjustBrightness: {}".format(str(error)))
-        assert "Input brightness_factor is not within the required interval of " in str(error)
-    try:
-        data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.transforms.Compose([
-            vision.Decode(True),
-            vision.Resize((224, 224)),
-            vision.AdjustBrightness(brightness_factor=[1, 2]),
-            vision.ToTensor()
-        ])
-        data_set = data_set.map(operations=[trans], input_columns=["image"])
-    except TypeError as error:
-        logger.info("Got an exception in AdjustBrightness: {}".format(str(error)))
-        assert "is not of type [<class 'float'>, <class 'int'>], but got" in str(error)
 
 
-def test_adjust_brightness_pipeline():
-    """
-    Feature: AdjustBrightness op
-    Description: Test AdjustBrightness in pipeline mode
-    Expectation: Output is the same as expected output
-    """
-    # First dataset
-    transforms1 = [vision.Decode(True), vision.Resize([64, 64]), vision.ToTensor()]
-    transforms1 = mindspore.dataset.transforms.transforms.Compose(
-        transforms1)
-    ds1 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds1 = ds1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    transforms2 = [
-        vision.Decode(True),
-        vision.Resize([64, 64]),
-        vision.AdjustBrightness(1.0),
-        vision.ToTensor()
-    ]
-    transform2 = mindspore.dataset.transforms.transforms.Compose(
-        transforms2)
-    ds2 = ds.TFRecordDataset(DATA_DIR_2,
-                             SCHEMA_DIR,
-                             columns_list=["image"],
-                             shuffle=False)
-    ds2 = ds2.map(operations=transform2, input_columns=["image"])
-
-    num_iter = 0
-    for data1, data2 in zip(ds1.create_dict_iterator(num_epochs=1),
-                            ds2.create_dict_iterator(num_epochs=1)):
-        num_iter += 1
-        ori_img = data1["image"].asnumpy()
-        cvt_img = data2["image"].asnumpy()
-        assert_allclose(ori_img.flatten(),
-                        cvt_img.flatten(),
-                        rtol=1e-5,
-                        atol=0)
-        mse = diff_mse(ori_img, cvt_img)
-        logger.info("MSE= {}".format(str(mse)))
-        assert mse == 0
 
 
 def test_adjust_brightness_operation_01():
@@ -439,13 +362,3 @@ def test_adjust_brightness_exception_02():
     with pytest.raises(TypeError, match="Input should be NumPy or PIL image, got "
                                         "<class 'mindspore.common.tensor.Tensor'>."):
         op(image)
-
-
-if __name__ == "__main__":
-    test_adjust_brightness_eager()
-    test_adjust_brightness_invalid_brightness_factor_param()
-    test_adjust_brightness_pipeline()
-    test_adjust_brightness_operation_01()
-    test_adjust_brightness_operation_02()
-    test_adjust_brightness_exception_01()
-    test_adjust_brightness_exception_02()

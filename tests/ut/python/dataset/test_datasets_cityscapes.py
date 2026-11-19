@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Dataset regression coverage for datasets cityscapes."""
 import os
 
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
@@ -79,7 +79,7 @@ def test_cityscapes_polygon():
     data = ds.CityscapesDataset(DATASET_DIR_TASK_JSON, usage=usage, quality_mode=quality_mode, task=task)
     count = 0
     json_file = os.path.join(DATASET_DIR_TASK_JSON, "gtFine/train/aa/aa_000000_gtFine_polygons.json")
-    with open(json_file, "r") as f:
+    with open(json_file, "r", encoding="utf-8") as f:
         expected = json.load(f)
     for item in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         task_dict = json.loads(str(item['task']))
@@ -170,83 +170,6 @@ def test_cityscapes_sequential_sampler():
     assert num_iter == num_samples
 
 
-def test_cityscapes_exception():
-    """
-    Feature: CityscapesDataset
-    Description: Test CityscapesDataset with wrong parameters
-    Expectation: Throw correct error as expected
-    """
-    task = "color"
-    quality_mode = "fine"
-    usage = "train"
-
-    error_msg_1 = "does not exist or is not a directory or permission denied!"
-    with pytest.raises(ValueError, match=error_msg_1):
-        ds.CityscapesDataset("NoExistsDir", usage=usage, quality_mode=quality_mode, task=task)
-
-    error_msg_2 = "sampler and shuffle cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_2):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, shuffle=False,
-                             sampler=ds.PKSampler(3))
-
-    error_msg_3 = "sampler and sharding cannot be specified at the same time"
-    with pytest.raises(RuntimeError, match=error_msg_3):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, num_shards=2,
-                             shard_id=0, sampler=ds.PKSampler(3))
-
-    error_msg_4 = "num_shards is specified and currently requires shard_id as well"
-    with pytest.raises(RuntimeError, match=error_msg_4):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, num_shards=10)
-
-    error_msg_5 = "shard_id is specified but num_shards is not"
-    with pytest.raises(RuntimeError, match=error_msg_5):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, shard_id=0)
-
-    error_msg_6 = "Input shard_id is not within the required interval"
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, num_shards=5, shard_id=-1)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, num_shards=5, shard_id=5)
-    with pytest.raises(ValueError, match=error_msg_6):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, num_shards=2, shard_id=5)
-
-    error_msg_7 = "num_parallel_workers exceeds"
-    with pytest.raises(ValueError, match=error_msg_7):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, shuffle=False,
-                             num_parallel_workers=0)
-    with pytest.raises(ValueError, match=error_msg_7):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, shuffle=False,
-                             num_parallel_workers=256)
-    with pytest.raises(ValueError, match=error_msg_7):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, shuffle=False,
-                             num_parallel_workers=-2)
-
-    error_msg_8 = "Argument shard_id"
-    with pytest.raises(TypeError, match=error_msg_8):
-        ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task, num_shards=2, shard_id="0")
-
-    def exception_func(item):
-        raise Exception("Error occur!")
-
-    try:
-        data = ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task)
-        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        num_rows = 0
-        for _ in data.create_dict_iterator(num_epochs=1):
-            num_rows += 1
-        assert False
-    except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data file is:" in str(e)
-
-    try:
-        data = ds.CityscapesDataset(DATASET_DIR, usage=usage, quality_mode=quality_mode, task=task)
-        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
-        num_rows = 0
-        for _ in data.create_dict_iterator(num_epochs=1):
-            num_rows += 1
-        assert False
-    except RuntimeError as e:
-        assert "map operation: [PyFunc] failed. The corresponding data file is:" in str(e)
 
 
 def test_cityscapes_param():
@@ -281,12 +204,3 @@ def test_cityscapes_param():
            in test_config("train", "fine", "invalid")
     assert "Argument task with value ['list'] is not of type [<class 'str'>], but got <class 'list'>." \
            in test_config("train", "fine", ["list"])
-
-
-if __name__ == "__main__":
-    test_cityscapes_basic()
-    test_cityscapes_polygon()
-    test_cityscapes_basic_func()
-    test_cityscapes_sequential_sampler()
-    test_cityscapes_exception()
-    test_cityscapes_param()

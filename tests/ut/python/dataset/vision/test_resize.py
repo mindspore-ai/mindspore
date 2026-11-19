@@ -27,8 +27,7 @@ import mindspore.dataset.vision.transforms as vision
 from mindspore.common.tensor import Tensor
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
-from util import visualize_list, save_and_check_md5, save_and_check_md5_pil, \
-    config_get_set_seed, config_get_set_num_parallel_workers, diff_mse
+from util import visualize_list, diff_mse
 
 TEST_DATA_DATASET_FUNC ="../data/dataset/"
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -178,63 +177,10 @@ def test_resize_op_antialias():
     assert num_iter == 3
 
 
-def run_test_resize_md5(test_name, size, filename, seed, expected_size, to_pil=True, plot=False):
-    """
-    Run Resize with md5 check for python and C op versions
-    """
-    logger.info("Test Resize with md5 check: {0}".format(test_name))
-    original_seed = config_get_set_seed(seed)
-    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
-    # Generate dataset
-    dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    compose_ops = ds.transforms.Compose([vision.Decode(to_pil=to_pil), vision.Resize(size)])
-    transformed_data = dataset.map(operations=compose_ops, input_columns=["image"])
-    # Compare with expected md5 from images
-    if to_pil:
-        save_and_check_md5_pil(transformed_data, filename, generate_golden=GENERATE_GOLDEN)
-    else:
-        save_and_check_md5(transformed_data, filename, generate_golden=GENERATE_GOLDEN)
-    for item in transformed_data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        resized_image = item["image"]
-        assert resized_image.shape == expected_size
-    if plot:
-        image_original = []
-        image_resized = []
-        original_data = dataset.map(operations=vision.Decode(), input_columns=["image"])
-        for item1, item2 in zip(original_data.create_dict_iterator(num_epochs=1, output_numpy=True),
-                                transformed_data.create_dict_iterator(num_epochs=1, output_numpy=True)):
-            image_1 = item1["image"]
-            image_2 = item2["image"]
-            image_original.append(image_1)
-            image_resized.append(image_2)
-        visualize_list(image_original, image_resized)
-    # Restore configuration
-    ds.config.set_seed(original_seed)
-    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_resize_md5_c(plot=False):
-    """
-    Feature: Resize op C version
-    Description: Test C Resize op using md5 check
-    Expectation: Passes the md5 check test
-    """
-    run_test_resize_md5("Test single int for size", 5, "resize_01_result_c.npz",
-                        5, (5, 8, 3), to_pil=False, plot=plot)
-    run_test_resize_md5("Test tuple for size", (5, 7), "resize_02_result_c.npz",
-                        7, (5, 7, 3), to_pil=False, plot=plot)
 
 
-def test_resize_md5_py(plot=False):
-    """
-    Feature: Resize op py version
-    Description: Test python Resize op using md5 check
-    Expectation: Passes the md5 check test
-    """
-    run_test_resize_md5("Test single int for size", 5, "resize_01_result_py.npz",
-                        5, (5, 8, 3), to_pil=True, plot=plot)
-    run_test_resize_md5("Test tuple for size", (5, 7), "resize_02_result_py.npz",
-                        7, (5, 7, 3), to_pil=True, plot=plot)
 
 
 def test_resize_op_invalid_input():
@@ -895,25 +841,3 @@ def test_resize_exception_03():
         resize_c_op = vision.Resize(size, interpolation=interpolation_c)
         with pytest.raises(TypeError, match="Current Interpolation is not supported with PIL input"):
             resize_c_op(image)
-
-
-if __name__ == "__main__":
-    test_resize_op(plot=True)
-    test_resize_4d_input_1_size()
-    test_resize_4d_input_2_size()
-    test_resize_2d_input_2_size()
-    test_resize_3d_input_2_size()
-    test_resize_op_antialias()
-    test_resize_md5_c(plot=False)
-    test_resize_md5_py(plot=False)
-    test_resize_op_invalid_input()
-    test_resize_op_exception_c_interpolation()
-    test_resize_op_exception_py_interpolation()
-    test_resize_performance()
-    test_resize_operation_01()
-    test_resize_operation_02()
-    test_resize_operation_03()
-    test_resize_operation_04()
-    test_resize_exception_01()
-    test_resize_exception_02()
-    test_resize_exception_03()

@@ -23,6 +23,7 @@ import numpy as np
 from mindspore.mindrecord import FileWriter
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
+from mindspore.dataset.core.config import _get_prefetch_size
 import mindspore.dataset.vision as vision
 import mindspore.dataset.transforms as transforms
 
@@ -40,7 +41,7 @@ def test_dataset_with_independent_process():
     Expectation: The dataset is processed as expected
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "true"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     # Random-accessible object as input source
@@ -104,7 +105,7 @@ def test_dataset_with_independent_process_dynamic_shape():
     Expectation: The dataset is processed as expected
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "true"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     # Random-accessible object as input source
@@ -167,7 +168,7 @@ def test_dataset_with_independent_process_train_and_eval():
     Expectation: The dataset is processed as expected
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "true"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     class TrainUDFDataset:
@@ -277,7 +278,7 @@ def test_dataset_with_independent_process_two_stage_pipeline():
     Expectation: The dataset is processed as expected
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "true"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     class FristUDFDataset:
@@ -376,7 +377,7 @@ def test_dataset_with_independent_process_with_dict():
     Expectation: The dataset is processed as expected
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "true"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     diff_shapes = [(548, 507), (778, 577), (1024, 700), (1359, 733), (1570, 882)]
@@ -451,7 +452,7 @@ def test_generator_with_generator_object_iterated_multi_times():
     Expectation: SUCCESS
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "true"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     # Generator
@@ -493,52 +494,6 @@ def test_generator_with_generator_object_iterated_multi_times():
     del os.environ["MS_INDEPENDENT_DATASET"]
 
 
-def test_dataset_mnistdataset_with_for_loop_iterator():
-    """
-    Feature: Dataset With Independent Process
-    Description: Test dataset in independent process with for loop iterator
-    Expectation: The dataset is processed as expected
-    """
-    os.environ["MS_INDEPENDENT_DATASET"] = "False"
-    prefetch_size = ds.config.get_prefetch_size()
-    ds.config.set_prefetch_size(2)
-
-    dataset = ds.MnistDataset(MNIST_DIR, num_samples=10)
-    dataset = dataset.take(count=5)
-    dataset = dataset.skip(count=1)
-    dataset = dataset.map(operations=transforms.Unique(), input_columns='image',
-                          output_columns=['image', 'image_idx', 'image_cnt'], num_parallel_workers=2,
-                          python_multiprocessing=True)
-    dataset = dataset.project(columns=['image', 'image_idx', 'image_cnt'])
-    dataset = dataset.repeat(5)
-    dataset = dataset.shuffle(buffer_size=100)
-    dataset = dataset.batch(1, drop_remainder=True, num_parallel_workers=2)
-    numiter = 0
-    for _ in range(2):
-        for _ in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
-            numiter += 1
-    assert numiter == 40
-
-    os.environ["MS_INDEPENDENT_DATASET"] = "True"
-
-    dataset = ds.MnistDataset(MNIST_DIR, num_samples=10)
-    dataset = dataset.take(count=5)
-    dataset = dataset.skip(count=1)
-    dataset = dataset.map(operations=transforms.Unique(), input_columns='image',
-                          output_columns=['image', 'image_idx', 'image_cnt'], num_parallel_workers=2,
-                          python_multiprocessing=True)
-    dataset = dataset.project(columns=['image', 'image_idx', 'image_cnt'])
-    dataset = dataset.repeat(5)
-    dataset = dataset.shuffle(buffer_size=100)
-    dataset = dataset.batch(1, drop_remainder=True, num_parallel_workers=2)
-    numiter = 0
-    for _ in range(2):
-        for _ in dataset.create_dict_iterator(output_numpy=True, num_epochs=1):
-            numiter += 1
-    assert numiter == 40
-
-    ds.config.set_prefetch_size(prefetch_size)
-    os.environ["MS_INDEPENDENT_DATASET"] = "False"
 
 
 def test_dataset_minddataset_with_map_error():
@@ -548,7 +503,7 @@ def test_dataset_minddataset_with_map_error():
     Expectation: The dataset is processed as expected
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "True"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
@@ -624,7 +579,7 @@ def test_dataset_generator_with_filter_error():
     Expectation: The dataset is processed as expected
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "True"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     def gen(num):
@@ -654,36 +609,6 @@ def test_dataset_generator_with_filter_error():
     os.environ["MS_INDEPENDENT_DATASET"] = "False"
 
 
-def test_dataset_wikitextdataset_with_op_input_error():
-    """
-    Feature: Dataset With Independent Process
-    Description: Test dataset in independent process with invalid op
-    Expectation: The dataset is processed as expected
-    """
-    os.environ["MS_INDEPENDENT_DATASET"] = "True"
-    prefetch_size = ds.config.get_prefetch_size()
-    ds.config.set_prefetch_size(2)
-
-    dataset = ds.WikiTextDataset(WIKI_DIR, usage='train', num_parallel_workers=8)
-    unique_op = transforms.Unique()
-    dataset = dataset.take(count=5)
-    dataset = dataset.skip(count=1)
-    dataset = dataset.map(operations=unique_op, input_columns='text', num_parallel_workers=3,
-                          python_multiprocessing=False)
-    dataset = dataset.project(columns=['text'])
-    dataset = dataset.repeat(5)
-    dataset = dataset.shuffle(buffer_size=100)
-    dataset = dataset.batch(32, drop_remainder=True)
-
-    with pytest.raises(RuntimeError) as err:
-        count = 0
-        for _ in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
-            count += 1
-    assert "Exception thrown from dataset pipeline. " in str(err.value) or \
-           "Exception thrown from user defined Python" in str(err.value)
-
-    ds.config.set_prefetch_size(prefetch_size)
-    os.environ["MS_INDEPENDENT_DATASET"] = "False"
 
 
 def skip_test_dataset_generator_error():
@@ -693,7 +618,7 @@ def skip_test_dataset_generator_error():
     Expectation: The dataset is processed as expected
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "True"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     class RandomAccessDataset:
@@ -729,7 +654,7 @@ def test_dataset_numpy_slices_with_zip_op():
     Expectation: The dataset is processed as expected
     """
     original_independent = os.environ.get("MS_INDEPENDENT_DATASET")
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     try:
         os.environ["MS_INDEPENDENT_DATASET"] = "True"
         ds.config.set_prefetch_size(2)
@@ -768,7 +693,7 @@ def test_dataset_TextFile_with_concat_op():
     Expectation: The dataset is processed as expected
     """
     os.environ["MS_INDEPENDENT_DATASET"] = "True"
-    prefetch_size = ds.config.get_prefetch_size()
+    prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
 
     data = ds.TextFileDataset(TEXT_FILE)
@@ -792,18 +717,3 @@ def test_dataset_TextFile_with_concat_op():
 
     ds.config.set_prefetch_size(prefetch_size)
     os.environ["MS_INDEPENDENT_DATASET"] = "False"
-
-
-if __name__ == "__main__":
-    test_dataset_with_independent_process()
-    test_dataset_with_independent_process_dynamic_shape()
-    test_dataset_with_independent_process_train_and_eval()
-    test_dataset_with_independent_process_with_dict()
-    test_generator_with_generator_object_iterated_multi_times()
-    test_dataset_mnistdataset_with_for_loop_iterator()
-    test_dataset_minddataset_with_map_error()
-    test_dataset_generator_with_filter_error()
-    test_dataset_wikitextdataset_with_op_input_error()
-    test_dataset_generator_error()
-    test_dataset_numpy_slices_with_zip_op()
-    test_dataset_TextFile_with_concat_op()

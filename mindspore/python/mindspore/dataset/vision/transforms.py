@@ -47,7 +47,7 @@ Examples:
     ...                    vision.RandomRotation((0, 15)),
     ...                    vision.Normalize((100, 115.0, 121.0), (71.0, 68.0, 70.0)),
     ...                    vision.HWC2CHW()]
-    >>> onehot_op = transforms.OneHot(num_classes=10)
+    >>> onehot_op = transforms.transforms.OneHot(num_classes=10)
     >>> # apply the transformation to the dataset through data1.map()
     >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
     ...                                                 input_columns="image")
@@ -1108,45 +1108,6 @@ class BoundingBoxAugment(ImageTensorOperation):
     Supported Platforms:
         ``CPU``
 
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.vision as vision
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.float32)
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> func = lambda img: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(np.float32))
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[func],
-        ...                                                 input_columns=["image"],
-        ...                                                 output_columns=["image", "bbox"])
-        >>> # set bounding box operation with ratio of 1 to apply rotation on all bounding boxes
-        >>> bbox_aug_op = vision.BoundingBoxAugment(vision.RandomRotation(90), 1)
-        >>> # map to apply ops
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=[bbox_aug_op],
-        ...                                                 input_columns=["image", "bbox"],
-        ...                                                 output_columns=["image", "bbox"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     print(item["bbox"].shape, item["bbox"].dtype)
-        ...     break
-        (100, 100, 3) float32
-        (1, 4) float32
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.array([[0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]], dtype=np.uint8).reshape((3, 4))
-        >>> data = data.astype(np.float32)
-        >>> func = lambda img, bboxes: (data, np.array([[0, 0, data.shape[1], data.shape[0]]]).astype(bboxes.dtype))
-        >>> func_data, func_bboxes = func(data, data)
-        >>> output = vision.BoundingBoxAugment(transforms.Fill(100), 1.0)(func_data, func_bboxes)
-        >>> print(output[0].shape, output[0].dtype)
-        (3, 4) float32
-        >>> print(output[1].shape, output[1].dtype)
-        (1, 4) float32
-
-    Tutorial Examples:
-        - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_bounding_box_augment_cpp
@@ -1529,45 +1490,6 @@ class CutMixBatch(ImageTensorOperation):
     Supported Platforms:
         ``CPU``
 
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms as transforms
-        >>> import mindspore.dataset.vision as vision
-        >>> from mindspore.dataset.vision import ImageBatchFormat
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> data = np.random.randint(0, 255, size=(28, 28, 3)).astype(np.uint8)
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(
-        ...     operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
-        ...     input_columns=["image"],
-        ...     output_columns=["image", "label"])
-        >>> onehot_op = transforms.OneHot(num_classes=10)
-        >>> numpy_slices_dataset= numpy_slices_dataset.map(operations=onehot_op, input_columns=["label"])
-        >>> cutmix_batch_op = vision.CutMixBatch(ImageBatchFormat.NHWC, 1.0, 0.5)
-        >>> numpy_slices_dataset = numpy_slices_dataset.batch(5)
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=cutmix_batch_op,
-        ...                                                 input_columns=["image", "label"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     print(item["label"].shape, item["label"].dtype)
-        ...     break
-        (5, 28, 28, 3) uint8
-        (5, 3, 10) float32
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.random.randint(0, 255, (3, 3, 10, 10)).astype(np.uint8)
-        >>> label = np.array([[0, 1], [1, 0], [1, 0]])
-        >>> output = vision.CutMixBatch(vision.ImageBatchFormat.NCHW, 1.0, 1.0)(data, label)
-        >>> print(output[0].shape, output[0].dtype)
-        (3, 3, 10, 10) uint8
-        >>> print(output[1].shape, output[1].dtype)
-        (3, 2) float32
-
-    Tutorial Examples:
-        - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_cut_mix_batch_c
@@ -2847,46 +2769,6 @@ class MixUp(PyTensorOperation):
     Supported Platforms:
         ``CPU``
 
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.vision as vision
-        >>> import mindspore.dataset.transforms as transforms
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> data = np.random.randint(0, 255, size=(64, 64, 3)).astype(np.uint8)
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(
-        ...     operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
-        ...     input_columns=["image"],
-        ...     output_columns=["image", "label"])
-        >>> # one hot decode the label
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.OneHot(10), input_columns="label")
-        >>> # batch the samples
-        >>> numpy_slices_dataset = numpy_slices_dataset.batch(batch_size=4)
-        >>> # finally mix up the images and labels
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(
-        ...     operations=vision.MixUp(batch_size=1, alpha=0.2),
-        ...     input_columns=["image", "label"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     print(item["label"].shape, item["label"].dtype)
-        ...     break
-        (4, 64, 64, 3) float64
-        (4, 3, 10) float64
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.random.randint(0, 255, size=(100, 100, 3)).astype(np.uint8)
-        >>> label = np.array([[0, 1]])
-        >>> output = vision.MixUp(batch_size=2, alpha=0.2, is_single=False)(data, label)
-        >>> print(output[0].shape, output[0].dtype)
-        (2, 100, 100, 3) float64
-        >>> print(output[1].shape, output[1].dtype)
-        (2, 2) float64
-
-    Tutorial Examples:
-        - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_mix_up
@@ -2943,45 +2825,6 @@ class MixUpBatch(ImageTensorOperation):
     Supported Platforms:
         ``CPU``
 
-    Examples:
-        >>> import numpy as np
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.vision as vision
-        >>> import mindspore.dataset.transforms as transforms
-        >>>
-        >>> # Use the transform in dataset pipeline mode
-        >>> data = np.random.randint(0, 255, size=(64, 64, 3)).astype(np.uint8)
-        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(
-        ...     operations=lambda img: (data, np.random.randint(0, 5, (3, 1))),
-        ...     input_columns=["image"],
-        ...     output_columns=["image", "label"])
-        >>> onehot_op = transforms.OneHot(num_classes=10)
-        >>> numpy_slices_dataset= numpy_slices_dataset.map(operations=onehot_op,
-        ...                                                input_columns=["label"])
-        >>> mixup_batch_op = vision.MixUpBatch(alpha=0.9)
-        >>> numpy_slices_dataset = numpy_slices_dataset.batch(5)
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=mixup_batch_op,
-        ...                                                 input_columns=["image", "label"])
-        >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     print(item["image"].shape, item["image"].dtype)
-        ...     print(item["label"].shape, item["label"].dtype)
-        ...     break
-        (5, 64, 64, 3) uint8
-        (5, 3, 10) float32
-        >>>
-        >>> # Use the transform in eager mode
-        >>> data = np.random.randint(0, 255, (2, 10, 10, 3)).astype(np.uint8)
-        >>> label = np.array([[0, 1], [1, 0]])
-        >>> output = vision.MixUpBatch(1)(data, label)
-        >>> print(output[0].shape, output[0].dtype)
-        (2, 10, 10, 3) uint8
-        >>> print(output[1].shape, output[1].dtype)
-        (2, 2) float32
-
-    Tutorial Examples:
-        - `Illustration of vision transforms
-          <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/vision_gallery.html>`_
     """
 
     @check_mix_up_batch_c

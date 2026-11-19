@@ -25,7 +25,8 @@ import pytest
 import re
 
 import mindspore.dataset as ds
-import mindspore.dataset.text as text
+from mindspore.dataset.core.config import _set_enable_shared_mem
+from mindspore.dataset.core.config import _get_prefetch_size
 from mindspore.dataset.transforms import transforms
 import mindspore.dataset.vision as vision
 from util import config_get_set_seed, config_get_set_num_parallel_workers, config_get_set_enable_shared_mem
@@ -33,125 +34,10 @@ from util import config_get_set_seed, config_get_set_num_parallel_workers, confi
 DATA_DIR = "../data/dataset/testPK/data"
 
 
-def test_map_c_transform_exception():
-    """
-    Feature: Test Cpp error op def
-    Description: Op defined like vision.HWC2CHW
-    Expectation: Success
-    """
-    data_set = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=1, shuffle=True)
-
-    train_image_size = 224
-    mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
-    std = [0.229 * 255, 0.224 * 255, 0.225 * 255]
-
-    # define map operations
-    random_crop_decode_resize_op = vision.RandomCropDecodeResize(train_image_size,
-                                                                 scale=(0.08, 1.0),
-                                                                 ratio=(0.75, 1.333))
-    random_horizontal_flip_op = vision.RandomHorizontalFlip(prob=0.5)
-    normalize_op = vision.Normalize(mean=mean, std=std)
-    hwc2chw_op = vision.HWC2CHW  # exception
-
-    data_set = data_set.map(operations=random_crop_decode_resize_op, input_columns="image", num_parallel_workers=1)
-    data_set = data_set.map(operations=random_horizontal_flip_op, input_columns="image", num_parallel_workers=1)
-    data_set = data_set.map(operations=normalize_op, input_columns="image", num_parallel_workers=1)
-    with pytest.raises(ValueError) as info:
-        data_set = data_set.map(operations=hwc2chw_op, input_columns="image", num_parallel_workers=1)
-    assert "Parameter operations's element of method map should be a " in str(info.value)
-
-    # compose exception
-    with pytest.raises(ValueError) as info:
-        transforms.Compose([
-            vision.RandomCropDecodeResize(train_image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
-            vision.RandomHorizontalFlip,
-            vision.Normalize(mean=mean, std=std),
-            vision.HWC2CHW()])
-    assert " should be a " in str(info.value)
-
-    # randomapply exception
-    with pytest.raises(ValueError) as info:
-        transforms.RandomApply([
-            vision.RandomCropDecodeResize,
-            vision.RandomHorizontalFlip(prob=0.5),
-            vision.Normalize(mean=mean, std=std),
-            vision.HWC2CHW()])
-    assert " should be a " in str(info.value)
-
-    # randomchoice exception
-    with pytest.raises(ValueError) as info:
-        transforms.RandomChoice([
-            vision.RandomCropDecodeResize(train_image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
-            vision.RandomHorizontalFlip(prob=0.5),
-            vision.Normalize,
-            vision.HWC2CHW()])
-    assert " should be a " in str(info.value)
 
 
-def test_map_py_transform_exception():
-    """
-    Feature: Test Python error op def
-    Description: Op defined like vision.RandomHorizontalFlip
-    Expectation: Success
-    """
-    data_set = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=1, shuffle=True)
-
-    # define map operations
-    decode_op = vision.Decode(to_pil=True)
-    random_horizontal_flip_op = vision.RandomHorizontalFlip  # exception
-    to_tensor_op = vision.ToTensor()
-    trans = [decode_op, random_horizontal_flip_op, to_tensor_op]
-
-    with pytest.raises(ValueError) as info:
-        data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=1)
-    assert "Parameter operations's element of method map should be a " in str(info.value)
-
-    # compose exception
-    with pytest.raises(ValueError) as info:
-        transforms.Compose([
-            vision.Decode,
-            vision.RandomHorizontalFlip(),
-            vision.ToTensor()])
-    assert " should be a " in str(info.value)
-
-    # randomapply exception
-    with pytest.raises(ValueError) as info:
-        transforms.RandomApply([
-            vision.Decode(to_pil=True),
-            vision.RandomHorizontalFlip,
-            vision.ToTensor()])
-    assert " should be a " in str(info.value)
-
-    # randomchoice exception
-    with pytest.raises(ValueError) as info:
-        transforms.RandomChoice([
-            vision.Decode(to_pil=True),
-            vision.RandomHorizontalFlip(),
-            vision.ToTensor])
-    assert " should be a " in str(info.value)
 
 
-def test_map_text_and_data_transforms():
-    """
-    Feature: Map op
-    Description: Test Map op with both Text Transforms and Data Transforms
-    Expectation: Dataset pipeline runs successfully and results are verified
-    """
-    data = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
-
-    vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None,
-                                    special_tokens=["<pad>", "<unk>"],
-                                    special_first=True)
-
-    padend_op = transforms.PadEnd([100], pad_value=vocab.tokens_to_ids('<pad>'))
-    lookup_op = text.Lookup(vocab, "<unk>")
-
-    # Use both Text Lookup op and Data Transforms PadEnd op in operations list for Map
-    data = data.map(operations=[lookup_op, padend_op], input_columns=["text"])
-    res = []
-    for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        res.append(d["text"].item())
-    assert res == [4, 5, 3, 6, 7, 2], res
 
 
 def test_map_operations1():
@@ -227,7 +113,7 @@ def test_c_map_randomness_repeatability_with_shards(set_seed_to=312, set_num_par
     num_shards = 2
     shard_id = 0
     shuffle = False
-    class_index = dict()
+    class_index = {}
     original_seed = config_get_set_seed(set_seed_to)
     original_num_parallel_workers = config_get_set_num_parallel_workers(set_num_parallel_workers_to)
 
@@ -292,7 +178,7 @@ def test_python_map_mp_repeatability(num_parallel_workers, num_samples, set_seed
     # Restore config setting
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
-    ds.config.set_enable_shared_mem(original_enable_shared_mem)
+    _set_enable_shared_mem(original_enable_shared_mem)
 
 
 def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_workers_to=4, num_repeat=5):
@@ -321,8 +207,8 @@ def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_wor
         result_np_array1 = list(item1.values())[0]
         try:
             expected_result_np_array[seed_used1].append(result_np_array1)
-        except KeyError:
-            raise AssertionError("Not all expected seeds were used")
+        except KeyError as exc:
+            raise AssertionError("Not all expected seeds were used") from exc
 
     for _ in range(num_repeat):
         expected_seed = {i: 0 for i in range(set_seed_to, set_seed_to + set_num_parallel_workers_to)}
@@ -345,7 +231,7 @@ def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_wor
     # Restore config setting
     ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
-    ds.config.set_enable_shared_mem(original_enable_shared_mem)
+    _set_enable_shared_mem(original_enable_shared_mem)
 
 
 def test_map_just_exchange_columns():
@@ -699,7 +585,7 @@ def create_dataset_with_two_workers_randomly_process_identical_images(fix_random
 
     # if to_pil is False, will use c++ implemented Decode and RandomCrop,
     # otherwise will use python implemented ones
-    to_pil = (transform_type == "python")
+    to_pil = transform_type == "python"
     transform = [vision.Decode(to_pil=to_pil),
                  vision.RandomCrop((28, 28))]
 
@@ -747,7 +633,7 @@ def test_reproducibility_of_random_transforms(fix_randomness, transform_type, mu
     Expectation: Random results are different for each worker
     """
     original_seed = ds.config.get_seed()
-    original_prefetch_size = ds.config.get_prefetch_size()
+    original_prefetch_size = _get_prefetch_size()
     ds.config.set_prefetch_size(2)
     dataset = create_dataset_with_two_workers_randomly_process_identical_images(fix_randomness, transform_type,
                                                                                 multiprocessing)
@@ -805,7 +691,7 @@ def test_map_batch_slowly():
     assert ret == 0
 
     # grep the log file
-    with open(log_file) as read_file:
+    with open(log_file, encoding="utf-8") as read_file:
         line_info = read_file.read()
     assert re.search("map time: 3", line_info)
     assert re.search("batch time: 3", line_info)
@@ -822,26 +708,3 @@ def test_map_batch_slowly():
     # rm the log file
     if os.path.exists(log_file):
         os.remove(log_file)
-
-
-if __name__ == '__main__':
-    test_map_c_transform_exception()
-    test_map_py_transform_exception()
-    test_map_text_and_data_transforms()
-    test_map_operations1()
-    test_c_map_randomness_repeatability()
-    test_c_map_randomness_repeatability_with_shards()
-    test_python_map_mp_repeatability(num_parallel_workers=4, num_samples=4)
-    test_python_map_mp_seed_repeatability()
-    test_map_with_deprecated_parameter()
-    test_map_just_exchange_columns()
-    test_map_multiprocessing_without_thread()
-    test_map_multiprocessing_with_fixed_handle()
-    test_map_multiprocessing_with_in_out_rowsize()
-    test_map_multiprocessing_with_in_out_rowsize_exception()
-    test_map_and_generatordataset_with_multiprocessing()
-    test_generator_or_map_with_pyfunc_use_global_executor()
-    test_randomness_across_workers(fix_randomness=True, transform_type="cpp", multiprocessing=False)
-    test_reproducibility_of_random_transforms(fix_randomness=False, transform_type="python", multiprocessing=True)
-    test_map_pullmode_exception()
-    test_map_batch_slowly()

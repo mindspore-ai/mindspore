@@ -107,49 +107,6 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
   EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
 }
 
-/// Feature: TreeAdapter
-/// Description: Test TreeAdapter on dataset that has been projected
-/// Expectation: Runs successfully
-TEST_F(MindDataTestTreeAdapter, TestProjectMapTreeAdapter) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProjectMap.";
-
-  // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testPK/data/";
-  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<SequentialSampler>(0, 2));
-  EXPECT_NE(ds, nullptr);
-
-  // Create objects for the tensor ops
-  std::shared_ptr<TensorTransform> one_hot = std::make_shared<transforms::OneHot>(10);
-  EXPECT_NE(one_hot, nullptr);
-
-  // Create a Map operation, this will automatically add a project after map
-  ds = ds->Map({one_hot}, {"label"}, {"label"});
-  EXPECT_NE(ds, nullptr);
-
-  std::shared_ptr<ProjectDataset> project_ds = ds->Project({"label"});
-
-  auto tree_adapter = std::make_shared<TreeAdapter>();
-
-  Status rc = tree_adapter->Compile(project_ds->IRNode(), 2);
-
-  EXPECT_TRUE(rc.IsOk());
-
-  const std::unordered_map<std::string, int32_t> map = {{"label", 0}};
-  EXPECT_EQ(tree_adapter->GetColumnNameMap(), map);
-
-  std::vector<size_t> row_sizes = {1, 1, 0, 1, 1, 0};
-  TensorRow row;
-
-  for (size_t sz : row_sizes) {
-    rc = tree_adapter->GetNext(&row);
-    EXPECT_TRUE(rc.IsOk());
-    EXPECT_EQ(row.size(), sz);
-  }
-  rc = tree_adapter->GetNext(&row);
-  const std::string err_msg = rc.ToString();
-  EXPECT_TRUE(err_msg.find("EOF buffer encountered.") != err_msg.npos);
-}
-
 /// Feature: Test for Serializing and Deserializing an optimized IR Tree after the tree has been modified with
 /// TreeModifier or in other words through Autotune indirectly.
 /// Description: Create a simple tree, modify the workers and queue size, serialize the optimized IR Tree, obtain a new

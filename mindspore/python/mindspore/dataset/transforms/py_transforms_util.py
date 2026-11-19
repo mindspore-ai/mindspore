@@ -21,7 +21,6 @@ from enum import IntEnum
 from types import FunctionType, MethodType
 
 import dill
-import numpy as np
 
 from mindspore import log as logger
 from ..core.py_util_helpers import is_numpy, ExceptionHandler
@@ -63,64 +62,12 @@ def compose(transforms, *args):
     for transform in transforms:
         try:
             args = transform(*args)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             result = ExceptionHandler(where="in map(or batch) worker and execute Python function")
             result.reraise()
         args = (args,) if not isinstance(args, tuple) else args
 
     return args
-
-
-def one_hot_encoding(label, num_classes, epsilon):
-    """
-    Apply label smoothing transformation to the input label, and make label be more smoothing and continuous.
-
-    Args:
-        label (numpy.ndarray): label to be applied label smoothing.
-        num_classes (int): Num class of object in dataset, value should over 0.
-        epsilon (float): The adjustable Hyper parameter. Default is 0.0.
-
-    Returns:
-        img (numpy.ndarray), label after being one hot encoded and done label smoothed.
-
-    Examples:
-        >>> # assume num_classes = 5
-        >>> # 1) input np.array(3) output [0, 0, 0, 1, 0]
-        >>> # 2) input np.array([4, 2, 0]) output [[0, 0, 0, 0, 1], [0, 0, 1, 0, 0], [1, 0, 0, 0, 0]]
-        >>> # 3) input np.array([[4], [2], [0]]) output [[[0, 0, 0, 0, 1]], [[0, 0, 1, 0, 0][, [[1, 0, 0, 0, 0]]]
-    """
-    if isinstance(label, np.ndarray):  # the numpy should be () or (1, ) or shape: (n, 1)
-        if label.dtype not in [np.int8, np.int16, np.int32, np.int64,
-                               np.uint8, np.uint16, np.uint32, np.uint64]:
-            raise ValueError('the input numpy type should be int, but the input is: ' + str(label.dtype))
-
-        if label.ndim == 0:
-            if label >= num_classes:
-                raise ValueError('the num_classes is smaller than the category number.')
-
-            one_hot_label = np.zeros((num_classes), dtype=int)
-            one_hot_label[label] = 1
-        else:
-            label_flatten = label.flatten()
-            for item in label_flatten:
-                if item >= num_classes:
-                    raise ValueError('the num_classes:' + str(num_classes) +
-                                     ' is smaller than the category number:' + str(item))
-
-            num_elements = label_flatten.size
-            one_hot_label = np.zeros((num_elements, num_classes), dtype=int)
-            for index in range(num_elements):
-                one_hot_label[index][label_flatten[index]] = 1
-
-            new_shape = []
-            for dim in label.shape:
-                new_shape.append(dim)
-            new_shape.append(num_classes)
-            one_hot_label = one_hot_label.reshape(new_shape)
-    else:
-        raise ValueError('the input is invalid, it should be numpy.ndarray.')
-
-    return (1 - epsilon) * one_hot_label + epsilon / num_classes
 
 
 def random_order(img, transforms):
@@ -200,7 +147,7 @@ class FuncWrapper:
     def __call__(self, *args):
         try:
             result = self.transform(*args)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             result = ExceptionHandler(where="in map(or batch) worker and execute Python function")
             result.reraise()
 
@@ -256,7 +203,7 @@ class FuncWrapper:
                 return json.dumps(json_obj)
             # dataset operations
             return self.transform.to_json()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.warning("Skip user-defined Python method which cannot be serialized, reason is: " + str(e))
             json_obj = {}
             json_obj["tensor_op_name"] = "unknown"

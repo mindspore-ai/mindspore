@@ -105,7 +105,6 @@ SET(DE_UT_SRCS
         equalize_op_test.cc
         execute_test.cc
         execution_tree_test.cc
-        fill_op_test.cc
         c_api_vision_gaussian_blur_test.cc
         global_context_test.cc
         image_process_test.cc
@@ -119,14 +118,11 @@ SET(DE_UT_SRCS
         jieba_tokenizer_op_test.cc
         main_test.cc
         map_op_test.cc
-        mask_test.cc
         memory_pool_test.cc
         mind_record_op_test.cc
         mixup_batch_op_test.cc
         normalize_op_test.cc
-        one_hot_op_test.cc
         optimization_pass_test.cc
-        pad_end_op_test.cc
         pad_op_test.cc
         path_test.cc
         perf_data_test.cc

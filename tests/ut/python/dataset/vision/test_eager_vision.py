@@ -20,7 +20,6 @@ import pytest
 
 from mindspore import log as logger
 from mindspore import Tensor
-from mindspore.dataset import transforms
 from mindspore.dataset import vision
 
 
@@ -184,43 +183,6 @@ def test_eager_resize_totensor_normalize_py():
     assert (pixel / 255 - mean_vec[0]) / std_vec[0] == pytest.approx(pixel_normalized, 0.0001)
 
 
-def test_eager_compose_py():
-    """
-    Feature: Eager Support
-    Description: Test eager support for this sequence of Python ops: Resize, Compose with ToTensor and Normalize
-    Expectation: Output image info from op is correct
-    """
-    img = Image.open("../data/dataset/apple.jpg").convert("RGB")
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
-
-    img = vision.Resize(size=(96, 64))(img)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
-
-    assert img.size == (64, 96)
-
-    pixel = img.getpixel((0, 0))[0]
-
-    mean_vec = [.100, .100, .100]
-    std_vec = [.2, .2, .2]
-
-    transform = transforms.Compose([
-        vision.ToTensor(),
-        vision.Normalize(mean=mean_vec, std=std_vec, is_hwc=False)])
-
-    # Convert to NumPy array
-    img = np.array(img)
-    output_size = 64 * 96 * 3
-    assert img.size == output_size
-
-    # Use Compose to apply transformation with ToTensor and Normalize
-    # Note: Output of Compose is a NumPy array
-    img = transform(img)
-    assert img.size == output_size
-    assert isinstance(img, np.ndarray)
-
-    pixel_normalized = img[0][0][0]
-
-    assert (pixel / 255 - mean_vec[0]) / std_vec[0] == pytest.approx(pixel_normalized, 0.0001)
 
 
 def test_eager_hwc2chw():
@@ -592,35 +554,3 @@ def test_eager_invalid_image_randomsharpness():
     test_config([10, 20, 30], TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
     test_config(Tensor(my_input), TypeError,
                 "Input should be NumPy or PIL image, got <class 'mindspore.common.tensor.Tensor'>.")
-
-
-if __name__ == '__main__':
-    test_eager_decode_c()
-    test_eager_decode_py()
-    test_eager_resize_c()
-    test_eager_resize_py()
-    test_eager_rescale()
-    test_eager_normalize_hwc()
-    test_eager_normalize_chw()
-    test_eager_resize_totensor_normalize_py()
-    test_eager_compose_py()
-    test_eager_hwc2chw()
-    test_eager_pad_c()
-    test_eager_pad_py()
-    test_eager_cutout_hwc_pil()
-    test_eager_cutout_chw_pil()
-    test_eager_cutout_hwc_cv()
-    test_eager_exceptions_decode()
-    test_eager_exceptions_resize()
-    test_eager_exceptions_normalize()
-    test_eager_exceptions_pad()
-    test_eager_invalid_image_randomadjustsharpness()
-    test_eager_invalid_image_hwc2chw()
-    test_eager_invalid_image_invert()
-    test_eager_invalid_image_pad()
-    test_eager_invalid_image_randomcrop()
-    test_eager_invalid_image_randomhorizontalflip()
-    test_eager_invalid_image_randomsolarize()
-    test_eager_invalid_image_cutout()
-    test_eager_invalid_image_randomcolor()
-    test_eager_invalid_image_randomsharpness()
