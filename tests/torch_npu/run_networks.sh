@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Prerequisites: installed unified wheel, matching PyTorch/torchvision, CANN,
-# pytest, expecttest and hypothesis; initialized third_party/torch_npu submodule.
+# pytest, expecttest and hypothesis. Test sources are included in this directory.
 # Example: ASCEND_RT_VISIBLE_DEVICES=0 bash tests/torch_npu/run_networks.sh
 # PYTHON selects the interpreter; OUTPUT_DIR selects the logs/JUnit directory.
 set -euo pipefail
@@ -34,23 +34,14 @@ cd "$work"
 export TORCH_DEVICE_BACKEND_AUTOLOAD=1 PYTHONNOUSERSITE=1 PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 export OMP_NUM_THREADS=${OMP_NUM_THREADS:-1} MKL_NUM_THREADS=${MKL_NUM_THREADS:-1}
 "$python_command" -u - "$root" "$output" <<'PY' 2>&1 | tee "$output/run.log"
-"""Run the selected upstream tests against the installed bundled torch_npu."""
+"""Run the local network tests against the installed bundled torch_npu."""
 import importlib.metadata
 from pathlib import Path
 import sys
 
 root, output = (Path(argument) for argument in sys.argv[1:])
-sys.argv = sys.argv[:1]  # Upstream ResNet also parses process arguments.
-test_root = root / 'third_party/torch_npu/test'
-cases = [line.strip() for line in (root / 'tests/torch_npu/test_cases.txt').read_text(encoding='utf-8').splitlines()
-         if line.strip() and not line.lstrip().startswith('#')]
-if not cases or len(cases) != len(set(cases)):
-    raise SystemExit('test_cases.txt must contain a nonempty list without duplicate entries')
-for case in cases:
-    source = (test_root / case.split('::', 1)[0]).resolve()
-    if not source.is_relative_to(test_root.resolve()) or not source.is_file():
-        raise SystemExit(f'Missing or invalid upstream test: {case}; initialize the torch_npu submodule')
-
+sys.argv = sys.argv[:1]
+test_root = root / 'tests/torch_npu'
 distribution = importlib.metadata.distribution('mindspore')
 bundle = Path(distribution.locate_file('mindspore/_bundled/torch_npu/torch_npu')).resolve()
 import torch
@@ -73,6 +64,11 @@ class RequireAllPassed:
 
     def __init__(self):
         self.passed = 0
+        self.collected = 0
+
+    def pytest_collection_finish(self, session):
+        """Count selected cases, including parametrized tests."""
+        self.collected = len(session.items)
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_runtest_logreport(self, report):
@@ -88,12 +84,12 @@ class RequireAllPassed:
 
 results = RequireAllPassed()
 exit_code = pytest.main([
-    '-v', '-s', '-ra', '--import-mode=importlib', '-o', 'addopts=',
+    '-v', '-s', '-ra', '--import-mode=importlib', '-o', 'addopts=', '-o', 'python_files=test_*.py',
     f'--confcutdir={test_root}', f'--junitxml={output / "results.xml"}',
-    *(str(test_root / case) for case in cases),
+    str(test_root),
 ], plugins=[results])
-if results.passed != len(cases):
-    print(f'Expected {len(cases)} passing tests, got {results.passed}')
+if not results.collected or results.passed != results.collected:
+    print(f'Expected {results.collected} passing tests, got {results.passed}')
     exit_code = exit_code or 1
 raise SystemExit(exit_code)
 PY
