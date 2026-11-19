@@ -758,49 +758,6 @@ def test_imagefolder_error_sample_sourceop():
     test_config(1, "../data/dataset/testImageNetError/Sample3_text/train", 3)
 
 
-def test_imagefolder_error_sample_mapop():
-    """
-    Feature: ImageFolderDataset
-    Description: Test ImageFolderDataset with sample errors. Include map op in pipeline.
-    Expectation: The dataset is processed as expected.
-        Note: The invalid JPEG file is detected.
-    """
-
-    def test_config(my_seed, my_error_sample_data_file):
-        # Set configuration since default Random Sampler is used
-        original_seed = config_get_set_seed(my_seed)
-
-        # For ImageFolderDataset, use decode default (of False)
-        data3 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=None)
-        # Add map op to the pipeline. Use C++ implemented ops
-        data3 = data3.map(operations=[vision.Decode(),
-                                      vision.HorizontalFlip()],
-                          input_columns=["image"], num_parallel_workers=1)
-        with pytest.raises(RuntimeError) as error_info:
-            for _ in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
-                pass
-        assert "map operation: [Decode] failed" in str(error_info.value)
-
-        # For ImageFolderDataset, use decode default (of False)
-        data4 = ds.ImageFolderDataset(my_error_sample_data_file, num_samples=None)
-        # Add map op to the pipeline. Use Python implemented ops
-        data4 = data4.map(operations=[vision.Decode(to_pil=True),
-                                      vision.RandomHorizontalFlip(0.7)],
-                          input_columns=["image"], num_parallel_workers=1)
-        with pytest.raises(RuntimeError) as error_info:
-            for _ in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
-                pass
-        assert "map operation: [PyFunc] failed" in str(error_info.value)
-
-        # Restore configuration
-        ds.config.set_seed(original_seed)
-
-    # Test empty sample
-    test_config(2, "../data/dataset/testImageNetError/Sample1_empty/train")
-    # Test corrupt sample
-    test_config(3, "../data/dataset/testImageNetError/Sample2_corrupt1mid/train")
-    # Test text sample, instead of image sample
-    test_config(1, "../data/dataset/testImageNetError/Sample3_text/train")
 
 
 def test_imagefolder_classindexing():

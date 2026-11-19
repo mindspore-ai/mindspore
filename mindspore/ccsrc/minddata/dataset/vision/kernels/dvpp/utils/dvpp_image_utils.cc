@@ -32,7 +32,6 @@
 #include "minddata/dataset/core/type_id.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/vision/kernels/affine_op.h"
-#include "minddata/dataset/vision/kernels/auto_contrast_op.h"
 #include "minddata/dataset/vision/kernels/invert_op.h"
 #include "minddata/dataset/vision/kernels/image_utils.h"
 #include "minddata/dataset/vision/kernels/math_utils.h"

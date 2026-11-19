@@ -934,7 +934,6 @@ def test_generator_with_batch_sampler_static_shape_without_label_with_map():
 
         for data in data_list:
             data = ds.transforms.vision.Resize((10, 10))(data)
-            data = ds.transforms.vision.AdjustSharpness(2)(data)
             data = ds.transforms.vision.CenterCrop(size=2)(data)
             trans_data.append(data)
 

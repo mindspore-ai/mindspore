@@ -17,9 +17,6 @@ Testing AdjustContrast op in DE
 """
 import numpy as np
 
-import mindspore.dataset.vision.transforms as vision
-from mindspore import log as logger
-from util import diff_mse
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
@@ -36,25 +33,3 @@ def generate_numpy_random_rgb(shape):
     handle arbitrary precision floating points well.
     """
     return np.random.randint(0, 256, shape) / 255.
-
-
-def test_adjust_contrast_eager(plot=False):
-    """
-    Feature: AdjustContrast op
-    Description: Test AdjustContrast in eager mode
-    Expectation: Output is the same as expected output
-    """
-    # Eager 3-channel
-    image_file = "../data/dataset/testImageNetData/train/class1/1_1.jpg"
-    img = np.fromfile(image_file, dtype=np.uint8)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
-
-    img = vision.Decode()(img)
-    img_adjustcontrast = vision.AdjustContrast(1)(img)
-    if plot:
-        visualize_image(img, img_adjustcontrast)
-    logger.info("Image.type: {}, Image.shape: {}".format(type(img_adjustcontrast),
-                                                         img_adjustcontrast.shape))
-    mse = diff_mse(img_adjustcontrast, img)
-    logger.info("MSE= {}".format(str(mse)))
-    assert mse == 0

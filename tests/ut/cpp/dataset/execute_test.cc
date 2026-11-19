@@ -327,32 +327,6 @@ TEST_F(MindDataTestExecute, TestTransformDecodeResizeCenterCrop1) {
 }
 
 /// Feature: Execute Transform op
-/// Description: Test executing UniformAugment op basic usage
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestUniformAugment) {
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-  std::vector<mindspore::MSTensor> image2;
-
-  // Transform params
-  std::shared_ptr<TensorTransform> decode = std::make_shared<vision::Decode>();
-  auto resize_op = std::make_shared<vision::Resize>(std::vector<int32_t>{16, 16});
-  std::shared_ptr<TensorTransform> vertical = std::make_shared<vision::RandomVerticalFlip>();
-  std::shared_ptr<TensorTransform> horizontal = std::make_shared<vision::RandomHorizontalFlip>();
-
-  auto uniform_op = std::make_shared<vision::UniformAugment>(
-    std::vector<std::shared_ptr<TensorTransform>>{resize_op, vertical, horizontal}, 3);
-
-  auto transform1 = Execute({decode});
-  Status rc = transform1(image, &image);
-  ASSERT_TRUE(rc.IsOk());
-
-  auto transform2 = Execute(std::vector<std::shared_ptr<TensorTransform>>{uniform_op});
-  rc = transform2({image}, &image2);
-  ASSERT_TRUE(rc.IsOk());
-}
-
-/// Feature: Execute Transform op
 /// Description: Test executing BasicTokenizer op basic usage
 /// Expectation: Status is okay and output is equal to the expected output
 TEST_F(MindDataTestExecute, TestBasicTokenizer) {
@@ -370,25 +344,6 @@ TEST_F(MindDataTestExecute, TestBasicTokenizer) {
   Status rc = transform1({txt}, &txt_result);
   ASSERT_EQ(txt_result.size(), 3);
   ASSERT_TRUE(rc.IsOk());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing Decode op then Rotate op
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestRotate) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRotate.";
-
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto rotate = vision::Rotate(10.5);
-
-  auto transform = Execute({decode, rotate});
-  Status rc = transform(image, &image);
-
-  EXPECT_EQ(rc, Status::OK());
 }
 
 /// Feature: Execute Transform op
@@ -425,74 +380,6 @@ TEST_F(MindDataTestExecute, TestRGB2BGREager) {
   auto transform = Execute({decode, rgb2bgr_op});
   Status rc = transform(image, &image);
 
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing Decode then RandomInvert op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestRandomInvertEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomInvertEager.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto random_invert_op = vision::RandomInvert(0.6);
-
-  auto transform = Execute({decode, random_invert_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing Decode then RandomAutoContrast op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestRandomAutoContrastEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomAutoContrastEager.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto random_auto_contrast_op = vision::RandomAutoContrast(0.6);
-
-  auto transform = Execute({decode, random_auto_contrast_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing Decode then RandomEqualize op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestRandomEqualizeEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomEqualizeEager.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto random_equalize_op = vision::RandomEqualize(0.6);
-
-  auto transform = Execute({decode, random_equalize_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing Decode then RandomAdjustSharpness op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestRandomAdjustSharpnessEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomAdjustSharpnessEager.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto random_adjust_sharpness_op = vision::RandomAdjustSharpness(2.0, 0.6);
-
-  auto transform = Execute({decode, random_adjust_sharpness_op});
-  Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
 
@@ -1164,57 +1051,6 @@ TEST_F(MindDataTestExecute, TestEraseEager) {
   EXPECT_EQ(rc, Status::OK());
 }
 
-/// Feature: AdjustBrightness
-/// Description: Test executing AdjustBrightness op in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAdjustBrightness) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustBrightness.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto adjust_brightness_op = vision::AdjustBrightness(1);
-
-  auto transform = Execute({decode, adjust_brightness_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: AdjustSharpness
-/// Description: Test executing Decode then AdjustSharpness op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAdjustSharpnessEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustSharpnessEager.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto adjust_sharpness_op = vision::AdjustSharpness(1.0);
-
-  auto transform = Execute({decode, adjust_sharpness_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: AdjustSaturation
-/// Description: Test executing Decode then AdjustSaturation op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAdjustSaturationEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustSaturationEager.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto adjust_saturation_op = vision::AdjustSaturation(1.0);
-
-  auto transform = Execute({decode, adjust_saturation_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
 /// Feature: Posterize
 /// Description: Test executing Posterize op in eager mode
 /// Expectation: The data is processed successfully
@@ -1228,69 +1064,6 @@ TEST_F(MindDataTestExecute, TestPosterizeEager) {
   auto posterize_op = vision::Posterize(1);
 
   auto transform = Execute({decode, posterize_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: AdjustHue
-/// Description: Test executing AdjustHue op in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAdjustHue) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustHue.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto adjust_hue_op = vision::AdjustHue(0.2);
-
-  auto transform = Execute({decode, adjust_hue_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: AdjustContrast
-/// Description: Test executing AdjustContrast op in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAdjustContrast) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustContrast.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto adjust_contrast_op = vision::AdjustContrast(1);
-
-  auto transform = Execute({decode, adjust_contrast_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: ResizedCrop
-/// Description: Test executing Decode op then ResizedCrop op
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestExecute, TestResizedCrop) {
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
-  std::shared_ptr<TensorTransform> resizedCrop_op =
-    std::make_shared<vision::ResizedCrop>(0, 0, 128, 128, std::vector<int32_t>{128, 128});
-
-  // Test Compute(Tensor, Tensor) method of ResizedCrop
-  auto transform = Execute({decode_op, resizedCrop_op});
-  Status rc = transform(image, &image);
-
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: RandAugment
-/// Description: test RandAugment eager
-/// Expectation: load one image data and process rand augmentation on it
-TEST_F(MindDataTestExecute, TestRandAugmentEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandAugmentEager.";
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-  auto decode = vision::Decode();
-  auto rand_augment_op = vision::RandAugment(3, 4, 5, InterpolationMode::kLinear, {0, 0, 0});
-  auto transform = Execute({decode, rand_augment_op});
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }

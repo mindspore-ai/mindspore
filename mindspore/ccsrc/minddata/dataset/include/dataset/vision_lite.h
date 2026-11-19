@@ -32,50 +32,6 @@ namespace mindspore::dataset::vision {
 // Forward Declarations
 class RotateOperation;
 
-/// \brief Apply affine transform on the input image.
-class DATASET_API Affine final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] degrees The degrees to rotate the image.
-  /// \param[in] translation The values representing vertical and horizontal translation (default = {0.0, 0.0}).
-  ///     The first value represents the x axis translation while the second represents the y axis translation.
-  /// \param[in] scale The scaling factor for the image (default = 0.0).
-  /// \param[in] shear A float vector of size 2, representing the shear degrees (default = {0.0, 0.0}).
-  /// \param[in] interpolation An enum for the mode of interpolation.
-  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation (Only supports this mode in Lite).
-  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
-  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
-  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
-  /// \param[in] fill_value A vector representing the value to fill the area outside the transformation
-  ///    in the output image. If 1 value is provided, it is used for all RGB channels.
-  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto affine_op = vision::Affine(30, {0.0, 0.0}, 0.8);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, affine_op},  // operations
-  ///                            {"image"});              // input columns
-  /// \endcode
-  explicit Affine(float_t degrees, const std::vector<float> &translation = {0.0, 0.0}, float scale = 0.0,
-                  const std::vector<float> &shear = {0.0, 0.0},
-                  InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
-                  const std::vector<uint8_t> &fill_value = {0, 0, 0});
-
-  /// \brief Destructor.
-  ~Affine() override = default;
-
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
 /// \brief Crop the input image at the center to the given size.
 class DATASET_API CenterCrop final : public TensorTransform {
  public:
@@ -168,38 +124,6 @@ class DATASET_API Decode final : public TensorTransform {
   std::shared_ptr<TensorOperation> Parse() override;
 
   std::shared_ptr<TensorOperation> Parse(const MapTargetDevice &env) override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Blur the input image with the specified Gaussian kernel.
-class DATASET_API GaussianBlur final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] kernel_size A vector of Gaussian kernel size for width and height. The value must be positive and odd.
-  /// \param[in] sigma A vector of Gaussian kernel standard deviation sigma for width and height. The values must be
-  ///     positive. Using default value 0 means to calculate the sigma according to the kernel size.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto gaussian_op = vision::GaussianBlur({7, 7});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, gaussian_op},  // operations
-  ///                            {"image"});                // input columns
-  /// \endcode
-  explicit GaussianBlur(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma = {0., 0.});
-
-  /// \brief Destructor.
-  ~GaussianBlur() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
 
  private:
   struct Data;
@@ -303,57 +227,6 @@ class DATASET_API Pad final : public TensorTransform {
   ~Pad() override = default;
 
  protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  struct Data;
-  std::shared_ptr<Data> data_;
-};
-
-/// \brief Apply a Random Affine transformation on the input image in RGB or Greyscale mode.
-class DATASET_API RandomAffine final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \param[in] degrees A float vector of size 2, representing the starting and ending degree.
-  /// \param[in] translate_range A float vector of size 2 or 4, representing percentages of translation on x and y axes.
-  ///    If the size is 2, (min_dx, max_dx, 0, 0).
-  ///    If the size is 4, (min_dx, max_dx, min_dy, max_dy),
-  ///    all values are in range [-1, 1].
-  /// \param[in] scale_range A float vector of size 2, representing the starting and ending scales in the range.
-  /// \param[in] shear_ranges A float vector of size 2 or 4, representing the starting and ending shear degrees
-  ///    vertically and horizontally.
-  ///    If the size is 2, (min_shear_x, max_shear_x, 0, 0),
-  ///    if the size is 4, (min_shear_x, max_shear_x, min_shear_y, max_shear_y).
-  /// \param[in] interpolation An enum for the mode of interpolation.
-  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation (Only supports this mode in Lite).
-  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
-  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
-  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
-  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
-  ///    in the output image. If 1 value is provided, it is used for all RGB channels.
-  ///    If 3 values are provided, it is used to fill R, G and B channels respectively.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto random_op = vision::RandomAffine({45, 90});
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, random_op},  // operations
-  ///                            {"image"});              // input columns
-  /// \endcode
-  explicit RandomAffine(const std::vector<float_t> &degrees,
-                        const std::vector<float_t> &translate_range = {0.0, 0.0, 0.0, 0.0},
-                        const std::vector<float_t> &scale_range = {1.0, 1.0},
-                        const std::vector<float_t> &shear_ranges = {0.0, 0.0, 0.0, 0.0},
-                        InterpolationMode interpolation = InterpolationMode::kNearestNeighbour,
-                        const std::vector<uint8_t> &fill_value = {0, 0, 0});
-
-  /// \brief Destructor.
-  ~RandomAffine() override = default;
-
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
@@ -525,72 +398,6 @@ class DATASET_API RGB2GRAY final : public TensorTransform {
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
-};
-
-/// \brief Rotate the input image according to parameters.
-class DATASET_API Rotate final : public TensorTransform {
- public:
-  /// \brief Constructor.
-  /// \note This api is only used in Lite, the interpolation mode is bilinear.
-  /// \param[in] angle_id The fix rotation angle.
-  ///     - FixRotationAngle::k0Degree = 1, Rotate 0 degree.
-  ///     - FixRotationAngle::k0DegreeAndMirror = 2, Rotate 0 degree and apply horizontal flip.
-  ///     - FixRotationAngle::k180Degree = 3, Rotate 180 degree.
-  ///     - FixRotationAngle::k180DegreeAndMirror = 4, Rotate 180 degree and apply horizontal flip.
-  ///     - FixRotationAngle::k90DegreeAndMirror = 5, Rotate 90 degree and apply horizontal flip.
-  ///     - FixRotationAngle::k90Degree = 6, Rotate 90 degree.
-  ///     - FixRotationAngle::k270DegreeAndMirror = 7, Rotate 270 degree and apply horizontal flip.
-  ///     - FixRotationAngle::k270Degree = 8, Rotate 270 degree.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto rotate_op = vision::Rotate(FixRotationAngle::k90Degree);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, rotate_op},  // operations
-  ///                            {"image"});              // input columns
-  /// \endcode
-  explicit Rotate(FixRotationAngle angle_id = FixRotationAngle::k0Degree);
-
-  /// \brief Constructor.
-  /// \param[in] degrees A float value, representing the rotation degrees.
-  /// \param[in] resample An enum for the mode of interpolation.
-  ///   - InterpolationMode::kLinear, Interpolation method is blinear interpolation.
-  ///   - InterpolationMode::kNearestNeighbour, Interpolation method is nearest-neighbor interpolation.
-  ///   - InterpolationMode::kCubic, Interpolation method is bicubic interpolation.
-  ///   - InterpolationMode::kArea, Interpolation method is pixel area interpolation.
-  /// \param[in] expand A boolean representing whether the image is expanded after rotation.
-  /// \param[in] center A float vector of size 2 or empty, representing the x and y center of rotation
-  ///     or the center of the image.
-  /// \param[in] fill_value A vector representing the value to fill the area outside the transform
-  ///    in the output image. If 1 value is provided, it is used for all RGB channels.
-  ///    If 3 values are provided, it is used to fill R, G, B channels respectively.
-  /// \par Example
-  /// \code
-  ///     /* Define operations */
-  ///     auto decode_op = vision::Decode();
-  ///     auto rotate_op = vision::Rotate(90);
-  ///
-  ///     /* dataset is an instance of Dataset object */
-  ///     dataset = dataset->Map({decode_op, rotate_op},  // operations
-  ///                            {"image"});              // input columns
-  /// \endcode
-  explicit Rotate(float degrees, InterpolationMode resample = InterpolationMode::kNearestNeighbour, bool expand = false,
-                  const std::vector<float> &center = {}, const std::vector<uint8_t> &fill_value = {0, 0, 0});
-
-  /// \brief Destructor.
-  ~Rotate() override = default;
-
- protected:
-  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
-  /// \return Shared pointer to TensorOperation object.
-  std::shared_ptr<TensorOperation> Parse() override;
-
- private:
-  std::shared_ptr<RotateOperation> op_;
-  struct Data;
-  std::shared_ptr<Data> data_;
 };
 
 /// \brief Swap the red and blue channels of the input image.

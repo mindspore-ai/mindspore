@@ -17,24 +17,17 @@
 #include <memory>
 #include <string>
 #include "common/common.h"
-#include "minddata/dataset/vision/transform/affine_ir.h"
-#include "minddata/dataset/vision/transform/auto_contrast_ir.h"
 #include "minddata/dataset/vision/transform/bounding_box_augment_ir.h"
 #include "minddata/dataset/vision/transform/center_crop_ir.h"
 #include "minddata/dataset/vision/transform/crop_ir.h"
 #include "minddata/dataset/vision/transform/cutmix_batch_ir.h"
-#include "minddata/dataset/vision/transform/cutout_ir.h"
 #include "minddata/dataset/vision/transform/decode_ir.h"
-#include "minddata/dataset/vision/transform/equalize_ir.h"
 #include "minddata/dataset/vision/transform/hwc_to_chw_ir.h"
-#include "minddata/dataset/vision/transform/invert_ir.h"
 #include "minddata/dataset/vision/transform/mixup_batch_ir.h"
 #include "minddata/dataset/vision/transform/normalize_ir.h"
 #include "minddata/dataset/vision/transform/normalize_pad_ir.h"
 #include "minddata/dataset/vision/transform/pad_ir.h"
-#include "minddata/dataset/vision/transform/random_affine_ir.h"
 #include "minddata/dataset/vision/transform/random_color_adjust_ir.h"
-#include "minddata/dataset/vision/transform/random_color_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_decode_resize_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_with_bbox_ir.h"
@@ -43,11 +36,7 @@
 #include "minddata/dataset/vision/transform/random_posterize_ir.h"
 #include "minddata/dataset/vision/transform/random_resized_crop_ir.h"
 #include "minddata/dataset/vision/transform/random_resized_crop_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_resize_ir.h"
 #include "minddata/dataset/vision/transform/random_resize_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_rotation_ir.h"
-#include "minddata/dataset/vision/transform/random_select_subpolicy_ir.h"
-#include "minddata/dataset/vision/transform/random_sharpness_ir.h"
 #include "minddata/dataset/vision/transform/random_solarize_ir.h"
 #include "minddata/dataset/vision/transform/random_vertical_flip_ir.h"
 #include "minddata/dataset/vision/transform/random_vertical_flip_with_bbox_ir.h"
@@ -60,7 +49,6 @@
 #include "minddata/dataset/vision/transform/rgb_to_gray_ir.h"
 #include "minddata/dataset/vision/transform/rotate_ir.h"
 #include "minddata/dataset/vision/transform/swap_red_blue_ir.h"
-#include "minddata/dataset/vision/transform/uniform_aug_ir.h"
 
 using namespace mindspore::dataset;
 
@@ -68,23 +56,6 @@ class MindDataTestIRVision : public UT::DatasetOpTesting {
  public:
   MindDataTestIRVision() = default;
 };
-
-/// Feature: AutoContrast op
-/// Description: Test AutoContrast op with invalid cutoff
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestAutoContrastFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestAutoContrastFail1.";
-
-  // Testing invalid cutoff < 0
-  auto auto_contrast1 = std::make_shared<vision::AutoContrastOperation>(-1.0, std::vector<uint32_t>{});
-  Status rc1 = auto_contrast1->ValidateParams();
-  EXPECT_ERROR(rc1);
-
-  // Testing invalid cutoff > 100
-  auto auto_contrast2 = std::make_shared<vision::AutoContrastOperation>(110.0, std::vector<uint32_t>{10, 20});
-  Status rc2 = auto_contrast2->ValidateParams();
-  EXPECT_ERROR(rc2);
-}
 
 /// Feature: CenterCrop op
 /// Description: Test CenterCrop op with invalid parameters
@@ -124,67 +95,23 @@ TEST_F(MindDataTestIRVision, TestCropFail) {
   Status rc;
 
   // wrong width
-  auto crop1 = std::make_shared<vision::CropOperation>(
-    std::vector<int32_t>{0, 0}, std::vector<int32_t>{32, -32});
+  auto crop1 = std::make_shared<vision::CropOperation>(std::vector<int32_t>{0, 0}, std::vector<int32_t>{32, -32});
   rc = crop1->ValidateParams();
   EXPECT_ERROR(rc);
 
   // wrong height
-  auto crop2 = std::make_shared<vision::CropOperation>(
-    std::vector<int32_t>{0, 0}, std::vector<int32_t>{-32, -32});
+  auto crop2 = std::make_shared<vision::CropOperation>(std::vector<int32_t>{0, 0}, std::vector<int32_t>{-32, -32});
   rc = crop2->ValidateParams();
   EXPECT_ERROR(rc);
 
   // zero height
-  auto crop3 = std::make_shared<vision::CropOperation>(
-    std::vector<int32_t>{0, 0}, std::vector<int32_t>{0, 32});
+  auto crop3 = std::make_shared<vision::CropOperation>(std::vector<int32_t>{0, 0}, std::vector<int32_t>{0, 32});
   rc = crop3->ValidateParams();
   EXPECT_ERROR(rc);
 
   // negative coordinates
-  auto crop4 = std::make_shared<vision::CropOperation>(
-    std::vector<int32_t>{-1, 0}, std::vector<int32_t>{32, 32});
+  auto crop4 = std::make_shared<vision::CropOperation>(std::vector<int32_t>{-1, 0}, std::vector<int32_t>{32, 32});
   rc = crop4->ValidateParams();
-  EXPECT_ERROR(rc);
-}
-
-/// Feature: CutOut op
-/// Description: Test CutOut op with invalid parameters (negative length and number of patches)
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestCutOutFail1) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestCutOutFail1 with invalid parameters.";
-
-  Status rc;
-
-  // Create object for the tensor op
-  // Invalid negative length
-  std::shared_ptr<TensorOperation> cutout_op = std::make_shared<vision::CutOutOperation>(-10, 1, true);
-  rc = cutout_op->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // Invalid negative number of patches
-  cutout_op = std::make_shared<vision::CutOutOperation>(10, -1, true);
-  rc = cutout_op->ValidateParams();
-  EXPECT_ERROR(rc);
-}
-
-/// Feature: CutOut op
-/// Description: Test CutOut op with invalid parameters (zero length and number of patches)
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestCutOutFail2) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestCutOutFail2 with invalid params, boundary cases.";
-
-  Status rc;
-
-  // Create object for the tensor op
-  // Invalid zero length
-  std::shared_ptr<TensorOperation> cutout_op = std::make_shared<vision::CutOutOperation>(0, 1, true);
-  rc = cutout_op->ValidateParams();
-  EXPECT_ERROR(rc);
-
-  // Invalid zero number of patches
-  cutout_op = std::make_shared<vision::CutOutOperation>(10, 0, true);
-  rc = cutout_op->ValidateParams();
   EXPECT_ERROR(rc);
 }
 
@@ -307,20 +234,19 @@ TEST_F(MindDataTestIRVision, TestResizeFail) {
   Status rc;
 
   // negative resize value
-  auto resize_op1 = std::make_shared<vision::ResizeOperation>(
-    std::vector<int32_t>{30, -30}, InterpolationMode::kLinear);
+  auto resize_op1 =
+    std::make_shared<vision::ResizeOperation>(std::vector<int32_t>{30, -30}, InterpolationMode::kLinear);
   rc = resize_op1->ValidateParams();
   EXPECT_ERROR(rc);
 
   // zero resize value
-  auto resize_op2 = std::make_shared<vision::ResizeOperation>(
-    std::vector<int32_t>{0, 30}, InterpolationMode::kLinear);
+  auto resize_op2 = std::make_shared<vision::ResizeOperation>(std::vector<int32_t>{0, 30}, InterpolationMode::kLinear);
   rc = resize_op2->ValidateParams();
   EXPECT_ERROR(rc);
 
   // resize with 3 values
-  auto resize_op3 = std::make_shared<vision::ResizeOperation>(
-    std::vector<int32_t>{30, 20, 10}, InterpolationMode::kLinear);
+  auto resize_op3 =
+    std::make_shared<vision::ResizeOperation>(std::vector<int32_t>{30, 20, 10}, InterpolationMode::kLinear);
   rc = resize_op3->ValidateParams();
   EXPECT_ERROR(rc);
 }
@@ -334,29 +260,29 @@ TEST_F(MindDataTestIRVision, TestResizeWithBBoxFail) {
   Status rc;
 
   // Testing negative resize value
-  auto resize_with_bbox_op = std::make_shared<vision::ResizeWithBBoxOperation>(
-    std::vector<int32_t>{10, -10}, InterpolationMode::kLinear);
+  auto resize_with_bbox_op =
+    std::make_shared<vision::ResizeWithBBoxOperation>(std::vector<int32_t>{10, -10}, InterpolationMode::kLinear);
   EXPECT_NE(resize_with_bbox_op, nullptr);
   rc = resize_with_bbox_op->ValidateParams();
   EXPECT_ERROR(rc);
 
   // Testing negative resize value
-  auto resize_with_bbox_op1 = std::make_shared<vision::ResizeWithBBoxOperation>(
-    std::vector<int32_t>{-10}, InterpolationMode::kLinear);
+  auto resize_with_bbox_op1 =
+    std::make_shared<vision::ResizeWithBBoxOperation>(std::vector<int32_t>{-10}, InterpolationMode::kLinear);
   EXPECT_NE(resize_with_bbox_op1, nullptr);
   rc = resize_with_bbox_op1->ValidateParams();
   EXPECT_ERROR(rc);
 
   // Testing zero resize value
-  auto resize_with_bbox_op2 = std::make_shared<vision::ResizeWithBBoxOperation>(
-    std::vector<int32_t>{0, 10}, InterpolationMode::kLinear);
+  auto resize_with_bbox_op2 =
+    std::make_shared<vision::ResizeWithBBoxOperation>(std::vector<int32_t>{0, 10}, InterpolationMode::kLinear);
   EXPECT_NE(resize_with_bbox_op2, nullptr);
   rc = resize_with_bbox_op2->ValidateParams();
   EXPECT_ERROR(rc);
 
   // Testing resize with 3 values
-  auto resize_with_bbox_op3 = std::make_shared<vision::ResizeWithBBoxOperation>(
-    std::vector<int32_t>{10, 10, 10}, InterpolationMode::kLinear);
+  auto resize_with_bbox_op3 =
+    std::make_shared<vision::ResizeWithBBoxOperation>(std::vector<int32_t>{10, 10, 10}, InterpolationMode::kLinear);
   EXPECT_NE(resize_with_bbox_op3, nullptr);
   rc = resize_with_bbox_op3->ValidateParams();
   EXPECT_ERROR(rc);

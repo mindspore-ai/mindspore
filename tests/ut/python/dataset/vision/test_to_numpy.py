@@ -22,7 +22,6 @@ from PIL import Image
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision.transforms as vision
-from util import config_get_set_seed
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -99,49 +98,6 @@ def test_to_numpy_op_2():
         np.testing.assert_equal(img1, img3)
 
 
-def test_to_numpy_op_3():
-    """
-    Feature: ToNumpy op
-    Description: Test ToNumpy op in data pipeline to select C++ implementation of subsequent op
-    Expectation: Data results are correct and the same
-    """
-    original_seed = config_get_set_seed(10)
-
-    # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    transforms1 = [
-        vision.Decode(True),
-        vision.RandomHorizontalFlip(1.0),  # Python implementation selected
-        vision.ToNumpy()
-    ]
-    data1 = data1.map(operations=transforms1, input_columns=["image"])
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    transforms2 = [
-        vision.Decode(True),
-        vision.ToNumpy(),
-        vision.HorizontalFlip()  # Only C++ implementation available
-    ]
-    data2 = data2.map(operations=transforms2, input_columns=["image"])
-
-    # Third dataset
-    data3 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    transforms3 = [
-        vision.Decode(True),
-        vision.ToNumpy(),
-        vision.RandomHorizontalFlip(1.0)  # C++ implementation selected
-    ]
-    data3 = data3.map(operations=transforms3, input_columns=["image"])
-
-    for img1, img2, img3 in zip(data1.create_tuple_iterator(num_epochs=1, output_numpy=True),
-                                data2.create_tuple_iterator(num_epochs=1, output_numpy=True),
-                                data3.create_tuple_iterator(num_epochs=1, output_numpy=True)):
-        np.testing.assert_equal(img1, img2)
-        np.testing.assert_equal(img1, img3)
-
-    # Restore configuration
-    ds.config.set_seed(original_seed)
 
 
 def test_tonumpy_operation_01():
@@ -211,11 +167,3 @@ def test_tonumpy_exception_01():
     # Passing a non-existent parameter to NumPy
     with pytest.raises(TypeError, match="__init__\\(\\) takes 1 positional argument but 2 were given"):
         vision.ToNumpy(10)
-
-
-if __name__ == "__main__":
-    test_to_numpy_op_1()
-    test_to_numpy_op_2()
-    test_to_numpy_op_3()
-    test_tonumpy_operation_01()
-    test_tonumpy_exception_01()

@@ -44,7 +44,7 @@ def create_animal_dataset(epoch_size=2, batch_size=32, step_size=1, resize_heigh
     # define map operations
     decode_op = deMap.Decode()
     deMap.Normalize(mean=[_R_MEAN, _G_MEAN, _B_MEAN], std=[_R_STD, _G_STD, _B_STD])
-    random_resize_op = deMap.RandomResize((resize_height, resize_width))
+    random_resize_op = deMap.Resize((resize_height, resize_width))
     vertical_flip_op = deMap.RandomVerticalFlip()
     channelswap_op = deMap.HWC2CHW()
     rescale = 1.0 / 255.0

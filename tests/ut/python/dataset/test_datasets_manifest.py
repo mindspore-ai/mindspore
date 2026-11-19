@@ -257,44 +257,6 @@ def test_manifest_dataset_error_sample_sourceop():
     test_config("../data/dataset/testManifestData/errorSample3_text.manifest", 2)
 
 
-def test_manifest_dataset_error_sample_mapop_c():
-    """
-    Feature: ManifestDataset
-    Description: Test ManifestDataset with sample errors. Include map op in pipeline with C++ implemented ops
-    Expectation: The dataset is processed as expected.
-        Note: No error is raised from the invalid JPEG file.
-    """
-
-    def test_config(my_error_sample_data_file, my_num_rows):
-        # For ManifestDataset, use decode=True
-        data3 = ds.ManifestDataset(
-            my_error_sample_data_file, "eval", num_samples=3, num_parallel_workers=1, decode=True
-        )
-        # Add map op to the pipeline
-        data3 = data3.map(operations=[vision.HorizontalFlip()], input_columns=["image"], num_parallel_workers=1)
-        count = 0
-        for _ in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
-            count += 1
-        assert count == my_num_rows
-
-        # For ManifestDataset, use decode=False
-        data4 = ds.ManifestDataset(
-            my_error_sample_data_file, "eval", num_samples=3, num_parallel_workers=1, decode=False
-        )
-        # Add map op to the pipeline
-        data4 = data4.map(
-            operations=[vision.Decode(), vision.HorizontalFlip()], input_columns=["image"], num_parallel_workers=1
-        )
-        count = 0
-        for _ in data4.create_dict_iterator(num_epochs=1, output_numpy=True):
-            count += 1
-        assert count == my_num_rows
-
-    # Test corrupt sample
-    test_config("../data/dataset/testManifestData/errorSample2_corrupt1midsamp.manifest", 3)
-    test_config("../data/dataset/testManifestData/errorSample4_corrupt1midsamp.manifest", 2)
-    # Test text sample, instead of image sample
-    test_config("../data/dataset/testManifestData/errorSample3_text.manifest", 2)
 
 
 def test_manifest_dataset_error_sample_mapop_py():

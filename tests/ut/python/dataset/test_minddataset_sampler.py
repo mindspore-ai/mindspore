@@ -15,10 +15,10 @@
 """
 This is the test module for mindrecord
 """
+
 import os
 import pytest
 import numpy as np
-
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.dataset import Shuffle
@@ -26,6 +26,7 @@ from mindspore.mindrecord import FileWriter
 from mindspore.dataset import vision
 from mindspore.dataset.callback import DSCallback
 from util import config_get_set_seed
+
 
 FILES_NUM = 4
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"

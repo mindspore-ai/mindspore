@@ -38,7 +38,7 @@ _INITIALIZED = False
 _INITIALIZED_PID = False
 
 # The following constants have been deprecated by Pillow since version 9.1.0
-if int(Image.__version__.split(".")[0]) > 9 or Image.__version__ >= "9.1.0":
+if int(Image.__version__.split(".", maxsplit=1)[0]) > 9 or Image.__version__ >= "9.1.0":
     FLIP_LEFT_RIGHT = Image.Transpose.FLIP_LEFT_RIGHT
     FLIP_TOP_BOTTOM = Image.Transpose.FLIP_TOP_BOTTOM
     PERSPECTIVE = Image.Transform.PERSPECTIVE
@@ -200,88 +200,6 @@ class Border(str, Enum):
         return value
 
 
-class ConvertMode(IntEnum):
-    """
-    The color conversion mode.
-
-    Possible enumeration values are as follows:
-
-    - ConvertMode.COLOR_BGR2BGRA: convert BGR format images to BGRA format images.
-    - ConvertMode.COLOR_RGB2RGBA: convert RGB format images to RGBA format images.
-    - ConvertMode.COLOR_BGRA2BGR: convert BGRA format images to BGR format images.
-    - ConvertMode.COLOR_RGBA2RGB: convert RGBA format images to RGB format images.
-    - ConvertMode.COLOR_BGR2RGBA: convert BGR format images to RGBA format images.
-    - ConvertMode.COLOR_RGB2BGRA: convert RGB format images to BGRA format images.
-    - ConvertMode.COLOR_RGBA2BGR: convert RGBA format images to BGR format images.
-    - ConvertMode.COLOR_BGRA2RGB: convert BGRA format images to RGB format images.
-    - ConvertMode.COLOR_BGR2RGB: convert BGR format images to RGB format images.
-    - ConvertMode.COLOR_RGB2BGR: convert RGB format images to BGR format images.
-    - ConvertMode.COLOR_BGRA2RGBA: convert BGRA format images to RGBA format images.
-    - ConvertMode.COLOR_RGBA2BGRA: convert RGBA format images to BGRA format images.
-    - ConvertMode.COLOR_BGR2GRAY: convert BGR format images to GRAY format images.
-    - ConvertMode.COLOR_RGB2GRAY: convert RGB format images to GRAY format images.
-    - ConvertMode.COLOR_GRAY2BGR: convert GRAY format images to BGR format images.
-    - ConvertMode.COLOR_GRAY2RGB: convert GRAY format images to RGB format images.
-    - ConvertMode.COLOR_GRAY2BGRA: convert GRAY format images to BGRA format images.
-    - ConvertMode.COLOR_GRAY2RGBA: convert GRAY format images to RGBA format images.
-    - ConvertMode.COLOR_BGRA2GRAY: convert BGRA format images to GRAY format images.
-    - ConvertMode.COLOR_RGBA2GRAY: convert RGBA format images to GRAY format images.
-    """
-    COLOR_BGR2BGRA = 0
-    COLOR_RGB2RGBA = COLOR_BGR2BGRA
-    COLOR_BGRA2BGR = 1
-    COLOR_RGBA2RGB = COLOR_BGRA2BGR
-    COLOR_BGR2RGBA = 2
-    COLOR_RGB2BGRA = COLOR_BGR2RGBA
-    COLOR_RGBA2BGR = 3
-    COLOR_BGRA2RGB = COLOR_RGBA2BGR
-    COLOR_BGR2RGB = 4
-    COLOR_RGB2BGR = COLOR_BGR2RGB
-    COLOR_BGRA2RGBA = 5
-    COLOR_RGBA2BGRA = COLOR_BGRA2RGBA
-    COLOR_BGR2GRAY = 6
-    COLOR_RGB2GRAY = 7
-    COLOR_GRAY2BGR = 8
-    COLOR_GRAY2RGB = COLOR_GRAY2BGR
-    COLOR_GRAY2BGRA = 9
-    COLOR_GRAY2RGBA = COLOR_GRAY2BGRA
-    COLOR_BGRA2GRAY = 10
-    COLOR_RGBA2GRAY = 11
-
-    @staticmethod
-    def to_c_type(mode):
-        """
-        Function to return C type for color mode.
-        """
-        c_values = {ConvertMode.COLOR_BGR2BGRA: cde.ConvertMode.DE_COLOR_BGR2BGRA,
-                    ConvertMode.COLOR_RGB2RGBA: cde.ConvertMode.DE_COLOR_RGB2RGBA,
-                    ConvertMode.COLOR_BGRA2BGR: cde.ConvertMode.DE_COLOR_BGRA2BGR,
-                    ConvertMode.COLOR_RGBA2RGB: cde.ConvertMode.DE_COLOR_RGBA2RGB,
-                    ConvertMode.COLOR_BGR2RGBA: cde.ConvertMode.DE_COLOR_BGR2RGBA,
-                    ConvertMode.COLOR_RGB2BGRA: cde.ConvertMode.DE_COLOR_RGB2BGRA,
-                    ConvertMode.COLOR_RGBA2BGR: cde.ConvertMode.DE_COLOR_RGBA2BGR,
-                    ConvertMode.COLOR_BGRA2RGB: cde.ConvertMode.DE_COLOR_BGRA2RGB,
-                    ConvertMode.COLOR_BGR2RGB: cde.ConvertMode.DE_COLOR_BGR2RGB,
-                    ConvertMode.COLOR_RGB2BGR: cde.ConvertMode.DE_COLOR_RGB2BGR,
-                    ConvertMode.COLOR_BGRA2RGBA: cde.ConvertMode.DE_COLOR_BGRA2RGBA,
-                    ConvertMode.COLOR_RGBA2BGRA: cde.ConvertMode.DE_COLOR_RGBA2BGRA,
-                    ConvertMode.COLOR_BGR2GRAY: cde.ConvertMode.DE_COLOR_BGR2GRAY,
-                    ConvertMode.COLOR_RGB2GRAY: cde.ConvertMode.DE_COLOR_RGB2GRAY,
-                    ConvertMode.COLOR_GRAY2BGR: cde.ConvertMode.DE_COLOR_GRAY2BGR,
-                    ConvertMode.COLOR_GRAY2RGB: cde.ConvertMode.DE_COLOR_GRAY2RGB,
-                    ConvertMode.COLOR_GRAY2BGRA: cde.ConvertMode.DE_COLOR_GRAY2BGRA,
-                    ConvertMode.COLOR_GRAY2RGBA: cde.ConvertMode.DE_COLOR_GRAY2RGBA,
-                    ConvertMode.COLOR_BGRA2GRAY: cde.ConvertMode.DE_COLOR_BGRA2GRAY,
-                    ConvertMode.COLOR_RGBA2GRAY: cde.ConvertMode.DE_COLOR_RGBA2GRAY,
-                    }
-
-        mode = c_values.get(mode)
-        if mode is None:
-            raise RuntimeError("Unsupported ConvertMode, see https://www.mindspore.cn/docs/en/master/api_python/"
-                               "dataset_vision/mindspore.dataset.vision.ConvertColor.html for more details.")
-        return mode
-
-
 class ImageBatchFormat(IntEnum):
     """
     Data format of images after batch operation.
@@ -392,32 +310,6 @@ class Inter(IntEnum):
         if value is None:
             raise RuntimeError("Unsupported interpolation, only support NEAREST, LINEAR, CUBIC, AREA and PILCUBIC.")
 
-        return value
-
-
-class SliceMode(IntEnum):
-    """
-    Mode for slicing a tensor into multiple parts.
-
-    Possible enumeration values are: ``SliceMode.PAD``, ``SliceMode.DROP``.
-
-    - ``SliceMode.PAD``: Pads some pixels before slicing the tensor if needed.
-    - ``SliceMode.DROP``: Drops remaining pixels before slicing the tensor if needed.
-    """
-    PAD = 0
-    DROP = 1
-
-    @staticmethod
-    def to_c_type(mode):
-        """
-        Function to return C type for SliceMode.
-        """
-        c_values = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
-                    SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
-
-        value = c_values.get(mode)
-        if value is None:
-            raise RuntimeError("Unsupported SliceMode, only support PAD and DROP.")
         return value
 
 
@@ -674,8 +566,8 @@ def _get_frame_by_cv(filename, container, stream):
 
     try:
         cv2 = importlib.import_module("cv2")
-    except ModuleNotFoundError:
-        raise ImportError("Importing cv2 failed, try to install it by running `pip install opencv-python`.")
+    except ModuleNotFoundError as exc:
+        raise ImportError("Importing cv2 failed, try to install it by running `pip install opencv-python`.") from exc
 
     cap = cv2.VideoCapture(filename)
     cap.set(cv2.CAP_PROP_FORMAT, -1)
@@ -836,7 +728,7 @@ def _read_from_stream_dvpp(filename, container, start_offset, end_offset, pts_un
 def _read_from_stream_ffmpeg(container, start_offset, end_offset, pts_unit, stream, stream_name):
     """ Read video stream with FFMPEG. """
 
-    global _CALLED_TIMES, _GC_COLLECTION_INTERVAL
+    global _CALLED_TIMES
     _CALLED_TIMES += 1
     if _CALLED_TIMES % _GC_COLLECTION_INTERVAL == _GC_COLLECTION_INTERVAL - 1:
         gc.collect()
@@ -1138,7 +1030,7 @@ class VideoDecoder:
             return np.empty(0, dtype=np.uint8)
         for i, frame_index in enumerate(indices):
             check_value(frame_index, [0, self._metadata["num_frames"]], "Invalid frame index[{0}]={1}".format(
-                i, indices[i]), right_open_interval=True)
+                i, frame_index), right_open_interval=True)
         filepath = os.path.realpath(self.source)
 
         with cde.pyav_open(filepath) as container:

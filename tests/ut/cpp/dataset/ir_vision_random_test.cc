@@ -16,9 +16,7 @@
 
 #include <memory>
 #include "common/common.h"
-#include "minddata/dataset/vision/transform/random_affine_ir.h"
 #include "minddata/dataset/vision/transform/random_color_adjust_ir.h"
-#include "minddata/dataset/vision/transform/random_color_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_decode_resize_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_with_bbox_ir.h"
@@ -27,11 +25,7 @@
 #include "minddata/dataset/vision/transform/random_posterize_ir.h"
 #include "minddata/dataset/vision/transform/random_resized_crop_ir.h"
 #include "minddata/dataset/vision/transform/random_resized_crop_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_resize_ir.h"
 #include "minddata/dataset/vision/transform/random_resize_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_rotation_ir.h"
-#include "minddata/dataset/vision/transform/random_select_subpolicy_ir.h"
-#include "minddata/dataset/vision/transform/random_sharpness_ir.h"
 #include "minddata/dataset/vision/transform/random_solarize_ir.h"
 #include "minddata/dataset/vision/transform/random_vertical_flip_ir.h"
 #include "minddata/dataset/vision/transform/random_vertical_flip_with_bbox_ir.h"
@@ -42,23 +36,6 @@ class MindDataTestIRVision : public UT::DatasetOpTesting {
  public:
   MindDataTestIRVision() = default;
 };
-
-/// Feature: RandomColor IR
-/// Description: Test RandomColorOperation with invalid parameters
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestRandomColorIRFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomColorIRFail.";
-
-  // Testing invalid lower bound > upper bound
-  auto random_color1 = std::make_shared<vision::RandomColorOperation>(1.0, 0.1);
-  Status rc1 = random_color1->ValidateParams();
-  EXPECT_ERROR(rc1);
-
-  // Testing invalid negative lower bound
-  auto random_color2 = std::make_shared<vision::RandomColorOperation>(-0.5, 0.5);
-  Status rc2 = random_color2->ValidateParams();
-  EXPECT_ERROR(rc2);
-}
 
 /// Feature: RandomColorAdjust IR
 /// Description: Test RandomColorAdjustOperation with invalid parameters
@@ -127,8 +104,7 @@ TEST_F(MindDataTestIRVision, TestRandomHorizontalFlipWithBBoxIRFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomHorizontalFlipWithBBoxIRFail.";
 
   // Testing invalid negative input
-  auto random_horizontal_flip_bbox1 = std::make_shared<vision::RandomHorizontalFlipWithBBoxOperation>(
-    -1.0);
+  auto random_horizontal_flip_bbox1 = std::make_shared<vision::RandomHorizontalFlipWithBBoxOperation>(-1.0);
   Status rc1 = random_horizontal_flip_bbox1->ValidateParams();
   EXPECT_ERROR(rc1);
 
@@ -165,33 +141,6 @@ TEST_F(MindDataTestIRVision, TestRandomPosterizeIRFail) {
   EXPECT_ERROR(rc4);
 }
 
-/// Feature: RandomResize IR
-/// Description: Test RandomResizeOperation with invalid parameters
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestRandomResizeIRFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomResizeIRFail.";
-
-  // Testing invalid: size must only contain positive integers
-  auto random_resize1 = std::make_shared<vision::RandomResizeOperation>(std::vector<int32_t>{-66, 77});
-  Status rc1 = random_resize1->ValidateParams();
-  EXPECT_ERROR(rc1);
-
-  // Testing invalid: size must only contain positive integers
-  auto random_resize2 = std::make_shared<vision::RandomResizeOperation>(std::vector<int32_t>{0, 77});
-  Status rc2 = random_resize2->ValidateParams();
-  EXPECT_ERROR(rc2);
-
-  // Testing invalid: size must be a vector of one or two values
-  auto random_resize3 = std::make_shared<vision::RandomResizeOperation>(std::vector<int32_t>{1, 2, 3});
-  Status rc3 = random_resize3->ValidateParams();
-  EXPECT_ERROR(rc3);
-
-  // Testing invalid: size must be a vector of one or two values
-  auto random_resize4 = std::make_shared<vision::RandomResizeOperation>(std::vector<int32_t>{});
-  Status rc4 = random_resize4->ValidateParams();
-  EXPECT_ERROR(rc4);
-}
-
 /// Feature: RandomResizeWithBBox IR
 /// Description: Test RandomResizeWithBBoxOperation with invalid parameters
 /// Expectation: Throw correct error and message
@@ -199,39 +148,21 @@ TEST_F(MindDataTestIRVision, TestRandomResizeWithBBoxIRFail) {
   MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomResizeWithBBoxIRFail.";
 
   // Testing invalid: size must only contain positive integers
-  auto random_resize_with_bbox1 = std::make_shared<vision::RandomResizeWithBBoxOperation>(
-    std::vector<int32_t>{-66, 77});
+  auto random_resize_with_bbox1 =
+    std::make_shared<vision::RandomResizeWithBBoxOperation>(std::vector<int32_t>{-66, 77});
   Status rc1 = random_resize_with_bbox1->ValidateParams();
   EXPECT_ERROR(rc1);
 
   // Testing invalid: size must be a vector of one or two values
-  auto random_resize_with_bbox2 = std::make_shared<vision::RandomResizeWithBBoxOperation>(
-    std::vector<int32_t>{1, 2, 3});
+  auto random_resize_with_bbox2 =
+    std::make_shared<vision::RandomResizeWithBBoxOperation>(std::vector<int32_t>{1, 2, 3});
   Status rc2 = random_resize_with_bbox2->ValidateParams();
   EXPECT_ERROR(rc2);
 
   // Testing invalid: size must be a vector of one or two values
-  auto random_resize_with_bbox3 = std::make_shared<vision::RandomResizeWithBBoxOperation>(
-    std::vector<int32_t>{});
+  auto random_resize_with_bbox3 = std::make_shared<vision::RandomResizeWithBBoxOperation>(std::vector<int32_t>{});
   Status rc3 = random_resize_with_bbox3->ValidateParams();
   EXPECT_ERROR(rc3);
-}
-
-/// Feature: RandomSharpness IR
-/// Description: Test RandomSharpnessOperation with invalid parameters
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestRandomSharpnessIRFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomSharpnessIRFail.";
-
-  // Testing invalid empty degrees vector
-  auto random_sharpness1 = std::make_shared<vision::RandomSharpnessOperation>(std::vector<float>{});
-  Status rc1 = random_sharpness1->ValidateParams();
-  EXPECT_ERROR(rc1);
-
-  // Testing invalid single degree value
-  auto random_sharpness2 = std::make_shared<vision::RandomSharpnessOperation>(std::vector<float>{0.1});
-  Status rc2 = random_sharpness2->ValidateParams();
-  EXPECT_ERROR(rc2);
 }
 
 /// Feature: RandomSolarize IR

@@ -29,77 +29,49 @@
 #endif
 #include "minddata/dataset/vision/transform/ascend_vision_ir.h"
 
-#include "minddata/dataset/vision/transform/adjust_brightness_ir.h"
-#include "minddata/dataset/vision/transform/adjust_contrast_ir.h"
 #include "minddata/dataset/vision/transform/adjust_gamma_ir.h"
-#include "minddata/dataset/vision/transform/adjust_hue_ir.h"
-#include "minddata/dataset/vision/transform/adjust_saturation_ir.h"
-#include "minddata/dataset/vision/transform/adjust_sharpness_ir.h"
-#include "minddata/dataset/vision/transform/affine_ir.h"
 #include "minddata/dataset/vision/transform/auto_augment_ir.h"
-#include "minddata/dataset/vision/transform/auto_contrast_ir.h"
 #include "minddata/dataset/vision/transform/bounding_box_augment_ir.h"
 #include "minddata/dataset/vision/transform/center_crop_ir.h"
-#include "minddata/dataset/vision/transform/convert_color_ir.h"
 #include "minddata/dataset/vision/transform/crop_ir.h"
 #include "minddata/dataset/vision/transform/cutmix_batch_ir.h"
-#include "minddata/dataset/vision/transform/cutout_ir.h"
 #include "minddata/dataset/vision/transform/decode_ir.h"
 #ifdef ENABLE_FFMPEG
 #include "minddata/dataset/vision/transform/decode_video_ir.h"
 #endif
-#include "minddata/dataset/vision/transform/equalize_ir.h"
 #include "minddata/dataset/vision/transform/erase_ir.h"
-#include "minddata/dataset/vision/transform/gaussian_blur_ir.h"
-#include "minddata/dataset/vision/transform/horizontal_flip_ir.h"
 #include "minddata/dataset/vision/transform/hwc_to_chw_ir.h"
-#include "minddata/dataset/vision/transform/invert_ir.h"
 #include "minddata/dataset/vision/transform/mixup_batch_ir.h"
 #include "minddata/dataset/vision/transform/normalize_ir.h"
 #include "minddata/dataset/vision/transform/normalize_pad_ir.h"
-#include "minddata/dataset/vision/transform/pad_to_size_ir.h"
 #include "minddata/dataset/vision/transform/perspective_ir.h"
 #include "minddata/dataset/vision/transform/posterize_ir.h"
 #include "minddata/dataset/vision/transform/rand_augment_ir.h"
-#include "minddata/dataset/vision/transform/random_adjust_sharpness_ir.h"
-#include "minddata/dataset/vision/transform/random_affine_ir.h"
-#include "minddata/dataset/vision/transform/random_auto_contrast_ir.h"
 #include "minddata/dataset/vision/transform/random_color_adjust_ir.h"
-#include "minddata/dataset/vision/transform/random_color_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_decode_resize_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_equalize_ir.h"
 #include "minddata/dataset/vision/transform/random_horizontal_flip_ir.h"
 #include "minddata/dataset/vision/transform/random_horizontal_flip_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_invert_ir.h"
 #include "minddata/dataset/vision/transform/random_lighting_ir.h"
 #include "minddata/dataset/vision/transform/random_posterize_ir.h"
-#include "minddata/dataset/vision/transform/random_resize_ir.h"
 #include "minddata/dataset/vision/transform/random_resize_with_bbox_ir.h"
 #include "minddata/dataset/vision/transform/random_resized_crop_ir.h"
 #include "minddata/dataset/vision/transform/random_resized_crop_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_rotation_ir.h"
-#include "minddata/dataset/vision/transform/random_select_subpolicy_ir.h"
-#include "minddata/dataset/vision/transform/random_sharpness_ir.h"
 #include "minddata/dataset/vision/transform/random_solarize_ir.h"
 #include "minddata/dataset/vision/transform/random_vertical_flip_ir.h"
 #include "minddata/dataset/vision/transform/random_vertical_flip_with_bbox_ir.h"
 #include "minddata/dataset/vision/transform/resize_ir.h"
 #include "minddata/dataset/vision/transform/resize_preserve_ar_ir.h"
 #include "minddata/dataset/vision/transform/resize_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/resized_crop_ir.h"
 #include "minddata/dataset/vision/transform/rgb_to_bgr_ir.h"
 #include "minddata/dataset/vision/transform/rgb_to_gray_ir.h"
 #include "minddata/dataset/vision/transform/rgba_to_bgr_ir.h"
 #include "minddata/dataset/vision/transform/rgba_to_rgb_ir.h"
 #include "minddata/dataset/vision/transform/rotate_ir.h"
-#include "minddata/dataset/vision/transform/slice_patches_ir.h"
 #include "minddata/dataset/vision/transform/solarize_ir.h"
 #include "minddata/dataset/vision/transform/to_tensor_ir.h"
 #include "minddata/dataset/vision/transform/trivial_augment_wide_ir.h"
-#include "minddata/dataset/vision/transform/uniform_aug_ir.h"
-#include "minddata/dataset/vision/transform/vertical_flip_ir.h"
 #include "minddata/dataset/util/log_adapter.h"
 
 #include "minddata/dataset/vision/transform/pad_ir.h"
@@ -120,55 +92,10 @@ namespace mindspore::dataset::vision {
 // (In alphabetical order)
 
 // Affine Transform Operation.
-struct Affine::Data {
-  Data(float_t degrees, const std::vector<float> &translation, float scale, const std::vector<float> &shear,
-       InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
-      : degrees_(degrees),
-        translation_(translation),
-        scale_(scale),
-        shear_(shear),
-        interpolation_(interpolation),
-        fill_value_(fill_value) {}
-  float degrees_;
-  std::vector<float> translation_;
-  float scale_;
-  std::vector<float> shear_;
-  InterpolationMode interpolation_;
-  std::vector<uint8_t> fill_value_;
-};
-
-Affine::Affine(float_t degrees, const std::vector<float> &translation, float scale, const std::vector<float> &shear,
-               InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
-    : data_(std::make_shared<Data>(degrees, translation, scale, shear, interpolation, fill_value)) {}
-
-std::shared_ptr<TensorOperation> Affine::Parse() {
-  return std::make_shared<AffineOperation>(data_->degrees_, data_->translation_, data_->scale_, data_->shear_,
-                                           data_->interpolation_, data_->fill_value_);
-}
 
 // AdjustBrightness Transform Operation.
-struct AdjustBrightness::Data {
-  explicit Data(float brightness_factor) : brightness_factor_(brightness_factor) {}
-  float brightness_factor_;
-};
-
-AdjustBrightness::AdjustBrightness(float brightness_factor) : data_(std::make_shared<Data>(brightness_factor)) {}
-
-std::shared_ptr<TensorOperation> AdjustBrightness::Parse() {
-  return std::make_shared<AdjustBrightnessOperation>(data_->brightness_factor_);
-}
 
 // AdjustContrast Transform Operation.
-struct AdjustContrast::Data {
-  explicit Data(float contrast_factor) : contrast_factor_(contrast_factor) {}
-  float contrast_factor_;
-};
-
-AdjustContrast::AdjustContrast(float contrast_factor) : data_(std::make_shared<Data>(contrast_factor)) {}
-
-std::shared_ptr<TensorOperation> AdjustContrast::Parse() {
-  return std::make_shared<AdjustContrastOperation>(data_->contrast_factor_);
-}
 
 // AdjustGamma Transform Operation.
 struct AdjustGamma::Data {
@@ -184,38 +111,10 @@ std::shared_ptr<TensorOperation> AdjustGamma::Parse() {
 }
 
 // AdjustHue Transform Operation.
-struct AdjustHue::Data {
-  explicit Data(float hue_factor) : hue_factor_(hue_factor) {}
-  float hue_factor_;
-};
-
-AdjustHue::AdjustHue(float hue_factor) : data_(std::make_shared<Data>(hue_factor)) {}
-
-std::shared_ptr<TensorOperation> AdjustHue::Parse() { return std::make_shared<AdjustHueOperation>(data_->hue_factor_); }
 
 // AdjustSaturation Transform Operation.
-struct AdjustSaturation::Data {
-  explicit Data(float saturation_factor) : saturation_factor_(saturation_factor) {}
-  float saturation_factor_;
-};
-
-AdjustSaturation::AdjustSaturation(float saturation_factor) : data_(std::make_shared<Data>(saturation_factor)) {}
-
-std::shared_ptr<TensorOperation> AdjustSaturation::Parse() {
-  return std::make_shared<AdjustSaturationOperation>(data_->saturation_factor_);
-}
 
 // AdjustSharpness Transform Operation.
-struct AdjustSharpness::Data {
-  explicit Data(float sharpness_factor) : sharpness_factor_(sharpness_factor) {}
-  float sharpness_factor_;
-};
-
-AdjustSharpness::AdjustSharpness(float sharpness_factor) : data_(std::make_shared<Data>(sharpness_factor)) {}
-
-std::shared_ptr<TensorOperation> AdjustSharpness::Parse() {
-  return std::make_shared<AdjustSharpnessOperation>(data_->sharpness_factor_);
-}
 
 // AutoAugment Transform Operation.
 struct AutoAugment::Data {
@@ -235,18 +134,6 @@ std::shared_ptr<TensorOperation> AutoAugment::Parse() {
 }
 
 // AutoContrast Transform Operation.
-struct AutoContrast::Data {
-  Data(float cutoff, const std::vector<uint32_t> &ignore) : cutoff_(cutoff), ignore_(ignore) {}
-  float cutoff_;
-  std::vector<uint32_t> ignore_;
-};
-
-AutoContrast::AutoContrast(float cutoff, const std::vector<uint32_t> &ignore)
-    : data_(std::make_shared<Data>(cutoff, ignore)) {}
-
-std::shared_ptr<TensorOperation> AutoContrast::Parse() {
-  return std::make_shared<AutoContrastOperation>(data_->cutoff_, data_->ignore_);
-}
 
 // BoundingBoxAugment Transform Operation.
 struct BoundingBoxAugment::Data {
@@ -302,16 +189,6 @@ std::shared_ptr<TensorOperation> CenterCrop::Parse(const MapTargetDevice &env) {
 }
 
 // ConvertColor Transform Operation.
-struct ConvertColor::Data {
-  explicit Data(ConvertMode convert_mode) : convert_mode_(convert_mode) {}
-  ConvertMode convert_mode_;
-};
-
-ConvertColor::ConvertColor(ConvertMode convert_mode) : data_(std::make_shared<Data>(convert_mode)) {}
-
-std::shared_ptr<TensorOperation> ConvertColor::Parse() {
-  return std::make_shared<ConvertColorOperation>(data_->convert_mode_);
-}
 
 // Crop Transform Operation.
 struct Crop::Data {
@@ -345,20 +222,6 @@ std::shared_ptr<TensorOperation> CutMixBatch::Parse() {
 }
 
 // CutOutOp.
-struct CutOut::Data {
-  Data(int32_t length, int32_t num_patches, bool is_hwc)
-      : length_(length), num_patches_(num_patches), is_hwc_(is_hwc) {}
-  int32_t length_;
-  int32_t num_patches_;
-  bool is_hwc_;
-};
-
-CutOut::CutOut(int32_t length, int32_t num_patches, bool is_hwc)
-    : data_(std::make_shared<Data>(length, num_patches, is_hwc)) {}
-
-std::shared_ptr<TensorOperation> CutOut::Parse() {
-  return std::make_shared<CutOutOperation>(data_->length_, data_->num_patches_, data_->is_hwc_);
-}
 
 // Decode Transform Operation.
 struct Decode::Data {
@@ -504,9 +367,6 @@ Status EncodePng(const mindspore::MSTensor &image, mindspore::MSTensor *output, 
 }
 
 // Equalize Transform Operation.
-Equalize::Equalize() = default;
-
-std::shared_ptr<TensorOperation> Equalize::Parse() { return std::make_shared<EqualizeOperation>(); }
 
 // Erase Operation.
 struct Erase::Data {
@@ -529,19 +389,6 @@ std::shared_ptr<TensorOperation> Erase::Parse() {
 }
 
 // GaussianBlur Transform Operation.
-struct GaussianBlur::Data {
-  Data(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma)
-      : kernel_size_(kernel_size), sigma_(sigma) {}
-  std::vector<int32_t> kernel_size_;
-  std::vector<float> sigma_;
-};
-
-GaussianBlur::GaussianBlur(const std::vector<int32_t> &kernel_size, const std::vector<float> &sigma)
-    : data_(std::make_shared<Data>(kernel_size, sigma)) {}
-
-std::shared_ptr<TensorOperation> GaussianBlur::Parse() {
-  return std::make_shared<GaussianBlurOperation>(data_->kernel_size_, data_->sigma_);
-}
 
 // GetImageNumChannels Function.
 Status GetImageNumChannels(const mindspore::MSTensor &image, dsize_t *channels) {
@@ -566,9 +413,6 @@ Status GetImageSize(const mindspore::MSTensor &image, std::vector<dsize_t> *size
 }
 
 // HorizontalFlip Transform Operation.
-HorizontalFlip::HorizontalFlip() = default;
-
-std::shared_ptr<TensorOperation> HorizontalFlip::Parse() { return std::make_shared<HorizontalFlipOperation>(); }
 
 // HwcToChw Transform Operation.
 HWC2CHW::HWC2CHW() = default;
@@ -576,9 +420,6 @@ HWC2CHW::HWC2CHW() = default;
 std::shared_ptr<TensorOperation> HWC2CHW::Parse() { return std::make_shared<HwcToChwOperation>(); }
 
 // Invert Transform Operation.
-Invert::Invert() = default;
-
-std::shared_ptr<TensorOperation> Invert::Parse() { return std::make_shared<InvertOperation>(); }
 
 // MixUpBatch Transform Operation.
 struct MixUpBatch::Data {
@@ -657,23 +498,6 @@ std::shared_ptr<TensorOperation> Pad::Parse() {
 }
 
 // PadToSize Transform Operation.
-struct PadToSize::Data {
-  Data(const std::vector<int32_t> &size, const std::vector<int32_t> &offset, const std::vector<uint8_t> &fill_value,
-       BorderType padding_mode)
-      : size_(size), offset_(offset), fill_value_(fill_value), padding_mode_(padding_mode) {}
-  std::vector<int32_t> size_;
-  std::vector<int32_t> offset_;
-  std::vector<uint8_t> fill_value_;
-  BorderType padding_mode_;
-};
-
-PadToSize::PadToSize(const std::vector<int32_t> &size, const std::vector<int32_t> &offset,
-                     const std::vector<uint8_t> &fill_value, BorderType padding_mode)
-    : data_(std::make_shared<Data>(size, offset, fill_value, padding_mode)) {}
-
-std::shared_ptr<TensorOperation> PadToSize::Parse() {
-  return std::make_shared<PadToSizeOperation>(data_->size_, data_->offset_, data_->fill_value_, data_->padding_mode_);
-}
 
 // Perspective Transform Operation.
 struct Perspective::Data {
@@ -729,75 +553,12 @@ std::shared_ptr<TensorOperation> RandAugment::Parse() {
 }
 
 // RandomAdjustSharpness Transform Operation.
-struct RandomAdjustSharpness::Data {
-  Data(float degree, float prob) : degree_(degree), probability_(prob) {}
-  float degree_;
-  float probability_;
-};
-
-RandomAdjustSharpness::RandomAdjustSharpness(float degree, float prob) : data_(std::make_shared<Data>(degree, prob)) {}
-
-std::shared_ptr<TensorOperation> RandomAdjustSharpness::Parse() {
-  return std::make_shared<RandomAdjustSharpnessOperation>(data_->degree_, data_->probability_);
-}
 
 // RandomAffine Transform Operation.
-struct RandomAffine::Data {
-  Data(const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range,
-       const std::vector<float_t> &scale_range, const std::vector<float_t> &shear_ranges,
-       InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
-      : degrees_(degrees),
-        translate_range_(translate_range),
-        scale_range_(scale_range),
-        shear_ranges_(shear_ranges),
-        interpolation_(interpolation),
-        fill_value_(fill_value) {}
-  std::vector<float_t> degrees_;          // min_degree, max_degree
-  std::vector<float_t> translate_range_;  // maximum x translation percentage, maximum y translation percentage
-  std::vector<float_t> scale_range_;      // min_scale, max_scale
-  std::vector<float_t> shear_ranges_;     // min_x_shear, max_x_shear, min_y_shear, max_y_shear
-  InterpolationMode interpolation_;
-  std::vector<uint8_t> fill_value_;
-};
-
-RandomAffine::RandomAffine(const std::vector<float_t> &degrees, const std::vector<float_t> &translate_range,
-                           const std::vector<float_t> &scale_range, const std::vector<float_t> &shear_ranges,
-                           InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
-    : data_(std::make_shared<Data>(degrees, translate_range, scale_range, shear_ranges, interpolation, fill_value)) {}
-
-std::shared_ptr<TensorOperation> RandomAffine::Parse() {
-  return std::make_shared<RandomAffineOperation>(data_->degrees_, data_->translate_range_, data_->scale_range_,
-                                                 data_->shear_ranges_, data_->interpolation_, data_->fill_value_);
-}
 
 // RandomAutoContrast Transform Operation.
-struct RandomAutoContrast::Data {
-  Data(float cutoff, const std::vector<uint32_t> &ignore, float prob)
-      : cutoff_(cutoff), ignore_(ignore), probability_(prob) {}
-  float cutoff_;
-  std::vector<uint32_t> ignore_;
-  float probability_;
-};
-
-RandomAutoContrast::RandomAutoContrast(float cutoff, const std::vector<uint32_t> &ignore, float prob)
-    : data_(std::make_shared<Data>(cutoff, ignore, prob)) {}
-
-std::shared_ptr<TensorOperation> RandomAutoContrast::Parse() {
-  return std::make_shared<RandomAutoContrastOperation>(data_->cutoff_, data_->ignore_, data_->probability_);
-}
 
 // RandomColor Transform Operation.
-struct RandomColor::Data {
-  Data(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) {}
-  float t_lb_;
-  float t_ub_;
-};
-
-RandomColor::RandomColor(float t_lb, float t_ub) : data_(std::make_shared<Data>(t_lb, t_ub)) {}
-
-std::shared_ptr<TensorOperation> RandomColor::Parse() {
-  return std::make_shared<RandomColorOperation>(data_->t_lb_, data_->t_ub_);
-}
 
 // RandomColorAdjust Transform Operation.
 struct RandomColorAdjust::Data {
@@ -893,16 +654,6 @@ std::shared_ptr<TensorOperation> RandomCropWithBBox::Parse() {
 }
 
 // RandomEqualize Transform Operation.
-struct RandomEqualize::Data {
-  explicit Data(float prob) : probability_(prob) {}
-  float probability_;
-};
-
-RandomEqualize::RandomEqualize(float prob) : data_(std::make_shared<Data>(prob)) {}
-
-std::shared_ptr<TensorOperation> RandomEqualize::Parse() {
-  return std::make_shared<RandomEqualizeOperation>(data_->probability_);
-}
 
 // RandomHorizontalFlip.
 struct RandomHorizontalFlip::Data {
@@ -929,16 +680,6 @@ std::shared_ptr<TensorOperation> RandomHorizontalFlipWithBBox::Parse() {
 }
 
 // RandomInvert Operation.
-struct RandomInvert::Data {
-  explicit Data(float prob) : probability_(prob) {}
-  float probability_;
-};
-
-RandomInvert::RandomInvert(float prob) : data_(std::make_shared<Data>(prob)) {}
-
-std::shared_ptr<TensorOperation> RandomInvert::Parse() {
-  return std::make_shared<RandomInvertOperation>(data_->probability_);
-}
 
 // RandomLighting Transform Operation.
 struct RandomLighting::Data {
@@ -965,14 +706,6 @@ std::shared_ptr<TensorOperation> RandomPosterize::Parse() {
 }
 
 // RandomResize Transform Operation.
-struct RandomResize::Data {
-  explicit Data(const std::vector<int32_t> &size) : size_(size) {}
-  std::vector<int32_t> size_;
-};
-
-RandomResize::RandomResize(const std::vector<int32_t> &size) : data_(std::make_shared<Data>(size)) {}
-
-std::shared_ptr<TensorOperation> RandomResize::Parse() { return std::make_shared<RandomResizeOperation>(data_->size_); }
 
 // RandomResizeWithBBox Transform Operation.
 struct RandomResizeWithBBox::Data {
@@ -1031,94 +764,10 @@ std::shared_ptr<TensorOperation> RandomResizedCropWithBBox::Parse() {
 }
 
 // RandomRotation Transform Operation.
-struct RandomRotation::Data {
-  Data(const std::vector<float> &degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
-       const std::vector<uint8_t> &fill_value)
-      : degrees_(degrees), interpolation_mode_(resample), center_(center), expand_(expand), fill_value_(fill_value) {}
-  std::vector<float> degrees_;
-  InterpolationMode interpolation_mode_;
-  std::vector<float> center_;
-  bool expand_;
-  std::vector<uint8_t> fill_value_;
-};
-
-RandomRotation::RandomRotation(const std::vector<float> &degrees, InterpolationMode resample, bool expand,
-                               const std::vector<float> &center, const std::vector<uint8_t> &fill_value)
-    : data_(std::make_shared<Data>(degrees, resample, expand, center, fill_value)) {}
-
-std::shared_ptr<TensorOperation> RandomRotation::Parse() {
-  return std::make_shared<RandomRotationOperation>(data_->degrees_, data_->interpolation_mode_, data_->expand_,
-                                                   data_->center_, data_->fill_value_);
-}
 
 // RandomSelectSubpolicy Transform Operation.
-struct RandomSelectSubpolicy::Data {
-  std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy_;
-};
-
-RandomSelectSubpolicy::RandomSelectSubpolicy(
-  const std::vector<std::vector<std::pair<TensorTransform *, double>>> &policy)
-    : data_(std::make_shared<Data>()) {
-  for (uint32_t i = 0; i < policy.size(); i++) {
-    std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
-
-    for (uint32_t j = 0; j < policy[i].size(); j++) {
-      TensorTransform *op = policy[i][j].first;
-      std::shared_ptr<TensorOperation> operation = (op ? op->Parse() : nullptr);
-      double prob = policy[i][j].second;
-      subpolicy.emplace_back(std::move(std::make_pair(operation, prob)));
-    }
-    data_->policy_.emplace_back(subpolicy);
-  }
-}
-
-RandomSelectSubpolicy::RandomSelectSubpolicy(
-  const std::vector<std::vector<std::pair<std::shared_ptr<TensorTransform>, double>>> &policy)
-    : data_(std::make_shared<Data>()) {
-  for (uint32_t i = 0; i < policy.size(); i++) {
-    std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
-
-    for (uint32_t j = 0; j < policy[i].size(); j++) {
-      std::shared_ptr<TensorTransform> op = policy[i][j].first;
-      std::shared_ptr<TensorOperation> operation = (op ? op->Parse() : nullptr);
-      double prob = policy[i][j].second;
-      subpolicy.emplace_back(std::move(std::make_pair(operation, prob)));
-    }
-    data_->policy_.emplace_back(subpolicy);
-  }
-}
-
-RandomSelectSubpolicy::RandomSelectSubpolicy(
-  const std::vector<std::vector<std::pair<std::reference_wrapper<TensorTransform>, double>>> &policy)
-    : data_(std::make_shared<Data>()) {
-  for (int32_t i = 0; i < policy.size(); i++) {
-    std::vector<std::pair<std::shared_ptr<TensorOperation>, double>> subpolicy;
-
-    for (int32_t j = 0; j < policy[i].size(); j++) {
-      TensorTransform &op = policy[i][j].first;
-      std::shared_ptr<TensorOperation> operation = op.Parse();
-      double prob = policy[i][j].second;
-      subpolicy.emplace_back(std::move(std::make_pair(operation, prob)));
-    }
-    data_->policy_.emplace_back(subpolicy);
-  }
-}
-
-std::shared_ptr<TensorOperation> RandomSelectSubpolicy::Parse() {
-  return std::make_shared<RandomSelectSubpolicyOperation>(data_->policy_);
-}
 
 // RandomSharpness Transform Operation.
-struct RandomSharpness::Data {
-  explicit Data(const std::vector<float> &degrees) : degrees_(degrees) {}
-  std::vector<float> degrees_;
-};
-
-RandomSharpness::RandomSharpness(const std::vector<float> &degrees) : data_(std::make_shared<Data>(degrees)) {}
-
-std::shared_ptr<TensorOperation> RandomSharpness::Parse() {
-  return std::make_shared<RandomSharpnessOperation>(data_->degrees_);
-}
 
 // RandomSolarize Transform Operation.
 struct RandomSolarize::Data {
@@ -1272,26 +921,6 @@ std::shared_ptr<TensorOperation> Resize::Parse(const MapTargetDevice &env) {
 }
 
 // ResizedCrop Transform Operation.
-struct ResizedCrop::Data {
-  Data(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
-       InterpolationMode interpolation)
-      : top_(top), left_(left), height_(height), width_(width), size_(size), interpolation_(interpolation) {}
-  int32_t top_;
-  int32_t left_;
-  int32_t height_;
-  int32_t width_;
-  std::vector<int32_t> size_;
-  InterpolationMode interpolation_;
-};
-
-ResizedCrop::ResizedCrop(int32_t top, int32_t left, int32_t height, int32_t width, const std::vector<int32_t> &size,
-                         InterpolationMode interpolation)
-    : data_(std::make_shared<Data>(top, left, height, width, size, interpolation)) {}
-
-std::shared_ptr<TensorOperation> ResizedCrop::Parse() {
-  return std::make_shared<ResizedCropOperation>(data_->top_, data_->left_, data_->height_, data_->width_, data_->size_,
-                                                data_->interpolation_);
-}
 
 // ResizePreserveAR Transform Operation.
 struct ResizePreserveAR::Data {
@@ -1331,36 +960,6 @@ std::shared_ptr<TensorOperation> RGB2BGR::Parse() { return std::make_shared<RgbT
 std::shared_ptr<TensorOperation> RGB2GRAY::Parse() { return std::make_shared<RgbToGrayOperation>(); }
 
 // Rotate Transform Operation.
-struct Rotate::Data {
-  Data(const float &degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
-       const std::vector<uint8_t> &fill_value)
-      : degrees_(degrees), interpolation_mode_(resample), center_(center), expand_(expand), fill_value_(fill_value) {}
-  explicit Data(const FixRotationAngle &angle_id) : angle_id_(angle_id), lite_impl_(true) {}
-  FixRotationAngle angle_id_{FixRotationAngle::k0Degree};
-  bool lite_impl_{false};
-  float degrees_{0};
-  InterpolationMode interpolation_mode_{InterpolationMode::kNearestNeighbour};
-  std::vector<float> center_{{}};
-  bool expand_{false};
-  std::vector<uint8_t> fill_value_{0, 0, 0};
-};
-
-Rotate::Rotate(FixRotationAngle angle_id) : data_(std::make_shared<Data>(angle_id)) {}
-
-Rotate::Rotate(float degrees, InterpolationMode resample, bool expand, const std::vector<float> &center,
-               const std::vector<uint8_t> &fill_value)
-    : data_(std::make_shared<Data>(degrees, resample, expand, center, fill_value)) {}
-
-std::shared_ptr<TensorOperation> Rotate::Parse() {
-  if (!data_->lite_impl_) {
-    return std::make_shared<RotateOperation>(data_->degrees_, data_->interpolation_mode_, data_->expand_,
-                                             data_->center_, data_->fill_value_);
-  }
-
-  std::string platform = data_->lite_impl_ ? "Cloud" : "Android";
-  MS_LOG(ERROR) << "This Rotate API is not supported for " + platform + ", use another Rotate API.";
-  return nullptr;
-}
 
 // RgbaToBgr Transform Operation.
 RGBA2BGR::RGBA2BGR() = default;
@@ -1373,22 +972,6 @@ RGBA2RGB::RGBA2RGB() = default;
 std::shared_ptr<TensorOperation> RGBA2RGB::Parse() { return std::make_shared<RgbaToRgbOperation>(); }
 
 // SlicePatches Transform Operation.
-struct SlicePatches::Data {
-  Data(int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value)
-      : num_height_(num_height), num_width_(num_width), slice_mode_(slice_mode), fill_value_(fill_value) {}
-  int32_t num_height_;
-  int32_t num_width_;
-  SliceMode slice_mode_;
-  uint8_t fill_value_;
-};
-
-SlicePatches::SlicePatches(int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value)
-    : data_(std::make_shared<Data>(num_height, num_width, slice_mode, fill_value)) {}
-
-std::shared_ptr<TensorOperation> SlicePatches::Parse() {
-  return std::make_shared<SlicePatchesOperation>(data_->num_height_, data_->num_width_, data_->slice_mode_,
-                                                 data_->fill_value_);
-}
 
 // Solarize Transform Operation.
 struct Solarize::Data {
@@ -1438,43 +1021,8 @@ std::shared_ptr<TensorOperation> TrivialAugmentWide::Parse() {
 }
 
 // UniformAug Transform Operation.
-struct UniformAugment::Data {
-  std::vector<std::shared_ptr<TensorOperation>> transforms_;
-  int32_t num_ops_;
-};
-
-UniformAugment::UniformAugment(const std::vector<TensorTransform *> &transforms, int32_t num_ops)
-    : data_(std::make_shared<Data>()) {
-  (void)std::transform(
-    transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-    [](TensorTransform *const op) -> std::shared_ptr<TensorOperation> { return op ? op->Parse() : nullptr; });
-  data_->num_ops_ = num_ops;
-}
-
-UniformAugment::UniformAugment(const std::vector<std::shared_ptr<TensorTransform>> &transforms, int32_t num_ops)
-    : data_(std::make_shared<Data>()) {
-  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-                       [](const std::shared_ptr<TensorTransform> &op) -> std::shared_ptr<TensorOperation> {
-                         return op ? op->Parse() : nullptr;
-                       });
-  data_->num_ops_ = num_ops;
-}
-
-UniformAugment::UniformAugment(const std::vector<std::reference_wrapper<TensorTransform>> &transforms, int32_t num_ops)
-    : data_(std::make_shared<Data>()) {
-  (void)std::transform(transforms.begin(), transforms.end(), std::back_inserter(data_->transforms_),
-                       [](TensorTransform &op) -> std::shared_ptr<TensorOperation> { return op.Parse(); });
-  data_->num_ops_ = num_ops;
-}
-
-std::shared_ptr<TensorOperation> UniformAugment::Parse() {
-  return std::make_shared<UniformAugOperation>(data_->transforms_, data_->num_ops_);
-}
 
 // VerticalFlip Transform Operation.
-VerticalFlip::VerticalFlip() = default;
-
-std::shared_ptr<TensorOperation> VerticalFlip::Parse() { return std::make_shared<VerticalFlipOperation>(); }
 
 // WriteFile Function.
 Status WriteFile(const std::string &filename, const mindspore::MSTensor &data) {

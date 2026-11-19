@@ -57,10 +57,20 @@ from mindspore.parallel._utils import _is_in_data_parallel_mode
 from mindspore.run_check._check_version import check_version_and_env_config
 from mindspore.dataset.callback.ds_callback import DSCallback, WaitedDSCallback
 from mindspore.dataset.transforms.transforms import TensorOperation, _Compose, Plugin, TypeCast
-from mindspore.dataset.text.transforms import AddToken, JiebaTokenizer, Lookup, Ngram, SentencePieceTokenizer, \
-    SlidingWindow, ToNumber, ToVectors, Truncate, TruncateSequencePair, UnicodeCharTokenizer, WordpieceTokenizer, \
-    BasicTokenizer, BertTokenizer, CaseFold, FilterWikipediaXML, NormalizeUTF8, RegexReplace, RegexTokenizer, \
-    UnicodeScriptTokenizer, WhitespaceTokenizer
+from mindspore.dataset.text.transforms import (
+    AddToken,
+    JiebaTokenizer,
+    Lookup,
+    Ngram,
+    SentencePieceTokenizer,
+    SlidingWindow,
+    ToNumber,
+    ToVectors,
+    Truncate,
+    TruncateSequencePair,
+    UnicodeCharTokenizer,
+    WordpieceTokenizer,
+)
 from mindspore.dataset.core.datatypes import nptype_to_detype, mstype_to_detype, mstypelist_to_detypelist
 from mindspore.dataset.audio.utils import create_dct, linear_fbanks, melscale_fbanks
 from mindspore.dataset.engine.cache_client import DatasetCache
@@ -86,26 +96,45 @@ from mindspore.dataset.engine.samplers import (
 )
 from mindspore.dataset.vision.utils import encode_jpeg, encode_png, get_image_num_channels, get_image_size, \
     read_file, read_image, read_video, read_video_timestamps, write_file, write_jpeg, write_png
-from mindspore.dataset.vision.transforms import AdjustBrightness, AdjustContrast, AdjustGamma as VAdjustGamma, \
-    AdjustHue, AdjustSaturation, AdjustSharpness, Affine, AutoAugment as VAutoAugment, AutoContrast as VAutoContrast, \
-    BoundingBoxAugment as VBoundingBoxAugment, CenterCrop as VCenterCrop, ConvertColor as VConvertColor, \
-    Crop as VCrop, CutMixBatch as VCutMixBatch, CutOut as VCutOut, Decode as VDecode, DecodeVideo, \
-    Equalize as VEqualize, Erase, GaussianBlur as VGaussianBlur, HorizontalFlip as VHorizontalFlip, \
-    HWC2CHW as VHWC2CHW, Invert as VInvert, MixUpBatch as VMixUpBatch, Normalize as VNormalize, \
-    NormalizePad as VNormalizePad, Pad as VPad, PadToSize, Perspective, Posterize, RandAugment, \
-    RandomAdjustSharpness as VRandomAdjustSharpness, RandomAffine as VRandomAffine, \
-    RandomAutoContrast as VRandomAutoContrast, RandomColor as VRandomColor, RandomColorAdjust as VRandomColorAdjust, \
-    RandomCrop as VRandomCrop, RandomCropDecodeResize as VRandomCropDecodeResize, \
-    RandomCropWithBBox as VRandomCropWithBBox, RandomEqualize as VRandomEqualize, RandomResize as VRandomResize, \
-    RandomHorizontalFlip as VRandomHorizontalFlip, RandomHorizontalFlipWithBBox as VRandomHorizontalFlipWithBBox, \
-    RandomInvert as VRandomInvert, RandomLighting as VRandomLighting, RandomPosterize as VRandomPosterize, \
-    RandomResizedCrop as VRandomResizedCrop, RandomResizedCropWithBBox as VRandomResizedCropWithBBox, \
-    RandomResizeWithBBox as VRandomResizeWithBBox, RandomRotation as VRandomRotation, \
-    RandomSelectSubpolicy as VRandomSelectSubpolicy, RandomSharpness as VRandomSharpness, \
-    RandomSolarize as VRandomSolarize, RandomVerticalFlip as VRandomVerticalFlip, \
-    RandomVerticalFlipWithBBox as VRandomVerticalFlipWithBBox, Rescale as VRescale, Resize as VResize, ResizedCrop, \
-    ResizeWithBBox as VResizeWithBBox, Rotate as VRotate, SlicePatches as VSlicePatches, Solarize, ToTensor,\
-    TrivialAugmentWide, UniformAugment as VUniformAugment, VerticalFlip as VVerticalFlip
+from mindspore.dataset.vision.transforms import (
+    AdjustGamma as VAdjustGamma,
+    AutoAugment as VAutoAugment,
+    BoundingBoxAugment as VBoundingBoxAugment,
+    CenterCrop as VCenterCrop,
+    Crop as VCrop,
+    CutMixBatch as VCutMixBatch,
+    Decode as VDecode,
+    DecodeVideo,
+    Erase,
+    HWC2CHW as VHWC2CHW,
+    MixUpBatch as VMixUpBatch,
+    Normalize as VNormalize,
+    NormalizePad as VNormalizePad,
+    Pad as VPad,
+    Perspective,
+    Posterize,
+    RandAugment,
+    RandomColorAdjust as VRandomColorAdjust,
+    RandomCrop as VRandomCrop,
+    RandomCropDecodeResize as VRandomCropDecodeResize,
+    RandomCropWithBBox as VRandomCropWithBBox,
+    RandomHorizontalFlip as VRandomHorizontalFlip,
+    RandomHorizontalFlipWithBBox as VRandomHorizontalFlipWithBBox,
+    RandomLighting as VRandomLighting,
+    RandomPosterize as VRandomPosterize,
+    RandomResizedCrop as VRandomResizedCrop,
+    RandomResizedCropWithBBox as VRandomResizedCropWithBBox,
+    RandomResizeWithBBox as VRandomResizeWithBBox,
+    RandomSolarize as VRandomSolarize,
+    RandomVerticalFlip as VRandomVerticalFlip,
+    RandomVerticalFlipWithBBox as VRandomVerticalFlipWithBBox,
+    Rescale as VRescale,
+    Resize as VResize,
+    ResizeWithBBox as VResizeWithBBox,
+    Solarize,
+    ToTensor,
+    TrivialAugmentWide,
+)
 from mindspore.profiler.profiler import Profiler
 from mindspore.communication._comm_helper import _create_group_helper, _destroy_group_helper
 from mindspore.communication.management import _set_rank_from_mpi, init as cinit, release as crelease
@@ -146,11 +175,20 @@ def _get_dataset_forbidden_code():
     codes = []
     codes.extend([DSCallback.__init__, WaitedDSCallback.__init__])
     codes.extend([TensorOperation.__call__, _Compose.parse, Plugin.parse, TypeCast.parse])
-    codes.extend([AddToken.parse, JiebaTokenizer.parse, Lookup.parse, Ngram.parse, SentencePieceTokenizer.parse, \
-                  SlidingWindow.parse, ToNumber.parse, ToVectors.parse, Truncate.parse, TruncateSequencePair.parse, \
-                  UnicodeCharTokenizer.parse, WordpieceTokenizer.parse, BasicTokenizer.parse, BertTokenizer.parse, \
-                  CaseFold.parse, FilterWikipediaXML.parse, NormalizeUTF8.parse, RegexReplace.parse, \
-                  RegexTokenizer.parse, UnicodeScriptTokenizer.parse, WhitespaceTokenizer.parse])
+    codes.extend([
+        AddToken.parse,
+        JiebaTokenizer.parse,
+        Lookup.parse,
+        Ngram.parse,
+        SentencePieceTokenizer.parse,
+        SlidingWindow.parse,
+        ToNumber.parse,
+        ToVectors.parse,
+        Truncate.parse,
+        TruncateSequencePair.parse,
+        UnicodeCharTokenizer.parse,
+        WordpieceTokenizer.parse,
+    ])
     codes.extend([create_dct, linear_fbanks, melscale_fbanks])
     codes.extend([DatasetCache.__init__, Iterator.__init__])
     codes.extend([CSVDataset.parse, MindDataset.parse, TFRecordDataset.parse])
@@ -180,26 +218,26 @@ def _get_dataset_forbidden_code():
                   _SubsetRandomSampler.parse_for_minddataset])
     codes.extend([encode_jpeg, encode_png, get_image_num_channels, get_image_size, read_file, read_image, read_video, \
                   read_video_timestamps, write_file, write_jpeg, write_png])
-    codes.extend([AdjustBrightness.parse, AdjustContrast.parse, VAdjustGamma.parse, AdjustHue.parse, \
-                  AdjustSaturation.parse, AdjustSharpness.parse, Affine.parse, VAutoAugment.parse, \
-                  VAutoContrast.parse, VBoundingBoxAugment.parse, VCenterCrop.parse, VConvertColor.parse, \
-                  VCrop.parse, VCutMixBatch.parse, VCutOut.parse, VDecode.parse, DecodeVideo.parse, \
-                  VEqualize.parse, Erase.parse, VGaussianBlur.parse, VHorizontalFlip.parse, \
-                  VHWC2CHW.parse, VInvert.parse, VMixUpBatch.parse, VNormalize.parse, VNormalizePad.parse, \
-                  VPad.parse, PadToSize.parse, Perspective.parse, Posterize.parse, RandAugment.parse, \
-                  VRandomAdjustSharpness.parse, VRandomAffine.parse, \
-                  VRandomAutoContrast.parse, VRandomColor.parse, VRandomColorAdjust.parse, \
+    codes.extend([VAdjustGamma.parse, \
+                  VAutoAugment.parse, \
+                  VBoundingBoxAugment.parse, VCenterCrop.parse, \
+                  VCrop.parse, VCutMixBatch.parse, VDecode.parse, DecodeVideo.parse, \
+                  Erase.parse, \
+                  VHWC2CHW.parse, VMixUpBatch.parse, VNormalize.parse, VNormalizePad.parse, \
+                  VPad.parse, Perspective.parse, Posterize.parse, RandAugment.parse, \
+                  \
+                  VRandomColorAdjust.parse, \
                   VRandomCrop.parse, VRandomCropDecodeResize.parse, \
-                  VRandomCropWithBBox.parse, VRandomEqualize.parse, VRandomResize.parse, \
+                  VRandomCropWithBBox.parse, \
                   VRandomHorizontalFlip.parse, VRandomHorizontalFlipWithBBox.parse, \
-                  VRandomInvert.parse, VRandomLighting.parse, VRandomPosterize.parse, \
+                  VRandomLighting.parse, VRandomPosterize.parse, \
                   VRandomResizedCrop.parse, VRandomResizedCropWithBBox.parse, \
-                  VRandomResizeWithBBox.parse, VRandomRotation.parse, \
-                  VRandomSelectSubpolicy.parse, VRandomSharpness.parse, \
+                  VRandomResizeWithBBox.parse, \
+                  \
                   VRandomSolarize.parse, VRandomVerticalFlip.parse, \
-                  VRandomVerticalFlipWithBBox.parse, VRescale.parse, VResize.parse, ResizedCrop.parse, \
-                  VResizeWithBBox.parse, VRotate.parse, VSlicePatches.parse, Solarize.parse, ToTensor.parse,\
-                  TrivialAugmentWide.parse, VUniformAugment.parse, VVerticalFlip])
+                  VRandomVerticalFlipWithBBox.parse, VRescale.parse, VResize.parse, \
+                  VResizeWithBBox.parse, Solarize.parse, ToTensor.parse,\
+                  TrivialAugmentWide.parse])
     return codes
 
 

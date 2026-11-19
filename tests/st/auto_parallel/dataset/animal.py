@@ -37,6 +37,7 @@ Constants:
 - Normalization parameters: _R_MEAN, _G_MEAN, _B_MEAN, _R_STD, _G_STD, _B_STD
 """
 import os
+import numpy as np
 import mindspore.dataset.vision as deMap
 import mindspore.dataset.transforms.transforms as C
 import mindspore.dataset as ds
@@ -45,7 +46,6 @@ from mindspore.communication.management import init
 from mindspore.communication.management import get_rank
 from mindspore.communication.management import get_group_size
 from mindspore import log as logger
-import numpy as np
 
 
 CUR_DIR = os.path.split(__file__)[0]
@@ -57,6 +57,22 @@ _B_MEAN = 103.94
 _R_STD = 1
 _G_STD = 1
 _B_STD = 1
+
+
+def _slice_patches(num_height, num_width):
+    """Split HW/HWC images in row-major order, padding the bottom and right with zeros."""
+    def split(image):
+        height, width = image.shape[:2]
+        patch_height = (height + num_height - 1) // num_height
+        patch_width = (width + num_width - 1) // num_width
+        padding = [(0, patch_height * num_height - height), (0, patch_width * num_width - width)]
+        padding.extend([(0, 0)] * (image.ndim - 2))
+        padded = np.pad(image, padding)
+        return tuple(np.ascontiguousarray(padded[row * patch_height:(row + 1) * patch_height,
+                                                col * patch_width:(col + 1) * patch_width])
+                     for row in range(num_height) for col in range(num_width))
+
+    return split
 
 
 def create_animal_dataset(epoch_size=2, batch_size=32, step_size=1, resize_height=224,
@@ -81,7 +97,7 @@ def create_animal_dataset(epoch_size=2, batch_size=32, step_size=1, resize_heigh
     # define map operations
     decode_op = deMap.Decode()
     deMap.Normalize(mean=[_R_MEAN, _G_MEAN, _B_MEAN], std=[_R_STD, _G_STD, _B_STD])
-    random_resize_op = deMap.RandomResize((resize_height, resize_width))
+    random_resize_op = deMap.Resize((resize_height, resize_width))
     vertical_flip_op = deMap.RandomVerticalFlip()
     channelswap_op = deMap.HWC2CHW()
     rescale = 1.0 / 255.0
@@ -202,14 +218,14 @@ def create_animal_no_random_dataset(epoch_size=1, batch_size=32, step_size=1, re
 def create_splited_data_dataset(img_h=1, img_w=1, mask_h=1, mask_w=1, batch_size=64,
                                 resize_height=224, resize_width=224):
     """
-    created a splited dataset;num_h and num_w are used in the SlicePatches interface to
+    created a splited dataset;num_h and num_w are used in the NumPy splitting helper to
     control the splitting of H and W dimensions.
 
     only support fo dataset_strategy
 
     num_h: H dimension of dataset
     num_w: W dimension of dataset
-    deMap.SlicePatches:Slice Tensor to multiple patches in horizontal and vertical directions.
+    Split images into patches in row-major order, padding the bottom and right if needed.
     """
     data_url = DATASET_PATH
 
@@ -218,15 +234,15 @@ def create_splited_data_dataset(img_h=1, img_w=1, mask_h=1, mask_w=1, batch_size
     # define map operations
     decode_op = deMap.Decode()
     deMap.Normalize(mean=[_R_MEAN, _G_MEAN, _B_MEAN], std=[_R_STD, _G_STD, _B_STD])
-    random_resize_op = deMap.RandomResize((resize_height, resize_width))
+    random_resize_op = deMap.Resize((resize_height, resize_width))
     vertical_flip_op = deMap.RandomVerticalFlip()
     channelswap_op = deMap.HWC2CHW()
     rescale = 1.0 / 255.0
     shift = 0.0
     rescale_op = deMap.Rescale(rescale, shift)
-    slice_patches_img_op = deMap.SlicePatches(img_h, img_w)
+    slice_patches_img_op = _slice_patches(img_h, img_w)
     img_cols = ['img' + str(x) for x in range(img_h * img_w)]
-    slice_patches_mask_op = deMap.SlicePatches(mask_h, mask_w)
+    slice_patches_mask_op = _slice_patches(mask_h, mask_w)
     mask_cols = ['mask' + str(x) for x in range(mask_h * mask_w)]
 
     dataset = dataset.map(input_columns="image", operations=decode_op)
@@ -377,7 +393,6 @@ def create_no_splited_data_dataset(batch_size=64, resize_height=224, resize_widt
 
     num_h: H dimension of dataset
     num_w: W dimension of dataset
-    deMap.SlicePatches:Slice Tensor to multiple patches in horizontal and vertical directions.
     """
     data_url = DATASET_PATH
 
@@ -386,7 +401,7 @@ def create_no_splited_data_dataset(batch_size=64, resize_height=224, resize_widt
     # define map operations
     decode_op = deMap.Decode()
     deMap.Normalize(mean=[_R_MEAN, _G_MEAN, _B_MEAN], std=[_R_STD, _G_STD, _B_STD])
-    random_resize_op = deMap.RandomResize((resize_height, resize_width))
+    random_resize_op = deMap.Resize((resize_height, resize_width))
     vertical_flip_op = deMap.RandomVerticalFlip()
     channelswap_op = deMap.HWC2CHW()
     rescale = 1.0 / 255.0

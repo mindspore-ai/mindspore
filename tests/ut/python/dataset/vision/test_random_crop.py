@@ -24,7 +24,7 @@ from PIL import Image
 import mindspore.dataset as ds
 import mindspore.dataset.vision.transforms as vision
 import mindspore.dataset.vision.utils as mode
-from mindspore.dataset.vision import Border
+from mindspore.dataset.vision.utils import Border
 from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, config_get_set_seed, config_get_set_num_parallel_workers
 
