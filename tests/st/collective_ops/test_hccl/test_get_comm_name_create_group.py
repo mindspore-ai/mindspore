@@ -15,7 +15,6 @@
 
 """test hccl get_comm_name with 8p"""
 
-import re
 import numpy as np
 from mindspore import nn
 from mindspore import Tensor
@@ -24,15 +23,6 @@ from mindspore import context
 from mindspore._c_expression import GroupOptions
 from mindspore.communication.management import init, get_comm_name, create_group, get_rank
 from mindspore.communication import GlobalComm
-
-def check_comm_name(text):
-    ip_pattern = r"\d{1,3}(?:\.\d{1,3}){3}"
-    comm_name_patterns = (
-        rf"{ip_pattern}%[a-zA-Z0-9]+(?:_\d+)+",
-        rf"{ip_pattern}(?:_\d+)+",
-    )
-    assert any(re.fullmatch(pattern, text) for pattern in comm_name_patterns), f"{text} is not comm_name!"
-
 
 np.random.seed(1)
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
@@ -54,12 +44,15 @@ group3 = "group_op_expansion_aiv"
 options3 = GroupOptions()
 options3.hccl_config = {"hccl_op_expansion_mode": "AIV"}
 
+max_length_group = "g" * 127
+
 rank_ids = [0, 7]
 if get_rank() in rank_ids:
     create_group(group0, rank_ids, options0)
     create_group(group1, rank_ids, options1)
     create_group(group2, rank_ids, options2)
     create_group(group3, rank_ids, options3)
+    create_group(max_length_group, rank_ids)
 
 class GroupCommNameNet(nn.Cell):
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
@@ -79,7 +72,7 @@ def test_hccl_get_comm_name_func_net_8p():
     net = GroupCommNameNet()
     test_tensor = np.ones([3, 4]).astype(np.float32)
     output = net(Tensor(test_tensor, mstype.float32))
-    check_comm_name(output)
+    assert output == GlobalComm.WORLD_COMM_GROUP
     print("Get world group comm_name: ", output)
 
 
@@ -90,9 +83,12 @@ def test_hccl_get_comm_name_func_8p():
     Expectation: expect correct result.
     """
     output_world = get_comm_name()
-    check_comm_name(output_world)
+    assert output_world == GlobalComm.WORLD_COMM_GROUP
     output_other = "[group does not exist at this rank]"
     if get_rank() in rank_ids:
         output_other = get_comm_name(group0)
-        check_comm_name(output_other)
+        assert output_other == group0
+        for group in (group1, group2, group3):
+            assert get_comm_name(group) == group
+        assert get_comm_name(max_length_group) == max_length_group
     print("Get world group comm_name: ", output_world, "created group comm_name: ", output_other)

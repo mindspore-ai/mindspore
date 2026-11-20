@@ -136,6 +136,10 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   if (initialized_) {
     return true;
   }
+  if (comm_created_) {
+    MS_LOG(ERROR) << "Communication group '" << name_ << "' still has a communicator pending finalization.";
+    return false;
+  }
 
   if (MsContext::GetInstance()->AscendSocSupportsFeature(ascend_soc::kAscendFeatureInferCommSkipInterNodeHcclGroup) &&
       !isGroupWithinLocalMachine(group_ranks_)) {
@@ -153,7 +157,6 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  (void)CALL_ASCEND_API(aclrtSetDevice, device_id);
   uint32_t group_rank;
   auto group_size = size_;
   if (!common::GetEnv(kSimulationLevel).empty()) {
@@ -164,6 +167,10 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   }
   // Generate HcclCommConfig.
   HcclCommConfig config = CreateHcclCommConfig();
+  if (CALL_ASCEND_API(aclrtSetDevice, device_id) != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "aclrtSetDevice failed for group '" << name_ << "'.";
+    return false;
+  }
   // Call HCCL initialize comm API.
   bool ret = false;
   std::string rank_table_file_path = common::GetEnv("RANK_TABLE_FILE");
@@ -175,12 +182,25 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
     ret = InitByRootInfoConfig(root_info, group_size, group_rank, config);
   }
   if (!ret) {
+    // A failed initialization does not guarantee a valid output handle.
+    comm_ = nullptr;
+    (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
     return false;
   }
+  comm_created_ = hccl_config_.find(kHcclComm) == hccl_config_.end();
   // Get HCCL comm name which is used in graph sink mode for GE.
   if (HcclGetCommName(comm_, inner_comm_name_) != static_cast<int32_t>(HCCL_SUCCESS)) {
     const string &error_message = ErrorManagerAdapter::GetErrorMessage(true);
-    MS_LOG(ERROR) << "HcclGetCommName failed. " + error_message;
+    MS_LOG(ERROR) << "Failed to initialize communication group '" << name_ << "': HcclGetCommName failed. "
+                  << error_message;
+    RollbackHcclComm(device_id);
+    return false;
+  }
+  inner_comm_name_[sizeof(inner_comm_name_) - 1] = '\0';
+  if (hccl_config_.find(kHcclComm) == hccl_config_.end() && name_ != inner_comm_name_) {
+    MS_LOG(ERROR) << "Failed to initialize communication group '" << name_ << "': HCCL communicator name '"
+                  << inner_comm_name_ << "' does not match the group name.";
+    RollbackHcclComm(device_id);
     return false;
   }
   initialized_ = true;
@@ -206,7 +226,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
 }
 
 bool AscendCommunicationGroup::Finalize() {
-  if (!initialized_) {
+  if (!initialized_ && !comm_created_) {
     return true;
   }
   if (hccl::HcclAdapter::GetInstance().UseHcclCM()) {
@@ -215,26 +235,55 @@ bool AscendCommunicationGroup::Finalize() {
     return true;
   }
 
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  const bool owned_comm = comm_created_;
+  const bool was_initialized = initialized_;
+  if (owned_comm && CALL_ASCEND_API(aclrtSetDevice, device_id) != ACL_SUCCESS) {
+    MS_LOG(ERROR) << "aclrtSetDevice failed when finalizing group '" << name_ << "'.";
+    return false;
+  }
   static auto destroy_hccl_watchdog_handler_cb = GET_COMMON_CALLBACK(DestroyWatchDogHandler, void, const std::string &);
-  if (destroy_hccl_watchdog_handler_cb != nullptr) {
+  if (initialized_ && destroy_hccl_watchdog_handler_cb != nullptr) {
     destroy_hccl_watchdog_handler_cb(name_);
   }
+  initialized_ = false;
+  if (!DestroyHcclComm()) {
+    if (!was_initialized) {
+      // Release this call's reference; retain the pending communicator's original device reference.
+      (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
+    }
+    return false;
+  }
+  if (owned_comm) {
+    (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
+    if (!was_initialized) {
+      // A pending communicator retains one device reference until it can be destroyed.
+      (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
+    }
+  }
+  return true;
+}
 
-  // HcclCommDestroy is only called when the communicator is created by MindSpore. If communicator is passed in via
-  // group's options, the finalization of the HCCL communicator is not managed by MindSpore.
-  if (hccl_config_.find(kHcclComm) == hccl_config_.end()) {
-    // This function will be called at a lonesome thread that has no rtContext, so HcclCommDestroy will be failed.
-    // Delete these codes when these threads can be bind.
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    (void)CALL_ASCEND_API(aclrtSetDevice, device_id);
-    (void)HcclCommDestroy(comm_);
+void AscendCommunicationGroup::RollbackHcclComm(uint32_t device_id) {
+  if (DestroyHcclComm()) {
     (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
   }
+}
 
-  initialized_ = false;
+bool AscendCommunicationGroup::DestroyHcclComm() {
+  if (comm_created_) {
+    auto ret = HcclCommDestroy(comm_);
+    if (ret != HCCL_SUCCESS) {
+      MS_LOG(ERROR) << "Failed to destroy HCCL communicator for group '" << name_ << "', ret: " << ret;
+      return false;
+    }
+    comm_created_ = false;
+  }
+  // Externally supplied communicators are borrowed and must not be destroyed.
   comm_ = nullptr;
+  inner_comm_name_[0] = '\0';
   return true;
 }
 
@@ -303,6 +352,10 @@ HcclCommConfig AscendCommunicationGroup::CreateHcclCommConfig() {
   InitHcclCommConfig(&config);
   // Set up NSLB-DP config.
   SetNslbCommConfig(&config);
+
+  if (hccl_config_.find(kHcclComm) == hccl_config_.end()) {
+    hccl::HcclAdapter::GetInstance().SetHcclCommName(&config, name_);
+  }
 
   if (hccl_config_.empty()) {
     return config;

@@ -220,14 +220,18 @@ bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id) {
     MS_LOG(INFO) << "Hccl has been inited, skip.";
     return true;
   }
+  if (hccl_comm_ != nullptr) {
+    MS_LOG(ERROR) << "An HCCL communicator is still pending finalization.";
+    return false;
+  }
   InitPlugin();
   init_flag_ = true;
   MS_LOG(INFO) << "Init hccl adapter success.";
   return true;
 }
 
-bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file,
-                           HcclMode hccl_mode) {
+bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, HcclMode hccl_mode,
+                           const std::string &group_name) {
   MS_LOG(INFO) << "Start init hccl adapter for " << GetHcclModeString(hccl_mode);
   std::lock_guard<std::mutex> lock(init_mutex_);
   if (init_flag_) {
@@ -235,10 +239,14 @@ bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::st
     return true;
   }
 
+  if (hccl_comm_ != nullptr) {
+    MS_LOG(ERROR) << "An HCCL communicator is still pending finalization.";
+    return false;
+  }
   hccl_mode_ = hccl_mode;
   InitPlugin();
   if (hccl_mode_ != HcclMode::kGraph) {
-    bool ret = InitHcclComm(rank_id, rank_file);
+    bool ret = InitHcclComm(rank_id, rank_file, group_name);
     if (!ret) {
       return false;
     }
@@ -286,13 +294,15 @@ bool HcclAdapter::HcclWatchdogThread(HcclComm comm, std::string *error_info, boo
 bool HcclAdapter::FinalizeHccl() {
   std::lock_guard<std::mutex> lock(init_mutex_);
   MS_LOG(INFO) << "Start destroy hccl adapter for " << GetHcclModeString(hccl_mode_);
-  if (!init_flag_) {
+  if (!init_flag_ && hccl_comm_ == nullptr && plugin_handle_ == nullptr) {
     MS_LOG(INFO) << "Hccl has never been inited, skip.";
     return true;
   }
-  (void)FinalizeHcclComm();
-  FinalizePlugin();
   init_flag_ = false;
+  if (!FinalizeHcclComm()) {
+    return false;
+  }
+  FinalizePlugin();
   MS_LOG(INFO) << "Destroy hccl adapter success.";
   return true;
 }
@@ -478,14 +488,34 @@ HcclResult HcclAdapter::HcclCommResume(HcclComm comm) const {
 }
 
 uint32_t HcclAdapter::HcclGetCommConfigCapability() {
-  CHECK_SYMBOL_NULL(get_hccl_comm_config_capability_);
+  if (get_hccl_comm_config_capability_ == nullptr) {
+    MS_LOG(EXCEPTION) << "HcclGetCommConfigCapability is unavailable; cannot set HCCL communicator name.";
+  }
   return get_hccl_comm_config_capability_();
+}
+
+void HcclAdapter::SetHcclCommName(HcclCommConfig *config, const std::string &group_name) {
+  MS_EXCEPTION_IF_NULL(config);
+  if (group_name.empty() || group_name.find('\0') != std::string::npos ||
+      group_name.size() >= sizeof(config->hcclCommName)) {
+    MS_LOG(EXCEPTION) << "Invalid HCCL communicator name: '" << group_name << "'. The name must contain 1 to "
+                      << sizeof(config->hcclCommName) - 1 << " bytes and no embedded NUL character.";
+  }
+  if (HcclGetCommConfigCapability() <= static_cast<uint32_t>(HCCL_COMM_CONFIG_COMM_NAME)) {
+    MS_LOG(EXCEPTION) << "This HCCL version does not support setting communicator name for group '" << group_name
+                      << "'.";
+  }
+  std::copy(group_name.begin(), group_name.end(), config->hcclCommName);
+  config->hcclCommName[group_name.size()] = '\0';
 }
 
 HcclResult HcclAdapter::HcclCommInitClusterInfoConfig(const char *rank_table, uint32_t rank_id, HcclCommConfig *config,
                                                       HcclComm *hccl_comm) {
   if (init_hccl_global_comm_ranktable_ == nullptr) {
     init_hccl_global_comm_ranktable_ = DlsymFuncObj(HcclCommInitClusterInfoConfig, plugin_handle_);
+    if (init_hccl_global_comm_ranktable_ == nullptr) {
+      MS_LOG(EXCEPTION) << "HcclCommInitClusterInfoConfig is unavailable; cannot set HCCL communicator name.";
+    }
   }
   return init_hccl_global_comm_ranktable_(rank_table, rank_id, config, hccl_comm);
 }
@@ -495,8 +525,7 @@ HcclResult HcclAdapter::HcclCommInitRootInfoConfig(uint32_t n_ranks, const HcclR
   if (init_hccl_root_info_config_ == nullptr) {
     init_hccl_root_info_config_ = DlsymFuncObj(HcclCommInitRootInfoConfig, plugin_handle_);
     if (init_hccl_root_info_config_ == nullptr) {
-      // new api in CANN C20
-      return HcclCommInitRootInfo(n_ranks, root_info, rank, hccl_comm_);
+      MS_LOG(EXCEPTION) << "HcclCommInitRootInfoConfig is unavailable; cannot set HCCL communicator name.";
     }
   }
 
@@ -508,11 +537,14 @@ HcclResult HcclAdapter::HcclCreateSubCommConfig(HcclComm *global_comm, uint32_t 
                                                 HcclComm *hccl_comm) {
   if (init_hccl_sub_comm_ranktable_ == nullptr) {
     init_hccl_sub_comm_ranktable_ = DlsymFuncObj(HcclCreateSubCommConfig, plugin_handle_);
+    if (init_hccl_sub_comm_ranktable_ == nullptr) {
+      MS_LOG(EXCEPTION) << "HcclCreateSubCommConfig is unavailable; cannot set HCCL communicator name.";
+    }
   }
   return init_hccl_sub_comm_ranktable_(global_comm, rank_size, rank_ids, comm_id, rank_id, config, hccl_comm);
 }
 
-bool HcclAdapter::InitHcclComm(std::string_view rank_id, std::string_view rank_file) {
+bool HcclAdapter::InitHcclComm(std::string_view rank_id, std::string_view rank_file, const std::string &group_name) {
   MS_LOG(INFO) << "Start init hccl comm.";
   int rank_id_i = -1;
   try {
@@ -524,10 +556,31 @@ bool HcclAdapter::InitHcclComm(std::string_view rank_id, std::string_view rank_f
     MS_LOG(ERROR) << "rank_id cannot be negative";
     return false;
   }
-  MS_EXCEPTION_IF_NULL(init_hccl_comm_);
-  auto hccl_result = init_hccl_comm_(rank_file.data(), rank_id_i, &hccl_comm_);
+  HcclCommConfig config;
+  HcclCommConfigInit(&config);
+  SetHcclCommName(&config, group_name);
+  HcclComm comm = nullptr;
+  auto hccl_result = HcclCommInitClusterInfoConfig(rank_file.data(), rank_id_i, &config, &comm);
   if (hccl_result != HCCL_SUCCESS) {
-    MS_LOG(ERROR) << "HcclCommInitClusterInfo failed, ret:" << hccl_result;
+    MS_LOG(ERROR) << "HcclCommInitClusterInfoConfig failed, ret:" << hccl_result;
+    return false;
+  }
+  hccl_comm_ = comm;
+  char actual_name[sizeof(config.hcclCommName)] = {0};
+  if (HcclGetCommName(hccl_comm_, actual_name) != HCCL_SUCCESS) {
+    MS_LOG(ERROR) << "Failed to initialize communication group '" << group_name << "': HcclGetCommName failed.";
+    if (!FinalizeHcclComm()) {
+      MS_LOG(ERROR) << "HCCL communicator cleanup remains pending for group '" << group_name << "'.";
+    }
+    return false;
+  }
+  actual_name[sizeof(actual_name) - 1] = '\0';
+  if (group_name != actual_name) {
+    MS_LOG(ERROR) << "Failed to initialize communication group '" << group_name << "': HCCL communicator name '"
+                  << actual_name << "' does not match the group name.";
+    if (!FinalizeHcclComm()) {
+      MS_LOG(ERROR) << "HCCL communicator cleanup remains pending for group '" << group_name << "'.";
+    }
     return false;
   }
   MS_LOG(INFO) << "InitHcclComm success";

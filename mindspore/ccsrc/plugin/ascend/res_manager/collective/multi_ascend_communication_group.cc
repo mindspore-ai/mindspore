@@ -69,7 +69,8 @@ bool MultiAscendCommunicationGroup::Initialize(void *root_info) {
 
 bool MultiAscendCommunicationGroup::Finalize() {
   if (!initialized_) {
-    return true;
+    // HCCL initialization may have failed with an owned communicator still pending cleanup.
+    return hccl_group_ == nullptr || hccl_group_->Finalize();
   }
 #ifdef ENABLE_INTERNAL_KERNELS
   if (device::ascend::AscendHalManager::GetInstance().EnableLccl() && lccl_group_ != nullptr) {
@@ -85,11 +86,11 @@ bool MultiAscendCommunicationGroup::Finalize() {
       return false;
     }
   }
+  initialized_ = false;
   if (!hccl_group_->Finalize()) {
     MS_LOG(ERROR) << "Failed to finalize HCCL group" << name_;
     return false;
   }
-  initialized_ = false;
   return true;
 }
 

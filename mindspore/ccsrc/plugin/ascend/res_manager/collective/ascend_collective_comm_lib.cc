@@ -141,7 +141,8 @@ bool AscendCollectiveCommLib::InitializeHccl() {
     hccl_mode = hccl::HcclMode::kKernelByKernel;
   }
 
-  bool ret = hccl::HcclAdapter::GetInstance().InitHccl(device_id, rank_id_str, full_path, hccl_mode);
+  bool ret =
+    hccl::HcclAdapter::GetInstance().InitHccl(device_id, rank_id_str, full_path, hccl_mode, global_group_name_);
   free(full_path);
   if (!ret) {
     MS_LOG(ERROR) << "Hcom init failed.";
