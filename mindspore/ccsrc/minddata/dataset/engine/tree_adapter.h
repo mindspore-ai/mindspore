@@ -46,8 +46,8 @@ class TreeAdapter {
 
  public:
   // this flag is used to indicate the purpose of the creation of this tree adapter (type of the tree_consumer).
-  // Currently there are 3 types of consumer, Iterator, Getter and TDT/Vocab/Save ...
-  // To avoid premature optimization, the last type (TDT/Vocab/Save) is regarded as Iterator for now.
+  // Currently there are 3 types of consumer, Iterator, Getter and TDT/Save ...
+  // To avoid premature optimization, the last type (TDT/Save) is regarded as Iterator for now.
   enum UsageFlag { kDeIterator = 0, kDeGetter = 1, kDeReset = 2 };
 
   explicit TreeAdapter(UsageFlag usage = kDeIterator);
@@ -157,7 +157,7 @@ class TreeAdapter {
   pid_t process_id_;         // current process id
   pid_t sub_process_id_;     // sub process id
 
-  bool independent_dataset_;  // BuildVocabConsumer, DatasetSizeGetter, SaveToDisk consumer no need to start subprocess
+  bool independent_dataset_;  // DatasetSizeGetter, SaveToDisk consumer no need to start subprocess
 #endif
 
   // 1. the tree holder, the send_tree_ will be moved to it and launched in independent dataset process

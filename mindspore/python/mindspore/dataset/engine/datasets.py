@@ -30,7 +30,6 @@ import json
 import os
 import signal
 import stat
-import warnings
 
 import time
 import uuid
@@ -52,7 +51,6 @@ from mindspore import log as logger
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.dataset.engine.offload import GetOffloadModel
 from mindspore.dataset import transforms
-from mindspore.dataset.text.utils import SentencePieceModel, DE_C_INTER_SENTENCEPIECE_MODE
 from mindspore.dataset.debug.debug_hook import DebugHook
 
 from mindspore.dataset.engine import samplers
@@ -890,8 +888,6 @@ class Dataset:
         - If you use transformations (
           `vision transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.vision>`_ ,
-          `nlp transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
-          dataset.transforms.html#module-mindspore.dataset.text>`_ ,
           `audio transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
           dataset.transforms.html#module-mindspore.dataset.audio>`_ )
           provided by mindspore dataset, please use the following parameters:
@@ -1251,7 +1247,7 @@ class Dataset:
             1. If the dataset object for which the split operation is performed is of type MappableDataset,
                an optimized split function will be called automatically.
             2. If the split function is performed, the dataset object should not be sharded (e.g. by specifying
-               num_shards or using :class:`mindspore.dataset.DistributedSampler`). Instead, 
+               num_shards or using :class:`mindspore.dataset.DistributedSampler`). Instead,
                create a :class:`mindspore.dataset.DistributedSampler` and specify a split to shard after splitting.
                It is strongly recommended to set the same seed in each instance of execution,
                otherwise each shard may not be part of the same split (see Examples).
@@ -2422,162 +2418,6 @@ class TextBaseDataset(Dataset):
 
     def parse(self, children=None):
         raise NotImplementedError("Dataset has to implement parse method.")
-
-    def build_vocab(self, columns, freq_range, top_k, special_tokens, special_first):
-        """
-        Function to create a Vocab from source dataset.
-        Desired source dataset is a text type dataset.
-
-        Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
-        which contains top_k most frequent words (if top_k is specified).
-
-        Note:
-            mindspore.dataset.Dataset.build_vocab is deprecated from version 2.0
-            and will be removed in a future version. Use mindspore.dataset.text.Vocab.from_dataset instead.
-
-        Args:
-            columns(Union[str, list[str]]): Column names to get words from.
-            freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
-                range will be stored.
-                Naturally 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
-                can be set to default, which corresponds to 0/total_words separately.
-            top_k(int): Number of words to be built into vocab. top_k most frequent words are
-                taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
-            special_tokens(list[str]): A list of strings, each one is a special token.
-            special_first(bool): Whether special_tokens will be prepended/appended to vocab, If special_tokens
-                is specified and special_first is set to default, special_tokens will be prepended.
-
-        Returns:
-            Vocab, vocab built from the dataset.
-        """
-        warnings.warn("mindspore.dataset.Dataset.build_vocab is deprecated from version 2.0 "
-                      "and will be removed in a future version. "
-                      "Use mindspore.dataset.text.Vocab.from_dataset instead.", DeprecationWarning)
-
-    def build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
-        """
-        Function to create a SentencePieceVocab from source dataset.
-        Desired source dataset is a text type dataset.
-
-        Note:
-            mindspore.dataset.Dataset.build_sentencepiece_vocab is deprecated from version 2.0
-            and will be removed in a future version. Use mindspore.dataset.text.SentencePieceVocab.from_dataset instead.
-
-        Args:
-            columns(list[str]): Column names to get words from.
-            vocab_size(int): Vocabulary size.
-            character_coverage(float): Percentage of characters covered by the model, must be between
-                0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
-                Japanese or Chinese character sets, and 1.0 for other languages with small character sets
-                like English or Latin.
-            model_type(SentencePieceModel): Model type. Choose from unigram (default), bpe, char, or word.
-                The input sentence must be pre-tokenized when using word type.
-            params(dict): Any extra optional parameters of sentencepiece library according to your raw data
-
-        Returns:
-            SentencePieceVocab, vocab built from the dataset.
-        """
-        warnings.warn("mindspore.dataset.Dataset.build_sentencepiece_vocab is deprecated from version 2.0 "
-                      "and will be removed in a future version. "
-                      "Use mindspore.dataset.text.SentencePieceVocab.from_dataset instead.", DeprecationWarning)
-
-    def _build_vocab(self, columns, freq_range, top_k, special_tokens, special_first):
-        """
-        Function to create a Vocab from source dataset.
-        Desired source dataset is a text type dataset.
-
-        Build a vocab from a dataset. This would collect all the unique words in a dataset and return a vocab
-        which contains top_k most frequent words (if top_k is specified).
-
-        Args:
-            columns(Union[str, list[str]]): Column names to get words from.
-            freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
-                range will be stored.
-                Naturally 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
-                can be set to default, which corresponds to 0/total_words separately.
-            top_k(int): Number of words to be built into vocab. top_k most frequent words are
-                taken. The top_k is taken after freq_range. If not enough top_k, all words will be taken
-            special_tokens(list[str]): A list of strings, each one is a special token.
-            special_first(bool): Whether special_tokens will be prepended/appended to vocab, If special_tokens
-                is specified and special_first is set to default, special_tokens will be prepended.
-
-        Returns:
-            Vocab, vocab built from the dataset.
-        """
-        vocab = cde.Vocab()
-        columns = replace_none(columns, [])
-        if not isinstance(columns, list):
-            columns = [columns]
-
-        freq_range = replace_none(freq_range, (0, 9223372036854775807))
-        if freq_range[0] is None:
-            freq_range = (0, freq_range[1])
-        if freq_range[1] is None:
-            freq_range = (freq_range[0], 9223372036854775807)
-        special_tokens = replace_none(special_tokens, [])
-        top_k = replace_none(top_k, 9223372036854775807)
-
-        ir_tree, api_tree = self.create_ir_tree()
-
-        # vocab node
-        vocab_node = cde.BuildVocabNode(ir_tree, vocab, columns, freq_range, top_k, special_tokens, special_first)
-
-        runtime_context = cde.PythonRuntimeContext()
-        runtime_context.Init()
-
-        # build vocab
-        consumer = cde.PythonBuildVocabConsumer()
-        consumer.Init(vocab_node)
-        runtime_context.AssignConsumer(consumer)
-
-        consumer.Start()
-        del api_tree
-
-        return vocab
-
-    def _build_sentencepiece_vocab(self, columns, vocab_size, character_coverage, model_type, params):
-        """
-        Function to create a SentencePieceVocab from source dataset.
-        Desired source dataset is a text type dataset.
-
-        Args:
-            columns(list[str]): Column names to get words from.
-            vocab_size(int): Vocabulary size.
-            character_coverage(float): Percentage of characters covered by the model, must be between
-                0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
-                Japanese or Chinese character sets, and 1.0 for other languages with small character sets
-                like English or Latin.
-            model_type(SentencePieceModel): Model type. Choose from unigram (default), bpe, char, or word.
-                The input sentence must be pre-tokenized when using word type.
-            params(dict): Any extra optional parameters of sentencepiece library according to your raw data
-
-        Returns:
-            SentencePieceVocab, vocab built from the dataset.
-        """
-        if not isinstance(model_type, SentencePieceModel):
-            raise TypeError(f"Argument model_type with value {model_type} is not of type SentencePieceModel, " +
-                            f"but got {type(model_type)}.")
-        model_type = DE_C_INTER_SENTENCEPIECE_MODE[model_type]
-        vocab = cde.SentencePieceVocab()
-
-        ir_tree, api_tree = self.create_ir_tree()
-
-        # vocab node
-        vocab_node = cde.BuildSentenceVocabNode(ir_tree, vocab, columns, vocab_size, character_coverage, model_type,
-                                                params)
-
-        runtime_context = cde.PythonRuntimeContext()
-        runtime_context.Init()
-
-        # build vocab
-        consumer = cde.PythonBuildVocabConsumer()
-        consumer.Init(vocab_node)
-        runtime_context.AssignConsumer(consumer)
-
-        consumer.Start()
-        del api_tree
-
-        return vocab
 
 
 class UnionBaseDataset(VisionBaseDataset, TextBaseDataset):
@@ -4159,7 +3999,7 @@ class MapDataset(UnionBaseDataset):
                                    else 0 for op in operations)
         # Count the number of non-data transforms and non-vision transforms
         count_non_data_vision_transforms = sum(
-            1 if "text.transforms" in str(op) or "audio.transforms" in str(op) else 0 for op in operations)
+            1 if "audio.transforms" in str(op) else 0 for op in operations)
         return count_new_transforms, count_non_data_vision_transforms
 
     @staticmethod

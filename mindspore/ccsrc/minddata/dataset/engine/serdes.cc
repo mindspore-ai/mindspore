@@ -328,10 +328,6 @@ FuncResult Serdes::InitializeFuncPtr() {
   ops_ptr[vision::kSwapRedBlueOperation] = &(vision::SwapRedBlueOperation::from_json);
   ops_ptr[vision::kToTensorOperation] = &(vision::ToTensorOperation::from_json);
   ops_ptr[transforms::kTypeCastOperation] = &(transforms::TypeCastOperation::from_json);
-  ops_ptr[text::kToNumberOperation] = &(text::ToNumberOperation::from_json);
-#ifndef _WIN32
-  ops_ptr[text::kBertTokenizerOperation] = &(text::BertTokenizerOperation::from_json);
-#endif
   return ops_ptr;
 }
 

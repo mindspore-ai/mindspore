@@ -881,18 +881,6 @@ Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &
   return Status::OK();
 }
 
-Status BuildVocabConsumer::Init(const std::shared_ptr<DatasetNode> &root) { return tree_adapter_->Compile(root, 1); }
-
-Status BuildVocabConsumer::Start() {
-  uint64_t start_time = GetSyscnt();
-  // Getting one row would trigger building the vocab
-  TensorRow row;
-  RETURN_IF_NOT_OK(tree_adapter_->GetNext(&row));
-  // The returned row would EOE which is an empty row
-  CHECK_FAIL_RETURN_UNEXPECTED(row.empty(), "BuildVocab: The fetched row from BuildVocab should be an EOE.");
-  RETURN_IF_NOT_OK(CollectPipelineInfo("BuildVocabConsumer", "Start", start_time));
-  return Status::OK();
-}
 Status DatasetSizeGetter::GetDatasetSize(int64_t *size, bool estimate) {
   if (dataset_size_ == -1) {
     RETURN_IF_NOT_OK(root_->GetDatasetSize(shared_from_this(), estimate, size));

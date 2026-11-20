@@ -40,7 +40,6 @@
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/engine/operation/cache/dataset_cache_impl.h"
-#include "minddata/dataset/include/dataset/text.h"
 
 // IR dataset node
 #include "minddata/dataset/engine/operation/datasetops/dataset_node.h"
@@ -48,8 +47,6 @@
 // IR non-leaf nodes
 #include "minddata/dataset/engine/operation/datasetops/batch_node.h"
 #include "minddata/dataset/engine/operation/datasetops/bucket_batch_by_length_node.h"
-#include "minddata/dataset/engine/operation/datasetops/build_sentence_piece_vocab_node.h"
-#include "minddata/dataset/engine/operation/datasetops/build_vocab_node.h"
 #include "minddata/dataset/engine/operation/datasetops/concat_node.h"
 #include "minddata/dataset/engine/operation/datasetops/filter_node.h"
 #include "minddata/dataset/engine/operation/datasetops/map_node.h"
@@ -573,79 +570,6 @@ std::shared_ptr<Dataset> Dataset::SetNumWorkers(int32_t num_workers) {
     return nullptr;
   }
   return shared_from_this();
-}
-
-std::shared_ptr<SentencePieceVocab> Dataset::BuildSentencePieceVocabCharIF(
-  const std::vector<std::vector<char>> &col_names, int32_t vocab_size, float character_coverage,
-  SentencePieceModel model_type, const std::map<std::vector<char>, std::vector<char>> &params) {
-  auto vocab = std::make_shared<SentencePieceVocab>();
-  auto ds = std::make_shared<BuildSentenceVocabNode>(IRNode(), vocab, VectorCharToString(col_names), vocab_size,
-                                                     character_coverage, model_type, UnorderedMapCharToString(params));
-
-  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  Status rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "BuildSentencePieceVocab: Failed to init runtime context. Error status: " << rc;
-    return nullptr;
-  }
-
-  auto consumer = std::make_unique<BuildVocabConsumer>();
-  BuildVocabConsumer *bv_consumer = consumer.get();
-  if (bv_consumer == nullptr) {
-    MS_LOG(ERROR) << "BuildVocabConsumer: Failed to get bv_consumer.";
-    return nullptr;
-  }
-  rc = consumer->Init(ds);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "BuildSentencePieceVocab: Failed to init consumer. Error status: " << rc;
-    return nullptr;
-  }
-  runtime_context->AssignConsumer(std::move(consumer));
-
-  // Run tree here to starting building SentencePieceVocab
-  rc = bv_consumer->Start();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "BuildSentencePieceVocab: Failed to start consumer. Error status: " << rc;
-    return nullptr;
-  }
-  return vocab;
-}
-
-std::shared_ptr<Vocab> Dataset::BuildVocabCharIF(const std::vector<std::vector<char>> &columns,
-                                                 const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
-                                                 const std::vector<std::vector<char>> &special_tokens,
-                                                 bool special_first) {
-  auto vocab = std::make_shared<Vocab>();
-  auto ds = std::make_shared<BuildVocabNode>(IRNode(), vocab, VectorCharToString(columns), freq_range, top_k,
-                                             VectorCharToString(special_tokens), special_first);
-
-  std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
-  Status rc = runtime_context->Init();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "BuildVocab: Failed to init runtime context. Error status: " << rc;
-    return nullptr;
-  }
-
-  auto consumer = std::make_unique<BuildVocabConsumer>();
-  BuildVocabConsumer *bv_consumer = consumer.get();
-  if (bv_consumer == nullptr) {
-    MS_LOG(ERROR) << "BuildVocabConsumer: Failed to get bv_consumer.";
-    return nullptr;
-  }
-  rc = consumer->Init(ds);
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "BuildVocab: Failed to init consumer. Error status: " << rc;
-    return nullptr;
-  }
-  runtime_context->AssignConsumer(std::move(consumer));
-
-  // Run tree here to starting building vocab
-  rc = bv_consumer->Start();
-  if (rc.IsError()) {
-    MS_LOG(ERROR) << "BuildVocab: Failed to start consumer. Error status: " << rc;
-    return nullptr;
-  }
-  return vocab;
 }
 
 std::shared_ptr<BatchDataset> Dataset::Batch(int32_t batch_size, bool drop_remainder) {

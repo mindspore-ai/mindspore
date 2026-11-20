@@ -17,8 +17,6 @@
 #include "minddata/dataset/engine/pass/pass.h"
 #include "minddata/dataset/engine/operation/datasetops/batch_node.h"
 #include "minddata/dataset/engine/operation/datasetops/bucket_batch_by_length_node.h"
-#include "minddata/dataset/engine/operation/datasetops/build_sentence_piece_vocab_node.h"
-#include "minddata/dataset/engine/operation/datasetops/build_vocab_node.h"
 #include "minddata/dataset/engine/operation/datasetops/cache_node.h"
 #include "minddata/dataset/engine/operation/datasetops/cache_merge_node.h"
 #include "minddata/dataset/engine/operation/datasetops/cache_lookup_node.h"
@@ -129,12 +127,7 @@ Status IRNodePass::Visit(std::shared_ptr<BucketBatchByLengthNode> node, bool *co
 Status IRNodePass::VisitAfter(std::shared_ptr<BucketBatchByLengthNode> node, bool *const modified) {
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
-Status IRNodePass::Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified) {
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-Status IRNodePass::VisitAfter(std::shared_ptr<BuildVocabNode> node, bool *const modified) {
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
+
 Status IRNodePass::Visit(std::shared_ptr<ConcatNode> node, bool *const modified) {
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
@@ -265,12 +258,6 @@ Status IRNodePass::VisitAfter(std::shared_ptr<SyncWaitNode> node, bool *const mo
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
 #endif
-Status IRNodePass::Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) {
-  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
-}
-Status IRNodePass::VisitAfter(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) {
-  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
-}
 
 // leaf-IR Node
 Status IRNodePass::Visit(std::shared_ptr<MappableSourceNode> node, bool *const modified) {

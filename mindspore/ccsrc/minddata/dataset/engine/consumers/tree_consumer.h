@@ -24,7 +24,6 @@
 #include <vector>
 
 #include "minddata/dataset/engine/tree_adapter.h"
-#include "minddata/dataset/include/dataset/text.h"
 
 namespace mindspore::dataset {
 // Forward declare
@@ -290,23 +289,5 @@ class DatasetSizeGetter : public TreeConsumer, public std::enable_shared_from_th
   int64_t dataset_size_;
 };
 
-class BuildVocabConsumer : public TreeConsumer {
- public:
-  /// BuildVocabConsumer Constructor which will call the base class default constructor.
-  BuildVocabConsumer() = default;
-
-  ~BuildVocabConsumer() override = default;
-
-  Status Init(const std::shared_ptr<DatasetNode> &root) override;
-
-  /// Start consuming
-  /// \return  Status error code
-  virtual Status Start();
-
- protected:
-  /// Method to return the name of the consumer
-  /// \return string
-  std::string Name() override { return "BuildVocab"; }
-};
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CONSUMERS_TREE_CONSUMER_H_

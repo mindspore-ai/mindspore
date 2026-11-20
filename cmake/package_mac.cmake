@@ -115,13 +115,6 @@ if(ENABLE_MINDDATA)
     install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.10.0.0.dylib
         DESTINATION ${INSTALL_LIB_DIR} RENAME libtinyxml2.10.dylib COMPONENT mindspore)
 
-    install(FILES ${icu4c_LIBPATH}/libicuuc.74.1.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libicuuc.74.dylib COMPONENT mindspore)
-    install(FILES ${icu4c_LIBPATH}/libicudata.74.1.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libicudata.74.dylib COMPONENT mindspore)
-    install(FILES ${icu4c_LIBPATH}/libicui18n.74.1.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libicui18n.74.dylib COMPONENT mindspore)
-
     if(ENABLE_FFMPEG)
         install(FILES ${ffmpeg_LIBPATH}/libavcodec.59.37.100.dylib
             DESTINATION ${INSTALL_LIB_DIR} RENAME libavcodec.59.dylib COMPONENT mindspore)
@@ -214,7 +207,6 @@ install(
     FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/config.h
     ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
     ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/execute.h
-    ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/text.h
     ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h
     ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision.h
     ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_lite.h

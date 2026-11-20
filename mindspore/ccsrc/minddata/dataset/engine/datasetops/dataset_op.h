@@ -34,8 +34,6 @@ namespace dataset {
 constexpr char kBarrierOp[] = "BarrierOp";
 constexpr char kBatchOp[] = "BatchOp";
 constexpr char kBucketBatchByLengthOp[] = "BucketBatchByLengthOp";
-constexpr char kBuildSentencePieceVocabOp[] = "BuildSentencePieceVocabOp";
-constexpr char kBuildVocabOp[] = "BuildVocabOp";
 constexpr char kCacheBase[] = "CacheBase";
 constexpr char kCacheLookupOp[] = "CacheLookupOp";
 constexpr char kCacheMergeOp[] = "CacheMergeOp";

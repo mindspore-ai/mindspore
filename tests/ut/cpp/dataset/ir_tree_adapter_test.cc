@@ -115,18 +115,17 @@ TEST_F(MindDataTestTreeAdapter, TestTreeAdapterWithRepeat) {
 TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune) {
   MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestOptimizedTreeSerializeDeserializeForAutoTune.";
 
-  // Create a CSVDataset, with single CSV file
-  std::string train_file = datasets_root_path_ + "/testCSV/1.csv";
-  std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, 0, ShuffleMode::kFalse);
+  // Create three ordered numeric samples without depending on a text conversion.
+  std::string dataset_dir = datasets_root_path_ + "/testCifar10Data";
+  std::shared_ptr<Dataset> ds = Cifar10(dataset_dir, "all", std::make_shared<SequentialSampler>(0, 3));
   ASSERT_NE(ds, nullptr);
-  ds = ds->Project({"col1"});
+  ds = ds->Project({"label"});
   ASSERT_NE(ds, nullptr);
   ds = ds->Repeat(2);
   ASSERT_NE(ds, nullptr);
-  auto to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt32);
-  ASSERT_NE(to_number, nullptr);
-  ds = ds->Map({to_number}, {"col1"}, {"col1"});
+  auto type_cast = std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeInt32);
+  ASSERT_NE(type_cast, nullptr);
+  ds = ds->Map({type_cast}, {"label"}, {"label"});
   ds->SetNumWorkers(1);
   ds = ds->Batch(1);
   ds->SetNumWorkers(1);
@@ -142,7 +141,7 @@ TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune
   tree_modifier->AddChangeRequest(0, std::make_shared<ResizeConnectorRequest>(100));
   tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(4));
 
-  std::vector<int32_t> expected_result = {1, 5, 9, 1, 5, 9};
+  std::vector<int32_t> expected_result = {0, 1, 2, 0, 1, 2};
   TensorRow row;
 
   uint64_t i = 0;
@@ -228,18 +227,17 @@ TEST_F(MindDataTestTreeAdapter, TestOptimizedTreeSerializeDeserializeForAutoTune
 TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
   MS_LOG(INFO) << "Doing MindDataTestTreeAdapter-TestSimpleTreeModifier.";
 
-  // Create a CSVDataset, with single CSV file
-  std::string train_file = datasets_root_path_ + "/testCSV/1.csv";
-  std::vector<std::string> column_names = {"col1", "col2", "col3", "col4"};
-  std::shared_ptr<Dataset> ds = CSV({train_file}, ',', {}, column_names, 0, ShuffleMode::kFalse);
+  // Create three ordered numeric samples without depending on a text conversion.
+  std::string dataset_dir = datasets_root_path_ + "/testCifar10Data";
+  std::shared_ptr<Dataset> ds = Cifar10(dataset_dir, "all", std::make_shared<SequentialSampler>(0, 3));
   ASSERT_NE(ds, nullptr);
-  ds = ds->Project({"col1"});
+  ds = ds->Project({"label"});
   ASSERT_NE(ds, nullptr);
   ds = ds->Repeat(2);
   ASSERT_NE(ds, nullptr);
-  auto to_number = std::make_shared<text::ToNumber>(mindspore::DataType::kNumberTypeInt32);
-  ASSERT_NE(to_number, nullptr);
-  ds = ds->Map({to_number}, {"col1"}, {"col1"});
+  auto type_cast = std::make_shared<transforms::TypeCast>(mindspore::DataType::kNumberTypeInt32);
+  ASSERT_NE(type_cast, nullptr);
+  ds = ds->Map({type_cast}, {"label"}, {"label"});
   ds->SetNumWorkers(1);
   ds = ds->Batch(1);
   ds->SetNumWorkers(1);
@@ -261,7 +259,7 @@ TEST_F(MindDataTestTreeAdapter, TestSimpleTreeModifier) {
   tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>());
   tree_modifier->AddChangeRequest(0, std::make_shared<ChangeNumWorkersRequest>(10));
 
-  std::vector<int32_t> expected_result = {1, 5, 9, 1, 5, 9};
+  std::vector<int32_t> expected_result = {0, 1, 2, 0, 1, 2};
   TensorRow row;
 
   uint64_t i = 0;

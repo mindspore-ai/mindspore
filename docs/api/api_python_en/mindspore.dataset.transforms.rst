@@ -73,70 +73,16 @@ Utilities
     mindspore.dataset.vision.ImageBatchFormat
     mindspore.dataset.vision.Inter
 
-Text
------
+Text processing API removal
+---------------------------
 
-.. automodule:: mindspore.dataset.text
-
-Example Gallery
-^^^^^^^^^^^^^^^^
-
-Example gallery of using vision transform APIs, jump to `Illustration of text transforms <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/text_gallery.html>`_.
-This guide presents various transforms and input/output results.
-
-Transforms
-^^^^^^^^^^^
-
-.. msnoteautosummary::
-    :toctree: dataset_text
-    :nosignatures:
-    :template: classtemplate_dataset.rst
-
-    mindspore.dataset.text.AddToken
-    mindspore.dataset.text.BasicTokenizer
-    mindspore.dataset.text.BertTokenizer
-    mindspore.dataset.text.CaseFold
-    mindspore.dataset.text.FilterWikipediaXML
-    mindspore.dataset.text.JiebaTokenizer
-    mindspore.dataset.text.Lookup
-    mindspore.dataset.text.Ngram
-    mindspore.dataset.text.NormalizeUTF8
-    mindspore.dataset.text.PythonTokenizer
-    mindspore.dataset.text.RegexReplace
-    mindspore.dataset.text.RegexTokenizer
-    mindspore.dataset.text.SentencePieceTokenizer
-    mindspore.dataset.text.SlidingWindow
-    mindspore.dataset.text.ToNumber
-    mindspore.dataset.text.ToVectors
-    mindspore.dataset.text.Truncate
-    mindspore.dataset.text.TruncateSequencePair
-    mindspore.dataset.text.UnicodeCharTokenizer
-    mindspore.dataset.text.UnicodeScriptTokenizer
-    mindspore.dataset.text.WhitespaceTokenizer
-    mindspore.dataset.text.WordpieceTokenizer
-
-
-Utilities
-^^^^^^^^^^
-
-.. msnoteautosummary::
-    :toctree: dataset_text
-    :nosignatures:
-    :template: classtemplate_dataset.rst
-
-    mindspore.dataset.text.CharNGram
-    mindspore.dataset.text.FastText
-    mindspore.dataset.text.GloVe
-    mindspore.dataset.text.JiebaMode
-    mindspore.dataset.text.NormalizeForm
-    mindspore.dataset.text.SentencePieceModel
-    mindspore.dataset.text.SentencePieceVocab
-    mindspore.dataset.text.SPieceTokenizerLoadType
-    mindspore.dataset.text.SPieceTokenizerOutType
-    mindspore.dataset.text.Vectors
-    mindspore.dataset.text.Vocab
-    mindspore.dataset.text.to_bytes
-    mindspore.dataset.text.to_str
+``mindspore.dataset.text`` and its vocabulary, tokenizer and text transform APIs have been removed.
+Dataset vocabulary-building methods and serialized pipelines containing these transforms must also be migrated.
+Text dataset readers, generic ``Dataset.map``, MindRecord and DataLoader remain available.
+Preprocess text into token IDs, or call a Python text-processing function of your choice through ``Dataset.map``.
+Check vocabularies and special tokens, case handling and Unicode normalization, tokenization, offset units,
+shape/dtype and throughput. External tokenizers are not guaranteed to be equivalent; vocabulary training
+and model file compatibility require separate validation.
 
 Audio
 ------

@@ -165,7 +165,7 @@ class PyTensorOperation:
         if "transforms" in json_obj.keys():
             # operations which have transforms as input, need to call _from_json() for each transform to deseriallize
             transforms = []
-            valid_module = ['mindspore.dataset.vision', 'mindspore.dataset.text',
+            valid_module = ['mindspore.dataset.vision',
                             'mindspore.dataset.audio', 'mindspore.dataset.transforms']
             for json_op in json_obj["transforms"]:
                 py_module = sys.modules.get(json_op.get("python_module"))
@@ -272,7 +272,7 @@ class _Compose(CompoundOperation):
         TypeError: If `transforms` is not of type list.
         ValueError: If `transforms` is empty.
         TypeError: If elements of `transforms` are neither Python callable objects nor data
-            processing operations in the audio, text, transforms, or vision modules.
+            processing operations in the audio, transforms, or vision modules.
 
     Supported Platforms:
         ``CPU``

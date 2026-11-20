@@ -5,8 +5,6 @@ set(DATASET_ENGINE_IR_DATASETOPS_SRC_FILES
         dataset_node.cc
         batch_node.cc
         bucket_batch_by_length_node.cc
-        build_sentence_piece_vocab_node.cc
-        build_vocab_node.cc
         cache_lookup_node.cc
         cache_merge_node.cc
         cache_node.cc

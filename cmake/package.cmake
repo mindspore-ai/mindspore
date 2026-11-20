@@ -143,13 +143,6 @@ if(ENABLE_MINDDATA)
       DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.so.411 COMPONENT mindspore)
     install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.so.10.0.0
       DESTINATION ${INSTALL_LIB_DIR} RENAME libtinyxml2.so.10 COMPONENT mindspore)
-
-    install(FILES ${icu4c_LIBPATH}/libicuuc.so.74.1
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libicuuc.so.74 COMPONENT mindspore)
-    install(FILES ${icu4c_LIBPATH}/libicudata.so.74.1
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libicudata.so.74 COMPONENT mindspore)
-    install(FILES ${icu4c_LIBPATH}/libicui18n.so.74.1
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libicui18n.so.74 COMPONENT mindspore)
 endif()
 
 if(ENABLE_CPU)
@@ -433,7 +426,6 @@ install(
     FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/config.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/execute.h
-          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/text.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_lite.h

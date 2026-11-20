@@ -29,7 +29,7 @@ namespace dataset {
 EpochCtrlPass::InjectionFinder::InjectionFinder(std::shared_ptr<DatasetNode> node)
     : injection_point_(nullptr), num_epochs_(-1) {}
 
-// Performs finder work for BuildVocabOp that has special rules about epoch control injection
+// Find the root child and epoch count for epoch control injection
 Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, bool *const modified) {
   RETURN_UNEXPECTED_IF_NULL(node);
   RETURN_UNEXPECTED_IF_NULL(modified);
@@ -38,22 +38,6 @@ Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, boo
   // The injection is at the child of the root node
   injection_point_ = node->Children()[0];
   num_epochs_ = node->NumEpochs();
-  return Status::OK();
-}
-
-// Performs finder work for BuildVocabOp that has special rules about epoch control injection
-Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(node);
-  RETURN_UNEXPECTED_IF_NULL(modified);
-  injection_point_ = nullptr;
-  return Status::OK();
-}
-
-// Performs finder work for BuildSentencePieceVocabNode that has special rules about epoch control injection
-Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) {
-  RETURN_UNEXPECTED_IF_NULL(node);
-  RETURN_UNEXPECTED_IF_NULL(modified);
-  injection_point_ = nullptr;
   return Status::OK();
 }
 
