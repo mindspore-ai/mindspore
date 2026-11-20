@@ -21,3 +21,7 @@ dill >=0.3.7
 
 # Wheel packaging; torch_npu source-build dependencies are installed separately.
 wheel >= 0.45.1
+
+# CPU PyTorch for the torch_npu runtime.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.13.0+cpu

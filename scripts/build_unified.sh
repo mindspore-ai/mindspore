@@ -10,7 +10,6 @@ clean=false
 device_selected=false
 version_selected=false
 torch_npu_url=
-torch_npu_source=false
 for argument in "$@"; do
     case "$argument" in
         --python=*)
@@ -24,13 +23,12 @@ for argument in "$@"; do
             [[ -n "$torch_npu_url" ]] || { echo '--torch-npu-wheel requires a version or HTTPS wheel URL' >&2; exit 1; }
             ;;
         --prepare-only) prepare_only=true ;;
-        --torch-npu-source) torch_npu_source=true ;;
         --clean) clean=true ;;
         -h|--help)
             echo "Usage: $0 [--python=PATH|VERSION] [--prepare-only] [--clean] [torch_npu options] [MindSpore build.sh options]"
             echo 'torch_npu options: --torch=VERSION --disable_torchair --disable_fxrt --disable_rpc --enable_lto --enable_pgo=1|2'
             echo '--torch-npu-wheel=VERSION|URL: automatically select an official wheel, or use an HTTPS wheel URL.'
-            echo 'Default: download torch_npu 2.13.0. Use --torch-npu-source to build from source.'
+            echo 'Default: build torch_npu from source.'
             echo 'Cannot combine --torch-npu-wheel with --prepare-only, --clean or torch_npu build options.'
             echo 'Default MindSpore options: -e ascend -V 910b; all other arguments go to native build.sh.'
             exit 0 ;;
@@ -39,14 +37,6 @@ for argument in "$@"; do
         *) ms_args+=("$argument") ;;
     esac
 done
-if $torch_npu_source && [[ -n "$torch_npu_url" ]]; then
-    echo '--torch-npu-source cannot be combined with --torch-npu-wheel' >&2
-    exit 1
-fi
-# Temporary default for CI; --prepare-only retains its source preparation behavior.
-if [[ -z "$torch_npu_url" ]] && ! $torch_npu_source && ! $prepare_only; then
-    torch_npu_url=2.13.0
-fi
 if [[ -n "$torch_npu_url" ]] && { $prepare_only || $clean || [[ ${#torch_npu_args[@]} != 0 ]]; }; then
     echo '--torch-npu-wheel cannot be combined with --prepare-only, --clean or torch_npu build options' >&2
     exit 1
