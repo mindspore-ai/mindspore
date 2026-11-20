@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""System tests for the CPU Split operator."""
+
 import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
 import numpy as np
+import pytest
 
 from mindspore import Tensor
 from mindspore.ops import operations as P
@@ -26,7 +29,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 class OpNetWrapper(nn.Cell):
     def __init__(self, op):
-        super(OpNetWrapper, self).__init__()
+        super().__init__()
         self.op = op
 
     def construct(self, *inputs):
@@ -239,3 +242,18 @@ def test_split_dynamic_shape():
 
     assert (outputs[0].asnumpy() == dyn_outputs[0].asnumpy()).all()
     assert (outputs[1].asnumpy() == dyn_outputs[1].asnumpy()).all()
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard')
+def test_split_resize_rejects_large_axis():
+    """
+    Feature: Split on CPU in graph mode.
+    Description: Pass an empty tensor with a dimension larger than INT_MAX.
+    Expectation: Resize reports the int32 range error.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    input_x = Tensor(np.empty((0, 1 << 31), dtype=np.int8))
+    op_wrapper = OpNetWrapper(P.Split(-1, 2))
+
+    with pytest.raises(ValueError, match="input shape exceeds the CPU Split int32 range"):
+        op_wrapper(input_x)

@@ -16,6 +16,7 @@
 
 #include "kernel/cpu/native/split_cpu_kernel.h"
 #include <algorithm>
+#include <climits>
 #include <utility>
 #include <complex>
 
@@ -62,6 +63,19 @@ int SplitCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
   }
   input_shape_.clear();
   auto input_shape = inputs[0]->GetShapeVector();
+  // Check the byte bound for nonempty tensors and the stride products between zero dimensions.
+  const bool empty = std::find(input_shape.begin(), input_shape.end(), 0) != input_shape.end();
+  int64_t size = empty ? 1 : SizeToLong(UnitSizeInBytes(inputs[0]->dtype_id()));
+  for (const auto dim : input_shape) {
+    if (dim <= 0) {
+      size = 1;
+      continue;
+    }
+    if (size > INT_MAX / dim) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input shape exceeds the CPU Split int32 range.";
+    }
+    size *= dim;
+  }
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
                        [](const int64_t &value) { return LongToInt(value); });
   CheckParam();
