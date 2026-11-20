@@ -1821,7 +1821,7 @@ op_db: Dict[str, OpInfo] = {
         supports_both_python_scalar=False,
         supports_left_python_scalar=False,
         convert_ref_scalar_to_tensor=True,
-        promotion_dtypes_exclude=(ms.float16, ms.bfloat16,),
+        promotion_dtypes_exclude=(ms.float16, ms.bfloat16, ms.bool),
         ascend910b_backward_loss_override={ms.float16:0.002, ms.bfloat16:0.015},
         op_error_inputs_func=error_inputs_shape_not_match_func,
     ),
