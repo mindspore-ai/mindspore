@@ -20,10 +20,10 @@ import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 import mindspore as ms
-from mindspore import dataset as ds
 from mindspore import context, Tensor, Profiler
 from mindspore.profiler import ProfilerLevel, ProfilerActivity, mstx
 from model_zoo import TinyAddNet
+from tests.dataset_mock import mnist_source
 from tests.mark_utils import arg_mark
 from file_check import FileChecker
 
@@ -87,7 +87,7 @@ def test_mstx_profiler():
     with tempfile.TemporaryDirectory(suffix="_mstx_profiler") as tmpdir:
         context.set_context(mode=ms.PYNATIVE_MODE, device_target="Ascend")
 
-        mnist_ds = ds.MnistDataset(os.path.join(DATASET_PATH, "train"))
+        mnist_ds = mnist_source(os.path.join(DATASET_PATH, "train"))
 
         net = TinyAddNet()
         prof = Profiler(activities=[ProfilerActivity.NPU],

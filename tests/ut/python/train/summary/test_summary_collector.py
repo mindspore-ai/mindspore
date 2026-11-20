@@ -335,7 +335,7 @@ class TestSummaryCollector:
         dataset = import_module('mindspore.dataset')
         mock_add_value.side_effect = add_value
         cb_params = _InternalCallbackParam()
-        cb_params.train_dataset = dataset.MnistDataset(dataset_dir=tempfile.mkdtemp(dir=self.base_summary_dir))
+        cb_params.train_dataset = dataset.ImageFolderDataset(dataset_dir=tempfile.mkdtemp(dir=self.base_summary_dir))
         cb_params.mode = ModeEnum.TRAIN.value
         with SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir))) as summary_collector:
             summary_collector._collect_dataset_graph(cb_params)

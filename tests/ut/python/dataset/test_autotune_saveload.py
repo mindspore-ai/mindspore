@@ -18,7 +18,6 @@ Test Dataset AutoTune's Save and Load Configuration support
 import os
 import json
 
-MNIST_DATA_DIR = "../data/dataset/testMnistData"
 DATA_DIR = "../data/dataset/testPK/data"
 
 

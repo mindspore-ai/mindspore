@@ -15,7 +15,6 @@
 
 
 """Dataset regression coverage for gpu autotune."""
-import mindspore.dataset as ds
 import mindspore.dataset.transforms as transforms
 import mindspore.dataset.vision as vision
 
@@ -23,6 +22,7 @@ from mindspore import nn
 from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter
 from mindspore.train import Model
+from tests.dataset_mock import mnist_source
 
 
 def create_model():
@@ -45,7 +45,7 @@ def create_dataset(data_path, batch_size=32, num_parallel_workers=1):
     Create dataset for train or test
     """
     # Define dataset
-    mnist_ds = ds.MnistDataset(data_path)
+    mnist_ds = mnist_source(data_path)
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0

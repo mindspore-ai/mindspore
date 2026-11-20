@@ -15,6 +15,7 @@
 """
 Testing Epoch Control op in DE
 """
+from tests.dataset_mock import cifar_source
 import itertools
 import numpy as np
 import pytest
@@ -48,7 +49,7 @@ def test_cifar10():
     batch_size = 32
     limit_dataset = 100
     # apply dataset operations
-    data1 = ds.Cifar10Dataset(data_dir_10, num_samples=limit_dataset)
+    data1 = cifar_source(data_dir_10, num_samples=limit_dataset)
     data1 = data1.repeat(num_repeat)
     data1 = data1.batch(batch_size, True)
     num_epoch = 5

@@ -269,8 +269,7 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess4) {
   SequentialSampler sampler = SequentialSampler(0, 4);
 
   // Create an ImageFolder Dataset
-  std::string folder_path = datasets_root_path_ + "/testVOC2012_2";
-  std::shared_ptr<Dataset> ds = VOC(folder_path, "Detection", "train", {}, false, &sampler);
+  std::shared_ptr<Dataset> ds = ImageFolder(datasets_root_path_ + "/testPK/data/", true, &sampler);
   EXPECT_NE(ds, nullptr);
 
   // Iterate the dataset and get each row

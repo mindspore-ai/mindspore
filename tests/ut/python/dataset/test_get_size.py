@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Regression tests for get size."""
 import mindspore.dataset as ds
-from mindspore import log as logger
 
 FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"
@@ -132,48 +132,6 @@ def test_case5():
     assert data.get_dataset_size() == 3
     data = ds.TFRecordDataset(FILES, num_samples=10).batch(3, drop_remainder=False)
     assert data.get_dataset_size() == 4
-
-
-def test_cifar():
-    """
-    Feature: get_dataset_size
-    Description: Test with Cifar10Dataset and Cifar100Dataset with and without num_samples
-    Expectation: Output is equal to the expected output
-    """
-    data = ds.Cifar10Dataset("../data/dataset/testCifar10Data")
-    assert data.get_dataset_size() == 10000
-
-    data = ds.Cifar10Dataset("../data/dataset/testCifar10Data", num_samples=10)
-    assert data.get_dataset_size() == 10
-
-    data = ds.Cifar10Dataset("../data/dataset/testCifar10Data", num_samples=90000)
-    assert data.get_dataset_size() == 10000
-
-    data = ds.Cifar100Dataset("../data/dataset/testCifar100Data")
-    assert data.get_dataset_size() == 10000
-
-    data = ds.Cifar100Dataset("../data/dataset/testCifar100Data", num_samples=10)
-    assert data.get_dataset_size() == 10
-
-    data = ds.Cifar100Dataset("../data/dataset/testCifar100Data", num_samples=20000)
-    assert data.get_dataset_size() == 10000
-
-
-def test_mnist():
-    """
-    Feature: get_dataset_size
-    Description: Test with MnistDataset with and without num_samples
-    Expectation: Output is equal to the expected output
-    """
-    data = ds.MnistDataset("../data/dataset/testMnistData")
-    logger.info("dataset.size: {}".format(data.get_dataset_size()))
-    assert data.get_dataset_size() == 10000
-
-    data = ds.MnistDataset("../data/dataset/testMnistData", num_samples=10)
-    assert data.get_dataset_size() == 10
-
-    data = ds.MnistDataset("../data/dataset/testMnistData", num_samples=90000)
-    assert data.get_dataset_size() == 10000
 
 
 def test_manifest():

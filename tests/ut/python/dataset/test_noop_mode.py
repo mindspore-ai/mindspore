@@ -15,8 +15,8 @@
 """
 Test No-op mode support with Dummy Iterator
 """
+from tests.dataset_mock import voc_source
 import os
-import mindspore.dataset as ds
 from mindspore import context
 
 DATA_DIR = "../data/dataset/testVOC2012"
@@ -31,7 +31,7 @@ def test_noop_sched():
     os.environ['MS_ROLE'] = 'MS_SCHED'
     context.set_context(mode=context.GRAPH_MODE)
     context.set_ps_context(enable_ps=True)
-    data1 = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
+    data1 = voc_source(DATA_DIR, task="Segmentation", usage="train", shuffle=False, decode=True)
     num = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
         num += 1

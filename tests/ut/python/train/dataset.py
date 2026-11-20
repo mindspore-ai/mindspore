@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """dataset base and LeNet."""
+from tests.dataset_mock import mnist_source
 import os
 
-from mindspore import dataset as ds
 from mindspore.common import dtype as mstype
 import mindspore.dataset.transforms as C
 from mindspore.dataset.vision import Inter
@@ -31,7 +31,7 @@ def create_mnist_dataset(mode='train', num_samples=2, batch_size=2):
     num_parallel_workers = 1
 
     # define dataset
-    mnist_ds = ds.MnistDataset(os.path.join(mnist_path, mode), num_samples=num_samples, shuffle=False)
+    mnist_ds = mnist_source(os.path.join(mnist_path, mode), num_samples=num_samples, shuffle=False)
 
     resize_height, resize_width = 32, 32
 

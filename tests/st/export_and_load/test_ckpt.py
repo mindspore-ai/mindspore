@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression tests for ckpt."""
 import os
 import stat
 
@@ -32,6 +33,7 @@ from mindspore.common.initializer import TruncatedNormal
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Accuracy
+from tests.dataset_mock import mnist_source
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -88,7 +90,7 @@ class LeNet5(nn.Cell):
 
 def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers=1):
     """create dataset for train or test"""
-    mnist_ds = ds.MnistDataset(data_path)
+    mnist_ds = mnist_source(data_path)
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0

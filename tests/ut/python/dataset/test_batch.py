@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Regression tests for batch."""
+from tests.dataset_mock import coco_source
 import numpy as np
 import pytest
 
@@ -675,7 +677,7 @@ def test_batch_exception_19():
     """
     data_dir_coco = "../data/dataset/testCOCO/train/"
     annotation_file_coco = "../data/dataset/testCOCO/annotations/train.json"
-    data1 = ds.CocoDataset(data_dir_coco, annotation_file=annotation_file_coco, task="Detection", decode=True)
+    data1 = coco_source(data_dir_coco, annotation_file=annotation_file_coco, task="Detection", decode=True)
     data1 = data1.shuffle(10)
     with pytest.raises(TypeError) as raise_info:
         data1 = data1.batch(3, pad_info={})

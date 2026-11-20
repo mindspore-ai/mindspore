@@ -16,6 +16,8 @@
 #include "common.h"
 #include <algorithm>
 #include <fstream>
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #ifdef ENABLE_PYTHON
@@ -26,6 +28,10 @@
 #include "minddata/dataset/core/pybind_support.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
+#include "minddata/dataset/include/dataset/datasets.h"
+#include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/general/transform/transforms_ir.h"
+#include "minddata/dataset/kernels/c_func_op.h"
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/data_source/tf_reader_op.h"
@@ -232,5 +238,43 @@ cv::Mat BGRToRGB(const cv::Mat &img) {
   }
   return image;
 }
+namespace test {
+namespace {
+class ImageSourceOnes final : public TensorTransform {
+ protected:
+  using TensorTransform::Parse;
+
+  std::shared_ptr<TensorOperation> Parse() override {
+    auto make_ones = [](TensorRow row) {
+      for (const auto &tensor : row) {
+        auto status = tensor->type() == DataType(DataType::DE_UINT32) ? tensor->Fill(uint32_t{1}) : tensor->Fill(1.0f);
+        if (status.IsError()) {
+          throw std::runtime_error(status.ToString());
+        }
+      }
+      return row;
+    };
+    return std::make_shared<transforms::PreBuiltOperation>(std::make_shared<CFuncOp>(make_ones));
+  }
+};
+}  // namespace
+std::shared_ptr<Dataset> ImageSource(int32_t rows, const std::vector<int32_t> &shape, bool with_bbox) {
+  auto schema = Schema();
+  if (!schema->add_column("image", mindspore::DataType::kNumberTypeUInt8, shape).IsOk() ||
+      !schema->add_column("label", mindspore::DataType::kNumberTypeUInt32, {}).IsOk()) {
+    return nullptr;
+  }
+  if (with_bbox && !schema->add_column("bbox", mindspore::DataType::kNumberTypeFloat32, {1, 4}).IsOk()) {
+    return nullptr;
+  }
+  // Tiny fixtures must not have fewer rows than the native source's worker count.
+  auto ds = RandomData(rows, schema)->SetNumWorkers(1);
+  std::vector<std::string> columns = {"label"};
+  if (with_bbox) {
+    columns.push_back("bbox");
+  }
+  return ds->Map({std::make_shared<ImageSourceOnes>()}, columns);
+}
+}  // namespace test
 }  // namespace dataset
 }  // namespace mindspore

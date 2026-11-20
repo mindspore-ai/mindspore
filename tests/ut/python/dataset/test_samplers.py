@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Dataset regression coverage for samplers."""
+from tests.dataset_mock import mnist_source
 import numpy as np
 import pytest
 
@@ -512,7 +513,7 @@ def test_distributed_sampler_offset(num_shards):
     for shard_id in range(num_shards):
         for offset in range(-1, num_shards):
             distributed_sampler = ds.DistributedSampler(num_shards=num_shards, shard_id=shard_id, offset=offset)
-            dataset = ds.MnistDataset("../data/dataset/testMnistData", sampler=distributed_sampler)
+            dataset = mnist_source("../data/dataset/testMnistData", sampler=distributed_sampler)
             if offset == -1 or offset == shard_id:
                 expected_result = (dataset_size -1) // num_shards + 1
             else:

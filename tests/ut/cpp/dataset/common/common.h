@@ -16,6 +16,8 @@
 #ifndef TESTS_UT_CPP_DATASET_COMMON_COMMON_H_
 #define TESTS_UT_CPP_DATASET_COMMON_COMMON_H_
 
+#include <memory>
+#include <vector>
 #include "gtest/gtest.h"
 #include "utils/status.h"
 #include "include/dataset/ms_tensor.h"
@@ -124,6 +126,8 @@ class DatasetOpTesting : public Common {
 }  // namespace UT
 
 namespace mindspore::dataset {
+class Dataset;
+
 // defined in datasets.cc code, and function prototypes added here for UT purposes
 // convert MSTensorVec to DE TensorRow, return empty if fails
 TensorRow VecToRow(const MSTensorVec &v);
@@ -139,5 +143,9 @@ MSTensorVec Predicate2(MSTensorVec in);
 MSTensorVec Predicate3(MSTensorVec in);
 
 cv::Mat BGRToRGB(const cv::Mat &img);
+namespace test {
+// Generic image input for retained transform and pipeline tests.
+std::shared_ptr<Dataset> ImageSource(int32_t rows, const std::vector<int32_t> &shape, bool with_bbox = false);
+}  // namespace test
 }  // namespace mindspore::dataset
 #endif  // TESTS_UT_CPP_DATASET_COMMON_COMMON_H_

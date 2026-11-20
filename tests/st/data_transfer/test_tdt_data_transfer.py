@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression tests for tdt data transfer."""
 import time
 import numpy as np
 
@@ -20,9 +21,9 @@ from mindspore import log as logger
 from mindspore.graph.api import _cell_graph_executor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
-import mindspore.dataset as de
 import mindspore.dataset.vision as vision
 import mindspore.dataset.transforms as transforms
+from tests.dataset_mock import cifar_source
 from tests.mark_utils import arg_mark
 
 DATA_DIR = "/home/workspace/mindspore_dataset/cifar-10-verify-bin"
@@ -33,7 +34,7 @@ def dataset_cifar(dataset_path=None, batch_size=32, repeat_num=1, num_rows=9600,
     if dataset_path is None:
         dataset_path = DATA_DIR
 
-    ds = de.Cifar10Dataset(dataset_path, num_samples=num_rows, num_shards=distribution_num, shard_id=shard_id,
+    ds = cifar_source(dataset_path, num_samples=num_rows, num_shards=distribution_num, shard_id=shard_id,
                            shuffle=shuffle, usage=usage, num_parallel_workers=num_workers)
 
     typecast_op = transforms.TypeCast(mstype.int32)

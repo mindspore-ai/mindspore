@@ -1,8 +1,9 @@
+"""Regression tests for resnet."""
+from tests.dataset_mock import cifar_source
 import argparse
 import numpy as np
 from mindspore import nn, context, ops
 from mindspore.common import dtype as mstype
-from mindspore.dataset import Cifar10Dataset
 from mindspore.dataset import vision, transforms
 from resnet import resnet18
 
@@ -16,7 +17,7 @@ class ImageToDualImage:
 
 
 def create_dataset(dataset_dir, batch_size, usage=None):
-    dataset = Cifar10Dataset(dataset_dir=dataset_dir, usage=usage)
+    dataset = cifar_source(dataset_dir=dataset_dir, usage=usage)
     type_cast_op = transforms.TypeCast(mstype.int32)
 
     # define map operations

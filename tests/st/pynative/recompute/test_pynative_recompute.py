@@ -38,6 +38,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore import ops
 from mindspore import recompute
+from tests.dataset_mock import cifar_source
 from tests.mark_utils import arg_mark
 
 random.seed(1)
@@ -323,7 +324,7 @@ def create_dataset(repeat_num=1, training=True, batch_size=32):
     data_dir = data_home + "/cifar-10-batches-bin"
     if not training:
         data_dir = data_home + "/cifar-10-verify-bin"
-    data_set = ds.Cifar10Dataset(data_dir)
+    data_set = cifar_source(data_dir)
 
     resize_height = 224
     resize_width = 224

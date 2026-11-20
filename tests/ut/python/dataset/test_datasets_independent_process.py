@@ -13,6 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """Tests for dataset execution in independent processes."""
+from tests.dataset_mock import mnist_source
 import copy
 import os
 import time
@@ -699,10 +700,10 @@ def test_dataset_TextFile_with_concat_op():
     data = ds.TextFileDataset(TEXT_FILE)
 
     def flat_map_func(x):
-        d = ds.MnistDataset(MNIST_DIR, num_samples=10)
+        d = mnist_source(MNIST_DIR, num_samples=10)
         return d
     data = data.flat_map(flat_map_func)
-    dataset = ds.MnistDataset(MNIST_DIR, num_samples=10)
+    dataset = mnist_source(MNIST_DIR, num_samples=10)
     dataset = dataset.concat(data)
     dataset = dataset.take(count=10)
     dataset = dataset.skip(count=1)

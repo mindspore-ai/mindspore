@@ -31,9 +31,8 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSaveCifar10AndLoad(single mindrecord file).";
 
   // Stage 1: load original dataset
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<SequentialSampler>(0, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -126,9 +125,8 @@ TEST_F(MindDataTestPipeline, TestSaveCifar10AndLoad) {
 TEST_F(MindDataTestPipeline, TestSaveFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSaveFail with incorrect param.";
 
-  // Create a Cifar10 Dataset
-  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
-  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<SequentialSampler>(0, 10));
+  // Create a synthetic image/label dataset
+  std::shared_ptr<Dataset> ds = test::ImageSource(10, {32, 32, 3});
   EXPECT_NE(ds, nullptr);
 
   // fail with invalid dataset_path

@@ -105,17 +105,15 @@ TEST_F(MindDataTestDeserialize, TestDeserializeImageFolder) {
 /// Feature: Deserialize
 /// Description: Test Deserialize on VOCDataset with RandomColorAdjust op
 /// Expectation: The data is processed successfully
-TEST_F(MindDataTestDeserialize, TestDeserializeVOC) {
-  MS_LOG(INFO) << "Doing MindDataTestDeserialize-VOC.";
-  std::string dataset_dir = "./data/dataset/testVOC2012";
+TEST_F(MindDataTestDeserialize, TestDeserializeSubsetColorAdjust) {
+  MS_LOG(INFO) << "Doing MindDataTestDeserialize-SubsetColorAdjust.";
+  std::string dataset_dir = "./data/dataset/testPK/data";
   std::vector<int64_t> indices = {0, 1};
   std::shared_ptr<SamplerObj> sampler = std::make_shared<SubsetRandomSamplerObj>(indices, 3);
-  std::string task = "Detection";
-  std::string usage = "train";
   std::map<std::string, int32_t> class_indexing = {};
   std::shared_ptr<DatasetCache> cache = nullptr;
-  std::shared_ptr<DatasetNode> ds =
-    std::make_shared<VOCNode>(dataset_dir, task, usage, class_indexing, true, sampler, cache);
+  std::shared_ptr<DatasetNode> ds = std::make_shared<ImageFolderNode>(dataset_dir, true, sampler, false,
+                                                                      std::set<std::string>{}, class_indexing, cache);
   std::vector<float> brightness = {0.5, 0.5};
   std::vector<float> contrast = {1.0, 1.0};
   std::vector<float> hue = {0.0, 0.0};
@@ -184,14 +182,14 @@ TEST_F(MindDataTestDeserialize, TestDeserializeTensor) {
 /// Expectation: The data is processed successfully
 TEST_F(MindDataTestDeserialize, DISABLED_TestDeserializeCache) {
   MS_LOG(INFO) << "Doing MindDataTestDeserialize-Cache.";
-  std::string data_dir = "./data/dataset/testCache";
-  std::string usage = "all";
+  std::string data_dir = "./data/dataset/testPK/data";
   session_id_type env_session;
-  ASSERT_TRUE(GetSessionFromEnv(&env_session));
+  ASSERT_OK(GetSessionFromEnv(&env_session));
   std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false, "127.0.0.1", 50052, 1, 1);
 
   std::shared_ptr<SamplerObj> sampler = std::make_shared<SequentialSamplerObj>(0, 10);
-  std::shared_ptr<DatasetNode> ds = std::make_shared<Cifar10Node>(data_dir, usage, sampler, some_cache);
+  std::shared_ptr<DatasetNode> ds = std::make_shared<ImageFolderNode>(
+    data_dir, false, sampler, false, std::set<std::string>{}, std::map<std::string, int32_t>{}, some_cache);
   compare_dataset(ds);
 }
 

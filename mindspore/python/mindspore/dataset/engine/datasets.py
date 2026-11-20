@@ -295,7 +295,7 @@ class Dataset:
                       SyncWaitDataset(UnionBaseDataset)
 
     Impl Dataset - vision:       ImageFolderDataset(MappableDataset, VisionBaseDataset)
-                                 USPSDataset(SourceDataset, VisionBaseDataset)
+                                 RandomDataset(SourceDataset, VisionBaseDataset)
     Impl Dataset - text:         TextFileDataset(SourceDataset, TextBaseDataset)
                                  YahooAnswersDataset(SourceDataset, TextBaseDataset)
     Impl Dataset - standard:     MindDataset(MappableDataset, UnionBaseDataset)
@@ -468,9 +468,9 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> mnist_dataset_dir = "/path/to/mnist_dataset_directory"
-            >>> dataset = ds.MnistDataset(dataset_dir=mnist_dataset_dir)
-            >>> dataset_json = dataset.to_json("/path/to/mnist_dataset_pipeline.json")
+            >>> image_dataset_dir = "/path/to/image_dataset_directory"
+            >>> dataset = ds.ImageFolderDataset(dataset_dir=image_dataset_dir)
+            >>> dataset_json = dataset.to_json("/path/to/image_dataset_pipeline.json")
         """
         ir_tree, _ = self.create_ir_tree()
         return json.loads(ir_tree.to_json(filename))
@@ -643,8 +643,8 @@ class Dataset:
             >>> import mindspore.dataset as ds
             >>> from PIL import Image
             >>>
-            >>> cifar10_dataset_dir = "/path/to/cifar10_dataset_directory"
-            >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir, num_samples=10)
+            >>> image_dataset_dir = "/path/to/image_dataset_directory"
+            >>> dataset = ds.ImageFolderDataset(dataset_dir=image_dataset_dir, num_samples=10)
             >>> dataset = dataset.batch(5, True)
             >>>
             >>> # 2) resize image according to its batch number, if it's 5-th batch, resize to (5^2, 5^2) = (25, 25)
@@ -985,8 +985,8 @@ class Dataset:
             >>> # dataset is an instance of Dataset which has 2 columns, "image" and "label".
             >>> # image is of type bytes type which can be decoded to RGB
             >>> # label is of type int32
-            >>> cifar10_dataset_dir = "/path/to/cifar10_dataset_directory"
-            >>> dataset = ds.Cifar10Dataset(dataset_dir=cifar10_dataset_dir)
+            >>> image_dataset_dir = "/path/to/image_dataset_directory"
+            >>> dataset = ds.ImageFolderDataset(dataset_dir=image_dataset_dir)
             >>>
             >>> # Define two operations, where each operation accepts 1 input column and outputs 1 column.
             >>> decode_op = vision.Decode(to_pil=False)
@@ -1157,9 +1157,9 @@ class Dataset:
 
         Examples:
             >>> import mindspore.dataset as ds
-            >>> mnist_dataset_dir = "/path/to/mnist_dataset_directory"
-            >>> dataset = ds.MnistDataset(dataset_dir=mnist_dataset_dir)
-            >>> # Take 50 samples from MNIST dataset.
+            >>> image_dataset_dir = "/path/to/image_dataset_directory"
+            >>> dataset = ds.ImageFolderDataset(dataset_dir=image_dataset_dir)
+            >>> # Take 50 samples from image dataset.
             >>> dataset = dataset.take(50)
         """
         return TakeDataset(self, count)

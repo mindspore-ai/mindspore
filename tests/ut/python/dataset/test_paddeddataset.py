@@ -14,6 +14,7 @@
 # ==============================================================================
 
 """Dataset padding regression tests."""
+from tests.dataset_mock import celeba_source
 from io import BytesIO
 import copy
 import os
@@ -582,7 +583,7 @@ def test_celeba_padded():
     Description: Test padding an CelebADataset with PaddedDataset
     Expectation: Output is equal to the expected output
     """
-    data = ds.CelebADataset("../data/dataset/testCelebAData/")
+    data = celeba_source("../data/dataset/testCelebAData/")
 
     padded_samples = [{'image': np.zeros(1, np.uint8), 'attr': np.zeros(1, np.uint32)}]
     padded_ds = ds.PaddedDataset(padded_samples)

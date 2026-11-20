@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Regression tests for fake dataset."""
+from tests.dataset_mock import synthetic_image_source
 from mindspore import dataset as ds
 from mindspore.dataset.vision import Inter
 from mindspore.common import dtype as mstype
@@ -61,7 +63,7 @@ class FakeDataset:
             >>> model.train(3, cv_dataset)
         """
         # define dataset
-        fake_dataset = ds.FakeImageDataset(
+        fake_dataset = synthetic_image_source(
             num_images=num_images,
             image_size=image_size,
             num_classes=num_classes,

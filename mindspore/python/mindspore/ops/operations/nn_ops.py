@@ -2618,7 +2618,7 @@ class GetNext(Primitive):
 
     Note:
         The GetNext operation needs to be associated with network and it also depends
-        on the 'dataset' interface, For example, please refer to :class:`mindspore.dataset.MnistDataset` .
+        on the 'dataset' interface, For example, please refer to :class:`mindspore.dataset.ImageFolderDataset` .
         it can't be used directly as a single operation.
         For details, please refer to :class:`mindspore.connect_network_with_dataset` source code.
 
@@ -2643,8 +2643,10 @@ class GetNext(Primitive):
         >>> from mindspore import ops
         >>> from mindspore import dataset as ds
         >>> from mindspore import dtype as mstype
-        >>> data_path = "/path/to/MNIST_Data/train/"
-        >>> train_dataset = ds.MnistDataset(data_path, num_samples=10)
+        >>> import numpy as np
+        >>> samples = {"image": np.zeros((10, 28, 28, 1), np.uint8),
+        ...            "label": np.arange(10, dtype=np.uint32)}
+        >>> train_dataset = ds.NumpySlicesDataset(samples, shuffle=False)
         >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> dataset = dataset_helper.iter.dataset
         >>> dataset_types, dataset_shapes = dataset_helper.types_shapes()
@@ -4001,7 +4003,7 @@ class ApplyAdadelta(Primitive):
         TypeError: If dtype of `var`, `accum`, `accum_update`, `lr`, `rho`, `epsilon` or `grad` is neither float16 nor
                    float32.
         TypeError: If `accum_update`, `lr`, `rho` or `epsilon` is neither a Number nor a Tensor.
-        TypeError: If `var`, `accum`, `accum_update` and `grad` do not support 
+        TypeError: If `var`, `accum`, `accum_update` and `grad` do not support
                       data type conversion.
 
     Supported Platforms:
@@ -4097,7 +4099,7 @@ class ApplyAdagrad(Primitive):
     Raises:
         TypeError: If dtype of `var`, `accum`, `lr` or `grad` is neither float nor complex.
         TypeError: If `lr` is neither a Number nor a Tensor.
-        TypeError: If `var`, `accum` and `grad` do not support 
+        TypeError: If `var`, `accum` and `grad` do not support
                       data type conversion.
 
     Supported Platforms:

@@ -67,12 +67,7 @@ from mindspore.dataset.engine.datasets_text import AGNewsDataset, AmazonReviewDa
     PennTreebankDataset, SogouNewsDataset, SQuADDataset, SST2Dataset, TextFileDataset, UDPOSDataset, \
     YelpReviewDataset, YahooAnswersDataset
 from mindspore.dataset.engine.datasets_user_defined import GeneratorDataset
-from mindspore.dataset.engine.datasets_vision import Caltech256Dataset, CelebADataset, Cifar100Dataset, \
-    Cifar10Dataset, CityscapesDataset, CocoDataset, DIV2KDataset, EMnistDataset, FakeImageDataset, \
-    FashionMnistDataset, FlickrDataset, Food101Dataset, ImageFolderDataset, KITTIDataset, KMnistDataset, \
-    LFWDataset, LSUNDataset, ManifestDataset, MnistDataset, OmniglotDataset, PhotoTourDataset, \
-    Places365Dataset, QMnistDataset, RandomDataset, RenderedSST2Dataset, SBUDataset, SemeionDataset, \
-    STL10Dataset, SUN397Dataset, USPSDataset, VOCDataset, WIDERFaceDataset
+from mindspore.dataset.engine.datasets_vision import ImageFolderDataset, ManifestDataset, RandomDataset
 from mindspore.dataset.engine.queue import _SharedQueue
 from mindspore.dataset.engine.datasets import Dataset, BucketBatchByLengthDataset, BatchDataset, \
     PaddedBatchDataset, SyncWaitDataset, ShuffleDataset, MapDataset, FilterDataset, RepeatDataset, SkipDataset, \
@@ -143,14 +138,7 @@ def _get_dataset_forbidden_code():
                   IWSLT2017Dataset.parse, Multi30kDataset.parse, PennTreebankDataset.parse, SogouNewsDataset.parse, \
                   SQuADDataset.parse, SST2Dataset.parse, TextFileDataset.parse, UDPOSDataset.parse, \
                   WikiTextDataset.parse, YahooAnswersDataset.parse, YelpReviewDataset.parse])
-    codes.extend([GeneratorDataset.parse, Caltech256Dataset.parse, CelebADataset.parse, Cifar10Dataset.parse, \
-                  Cifar100Dataset.parse, CityscapesDataset.parse, CocoDataset.parse, DIV2KDataset.parse, \
-                  EMnistDataset.parse, FakeImageDataset.parse, FashionMnistDataset.parse, FlickrDataset.parse, \
-                  Food101Dataset.parse, ImageFolderDataset.parse, KITTIDataset.parse, KMnistDataset.parse, \
-                  LFWDataset.parse, LSUNDataset.parse, ManifestDataset.parse, MnistDataset.parse, VOCDataset.parse, \
-                  OmniglotDataset.parse, PhotoTourDataset.parse, Places365Dataset.parse, QMnistDataset.parse, \
-                  RandomDataset.parse, RenderedSST2Dataset.parse, SBUDataset.parse, SemeionDataset.parse, \
-                  STL10Dataset.parse, SUN397Dataset.parse, USPSDataset.parse, WIDERFaceDataset.parse])
+    codes.extend([GeneratorDataset.parse, ImageFolderDataset.parse, ManifestDataset.parse, RandomDataset.parse])
     codes.extend([_SharedQueue.put, _SharedQueue.get])
     codes.extend([BucketBatchByLengthDataset.parse, BatchDataset.parse, \
                   PaddedBatchDataset.parse, SyncWaitDataset.parse, ShuffleDataset.parse, MapDataset.parse, \

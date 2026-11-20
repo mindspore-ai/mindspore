@@ -1,10 +1,11 @@
+"""Regression tests for mnist."""
+from tests.dataset_mock import mnist_source
 import argparse
 
 import numpy as np
 import mindspore
 from mindspore import nn, context, ops
 from mindspore.common import dtype as mstype
-from mindspore.dataset import MnistDataset
 from hcmodel import HCModel
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -17,7 +18,7 @@ class ImageToDualImage:
 
 
 def create_dataset(dataset_dir, batch_size, usage=None):
-    dataset = MnistDataset(dataset_dir=dataset_dir, usage=usage)
+    dataset = mnist_source(dataset_dir=dataset_dir, usage=usage)
     type_cast_op = mindspore.dataset.transforms.TypeCast(mstype.int32)
 
     # define map operations

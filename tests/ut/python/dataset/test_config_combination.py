@@ -18,6 +18,7 @@ Test combination of different configuration manager settings
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
+from tests.dataset_mock import celeba_source
 
 ORIGINAL_SEED = 0  # Seed will be set internally in debug mode. Save original seed value to restore.
 
@@ -35,7 +36,7 @@ def teardown_function():
 
 def create_celeba_pipeline(offload=False, to_pil=False):
     """ Create simple CelebADataset pipeline, suitable for offloading. """
-    data1 = ds.CelebADataset("../data/dataset/testCelebAData/")
+    data1 = celeba_source("../data/dataset/testCelebAData/")
     data1 = data1.map(operations=[vision.Decode(to_pil=to_pil)], input_columns=["image"])
     data1 = data1.map(operations=[vision.Resize((30, 30))], input_columns=["image"])
     data1 = data1.map(operations=[vision.Rescale(1.0 / 255.0, -1.0),

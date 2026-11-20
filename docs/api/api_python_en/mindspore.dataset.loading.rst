@@ -46,41 +46,8 @@ Vision
     :nosignatures:
     :template: classtemplate_dataset.rst
 
-    mindspore.dataset.Caltech101Dataset
-    mindspore.dataset.Caltech256Dataset
-    mindspore.dataset.CelebADataset
-    mindspore.dataset.Cifar10Dataset
-    mindspore.dataset.Cifar100Dataset
-    mindspore.dataset.CityscapesDataset
-    mindspore.dataset.CocoDataset
-    mindspore.dataset.DIV2KDataset
-    mindspore.dataset.EMnistDataset
-    mindspore.dataset.FakeImageDataset
-    mindspore.dataset.FashionMnistDataset
-    mindspore.dataset.FlickrDataset
-    mindspore.dataset.Flowers102Dataset
-    mindspore.dataset.Food101Dataset
     mindspore.dataset.ImageFolderDataset
-    mindspore.dataset.KITTIDataset
-    mindspore.dataset.KMnistDataset
-    mindspore.dataset.LFWDataset
-    mindspore.dataset.LSUNDataset
     mindspore.dataset.ManifestDataset
-    mindspore.dataset.MnistDataset
-    mindspore.dataset.OmniglotDataset
-    mindspore.dataset.PhotoTourDataset
-    mindspore.dataset.Places365Dataset
-    mindspore.dataset.QMnistDataset
-    mindspore.dataset.RenderedSST2Dataset
-    mindspore.dataset.SBDataset
-    mindspore.dataset.SBUDataset
-    mindspore.dataset.SemeionDataset
-    mindspore.dataset.STL10Dataset
-    mindspore.dataset.SUN397Dataset
-    mindspore.dataset.SVHNDataset
-    mindspore.dataset.USPSDataset
-    mindspore.dataset.VOCDataset
-    mindspore.dataset.WIDERFaceDataset
 
 Text
 ^^^^^

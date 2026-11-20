@@ -14,6 +14,7 @@
 # ==============================================================================
 
 """Dataset regression coverage for util."""
+from tests.dataset_mock import voc_source
 import hashlib
 import json
 import os
@@ -513,19 +514,19 @@ def helper_invalid_bounding_box_test(data_dir, test_op):
     :param test_op: operation that is being tested
     :return: None
     """
-    data = ds.VOCDataset(
+    data = voc_source(
         data_dir, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data, test_op, InvalidBBoxType.WidthOverflow,
                    "bounding boxes is out of bounds of the image")
-    data = ds.VOCDataset(
+    data = voc_source(
         data_dir, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data, test_op, InvalidBBoxType.HeightOverflow,
                    "bounding boxes is out of bounds of the image")
-    data = ds.VOCDataset(
+    data = voc_source(
         data_dir, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data, test_op,
                    InvalidBBoxType.NegativeXY, "negative value")
-    data = ds.VOCDataset(
+    data = voc_source(
         data_dir, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data, test_op,
                    InvalidBBoxType.WrongShape, "4 features")
