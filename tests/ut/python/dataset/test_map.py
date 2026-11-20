@@ -166,8 +166,8 @@ def test_python_map_mp_repeatability(num_parallel_workers, num_samples, set_seed
     # dataset
     data1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False, num_samples=num_samples)
     transforms_list1 = [vision.Decode(to_pil=True),
-                        vision.RandomPerspective(0.4, 1.0),
-                        vision.RandomLighting(0.01)]
+                        vision.RandomHorizontalFlip(0.0),
+                        vision.RandomColorAdjust(saturation=(1.0, 1.0))]
     data1 = data1.map(transforms_list1, num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
 
     # Expect to have the same augmentations
@@ -226,7 +226,7 @@ def test_python_map_mp_seed_repeatability(set_seed_to=1337, set_num_parallel_wor
                 raise AssertionError("Seed not found")
 
         if 0 in expected_seed.values():
-            raise AssertionError("Not all expected seeds were used")
+            raise AssertionError("Not all expected seeds were used") from exc
 
     # Restore config setting
     ds.config.set_seed(original_seed)

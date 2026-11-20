@@ -1399,86 +1399,6 @@ def test_map_with_dvpp_normalize_exception():
 
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=0.01)
-def test_map_with_dvpp_perspective_with_exception():
-    """
-    Feature: Map op
-    Description: Test map with dvpp perspective operation when exception
-    Expectation: The result is equal to the expected
-    """
-
-    print("Run testcase: " + sys._getframe().f_code.co_name)
-
-    start_points = [[0, 63], [63, 63], [63, 0], [0, 0]]
-    end_points = [[0, 32], [32, 32], [32, 0], [0, 0]]
-
-    # the input is HW2
-    class RandomAccessDatasetHW2:
-        def __init__(self):
-            self._data = np.ones((6, 224, 224, 2), dtype=np.uint8)
-            self._label = np.zeros((6,))
-
-        def __getitem__(self, index):
-            return self._data[index], self._label[index]
-
-        def __len__(self):
-            return len(self._data)
-    loader = RandomAccessDatasetHW2()
-    dataset1 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
-
-    dataset1 = dataset1.map(vision.Perspective(start_points, end_points).device("Ascend").device("Ascend"),
-                            input_columns="image")
-    with pytest.raises(RuntimeError) as info:
-        count = 0
-        for _ in dataset1.create_tuple_iterator(num_epochs=1, output_numpy=True):
-            count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
-
-    # the input is HW4
-    class RandomAccessDatasetHW4:
-        def __init__(self):
-            self._data = np.ones((6, 224, 224, 4), dtype=np.uint8)
-            self._label = np.zeros((6,))
-
-        def __getitem__(self, index):
-            return self._data[index], self._label[index]
-
-        def __len__(self):
-            return len(self._data)
-    loader = RandomAccessDatasetHW4()
-    dataset2 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
-
-    dataset2 = dataset2.map(vision.Perspective(start_points, end_points).device("Ascend"),
-                            input_columns="image")
-    with pytest.raises(RuntimeError) as info:
-        count = 0
-        for _ in dataset2.create_tuple_iterator(num_epochs=1, output_numpy=True):
-            count += 1
-    assert "The channel of the input tensor of shape [H,W,C] is not 1, 3" in str(info.value)
-
-    # the input is 23HW4
-    class RandomAccessDataset23HW4:
-        def __init__(self):
-            self._data = np.ones((6, 2, 3, 224, 224, 4), dtype=np.uint8)
-            self._label = np.zeros((6,))
-
-        def __getitem__(self, index):
-            return self._data[index], self._label[index]
-
-        def __len__(self):
-            return len(self._data)
-    loader = RandomAccessDataset23HW4()
-    dataset3 = ds.GeneratorDataset(source=loader, column_names=["image", "label"])
-
-    dataset3 = dataset3.map(vision.Perspective(start_points, end_points).device("Ascend"),
-                            input_columns="image")
-    with pytest.raises(RuntimeError) as info:
-        count = 0
-        for _ in dataset3.create_tuple_iterator(num_epochs=1, output_numpy=True):
-            count += 1
-    assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
-
-
 
 
 
@@ -1497,7 +1417,7 @@ def test_map_with_dvpp_with_910a_exception():
     """
     data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
     numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-    transforms_list = [vision.Erase(10, 10, 10, 10, (100, 100, 100)).device("Ascend")]
+    transforms_list = [vision.Resize((64, 64)).device("Ascend")]
     numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
     with pytest.raises(RuntimeError) as error_info:
         for _ in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):

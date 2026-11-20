@@ -298,11 +298,7 @@ Status Serdes::ConstructTensorOps(nlohmann::json json_obj, std::vector<std::shar
 
 FuncResult Serdes::InitializeFuncPtr() {
   FuncResult ops_ptr;
-  ops_ptr[vision::kAdjustGammaOperation] = &(vision::AdjustGammaOperation::from_json);
-  ops_ptr[vision::kBoundingBoxAugmentOperation] = &(vision::BoundingBoxAugmentOperation::from_json);
   ops_ptr[vision::kCenterCropOperation] = &(vision::CenterCropOperation::from_json);
-  ops_ptr[vision::kCropOperation] = &(vision::CropOperation::from_json);
-  ops_ptr[vision::kCutMixBatchOperation] = &(vision::CutMixBatchOperation::from_json);
   ops_ptr[vision::kDecodeOperation] = &(vision::DecodeOperation::from_json);
 #if defined(WITH_BACKEND) || defined(ENABLE_ACL)
   if (AclAdapter::GetInstance().HasAclPlugin()) {
@@ -314,28 +310,16 @@ FuncResult Serdes::InitializeFuncPtr() {
   }
 #endif
   ops_ptr[vision::kHwcToChwOperation] = &(vision::HwcToChwOperation::from_json);
-  ops_ptr[vision::kMixUpBatchOperation] = &(vision::MixUpBatchOperation::from_json);
   ops_ptr[vision::kNormalizeOperation] = &(vision::NormalizeOperation::from_json);
-  ops_ptr[vision::kNormalizePadOperation] = &(vision::NormalizePadOperation::from_json);
-  ops_ptr[vision::kPadOperation] = &(vision::PadOperation::from_json);
   ops_ptr[vision::kRandomColorAdjustOperation] = &(vision::RandomColorAdjustOperation::from_json);
   ops_ptr[vision::kRandomCropDecodeResizeOperation] = &(vision::RandomCropDecodeResizeOperation::from_json);
   ops_ptr[vision::kRandomCropOperation] = &(vision::RandomCropOperation::from_json);
-  ops_ptr[vision::kRandomCropWithBBoxOperation] = &(vision::RandomCropWithBBoxOperation::from_json);
   ops_ptr[vision::kRandomHorizontalFlipOperation] = &(vision::RandomHorizontalFlipOperation::from_json);
-  ops_ptr[vision::kRandomHorizontalFlipWithBBoxOperation] = &(vision::RandomHorizontalFlipWithBBoxOperation::from_json);
-  ops_ptr[vision::kRandomPosterizeOperation] = &(vision::RandomPosterizeOperation::from_json);
-  ops_ptr[vision::kRandomResizeWithBBoxOperation] = &(vision::RandomResizeWithBBoxOperation::from_json);
   ops_ptr[vision::kRandomResizedCropOperation] = &(vision::RandomResizedCropOperation::from_json);
-  ops_ptr[vision::kRandomResizedCropWithBBoxOperation] = &(vision::RandomResizedCropWithBBoxOperation::from_json);
-  ops_ptr[vision::kRandomSolarizeOperation] = &(vision::RandomSolarizeOperation::from_json);
   ops_ptr[vision::kRandomVerticalFlipOperation] = &(vision::RandomVerticalFlipOperation::from_json);
-  ops_ptr[vision::kRandomVerticalFlipWithBBoxOperation] = &(vision::RandomVerticalFlipWithBBoxOperation::from_json);
-  ops_ptr[vision::kRandomSolarizeOperation] = &(vision::RandomSolarizeOperation::from_json);
   ops_ptr[vision::kRescaleOperation] = &(vision::RescaleOperation::from_json);
   ops_ptr[vision::kResizeOperation] = &(vision::ResizeOperation::from_json);
   ops_ptr[vision::kResizePreserveAROperation] = &(vision::ResizePreserveAROperation::from_json);
-  ops_ptr[vision::kResizeWithBBoxOperation] = &(vision::ResizeWithBBoxOperation::from_json);
   ops_ptr[vision::kRgbaToBgrOperation] = &(vision::RgbaToBgrOperation::from_json);
   ops_ptr[vision::kRgbaToRgbOperation] = &(vision::RgbaToRgbOperation::from_json);
   ops_ptr[vision::kRgbToBgrOperation] = &(vision::RgbToBgrOperation::from_json);

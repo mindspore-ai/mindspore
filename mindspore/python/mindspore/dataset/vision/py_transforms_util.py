@@ -24,7 +24,12 @@ import numpy as np
 from PIL import Image, ImageOps, ImageEnhance
 
 from ..core.py_util_helpers import is_numpy
-from .utils import Inter, FLIP_LEFT_RIGHT, FLIP_TOP_BOTTOM, PERSPECTIVE, AFFINE
+from .utils import (
+    Inter,
+    FLIP_LEFT_RIGHT,
+    FLIP_TOP_BOTTOM,
+    AFFINE,
+)
 
 augment_error_message = "img should be PIL image. Got {}. Use Decode() for encoded data or ToPIL() for decoded data."
 
@@ -108,9 +113,9 @@ def decode(img):
         img = Image.open(data)
         return img.convert('RGB')
     except IOError as e:
-        raise ValueError("{0}\n: Failed to decode given image.".format(e))
+        raise ValueError("{0}\n: Failed to decode given image.".format(e)) from e
     except AttributeError as e:
-        raise ValueError("{0}\n: Failed to decode, Image might already be decoded.".format(e))
+        raise ValueError("{0}\n: Failed to decode, Image might already be decoded.".format(e)) from e
 
 
 def hwc_to_chw(img):
@@ -370,9 +375,7 @@ def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, ma
         raise TypeError(augment_error_message.format(type(img)))
     if isinstance(size, int):
         size = (size, size)
-    elif isinstance(size, (tuple, list)) and len(size) == 2:
-        size = size
-    else:
+    elif not (isinstance(size, (tuple, list)) and len(size) == 2):
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
 
     if scale[0] > scale[1] or ratio[0] > ratio[1]:
@@ -456,9 +459,7 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
         raise TypeError(augment_error_message.format(type(img)))
     if isinstance(size, int):
         size = (size, size)
-    elif isinstance(size, (tuple, list)) and len(size) == 2:
-        size = size
-    else:
+    elif not (isinstance(size, (tuple, list)) and len(size) == 2):
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
 
     if isinstance(fill_value, list):
@@ -607,8 +608,8 @@ def to_type(img, output_type):
 
     try:
         return img.astype(output_type)
-    except Exception:
-        raise RuntimeError("output_type: " + str(output_type) + " is not a valid datatype.")
+    except Exception as exc:
+        raise RuntimeError("output_type: " + str(output_type) + " is not a valid datatype.") from exc
 
 
 def rotate(img, angle, resample, expand, center, fill_value):
@@ -713,40 +714,6 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
     return img
 
 
-def random_lighting(img, alpha):
-    """
-    Add AlexNet-style PCA-based noise to an image.
-
-    Args:
-        img (PIL.Image.Image): Image to be added AlexNet-style PCA-based noise.
-        alpha (float, optional): Intensity of the image.
-
-    Returns:
-        PIL.Image.Image, image with noise added.
-    """
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-    if img.mode != 'RGB':
-        img = img.convert("RGB")
-
-    alpha_r = np.random.normal(loc=0.0, scale=alpha)
-    alpha_g = np.random.normal(loc=0.0, scale=alpha)
-    alpha_b = np.random.normal(loc=0.0, scale=alpha)
-    table = np.array([
-        [55.46 * -0.5675, 4.794 * 0.7192, 1.148 * 0.4009],
-        [55.46 * -0.5808, 4.794 * -0.0045, 1.148 * -0.8140],
-        [55.46 * -0.5836, 4.794 * -0.6948, 1.148 * 0.4203]
-    ])
-    pca_r = table[0][0] * alpha_r + table[0][1] * alpha_g + table[0][2] * alpha_b
-    pca_g = table[1][0] * alpha_r + table[1][1] * alpha_g + table[1][2] * alpha_b
-    pca_b = table[2][0] * alpha_r + table[2][1] * alpha_g + table[2][2] * alpha_b
-    img_arr = np.array(img).astype(np.float64)
-    img_arr[:, :, 0] += pca_r
-    img_arr[:, :, 1] += pca_g
-    img_arr[:, :, 2] += pca_b
-    img_arr = np.uint8(np.minimum(np.maximum(img_arr, 0), 255))
-    img = Image.fromarray(img_arr)
-    return img
 
 
 def random_rotation(img, degrees, resample, expand, center, fill_value):
@@ -796,111 +763,6 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
     return rotate(img, angle, resample, expand, center, fill_value)
 
 
-def five_crop(img, size):
-    """
-    Generate 5 cropped images (one central and four corners).
-
-    Args:
-        img (PIL.Image.Image): PIL Image to be cropped.
-        size (Union[int, sequence]): The output size of the crop.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-
-    Returns:
-            img_tuple (tuple), a tuple of 5 PIL Image
-                (top_left, top_right, bottom_left, bottom_right, center).
-    """
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-
-    if isinstance(size, int):
-        size = (size, size)
-    elif isinstance(size, (tuple, list)) and len(size) == 2:
-        size = size
-    else:
-        raise TypeError("Size should be a single number or a list/tuple (h, w) of length 2.")
-
-    # PIL.Image.Image.size returns in (width, height) order
-    img_width, img_height = img.size
-    crop_height, crop_width = size
-    if crop_height > img_height or crop_width > img_width:
-        raise ValueError("Crop size {} is larger than input image size {}.".format(size, (img_height, img_width)))
-    center = center_crop(img, (crop_height, crop_width))
-    top_left = img.crop((0, 0, crop_width, crop_height))
-    top_right = img.crop((img_width - crop_width, 0, img_width, crop_height))
-    bottom_left = img.crop((0, img_height - crop_height, crop_width, img_height))
-    bottom_right = img.crop((img_width - crop_width, img_height - crop_height, img_width, img_height))
-
-    return top_left, top_right, bottom_left, bottom_right, center
-
-
-def ten_crop(img, size, use_vertical_flip=False):
-    """
-    Generate 10 cropped images (first 5 from FiveCrop, second 5 from their flipped version).
-
-    The default is horizontal flipping, `use_vertical_flip` is ``False``.
-
-    Args:
-        img (PIL.Image.Image): PIL Image to be cropped.
-        size (Union[int, sequence]): The output size of the crop.
-            If size is an integer, a square crop of size (size, size) is returned.
-            If size is a sequence of length 2, it should be (height, width).
-        use_vertical_flip (bool): Flip the image vertically instead of horizontally if set to ``True``.
-            Default: ``False``.
-
-    Returns:
-        tuple[PIL.Image.Image], a tuple of 10 PIL Image
-            (top_left, top_right, bottom_left, bottom_right, center) of original image +
-            (top_left, top_right, bottom_left, bottom_right, center) of flipped image.
-    """
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-
-    if isinstance(size, int):
-        size = (size, size)
-    elif isinstance(size, (tuple, list)) and len(size) == 2:
-        size = size
-    else:
-        raise TypeError("Size should be a single number or a list/tuple (h, w) of length 2.")
-
-    first_five_crop = five_crop(img, size)
-
-    if use_vertical_flip:
-        img = vertical_flip(img)
-    else:
-        img = horizontal_flip(img)
-
-    second_five_crop = five_crop(img, size)
-
-    return first_five_crop + second_five_crop
-
-
-def grayscale(img, num_output_channels):
-    """
-    Convert the input PIL Image to grayscale image.
-
-    Args:
-        img (PIL.Image.Image): PIL Image to be converted to grayscale.
-        num_output_channels (int): Number of channels of the output grayscale image (1 or 3).
-
-    Returns:
-        PIL.Image.Image, grayscaled image.
-    """
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-
-    if num_output_channels == 1:
-        img = img.convert('L')
-    elif num_output_channels == 3:
-        # each channel is the same grayscale layer
-        img = img.convert('L')
-        np_gray = np.array(img, dtype=np.uint8)
-        np_img = np.dstack([np_gray, np_gray, np_gray])
-        img = Image.fromarray(np_img, 'RGB')
-    else:
-        raise ValueError('num_output_channels should be either 1 or 3. Got {}.'.format(num_output_channels))
-
-    return img
 
 
 def pad(img, padding, fill_value, padding_mode):
@@ -988,170 +850,14 @@ def pad(img, padding, fill_value, padding_mode):
     return Image.fromarray(img)
 
 
-def get_perspective_params(img, distortion_scale):
-    """Helper function to get parameters for RandomPerspective.
-    """
-    img_width, img_height = img.size
-    distorted_half_width = int(img_width / 2 * distortion_scale)
-    distorted_half_height = int(img_height / 2 * distortion_scale)
-    top_left = (random.randint(0, distorted_half_width),
-                random.randint(0, distorted_half_height))
-    top_right = (random.randint(img_width - distorted_half_width - 1, img_width - 1),
-                 random.randint(0, distorted_half_height))
-    bottom_right = (random.randint(img_width - distorted_half_width - 1, img_width - 1),
-                    random.randint(img_height - distorted_half_height - 1, img_height - 1))
-    bottom_left = (random.randint(0, distorted_half_width),
-                   random.randint(img_height - distorted_half_height - 1, img_height - 1))
-
-    start_points = [(0, 0), (img_width - 1, 0), (img_width - 1, img_height - 1), (0, img_height - 1)]
-    end_points = [top_left, top_right, bottom_right, bottom_left]
-    return start_points, end_points
 
 
-def perspective(img, start_points, end_points, interpolation=Inter.BICUBIC):
-    """
-    Apply perspective transformation to the input PIL Image.
-
-    Args:
-        img (PIL.Image.Image): PIL Image to be applied perspective transformation.
-        start_points (list): List of [top_left, top_right, bottom_right, bottom_left] of the original image.
-        end_points: List of [top_left, top_right, bottom_right, bottom_left] of the transformed image.
-        interpolation (interpolation mode): Image interpolation mode, Default: ``Inter.BICUBIC = 3``.
-
-    Returns:
-        PIL.Image.Image, image after being perspectively transformed.
-    """
-
-    def _input_to_coeffs(original_points, transformed_points):
-        # Get the coefficients (a, b, c, d, e, f, g, h) for the perspective transforms.
-        # According to "Using Projective Geometry to Correct a Camera" from AMS.
-        # http://www.ams.org/publicoutreach/feature-column/fc-2013-03
-        # https://github.com/python-pillow/Pillow/blob/master/src/libImaging/Geometry.c#L377
-
-        matrix = []
-        for pt1, pt2 in zip(transformed_points, original_points):
-            matrix.append([pt1[0], pt1[1], 1, 0, 0, 0, -pt2[0] * pt1[0], -pt2[0] * pt1[1]])
-            matrix.append([0, 0, 0, pt1[0], pt1[1], 1, -pt2[1] * pt1[0], -pt2[1] * pt1[1]])
-        matrix_a = np.array(matrix, dtype=float)
-        matrix_b = np.array(original_points, dtype=float).reshape(8)
-        res = np.linalg.lstsq(matrix_a, matrix_b, rcond=None)[0]
-        return res.tolist()
-
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-
-    coeffs = _input_to_coeffs(start_points, end_points)
-    return img.transform(img.size, PERSPECTIVE, coeffs, interpolation)
 
 
-def get_erase_params(np_img, scale, ratio, value, bounded, max_attempts):
-    """Helper function to get parameters for RandomErasing/Cutout.
-    """
-    if not is_numpy(np_img):
-        raise TypeError('img should be NumPy array. Got {}.'.format(type(np_img)))
-
-    image_c, image_h, image_w = np_img.shape
-    area = image_h * image_w
-
-    for _ in range(max_attempts):
-        erase_area = random.uniform(scale[0], scale[1]) * area
-        aspect_ratio = random.uniform(ratio[0], ratio[1])
-        erase_w = int(round(math.sqrt(erase_area * aspect_ratio)))
-        erase_h = int(round(erase_w / aspect_ratio))
-        erase_shape = (image_c, erase_h, erase_w)
-
-        if erase_h < image_h and erase_w < image_w:
-            if bounded:
-                i = random.randint(0, image_h - erase_h)
-                j = random.randint(0, image_w - erase_w)
-            else:
-                def clip(x, lower, upper):
-                    return max(lower, min(x, upper))
-
-                x = random.randint(0, image_w)
-                y = random.randint(0, image_h)
-                x1 = clip(x - erase_w // 2, 0, image_w)
-                x2 = clip(x + erase_w // 2, 0, image_w)
-                y1 = clip(y - erase_h // 2, 0, image_h)
-                y2 = clip(y + erase_h // 2, 0, image_h)
-
-                i, j, erase_h, erase_w = y1, x1, y2 - y1, x2 - x1
-
-            if isinstance(value, numbers.Number):
-                erase_value = value
-            elif isinstance(value, (str, bytes)):
-                erase_value = np.random.normal(loc=0.0, scale=1.0, size=erase_shape)
-            elif isinstance(value, (tuple, list)) and len(value) == 3:
-                value = np.array(value)
-                erase_value = np.multiply(np.ones(erase_shape), value[:, None, None])
-            else:
-                raise ValueError("The value for erasing should be either a single value, or a string "
-                                 "'random', or a sequence of 3 elements for RGB respectively.")
-
-            return i, j, erase_h, erase_w, erase_value
-
-    # exceeding max_attempts, return original image
-    return 0, 0, image_h, image_w, np_img
 
 
-def erase(np_img, i, j, height, width, erase_value, inplace=False):
-    """
-    Erase the pixels, within a selected rectangle region, to the given value. Applied on the input NumPy image array.
-
-    Args:
-        np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be erased.
-        i (int): The height component of the top left corner (height, width).
-        j (int): The width component of the top left corner (height, width).
-        height (int): Height of the erased region.
-        width (int): Width of the erased region.
-        erase_value: Erase value return from helper function get_erase_params().
-        inplace (bool, optional): Apply this transform inplace. Default: ``False``.
-
-    Returns:
-        np_img (numpy.ndarray), Erased NumPy image array.
-    """
-    if not is_numpy(np_img):
-        raise TypeError('img should be NumPy array. Got {}.'.format(type(np_img)))
-
-    if not inplace:
-        np_img = np_img.copy()
-    # (i, j) here are the coordinates of axes (height, width) as in CHW
-    np_img[:, i:i + height, j:j + width] = erase_value
-    return np_img
 
 
-def linear_transform(np_img, transformation_matrix, mean_vector):
-    """
-    Apply linear transformation to the input NumPy image array, given a square transformation matrix and a mean_vector.
-
-    The transformation first flattens the input array and subtract mean_vector from it, then computes the
-    dot product with the transformation matrix, and reshapes it back to its original shape.
-
-    Args:
-        np_img (numpy.ndarray): NumPy image array of shape (C, H, W) to be linear transformed.
-        transformation_matrix (numpy.ndarray): a square transformation matrix of shape (D, D), D = C x H x W.
-        mean_vector (numpy.ndarray): a NumPy ndarray of shape (D,) where D = C x H x W.
-
-    Returns:
-        np_img (numpy.ndarray), Linear transformed image.
-    """
-    if not is_numpy(np_img):
-        raise TypeError('img should be NumPy array. Got {}'.format(type(np_img)))
-    if transformation_matrix.shape[0] != transformation_matrix.shape[1]:
-        raise ValueError("transformation_matrix should be a square matrix. "
-                         "Got shape {} instead".format(transformation_matrix.shape))
-    if np.prod(np_img.shape) != transformation_matrix.shape[0]:
-        raise ValueError("transformation_matrix shape {0} not compatible with "
-                         "Numpy image shape {1}.".format(transformation_matrix.shape, np_img.shape))
-    if mean_vector.shape[0] != transformation_matrix.shape[0]:
-        raise ValueError("mean_vector length {0} should match either one dimension of the square "
-                         "transformation_matrix {1}.".format(mean_vector.shape[0], transformation_matrix.shape))
-    zero_centered_img = np_img.reshape(1, -1) - mean_vector
-    transformed_img = np.dot(zero_centered_img, transformation_matrix)
-    if transformed_img.size != np_img.size:
-        raise ValueError("Linear transform failed, input shape should match with transformation_matrix.")
-    transformed_img = transformed_img.reshape(np_img.shape)
-    return transformed_img
 
 
 def random_affine(img, angle, translations, scale, shear, resample, fill_value=0):
@@ -1247,65 +953,8 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
     return img.transform(output_size, AFFINE, matrix, resample, **kwargs)
 
 
-def mix_up_single(batch_size, img, label, alpha=0.2):
-    """
-    Apply mix up transformation to image and label in single batch internal, One hot encoding should done before this.
-
-    Args:
-        batch_size (int): The batch size of dataset.
-        img (numpy.ndarray): NumPy image to be applied mix up transformation.
-        label (numpy.ndarray): NumPy label to be applied mix up transformation.
-        alpha (float): The mix up rate.
-
-    Returns:
-        mix_img (numpy.ndarray): NumPy image after being applied mix up transformation.
-        mix_label (numpy.ndarray): NumPy label after being applied mix up transformation.
-    """
-
-    def cir_shift(data):
-        index = list(range(1, batch_size)) + [0]
-        data = data[index, ...]
-        return data
-
-    lam = np.random.beta(alpha, alpha, batch_size)
-    lam_img = lam.reshape((batch_size, 1, 1, 1))
-    mix_img = lam_img * img + (1 - lam_img) * cir_shift(img)
-
-    lam_label = lam.reshape((batch_size, 1))
-    mix_label = lam_label * label + (1 - lam_label) * cir_shift(label)
-
-    return mix_img, mix_label
 
 
-def mix_up_muti(tmp, batch_size, img, label, alpha=0.2):
-    """
-    Apply mix up transformation to image and label in continuous batch, one hot encoding should done before this.
-
-    Args:
-        tmp (class object): mainly for saving the tmp parameter.
-        batch_size (int): the batch size of dataset.
-        img (numpy.ndarray): NumPy image to be applied mix up transformation.
-        label (numpy.ndarray): NumPy label to be applied mix up transformation.
-        alpha (float):  refer to the mix up rate.
-
-    Returns:
-        mix_img (numpy.ndarray): NumPy image after being applied mix up transformation.
-        mix_label (numpy.ndarray): NumPy label after being applied mix up transformation.
-    """
-    lam = np.random.beta(alpha, alpha, batch_size)
-    if tmp.is_first:
-        lam = np.ones(batch_size)
-        tmp.is_first = False
-
-    lam_img = lam.reshape((batch_size, 1, 1, 1))
-    mix_img = lam_img * img + (1 - lam_img) * tmp.image
-
-    lam_label = lam.reshape(batch_size, 1)
-    mix_label = lam_label * label + (1 - lam_label) * tmp.label
-    tmp.image = mix_img
-    tmp.label = mix_label
-
-    return mix_img, mix_label
 
 
 def rgb_to_bgr(np_rgb_img, is_hwc):
@@ -1552,30 +1201,6 @@ def random_sharpness(img, degrees):
     return ImageEnhance.Sharpness(img).enhance(v)
 
 
-def adjust_gamma(img, gamma, gain):
-    """
-    Adjust gamma of the input PIL Image.
-
-    Args:
-        img (PIL.Image.Image): Image to be augmented with AdjustGamma.
-        gamma (float): Non negative real number, same as gamma in the equation.
-        gain (float, optional): The constant multiplier.
-
-    Returns:
-        PIL.Image.Image, augmented image.
-
-    """
-
-    if not is_pil(img):
-        raise TypeError("img should be PIL image. Got {}.".format(type(img)))
-
-    gamma_table = [int((255 + 1 - 1e-3) * gain * pow(x / 255., gamma)) for x in range(256)]
-    if len(img.split()) == 3:
-        gamma_table = gamma_table * 3
-        img = img.point(gamma_table)
-    elif len(img.split()) == 1:
-        img = img.point(gamma_table)
-    return img
 
 
 def auto_contrast(img, cutoff, ignore):

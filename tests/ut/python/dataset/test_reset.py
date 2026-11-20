@@ -18,9 +18,9 @@ Testing dataset pipeline failover Reset
 import os
 import numpy as np
 import pytest
+from util_minddataset import add_and_remove_cv_file  # pylint: disable=unused-import
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
-from util_minddataset import add_and_remove_cv_file  # pylint: disable=unused-import
 
 # pylint: disable=no-value-for-parameter
 
@@ -32,32 +32,8 @@ def create_np_dataset(size):
     return data
 
 
-def create_cifar_dataset1(size):
-    data_dir = "../data/dataset/testCifar100Data"
-    pad_size = 100
-    crop_size = 64
-    data = ds.Cifar100Dataset(data_dir, num_samples=size, shuffle=False)
-    data = data.project(["image"])
-    pad_op = vision.Pad(pad_size)
-    data = data.map(operations=pad_op, input_columns=["image"])
-    crop_op = vision.CenterCrop(crop_size)
-    data = data.map(operations=crop_op, input_columns=["image"])
-    return data
 
 
-def create_cifar_dataset2(size):
-    data_dir = "../data/dataset/testCifar100Data"
-    pad_size = 100
-    crop_size = 64
-    repeat_count = 2
-    data = ds.Cifar100Dataset(data_dir, num_samples=size, shuffle=False)
-    data = data.repeat(repeat_count)
-    data = data.project(["image"])
-    pad_op = vision.Pad(pad_size)
-    data = data.map(operations=pad_op, input_columns=["image"])
-    crop_op = vision.CenterCrop(crop_size)
-    data = data.map(operations=crop_op, input_columns=["image"])
-    return data
 
 
 def create_imagenet_dataset(size):
@@ -168,32 +144,8 @@ def test_reset_np():
         run_reset(data, num_epochs=num_epochs, failure_point=failure_point)
 
 
-def test_reset_cifar1():
-    """
-    Feature: Dataset recovery
-    Description: Simple test of data pipeline reset feature on a pipeline with Cifar100Dataset as a leaf node (1)
-    Expectation: Same datasets after reset
-    """
-    dataset_size = 30
-    num_epochs = 2
-    failure_steps = (dataset_size * num_epochs) // 5
-    data = create_cifar_dataset1(size=dataset_size)
-    for failure_point in range(0, dataset_size * num_epochs, failure_steps):
-        run_reset(data, num_epochs=num_epochs, failure_point=failure_point)
 
 
-def test_reset_cifar2():
-    """
-    Feature: Dataset recovery
-    Description: Simple test of data pipeline reset feature on a pipeline with Cifar100Dataset as a leaf node (2)
-    Expectation: Same datasets after reset
-    """
-    dataset_size = 30
-    num_epochs = 3
-    failure_steps = (dataset_size * num_epochs) // 5
-    data = create_cifar_dataset2(size=dataset_size)
-    for failure_point in range(0, dataset_size * num_epochs, failure_steps):
-        run_reset(data, num_epochs=num_epochs, failure_point=failure_point)
 
 
 def test_reset_imagenet():

@@ -147,41 +147,6 @@ TEST_F(MindDataTestDeserialize, TestDeserializeCLUE) {
 }
 
 /// Feature: Deserialize
-/// Description: Test Deserialize on CocoDataset with some random tensor operations
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestDeserialize, TestDeserializeCoco) {
-  MS_LOG(INFO) << "Doing MindDataTestDeserialize-Coco.";
-  std::string folder_path = "./data/dataset/testCOCO/train";
-  std::string annotation_file = "./data/dataset/testCOCO/annotations/train.json";
-  std::string task = "Detection";
-  std::vector<int64_t> indices = {0, 1};
-  std::shared_ptr<SamplerObj> sampler = std::make_shared<SubsetRandomSamplerObj>(indices, 3);
-  std::shared_ptr<DatasetCache> cache = nullptr;
-  std::shared_ptr<DatasetNode> ds =
-    std::make_shared<CocoNode>(folder_path, annotation_file, task, true, sampler, cache, false);
-  std::vector<uint8_t> fill_value = {150, 150, 150};
-  std::vector<float> degrees = {0.0, 0.0};
-  std::vector<float> scale = {0.5, 0.5};
-  std::vector<float> ratio = {0.5, 0.5};
-  std::vector<int32_t> size = {224, 224};
-  std::vector<int32_t> padding = {20, 20, 20, 20};
-  InterpolationMode interpolation = InterpolationMode::kLinear;
-  std::shared_ptr<TensorOperation> operation1 =
-    std::make_shared<vision::RandomCropDecodeResizeOperation>(size, scale, ratio, interpolation, 2);
-  std::shared_ptr<TensorOperation> operation2 =
-    std::make_shared<vision::RandomCropWithBBoxOperation>(size, padding, true, fill_value, BorderType::kConstant);
-  std::shared_ptr<TensorOperation> operation3 = std::make_shared<vision::RandomHorizontalFlipOperation>(0.1);
-  std::shared_ptr<TensorOperation> operation4 = std::make_shared<vision::RandomHorizontalFlipWithBBoxOperation>(0.1);
-  std::vector<std::shared_ptr<TensorOperation>> operations;
-  operations.push_back(operation1);
-  operations.push_back(operation2);
-  operations.push_back(operation3);
-  operations.push_back(operation4);
-  ds = std::make_shared<MapNode>(ds, operations);
-  compare_dataset(ds);
-}
-
-/// Feature: Deserialize
 /// Description: Test Deserialize with invalid json path or object
 /// Expectation: Throw correct error and message
 TEST_F(MindDataTestDeserialize, TestDeserializeInvalidJson) {
@@ -192,8 +157,6 @@ TEST_F(MindDataTestDeserialize, TestDeserializeInvalidJson) {
   ASSERT_ERROR(Serdes::Deserialize("./data/dataset/testDataset1/datasetTestInvalidJson.json", &ds));
   EXPECT_EQ(ds, nullptr);
 }
-
-
 
 /// Feature: Deserialize
 /// Description: Test Deserialize on Tensor
@@ -229,33 +192,6 @@ TEST_F(MindDataTestDeserialize, DISABLED_TestDeserializeCache) {
 
   std::shared_ptr<SamplerObj> sampler = std::make_shared<SequentialSamplerObj>(0, 10);
   std::shared_ptr<DatasetNode> ds = std::make_shared<Cifar10Node>(data_dir, usage, sampler, some_cache);
-  compare_dataset(ds);
-}
-
-/// Feature: Deserialize
-/// Description: Test Deserialize on AlbumDataset with Concat and Flickr
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestDeserialize, TestDeserializeConcatAlbumFlickr) {
-  MS_LOG(INFO) << "Doing MindDataTestDeserialize-ConcatAlbumFlickr.";
-  std::string dataset_dir = "./data/dataset/testAlbum";
-  std::vector<std::string> column_names = {"col1", "col2", "col3"};
-  bool decode = false;
-  std::shared_ptr<SamplerObj> sampler = std::make_shared<SequentialSamplerObj>(0, 10);
-  std::string data_schema = "./data/dataset/testAlbum/datasetSchema.json";
-  std::shared_ptr<DatasetNode> ds =
-    std::make_shared<AlbumNode>(dataset_dir, data_schema, column_names, decode, sampler, nullptr);
-  std::shared_ptr<TensorOperation> operation = std::make_shared<vision::AdjustGammaOperation>(0.5, 0.5);
-  std::vector<std::shared_ptr<TensorOperation>> ops = {operation};
-  ds = std::make_shared<MapNode>(ds, ops);
-  std::string dataset_path = "./data/dataset/testFlickrData/flickr30k/flickr30k-images";
-  std::string annotation_file = "./data/dataset/testFlickrData/flickr30k/test1.token";
-  std::shared_ptr<DatasetNode> ds_child1 =
-    std::make_shared<FlickrNode>(dataset_path, annotation_file, decode, sampler, nullptr);
-  std::vector<std::shared_ptr<DatasetNode>> datasets = {ds, ds_child1};
-  std::pair<int, int> pair = std::make_pair(1, 1);
-  std::vector<std::pair<int, int>> children_flag_and_nums = {pair};
-  std::vector<std::pair<int, int>> children_start_end_index = {pair};
-  ds = std::make_shared<ConcatNode>(datasets, sampler, children_flag_and_nums, children_start_end_index);
   compare_dataset(ds);
 }
 

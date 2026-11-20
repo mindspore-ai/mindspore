@@ -13,10 +13,11 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing ToType op in DE
+Testing TypeCast op in DE
 """
 import numpy as np
 import pytest
+from mindspore.dataset.transforms import TypeCast
 import mindspore as ms
 import mindspore._c_dataengine as cde
 import mindspore.dataset.vision.transforms as vision
@@ -44,31 +45,31 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
 
-def test_to_type_errors():
+def test_type_cast_errors():
     """
-    Feature: ToType op
-    Description: Test ToType with invalid input
+    Feature: TypeCast op
+    Description: Test TypeCast with invalid input
     Expectation: Correct error is thrown as expected
     """
     with pytest.raises(TypeError) as error_info:
-        vision.ToType("JUNK")
+        TypeCast("JUNK")
     assert "Argument data_type with value JUNK is not of type" in str(error_info.value)
 
     with pytest.raises(TypeError) as error_info:
-        vision.ToType([np.float32])
+        TypeCast([np.float32])
     assert "Argument data_type with value [<class 'numpy.float32'>] is not of type" in str(error_info.value)
 
     with pytest.raises(TypeError) as error_info:
-        vision.ToType((np.float32,))
+        TypeCast((np.float32,))
     assert "Argument data_type with value (<class 'numpy.float32'>,) is not of type" in str(error_info.value)
 
     with pytest.raises(TypeError) as error_info:
-        vision.ToType((np.int16, np.int8))
+        TypeCast((np.int16, np.int8))
     assert "Argument data_type with value (<class 'numpy.int16'>, <class 'numpy.int8'>) is not of type" \
            in str(error_info.value)
 
     with pytest.raises(TypeError) as error_info:
-        vision.ToType(None)
+        TypeCast(None)
     assert "Argument data_type with value None is not of type" in str(error_info.value)
 
 
@@ -118,86 +119,101 @@ def test_np_to_de():
     assert nptype_to_detype(str) == cde.DataType("string")
 
 
-def test_to_type_operation_01():
+def test_type_cast_operation_01():
     """
-    Feature: ToType operation
-    Description: Testing the normal functionality of the ToType operator
+    Feature: TypeCast operation
+    Description: Testing the normal functionality of the TypeCast operator
     Expectation: The Output is equal to the expected output
     """
-    # ToType operation: np.float16, eager mode
+    # TypeCast operation: np.float16, eager mode
     image = np.random.randint(0, 255, (20, 30, 8)).astype(np.uint8)
-    totype_op = vision.ToType(np.float16)
+    totype_op = TypeCast(np.float16)
     out = totype_op(image)
     assert out.dtype == "float16"
 
-    # ToType operation: np.float64 to ms.int16
+    # TypeCast operation: np.float64 to ms.int16
     image = np.random.randn(20, 30).astype(np.float64)
-    totype_op = vision.ToType(ms.int16)
+    totype_op = TypeCast(ms.int16)
     out = totype_op(image)
     assert out.dtype == "int16"
 
-    # ToType operation: int to bool
+    # TypeCast operation: int to bool
     image = np.random.randint(-1000, 1000, (10, 6, 8, 5)).astype(np.int32)
-    totype_op = vision.ToType(np.bool_)
+    totype_op = TypeCast(np.bool_)
     out = totype_op(image)
     assert out.dtype == "bool"
 
-    # ToType operation: np.float64 to uint8
+    # TypeCast operation: np.float64 to uint8
     image = np.random.randn(50, )
-    totype_op = vision.ToType(ms.uint8)
+    totype_op = TypeCast(ms.uint8)
     out = totype_op(image)
     assert out.dtype == "uint8"
 
-    # ToType operation: np.int64 to ms.int64
+    # TypeCast operation: np.int64 to ms.int64
     image = tuple(np.random.randn(5, 4, 8, 12, 3).astype(np.int64))
-    totype_op = vision.ToType(ms.int64)
+    totype_op = TypeCast(ms.int64)
     out = totype_op(image)
     assert out.dtype == "int64"
 
-    # ToType operation: input equals list
+    # TypeCast operation: input equals list
     image = list(np.random.randn(100, 200).astype(np.int8))
-    totype_op = vision.ToType(int)
+    totype_op = TypeCast(int)
     out = totype_op(image)
     assert out.dtype in ["int64", "int32"]
 
-    # ToType operation: str t0 str
+    # TypeCast operation: str t0 str
     image = np.array(["1", "2", "3"])
-    totype_op = vision.ToType(ms.string)
+    totype_op = TypeCast(ms.string)
     totype_op(image)
 
-    # ToType operation: input equals 10.0
+    # TypeCast operation: input equals 10.0
     image = 10.0
-    totype_op = vision.ToType(np.int32)
+    totype_op = TypeCast(np.int32)
     out = totype_op(image)
     assert out == 10
 
 
-def test_to_type_exception_01():
+def test_type_cast_exception_01():
     """
-    Feature: ToType operation
-    Description: Testing the ToType Operator in Exceptional Scenarios
+    Feature: TypeCast operation
+    Description: Testing the TypeCast Operator in Exceptional Scenarios
     Expectation: Throw an exception
     """
-    # ToType operation: float to int
+    # TypeCast operation: float to int
     image = np.random.randn(100, 200)
     image = vision.ToPIL()(image)
-    totype_op = vision.ToType(np.int32)
+    totype_op = TypeCast(np.int32)
     totype_op(image)
 
-    # ToType operation: Missing parameters
+    # TypeCast operation: Missing parameters
     with pytest.raises(TypeError, match="missing a required argument: 'data_type'"):
-        vision.ToType()
+        TypeCast()
 
-    # ToType operation: The parameter is a list
+    # TypeCast operation: The parameter is a list
     image = np.random.randn(100, 200).astype(np.float32)
     with pytest.raises(TypeError, match="but got <class 'list'>."):
-        totype_op = vision.ToType([np.int32])
+        totype_op = TypeCast([np.int32])
         totype_op(image)
 
-    # ToType operation: The parameter is a int
+    # TypeCast operation: The parameter is a int
     with pytest.raises(TypeError, match="but got <class 'int'>."):
-        vision.ToType(1)
+        TypeCast(1)
 
-    # ToType operation: The parameter is a str
+    # TypeCast operation: The parameter is a str
     with pytest.raises(TypeError, match="but got <class 'str'>."):
-        vision.ToType("number")
+        TypeCast("number")
+
+
+if __name__ == "__main__":
+    test_type_cast_op()
+    test_type_cast_data_type()
+    test_type_cast_01()
+    test_type_cast_02()
+    test_type_cast_03()
+    test_type_cast_04()
+    test_type_cast_05()
+    test_type_cast_invalid_arg()
+    test_type_cast_errors()
+    test_np_to_de()
+    test_type_cast_operation_01()
+    test_type_cast_exception_01()

@@ -19,16 +19,9 @@
 #include "minddata/dataset/vision/transform/random_color_adjust_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_decode_resize_ir.h"
 #include "minddata/dataset/vision/transform/random_crop_ir.h"
-#include "minddata/dataset/vision/transform/random_crop_with_bbox_ir.h"
 #include "minddata/dataset/vision/transform/random_horizontal_flip_ir.h"
-#include "minddata/dataset/vision/transform/random_horizontal_flip_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_posterize_ir.h"
 #include "minddata/dataset/vision/transform/random_resized_crop_ir.h"
-#include "minddata/dataset/vision/transform/random_resized_crop_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_resize_with_bbox_ir.h"
-#include "minddata/dataset/vision/transform/random_solarize_ir.h"
 #include "minddata/dataset/vision/transform/random_vertical_flip_ir.h"
-#include "minddata/dataset/vision/transform/random_vertical_flip_with_bbox_ir.h"
 
 using namespace mindspore::dataset;
 
@@ -97,101 +90,6 @@ TEST_F(MindDataTestIRVision, TestRandomHorizontalFlipIRFail) {
   EXPECT_ERROR(rc2);
 }
 
-/// Feature: RandomHorizontalFlipWithBBox IR
-/// Description: Test RandomHorizontalFlipWithBBoxOperation with invalid parameters
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestRandomHorizontalFlipWithBBoxIRFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomHorizontalFlipWithBBoxIRFail.";
-
-  // Testing invalid negative input
-  auto random_horizontal_flip_bbox1 = std::make_shared<vision::RandomHorizontalFlipWithBBoxOperation>(-1.0);
-  Status rc1 = random_horizontal_flip_bbox1->ValidateParams();
-  EXPECT_ERROR(rc1);
-
-  // Testing invalid >1 input
-  auto random_horizontal_flip_bbox2 = std::make_shared<vision::RandomHorizontalFlipWithBBoxOperation>(2.0);
-  Status rc2 = random_horizontal_flip_bbox2->ValidateParams();
-  EXPECT_ERROR(rc2);
-}
-
-/// Feature: RandomPosterize IR
-/// Description: Test RandomPosterizeOperation with invalid parameters
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestRandomPosterizeIRFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomPosterizeIRFail.";
-
-  // Testing invalid max > 8
-  auto random_posterize1 = std::make_shared<vision::RandomPosterizeOperation>(std::vector<uint8_t>{1, 9});
-  Status rc1 = random_posterize1->ValidateParams();
-  EXPECT_ERROR(rc1);
-
-  // Testing invalid min < 1
-  auto random_posterize2 = std::make_shared<vision::RandomPosterizeOperation>(std::vector<uint8_t>{0, 8});
-  Status rc2 = random_posterize2->ValidateParams();
-  EXPECT_ERROR(rc2);
-
-  // Testing invalid min > max
-  auto random_posterize3 = std::make_shared<vision::RandomPosterizeOperation>(std::vector<uint8_t>{8, 1});
-  Status rc3 = random_posterize3->ValidateParams();
-  EXPECT_ERROR(rc3);
-
-  // Testing invalid empty input
-  auto random_posterize4 = std::make_shared<vision::RandomPosterizeOperation>(std::vector<uint8_t>{});
-  Status rc4 = random_posterize4->ValidateParams();
-  EXPECT_ERROR(rc4);
-}
-
-/// Feature: RandomResizeWithBBox IR
-/// Description: Test RandomResizeWithBBoxOperation with invalid parameters
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestRandomResizeWithBBoxIRFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomResizeWithBBoxIRFail.";
-
-  // Testing invalid: size must only contain positive integers
-  auto random_resize_with_bbox1 =
-    std::make_shared<vision::RandomResizeWithBBoxOperation>(std::vector<int32_t>{-66, 77});
-  Status rc1 = random_resize_with_bbox1->ValidateParams();
-  EXPECT_ERROR(rc1);
-
-  // Testing invalid: size must be a vector of one or two values
-  auto random_resize_with_bbox2 =
-    std::make_shared<vision::RandomResizeWithBBoxOperation>(std::vector<int32_t>{1, 2, 3});
-  Status rc2 = random_resize_with_bbox2->ValidateParams();
-  EXPECT_ERROR(rc2);
-
-  // Testing invalid: size must be a vector of one or two values
-  auto random_resize_with_bbox3 = std::make_shared<vision::RandomResizeWithBBoxOperation>(std::vector<int32_t>{});
-  Status rc3 = random_resize_with_bbox3->ValidateParams();
-  EXPECT_ERROR(rc3);
-}
-
-/// Feature: RandomSolarize IR
-/// Description: Test RandomSolarizeOperation with invalid parameters
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestRandomSolarizeIRFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomSolarizeIRFail.";
-
-  // Testing invalid lower bound > upper bound
-  auto random_solarize1 = std::make_shared<vision::RandomSolarizeOperation>(std::vector<uint8_t>{13, 1});
-  Status rc1 = random_solarize1->ValidateParams();
-  EXPECT_ERROR(rc1);
-
-  // Testing invalid threshold must be a vector of two values
-  auto random_solarize2 = std::make_shared<vision::RandomSolarizeOperation>(std::vector<uint8_t>{1, 2, 3});
-  Status rc2 = random_solarize2->ValidateParams();
-  EXPECT_ERROR(rc2);
-
-  // Testing invalid threshold must be a vector of two values
-  auto random_solarize3 = std::make_shared<vision::RandomSolarizeOperation>(std::vector<uint8_t>{1});
-  Status rc3 = random_solarize3->ValidateParams();
-  EXPECT_ERROR(rc3);
-
-  // Testing invalid empty threshold
-  auto random_solarize4 = std::make_shared<vision::RandomSolarizeOperation>(std::vector<uint8_t>{});
-  Status rc4 = random_solarize4->ValidateParams();
-  EXPECT_ERROR(rc4);
-}
-
 /// Feature: RandomVerticalFlip IR
 /// Description: Test RandomVerticalFlipOperation with invalid parameters
 /// Expectation: Throw correct error and message
@@ -205,23 +103,6 @@ TEST_F(MindDataTestIRVision, TestRandomVerticalFlipIRFail) {
 
   // Testing invalid >1 input
   auto random_vertical_flip2 = std::make_shared<vision::RandomVerticalFlipOperation>(1.1);
-  Status rc2 = random_vertical_flip2->ValidateParams();
-  EXPECT_ERROR(rc2);
-}
-
-/// Feature: RandomVerticalFlipWithBBox IR
-/// Description: Test RandomVerticalFlipWithBBoxOperation with invalid parameters
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestIRVision, TestRandomVerticalFlipWithBBoxIRFail) {
-  MS_LOG(INFO) << "Doing MindDataTestIRVision-TestRandomVerticalFlipWithBBoxIRFail.";
-
-  // Testing invalid negative input
-  auto random_vertical_flip1 = std::make_shared<vision::RandomVerticalFlipWithBBoxOperation>(-0.5);
-  Status rc1 = random_vertical_flip1->ValidateParams();
-  EXPECT_ERROR(rc1);
-
-  // Testing invalid >1 input
-  auto random_vertical_flip2 = std::make_shared<vision::RandomVerticalFlipWithBBoxOperation>(3.0);
   Status rc2 = random_vertical_flip2->ValidateParams();
   EXPECT_ERROR(rc2);
 }

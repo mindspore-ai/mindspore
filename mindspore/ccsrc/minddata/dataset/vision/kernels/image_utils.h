@@ -532,58 +532,11 @@ float Round(float value);
 Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::string &op_name,
                     float magnitude, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value);
 
-/// \brief Encode the image as JPEG data.
-/// \param[in] image The image to be encoded.
-/// \param[out] output The Tensor data.
-/// \param[in] quality The quality for the output tensor, in range of [1, 100]. Default: 75.
-/// \return The status code.
-Status EncodeJpeg(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *output, int quality = 75);
-
-/// \brief Encode the image as PNG data.
-/// \param[in] image The image to be encoded.
-/// \param[out] output The Tensor data.
-/// \param[in] compression_level The compression_level for encoding, in range of [0, 9]. Default: 6.
-/// \return The status code.
-Status EncodePng(const std::shared_ptr<Tensor> &image, std::shared_ptr<Tensor> *output, int compression_level = 6);
-
-/// \brief Reads a file in binary mode.
-/// \param[in] filename The path to the file to be read.
-/// \param[out] output The binary data.
-/// \return The status code.
-Status ReadFile(const std::string &filename, std::shared_ptr<Tensor> *output);
-
-/// \brief Reads a image file and decode it into one or three channels data.
-/// \param[in] filename The path to the image file to be read.
-/// \param[out] output Output Tensor.
-/// \param[in] mode The read mode used for optionally converting the image, can be one of
-///    [ImageReadMode::kUNCHANGED, ImageReadMode::kGRAYSCALE, ImageReadMode::kCOLOR]. Default:
-///    ImageReadMode::kUNCHANGED.
-///    - ImageReadMode::kUNCHANGED, remain the output in the original format.
-///    - ImageReadMode::kGRAYSCALE, convert the output into one channel grayscale data.
-///    - ImageReadMode::kCOLOR, convert the output into three channels RGB color data.
-/// \return The status code.
-Status ReadImage(const std::string &filename, std::shared_ptr<Tensor> *output,
-                 ImageReadMode mode = ImageReadMode::kUNCHANGED);
-
 /// \brief Write the one dimension uint8 data into a file using binary mode.
 /// \param[in] filename The path to the file to be written.
 /// \param[in] data The tensor data.
 /// \return The status code.
 Status WriteFile(const std::string &filename, const std::shared_ptr<Tensor> &data);
-
-/// \brief Write the image data into a JPEG file.
-/// \param[in] filename The path to the file to be written.
-/// \param[in] image The data tensor.
-/// \param[in] quality The quality for JPEG file, in range of [1, 100]. Default: 75.
-/// \return Status code.
-Status WriteJpeg(const std::string &filename, const std::shared_ptr<Tensor> &image, int quality = 75);
-
-/// \brief Write the image into a PNG file.
-/// \param[in] filename The path to the file to be written.
-/// \param[in] image The data tensor.
-/// \param[in] compression_level The compression level for PNG file, in range of [0, 9]. Default: 6.
-/// \return Status code.
-Status WritePng(const std::string &filename, const std::shared_ptr<Tensor> &image, int compression_level = 6);
 
 /// \brief Dump the abnormal image to disk and facilitate user to check it.
 /// \param[in] image The data Tensor.

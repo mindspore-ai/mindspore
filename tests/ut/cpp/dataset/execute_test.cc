@@ -38,39 +38,6 @@ class MindDataTestExecute : public UT::DatasetOpTesting {
  protected:
 };
 
-/// Feature: Execute Transform op
-/// Description: Test executing AdjustGamma op in eager mode with dataset with 3 channels
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAdjustGammaEager3Channel) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustGammaEager3Channel.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto adjust_gamma_op = vision::AdjustGamma(0.1, 1.0);
-
-  auto transform = Execute({decode, adjust_gamma_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing AdjustGamma op in eager mode with dataset transformed to 1 channel only
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestAdjustGammaEager1Channel) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustGammaEager1Channel.";
-  auto m1 = ReadFileToTensor("data/dataset/apple.jpg");
-  // Transform params
-  auto decode = vision::Decode();
-  auto rgb2gray = vision::RGB2GRAY();
-  auto adjust_gamma_op = vision::AdjustGamma(0.1, 1.0);
-
-  auto transform = Execute({decode, rgb2gray, adjust_gamma_op});
-  Status rc = transform(m1, &m1);
-  EXPECT_EQ(rc, Status::OK());
-}
-
 /// Feature: Execute composed transform ops
 /// Description: Test executing composed multiple transform ops
 /// Expectation: Output is equal to the expected output and status is okay
@@ -93,27 +60,6 @@ TEST_F(MindDataTestExecute, TestComposeTransforms) {
   EXPECT_EQ(30, image.Shape()[1]);
 }
 
-/// Feature: Execute Transform op
-/// Description: Test executing Crop op after Decode op
-/// Expectation: Output is equal to the expected output and status is okay
-TEST_F(MindDataTestExecute, TestCrop) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestCrop.";
-
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto crop = vision::Crop({10, 30}, {10, 15});
-
-  auto transform = Execute({decode, crop});
-  Status rc = transform(image, &image);
-
-  EXPECT_EQ(rc, Status::OK());
-  EXPECT_EQ(image.Shape()[0], 10);
-  EXPECT_EQ(image.Shape()[1], 15);
-}
-
 /// Feature: FilterWikipediaXMLEager op
 /// Description: Test FilterWikipediaXML's Eager mode
 /// Expectation: Run successfully
@@ -130,23 +76,6 @@ TEST_F(MindDataTestExecute, TestFilterWikipediaXMLEager) {
   Status s = Transform(input, &input);
 
   ASSERT_TRUE(s.IsOk());
-}
-
-/// Feature: RandomLighting op
-/// Description: Test RandomLighting Op when alpha=0.1
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestRandomLighting) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestRandomLighting.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto random_lighting_op = vision::RandomLighting(0.1);
-
-  auto transform = Execute({decode, random_lighting_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
 }
 
 /// Feature: Execute Transform op
@@ -344,24 +273,6 @@ TEST_F(MindDataTestExecute, TestBasicTokenizer) {
   Status rc = transform1({txt}, &txt_result);
   ASSERT_EQ(txt_result.size(), 3);
   ASSERT_TRUE(rc.IsOk());
-}
-
-/// Feature: Execute Transform op
-/// Description: Test executing Decode op then ResizeWithBBox op
-/// Expectation: Throw correct error and message
-TEST_F(MindDataTestExecute, TestResizeWithBBox) {
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-  std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
-  std::shared_ptr<TensorTransform> resizewithbbox_op =
-    std::make_shared<vision::ResizeWithBBox>(std::vector<int32_t>{250, 500});
-
-  // Test Compute(Tensor, Tensor) method of ResizeWithBBox
-  auto transform = Execute({decode_op, resizewithbbox_op});
-
-  // Expect fail since Compute(Tensor, Tensor) is not a valid behavior for this Op,
-  // while Compute(TensorRow, TensorRow) is the correct one.
-  Status rc = transform(image, &image);
-  EXPECT_FALSE(rc.IsOk());
 }
 
 /// Feature: Execute Transform op
@@ -921,23 +832,6 @@ TEST_F(MindDataTestExecute, TestToVectorsWithInvalidParamForCharNGram) {
   EXPECT_FALSE(status02.IsOk());
 }
 
-/// Feature: AutoAugment op
-/// Description: Test AutoAugment op eager
-/// Expectation: Load one image data and process auto augmentation with given policy on it
-TEST_F(MindDataTestExecute, TestAutoAugmentEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAutoAugmentEager.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto auto_augment_op = vision::AutoAugment(AutoAugmentPolicy::kImageNet, InterpolationMode::kLinear, {0, 0, 0});
-
-  auto transform = Execute({decode, auto_augment_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
 /// Feature: Execute Construct Demo1
 /// Description: Demonstrate how to construct a Execute
 /// Expectation: Construct Execute object and run
@@ -1034,59 +928,6 @@ TEST_F(MindDataTestExecute, TestConstructorDemo4) {
   delete resize;
 }
 
-/// Feature: Execute Transform op
-/// Description: Test executing Decode then Erase op with eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestEraseEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestEraseEager.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto erase_op = vision::Erase(10, 10, 10, 10);
-
-  auto transform = Execute({decode, erase_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Posterize
-/// Description: Test executing Posterize op in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestPosterizeEager) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestPosterizeEager.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  auto posterize_op = vision::Posterize(1);
-
-  auto transform = Execute({decode, posterize_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
-/// Feature: Perspective
-/// Description: Test executing Perspective op in eager mode
-/// Expectation: The data is processed successfully
-TEST_F(MindDataTestExecute, TestPerspective) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestPerspective.";
-  // Read images
-  auto image = ReadFileToTensor("data/dataset/apple.jpg");
-
-  // Transform params
-  auto decode = vision::Decode();
-  std::vector<std::vector<int32_t>> src = {{0, 200}, {400, 200}, {400, 0}, {0, 0}};
-  std::vector<std::vector<int32_t>> dst = {{0, 180}, {400, 180}, {400, 0}, {0, 0}};
-  auto perspective_op = vision::Perspective(src, dst, InterpolationMode::kLinear);
-
-  auto transform = Execute({decode, perspective_op});
-  Status rc = transform(image, &image);
-  EXPECT_EQ(rc, Status::OK());
-}
-
 /// Feature: AddToken op
 /// Description: Test basic usage of AddToken op
 /// Expectation: The data is processed successfully
@@ -1119,188 +960,5 @@ TEST_F(MindDataTestExecute, TestTruncateOpStr) {
 }
 
 #ifdef ENABLE_FFMPEG
-/// Feature: Execute DecodeVideo op
-/// Description: Test executing DecodeVideo op with AVI video
-/// Expectation: Output is equal to the expected output and status is okay
-TEST_F(MindDataTestExecute, TestDecodeVideoAVI) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoAVI.";
 
-  // Read video file into tensor
-  mindspore::MSTensor video;
-  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.avi", &video));
-
-  std::vector<mindspore::MSTensor> input_tensor;
-  std::vector<mindspore::MSTensor> output_tensor;
-  input_tensor.push_back(video);
-
-  auto decode_video = vision::DecodeVideo();
-  auto transform = Execute(decode_video);
-  Status rc = transform(input_tensor, &output_tensor);
-  EXPECT_EQ(rc, Status::OK());
-  EXPECT_EQ(output_tensor[0].Shape()[0], 5);
-  EXPECT_EQ(output_tensor[0].Shape()[1], 160);
-  EXPECT_EQ(output_tensor[0].Shape()[2], 240);
-  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
-  EXPECT_EQ(output_tensor[1].Shape()[0], 2);
-  EXPECT_EQ(output_tensor[1].Shape()[1], 9216);
-}
-
-/// Feature: Execute DecodeVideo op
-/// Description: Test executing DecodeVideo op with H264 video
-/// Expectation: Output is equal to the expected output and status is okay
-TEST_F(MindDataTestExecute, TestDecodeVideoH264) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoH264.";
-
-  // Read video file into tensor
-  mindspore::MSTensor video;
-  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.h264", &video));
-
-  std::vector<mindspore::MSTensor> input_tensor;
-  std::vector<mindspore::MSTensor> output_tensor;
-  input_tensor.push_back(video);
-
-  auto decode_video = vision::DecodeVideo();
-  auto transform = Execute(decode_video);
-  Status rc = transform(input_tensor, &output_tensor);
-  EXPECT_EQ(rc, Status::OK());
-  EXPECT_EQ(output_tensor[0].Shape()[0], 19);
-  EXPECT_EQ(output_tensor[0].Shape()[1], 480);
-  EXPECT_EQ(output_tensor[0].Shape()[2], 270);
-  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
-  EXPECT_EQ(output_tensor[1].Shape()[0], 2);
-  EXPECT_EQ(output_tensor[1].Shape()[1], 15360);
-}
-
-/// Feature: Execute DecodeVideo op
-/// Description: Test executing DecodeVideo op with H265 video
-/// Expectation: Output is equal to the expected output and status is okay
-TEST_F(MindDataTestExecute, TestDecodeVideoH265) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoH265.";
-
-  // Read video file into tensor
-  mindspore::MSTensor video;
-  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.h265", &video));
-
-  std::vector<mindspore::MSTensor> input_tensor;
-  std::vector<mindspore::MSTensor> output_tensor;
-  input_tensor.push_back(video);
-
-  auto decode_video = vision::DecodeVideo();
-  auto transform = Execute(decode_video);
-  Status rc = transform(input_tensor, &output_tensor);
-  EXPECT_EQ(rc, Status::OK());
-  EXPECT_EQ(output_tensor[0].Shape()[0], 1);
-  EXPECT_EQ(output_tensor[0].Shape()[1], 576);
-  EXPECT_EQ(output_tensor[0].Shape()[2], 720);
-  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
-  EXPECT_EQ(output_tensor[1].Shape()[0], 2);
-  EXPECT_EQ(output_tensor[1].Shape()[1], 4608);
-}
-
-/// Feature: Execute DecodeVideo op
-/// Description: Test executing DecodeVideo op with MOV video
-/// Expectation: Output is equal to the expected output and status is okay
-TEST_F(MindDataTestExecute, TestDecodeVideoMOV) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoMOV.";
-
-  // Read video file into tensor
-  mindspore::MSTensor video;
-  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.mov", &video));
-
-  std::vector<mindspore::MSTensor> input_tensor;
-  std::vector<mindspore::MSTensor> output_tensor;
-  input_tensor.push_back(video);
-
-  auto decode_video = vision::DecodeVideo();
-  auto transform = Execute(decode_video);
-  Status rc = transform(input_tensor, &output_tensor);
-  EXPECT_EQ(rc, Status::OK());
-  EXPECT_EQ(output_tensor[0].Shape()[0], 5);
-  EXPECT_EQ(output_tensor[0].Shape()[1], 160);
-  EXPECT_EQ(output_tensor[0].Shape()[2], 240);
-  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
-  EXPECT_EQ(output_tensor[1].Shape()[0], 1);
-  EXPECT_EQ(output_tensor[1].Shape()[1], 9216);
-}
-
-/// Feature: Execute DecodeVideo op
-/// Description: Test executing DecodeVideo op with MP4 video
-/// Expectation: Output is equal to the expected output and status is okay
-TEST_F(MindDataTestExecute, TestDecodeVideoMP4) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoMP4.";
-
-  // Read video file into tensor
-  mindspore::MSTensor video;
-  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.mp4", &video));
-
-  std::vector<mindspore::MSTensor> input_tensor;
-  std::vector<mindspore::MSTensor> output_tensor;
-  input_tensor.push_back(video);
-
-  auto decode_video = vision::DecodeVideo();
-  auto transform = Execute(decode_video);
-  Status rc = transform(input_tensor, &output_tensor);
-  EXPECT_EQ(rc, Status::OK());
-  EXPECT_EQ(output_tensor[0].Shape()[0], 5);
-  EXPECT_EQ(output_tensor[0].Shape()[1], 160);
-  EXPECT_EQ(output_tensor[0].Shape()[2], 240);
-  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
-  EXPECT_EQ(output_tensor[1].Shape()[0], 1);
-  EXPECT_EQ(output_tensor[1].Shape()[1], 9216);
-}
-
-/// Feature: Execute DecodeVideo op
-/// Description: Test executing DecodeVideo op with WMV video
-/// Expectation: Output is equal to the expected output and status is okay
-TEST_F(MindDataTestExecute, TestDecodeVideoWMV) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoWMV.";
-
-  // Read video file into tensor
-  mindspore::MSTensor video;
-  ASSERT_OK(mindspore::dataset::vision::ReadFile("data/dataset/video/campus.wmv", &video));
-
-  std::vector<mindspore::MSTensor> input_tensor;
-  std::vector<mindspore::MSTensor> output_tensor;
-  input_tensor.push_back(video);
-
-  auto decode_video = vision::DecodeVideo();
-  auto transform = Execute(decode_video);
-  Status rc = transform(input_tensor, &output_tensor);
-  EXPECT_EQ(rc, Status::OK());
-  EXPECT_EQ(output_tensor[0].Shape()[0], 4);
-  EXPECT_EQ(output_tensor[0].Shape()[1], 576);
-  EXPECT_EQ(output_tensor[0].Shape()[2], 720);
-  EXPECT_EQ(output_tensor[0].Shape()[3], 3);
-  EXPECT_EQ(output_tensor[1].Shape()[0], 2);
-  EXPECT_EQ(output_tensor[1].Shape()[1], 10240);
-}
-
-/// Feature: Execute DecodeVideo op
-/// Description: Test executing DecodeVideo op with invalid parameter
-/// Expectation: Error is caught when the parameter is invalid
-TEST_F(MindDataTestExecute, TestDecodeVideoException) {
-  MS_LOG(INFO) << "Doing MindDataTestExecute-TestDecodeVideoException.";
-
-  std::shared_ptr<Tensor> input;
-  std::vector<mindspore::MSTensor> input_tensor;
-  std::vector<mindspore::MSTensor> output_tensor;
-
-  auto decode_video = vision::DecodeVideo();
-  auto transform = Execute(decode_video);
-
-  // Decode a 2D tensor
-  TensorShape tensor_shape = TensorShape({100, 200});
-  DataType data_type = DataType(DataType::DE_UINT8);
-  Tensor::CreateEmpty(tensor_shape, data_type, &input);
-  input_tensor.push_back(mindspore::MSTensor(std::make_shared<DETensor>(input)));
-  ASSERT_ERROR(transform(input_tensor, &output_tensor));
-
-  // Decode a tensor with float32 elements
-  tensor_shape = TensorShape({100});
-  data_type = DataType(DataType::DE_FLOAT32);
-  Tensor::CreateEmpty(tensor_shape, data_type, &input);
-  input_tensor.clear();
-  input_tensor.push_back(mindspore::MSTensor(std::make_shared<DETensor>(input)));
-  ASSERT_ERROR(transform(input_tensor, &output_tensor));
-}
 #endif

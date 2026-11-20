@@ -45,7 +45,7 @@ def run(num_workers):
 
     def map1(data):
         decode = vision.Decode()(data)
-        crop = vision.Crop((0, 0), 2000)(decode)
+        crop = np.ascontiguousarray(decode[:2000, :2000])
         resize = vision.Resize([1024, 768], Inter.BICUBIC)(crop)
         normalize = vision.Normalize(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0])(resize)
         time.sleep(3)

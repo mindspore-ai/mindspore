@@ -94,46 +94,20 @@ from mindspore.dataset.engine.datasets import Dataset, BucketBatchByLengthDatase
 from mindspore.dataset.engine.samplers import (
     Sampler, DistributedSampler, RandomSampler, SequentialSampler, _SubsetSampler, _SubsetRandomSampler,
 )
-from mindspore.dataset.vision.utils import encode_jpeg, encode_png, get_image_num_channels, get_image_size, \
-    read_file, read_image, read_video, read_video_timestamps, write_file, write_jpeg, write_png
 from mindspore.dataset.vision.transforms import (
-    AdjustGamma as VAdjustGamma,
-    AutoAugment as VAutoAugment,
-    BoundingBoxAugment as VBoundingBoxAugment,
     CenterCrop as VCenterCrop,
-    Crop as VCrop,
-    CutMixBatch as VCutMixBatch,
     Decode as VDecode,
-    DecodeVideo,
-    Erase,
     HWC2CHW as VHWC2CHW,
-    MixUpBatch as VMixUpBatch,
     Normalize as VNormalize,
-    NormalizePad as VNormalizePad,
-    Pad as VPad,
-    Perspective,
-    Posterize,
-    RandAugment,
     RandomColorAdjust as VRandomColorAdjust,
     RandomCrop as VRandomCrop,
     RandomCropDecodeResize as VRandomCropDecodeResize,
-    RandomCropWithBBox as VRandomCropWithBBox,
     RandomHorizontalFlip as VRandomHorizontalFlip,
-    RandomHorizontalFlipWithBBox as VRandomHorizontalFlipWithBBox,
-    RandomLighting as VRandomLighting,
-    RandomPosterize as VRandomPosterize,
     RandomResizedCrop as VRandomResizedCrop,
-    RandomResizedCropWithBBox as VRandomResizedCropWithBBox,
-    RandomResizeWithBBox as VRandomResizeWithBBox,
-    RandomSolarize as VRandomSolarize,
     RandomVerticalFlip as VRandomVerticalFlip,
-    RandomVerticalFlipWithBBox as VRandomVerticalFlipWithBBox,
     Rescale as VRescale,
     Resize as VResize,
-    ResizeWithBBox as VResizeWithBBox,
-    Solarize,
     ToTensor,
-    TrivialAugmentWide,
 )
 from mindspore.profiler.profiler import Profiler
 from mindspore.communication._comm_helper import _create_group_helper, _destroy_group_helper
@@ -216,28 +190,21 @@ def _get_dataset_forbidden_code():
                   SequentialSampler.parse, SequentialSampler.parse_for_minddataset, _SubsetSampler.parse, \
                   _SubsetSampler.parse_for_minddataset, _SubsetRandomSampler.parse, \
                   _SubsetRandomSampler.parse_for_minddataset])
-    codes.extend([encode_jpeg, encode_png, get_image_num_channels, get_image_size, read_file, read_image, read_video, \
-                  read_video_timestamps, write_file, write_jpeg, write_png])
-    codes.extend([VAdjustGamma.parse, \
-                  VAutoAugment.parse, \
-                  VBoundingBoxAugment.parse, VCenterCrop.parse, \
-                  VCrop.parse, VCutMixBatch.parse, VDecode.parse, DecodeVideo.parse, \
-                  Erase.parse, \
-                  VHWC2CHW.parse, VMixUpBatch.parse, VNormalize.parse, VNormalizePad.parse, \
-                  VPad.parse, Perspective.parse, Posterize.parse, RandAugment.parse, \
-                  \
-                  VRandomColorAdjust.parse, \
-                  VRandomCrop.parse, VRandomCropDecodeResize.parse, \
-                  VRandomCropWithBBox.parse, \
-                  VRandomHorizontalFlip.parse, VRandomHorizontalFlipWithBBox.parse, \
-                  VRandomLighting.parse, VRandomPosterize.parse, \
-                  VRandomResizedCrop.parse, VRandomResizedCropWithBBox.parse, \
-                  VRandomResizeWithBBox.parse, \
-                  \
-                  VRandomSolarize.parse, VRandomVerticalFlip.parse, \
-                  VRandomVerticalFlipWithBBox.parse, VRescale.parse, VResize.parse, \
-                  VResizeWithBBox.parse, Solarize.parse, ToTensor.parse,\
-                  TrivialAugmentWide.parse])
+    codes.extend([
+        VCenterCrop.parse,
+        VDecode.parse,
+        VHWC2CHW.parse,
+        VNormalize.parse,
+        VRandomColorAdjust.parse,
+        VRandomCrop.parse,
+        VRandomCropDecodeResize.parse,
+        VRandomHorizontalFlip.parse,
+        VRandomResizedCrop.parse,
+        VRandomVerticalFlip.parse,
+        VRescale.parse,
+        VResize.parse,
+        ToTensor.parse,
+    ])
     return codes
 
 

@@ -19,7 +19,6 @@ Test Cifar10 and Cifar100 dataset operations
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import mindspore.dataset.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.dataset import vision
@@ -132,13 +131,11 @@ def invert_sign_per_batch_multi_col(col_list, batch_info):
     return ([np.copy(((-1) ** batch_info.get_batch_num()) * arr) for arr in col_list],)
 
 
-
-
 class DatasetCTransformsFunc():
     '''c_transform'''
 
-    def cutmix_fun(self, sampler):
-        '''cut mix'''
+    def batch_map_fun(self, sampler):
+        '''Batch map with aligned labels.'''
         skipcount = 5
         takecount = 5
         repeatcount = 10
@@ -164,9 +161,10 @@ class DatasetCTransformsFunc():
 
         one_hot_encode = encode_label
         dataset = dataset.map(input_columns="label", operations=one_hot_encode, num_parallel_workers=3)
-        cutmix_batch_op = vision.CutMixBatch(mode.ImageBatchFormat.NHWC)
+
         dataset = dataset.batch(2, drop_remainder=True)
-        dataset = dataset.map(input_columns=["image", "label"], operations=cutmix_batch_op)
+        dataset = dataset.map(input_columns=["image", "label"],
+                              operations=lambda image, label: (image.astype(np.float32), label))
 
         dataset = dataset.take(count=takecount)
         aftersize = 0
@@ -184,6 +182,8 @@ class DatasetCTransformsFunc():
             l1.append(data['image'])
         l1.clear()
 
+
+### Testcases for Cifar10Dataset Op ###
 
 def test_cifar10_content_check():
     """
@@ -263,12 +263,6 @@ def test_cifar10_basic():
     for _ in data5.create_dict_iterator(num_epochs=1):
         num_iter5 += 1
     assert num_iter5 == 14
-
-
-
-
-
-
 
 
 def test_cifar10_visualize(plot=False):
@@ -368,10 +362,6 @@ def test_cifar100_basic():
     for _ in data4.create_dict_iterator(num_epochs=1):
         num_iter5 += 1
     assert num_iter5 == 33
-
-
-
-
 
 
 def test_cifar100_visualize(plot=False):
@@ -517,43 +507,21 @@ def test_cifar_exception_file_path():
         assert "map operation: [PyFunc] failed. The corresponding data file is" in str(e)
 
 
-
-
-
-
-
-
-
-
-
 def dataset_call_py_transforms_func(sampler, sampler_num):
     """
     All of py_transforms
     Returns:
 
     """
-    unused_crop_height = 100
-    unused_crop_width = 50
-    unused_target_height = 200
-    unused_target_width = 200
-    unused_scalelb = 0.5
-    unused_scaleub = 200.5
-    unused_aspectlb = 200.5
-    unused_aspectub = 200.5
-    unused_targetheight = 100
-    unused_targetwidth = 100
-    unused_interpolation = Inter.BILINEAR
-    unused_maxiter = 100
-    unused_transformation_matrix = np.ones([432, 432])
-    unused_mean_vector = np.ones([432])
-    unused_l1 = []
 
     dataset = ds.Cifar10Dataset(DATA_DIR_10, sampler=sampler, num_parallel_workers=3)
+
     dataset_num = 0
+
     for _ in dataset.create_dict_iterator(output_numpy=True):
         dataset_num += 1
-    assert dataset_num == sampler_num
 
+    assert dataset_num == sampler_num
 
 
 def dataset_call_c_transforms_func(sampler, shard_id=0):
@@ -665,10 +633,6 @@ def dataset_call_c_transforms_func(sampler, shard_id=0):
     unused_num_classes = 100
 
 
-
-
-
-
 def test_cifar10_sequential_sampler():
     """
     Feature: Cifar10Dataset
@@ -689,11 +653,10 @@ def test_cifar10_sequential_sampler():
 
     sampler = ds.SequentialSampler(num_samples=100)
     dataset_call_c_transforms_func(sampler=sampler)
-    DatasetCTransformsFunc().cutmix_fun(sampler=sampler)
+    DatasetCTransformsFunc().batch_map_fun(sampler=sampler)
 
     sampler = ds.SequentialSampler(start_index=2, num_samples=100)
     dataset_call_py_transforms_func(sampler=sampler, sampler_num=100)
-
 
 
 def test_cifar10_with_distributed_sampler():
@@ -705,12 +668,11 @@ def test_cifar10_with_distributed_sampler():
     # DistributedSampler
     sampler = ds.DistributedSampler(10, 1, num_samples=100)
     dataset_call_c_transforms_func(sampler=sampler)
-    DatasetCTransformsFunc().cutmix_fun(sampler=sampler)
+    DatasetCTransformsFunc().batch_map_fun(sampler=sampler)
 
     # DistributedSampler with offset
     sampler = ds.DistributedSampler(10, 1, num_samples=100, offset=1)
     dataset_call_py_transforms_func(sampler=sampler, sampler_num=100)
-
 
 
 def test_cifar10_with_random_sampler():
@@ -721,12 +683,10 @@ def test_cifar10_with_random_sampler():
     """
     sampler = ds.RandomSampler(True, 50)
     dataset_call_c_transforms_func(sampler=sampler)
-    DatasetCTransformsFunc().cutmix_fun(sampler=sampler)
+    DatasetCTransformsFunc().batch_map_fun(sampler=sampler)
 
     sampler = ds.RandomSampler(True, 50)
     dataset_call_py_transforms_func(sampler=sampler, sampler_num=50)
-
-
 
 
 def test_cifar10_with_udf_sampler():
