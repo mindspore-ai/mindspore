@@ -109,30 +109,6 @@ def check_value(value, valid_range, arg_name="", left_open_interval=False, right
                                                                                      valid_range[1]))
 
 
-def check_value_cutoff(value, valid_range, arg_name=""):
-    """
-    Validates a value is within a desired range [inclusive, exclusive).
-
-    :param value: the value to be validated
-    :param valid_range: the desired range
-    :param arg_name: arg_name: arg_name: name of the variable to be validated
-    :return: Exception: when the validation fails, nothing otherwise.
-    """
-    check_value(value, valid_range, arg_name, False, True)
-
-
-def check_value_ratio(value, valid_range, arg_name=""):
-    """
-    Validates a value is within a desired range (exclusive, inclusive].
-
-    :param value: the value to be validated
-    :param valid_range: the desired range
-    :param arg_name: arg_name: name of the variable to be validated
-    :return: Exception: when the validation fails, nothing otherwise.
-    """
-    check_value(value, valid_range, arg_name, True, False)
-
-
 def check_value_normalize_std(value, valid_range, arg_name=""):
     """
     Validates a value is within a desired range (exclusive, inclusive].
@@ -172,21 +148,6 @@ def check_positive(value, arg_name=""):
     arg_name = pad_arg_name(arg_name)
     if value <= 0:
         raise ValueError("Input {0}must be greater than 0.".format(arg_name))
-
-
-def check_int32_not_zero(value, arg_name=""):
-    arg_name = pad_arg_name(arg_name)
-    type_check(value, (int,), arg_name)
-    if value < INT32_MIN or value > INT32_MAX or value == 0:
-        raise ValueError(
-            "Input {0}is not within the required interval of [-2147483648, 0) and (0, 2147483647].".format(arg_name))
-
-
-def check_odd(value, arg_name=""):
-    arg_name = pad_arg_name(arg_name)
-    if value % 2 != 1:
-        raise ValueError(
-            "Input {0}is not an odd value.".format(arg_name))
 
 
 def check_2tuple(value, arg_name=""):
@@ -273,30 +234,6 @@ def check_uint64(value, arg_name=""):
     check_value(value, [UINT64_MIN, UINT64_MAX], arg_name)
 
 
-def check_pos_int64(value, arg_name=""):
-    """
-    Validates the value of a variable is within the range of int64.
-
-    :param value: the value of the variable
-    :param arg_name: name of the variable to be validated
-    :return: Exception: when the validation fails, nothing otherwise.
-    """
-    type_check(value, (int,), arg_name)
-    check_value(value, [POS_INT_MIN, INT64_MAX], arg_name)
-
-
-def check_non_negative_int32(value, arg_name=""):
-    """
-    Validates the value of a variable is within the range of non negative int32.
-
-    :param value: the value of the variable.
-    :param arg_name: name of the variable to be validated.
-    :return: Exception: when the validation fails, nothing otherwise.
-    """
-    type_check(value, (int,), arg_name)
-    check_value(value, [0, INT32_MAX], arg_name)
-
-
 def check_float32(value, arg_name=""):
     """
     Validates the value of a variable is within the range of float32.
@@ -369,14 +306,6 @@ def check_non_negative_float64(value, arg_name=""):
     check_value(value, [UINT32_MIN, DOUBLE_MAX_INTEGER], arg_name)
 
 
-def check_float32_not_zero(value, arg_name=""):
-    arg_name = pad_arg_name(arg_name)
-    type_check(value, (float, int), arg_name)
-    if value < FLOAT_MIN_INTEGER or value > FLOAT_MAX_INTEGER or value == 0:
-        raise ValueError(
-            "Input {0}is not within the required interval of [-16777216, 0) and (0, 16777216].".format(arg_name))
-
-
 def check_valid_detype(type_):
     """
     Validates if a type is a DE Type.
@@ -401,28 +330,6 @@ def check_valid_str(value, valid_strings, arg_name=""):
     type_check(value, (str,), arg_name)
     if value not in valid_strings:
         raise ValueError("Input {0} is not within the valid set of {1}.".format(arg_name, str(valid_strings)))
-
-
-def check_valid_list_tuple(value, valid_list_tuple, data_type, arg_name=""):
-    """
-    Validate value in valid_list_tuple.
-
-    Args:
-        value (Union[list, tuple]): the value to be validated.
-        valid_strings (Union[list, tuple]): name of columns.
-        type (tuple): tuple of all valid types for value.
-        arg_name (str): the names of value.
-    Returns:
-        Exception: when the value is not correct, otherwise nothing.
-    """
-    valid_length = len(valid_list_tuple[0])
-    type_check(value, (list, tuple), arg_name)
-    type_check_list(value, data_type, arg_name)
-    if len(value) != valid_length:
-        raise ValueError("Input {0} is a list or tuple of length {1}.".format(arg_name, valid_length))
-    if value not in valid_list_tuple:
-        raise ValueError(
-            "Input {0}{1} is not within the valid set of {2}.".format(arg_name, value, valid_list_tuple))
 
 
 def check_columns(columns, name):
@@ -558,20 +465,6 @@ def check_dir(dataset_dir):
     type_check(dataset_dir, (str,), "dataset_dir")
     if not os.path.isdir(dataset_dir) or not os.access(dataset_dir, os.R_OK):
         raise ValueError("The folder {} does not exist or is not a directory or permission denied!".format(dataset_dir))
-
-
-def check_list_same_size(list1, list2, list1_name="", list2_name=""):
-    """
-    Validates the two lists as the same size.
-
-    :param list1: the first list to be validated
-    :param list2: the secend list to be validated
-    :param list1_name: name of the list1
-    :param list2_name: name of the list2
-    :return: Exception: when the two list no same size, nothing otherwise.
-    """
-    if len(list1) != len(list2):
-        raise ValueError("The size of {0} should be the same as that of {1}.".format(list1_name, list2_name))
 
 
 def check_file(dataset_file):

@@ -2327,37 +2327,6 @@ def _check_axis_valid(axes, ndim):
     raise ValueError(f"The parameter dims must be tuple of ints, but got {type(axes)}")
 
 
-def _get_flip_start(ndim, shape, axes):
-    """Calculate the start index of flip"""
-    return tuple(shape[i] - 1 if i in axes else 0 for i in range(ndim))
-
-
-def _get_flip_end(ndim, shape, axes):
-    """Calculate the end index of flip"""
-    return tuple(-shape[i] - 1 if i in axes else shape[i] + 1 for i in range(ndim))
-
-
-@constexpr
-def _get_flip_strides(ndim, axes):
-    """Calculate the strides of flip"""
-    return tuple(-1 if i in axes else 1 for i in range(ndim))
-
-
-def _is_shape_empty(shp):
-    """Check whether shape contains zero"""
-    if isinstance(shp, int):
-        return shp == 0
-    return ops.shape_mul(shp) == 0
-
-
-def _check_input_tensor(arg_name, *tensors):
-    """Check whether the input is tensor"""
-    for tensor in tensors:
-        if not isinstance(tensor, Tensor):
-            raise TypeError(f"For '{arg_name}', the input must be Tensor, but got {ops.typeof(tensor)}")
-    return True
-
-
 def flip(input, dims):
     """
     Reverses elements in a tensor along the given dimensions.

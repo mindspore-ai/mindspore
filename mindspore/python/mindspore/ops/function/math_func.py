@@ -8220,21 +8220,6 @@ def _min(*args):
     return min(*args)
 
 
-@_primexpr
-def _infer_shape_rem(shape1, shape2, ndim1, ndim2, transpose_b):
-    """Infers the shape of the last two dimensions after performing matmul."""
-    shape_rem = []
-    if ndim1 >= 2:
-        shape_rem.append(shape1[-2])
-    if transpose_b:
-        if ndim2 >= 2:
-            shape_rem.append(shape2[-2])
-    else:
-        if ndim1 >= 1:
-            shape_rem.append(shape2[-1])
-    return tuple(shape_rem)
-
-
 def _check_value(items, max_size, msg_prefix, shape1, shape2):
     for item in items:
         if item not in (1, max_size):

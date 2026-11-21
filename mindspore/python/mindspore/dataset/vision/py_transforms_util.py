@@ -28,7 +28,6 @@ from .utils import (
     Inter,
     FLIP_LEFT_RIGHT,
     FLIP_TOP_BOTTOM,
-    AFFINE,
 )
 
 augment_error_message = "img should be PIL image. Got {}. Use Decode() for encoded data or ToPIL() for decoded data."
@@ -716,55 +715,6 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
 
 
 
-def random_rotation(img, degrees, resample, expand, center, fill_value):
-    """
-    Rotate the input PIL Image by a random angle.
-
-    See <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.rotate>.
-
-    Args:
-        img (PIL.Image.Image): Image to be rotated.
-        degrees (Union[int, float, sequence]): Range of random rotation degrees.
-            If `degrees` is a number, the range will be converted to (-degrees, degrees).
-            If `degrees` is a sequence, it should be (min, max).
-        resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
-            If omitted, or if the image has mode "1" or "P", it is set to be ``Inter.NEAREST``.
-        expand (bool, optional):  Optional expansion flag. If set to True, expand the output
-            image to make it large enough to hold the entire rotated image.
-            If set to ``False`` or omitted, make the output image the same size as the input.
-            Note that the expand flag assumes rotation around the center and no translation.
-        center (tuple, optional): Optional center of rotation (a 2-tuple).
-            Origin is the top left corner.
-        fill_value (Union[int, tuple]): Optional fill color for the area outside the rotated image.
-            If it is a 3-tuple, it is used for R, G, B channels respectively.
-            If it is an integer, it is used for all RGB channels.
-
-    Returns:
-        PIL.Image.Image, Rotated image.
-    """
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-
-    if isinstance(degrees, numbers.Number):
-        if degrees < 0:
-            raise ValueError("If degrees is a single number, it cannot be negative.")
-        degrees = (-degrees, degrees)
-    elif isinstance(degrees, (list, tuple)):
-        if len(degrees) != 2:
-            raise ValueError("If degrees is a sequence, the length must be 2.")
-    else:
-        raise TypeError("Degrees must be a single non-negative number or a sequence.")
-
-    if isinstance(fill_value, list):
-        # Ensure fill_value of type list (from serialize JSON support) is converted to type tuple
-        fill_value = tuple(fill_value)
-
-    angle = random.uniform(degrees[0], degrees[1])
-    return rotate(img, angle, resample, expand, center, fill_value)
-
-
-
-
 def pad(img, padding, fill_value, padding_mode):
     """
     Pad the image according to padding parameters.
@@ -854,103 +804,6 @@ def pad(img, padding, fill_value, padding_mode):
 
 
 
-
-
-
-
-
-
-def random_affine(img, angle, translations, scale, shear, resample, fill_value=0):
-    """
-    Applies a random Affine transformation on the input PIL Image.
-
-    Args:
-        img (PIL.Image.Image): Image to be applied affine transformation.
-        angle (Sequence): Rotation angle in degrees, clockwise.
-        translations (Sequence): Translations in horizontal and vertical axis.
-        scale (Sequence): Scale parameter.
-        shear (Sequence): Shear amount parallel to X axis and Y axis.
-        resample (Inter): Resampling filter.
-        fill_value (Union[tuple, int], optional): Optional fill_value to fill the area outside the transform
-            in the output image. Used only in Pillow versions > 5.0.0.
-            If ``None``, no filling is performed.
-
-    Returns:
-        PIL.Image.Image, randomly affine transformed image.
-
-    """
-    if not is_pil(img):
-        raise ValueError("Input image should be a Pillow image.")
-
-    # rotation
-    angle = random.uniform(angle[0], angle[1])
-
-    # translation
-    if translations is not None:
-        max_dx = translations[0] * img.size[0]
-        max_dy = translations[1] * img.size[1]
-        translations = (np.round(random.uniform(-max_dx, max_dx)),
-                        np.round(random.uniform(-max_dy, max_dy)))
-    else:
-        translations = (0, 0)
-
-    # scale
-    if scale is not None:
-        scale = random.uniform(scale[0], scale[1])
-    else:
-        scale = 1.0
-
-    # shear
-    if shear is not None:
-        if len(shear) == 2:
-            shear = [random.uniform(shear[0], shear[1]), 0.]
-        elif len(shear) == 4:
-            shear = [random.uniform(shear[0], shear[1]),
-                     random.uniform(shear[2], shear[3])]
-    else:
-        shear = 0.0
-
-    output_size = img.size
-    center = (img.size[0] * 0.5 + 0.5, img.size[1] * 0.5 + 0.5)
-
-    angle = math.radians(angle)
-    if isinstance(shear, (tuple, list)) and len(shear) == 2:
-        shear = [math.radians(s) for s in shear]
-    elif isinstance(shear, numbers.Number):
-        shear = math.radians(shear)
-        shear = [shear, 0]
-    else:
-        raise ValueError(
-            "Shear should be a single value or a tuple/list containing " +
-            "two values. Got {}.".format(shear))
-
-    scale = 1.0 / scale
-
-    # Inverted rotation matrix with scale and shear
-    d = math.cos(angle + shear[0]) * math.cos(angle + shear[1]) + \
-        math.sin(angle + shear[0]) * math.sin(angle + shear[1])
-    matrix = [
-        math.cos(angle + shear[0]), math.sin(angle + shear[0]), 0,
-        -math.sin(angle + shear[1]), math.cos(angle + shear[1]), 0
-    ]
-    matrix = [scale / d * m for m in matrix]
-
-    # Apply inverse of translation and of center translation: RSS^-1 * C^-1 * T^-1
-    matrix[2] += matrix[0] * (-center[0] - translations[0]) + matrix[1] * (-center[1] - translations[1])
-    matrix[5] += matrix[3] * (-center[0] - translations[0]) + matrix[4] * (-center[1] - translations[1])
-
-    # Apply center translation: C * RSS^-1 * C^-1 * T^-1
-    matrix[2] += center[0]
-    matrix[5] += center[1]
-
-    # Ensure fill_value of type list (from serialize JSON support) is converted to type tuple
-    kwarg_fill_value = tuple(fill_value) if isinstance(fill_value, list) else fill_value
-
-    if Image.__version__ >= '5':
-        kwargs = {"fillcolor": kwarg_fill_value}
-    else:
-        kwargs = {}
-    return img.transform(output_size, AFFINE, matrix, resample, **kwargs)
 
 
 
@@ -1161,85 +1014,6 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
     return np.array([hsv_to_rgb(img, is_hwc) for img in np_hsv_imgs])
 
 
-def random_color(img, degrees):
-    """
-    Adjust the color of the input PIL Image by a random degree.
-
-    Args:
-        img (PIL.Image.Image): Image to be color adjusted.
-        degrees (sequence): Range of random color adjustment degrees.
-            It should be in (min, max) format. Default: ``(0.1,1.9)``.
-
-    Returns:
-        PIL.Image.Image, color adjusted image.
-    """
-
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-
-    v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
-    return ImageEnhance.Color(img).enhance(v)
-
-
-def random_sharpness(img, degrees):
-    """
-    Adjust the sharpness of the input PIL Image by a random degree.
-
-    Args:
-        img (PIL.Image.Image): Image to be sharpness adjusted.
-        degrees (sequence): Range of random sharpness adjustment degrees.
-            It should be in (min, max) format. Default: ``(0.1,1.9)``.
-
-    Returns:
-        PIL.Image.Image, sharpness adjusted image.
-    """
-
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-
-    v = (degrees[1] - degrees[0]) * random.random() + degrees[0]
-    return ImageEnhance.Sharpness(img).enhance(v)
-
-
-
-
-def auto_contrast(img, cutoff, ignore):
-    """
-    Automatically maximize the contrast of the input PIL Image.
-
-    Args:
-        img (PIL.Image): Image to be augmented with AutoContrast.
-        cutoff (float, optional): Percent of pixels to cut off from the histogram. Default: ``0.0``.
-        ignore (Union[int, Sequence[int]], optional): Pixel values to ignore. Default: ``None``.
-
-    Returns:
-        PIL.Image, augmented image.
-    """
-
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-
-    return ImageOps.autocontrast(img, cutoff, ignore)
-
-
-def invert_color(img):
-    """
-    Invert colors of input PIL Image.
-
-    Args:
-        img (PIL.Image.Image): Image to be color inverted.
-
-    Returns:
-        PIL.Image.Image, color inverted image.
-
-    """
-
-    if not is_pil(img):
-        raise TypeError(augment_error_message.format(type(img)))
-
-    return ImageOps.invert(img)
-
-
 def equalize(img):
     """
     Equalize the histogram of input PIL Image.
@@ -1256,30 +1030,3 @@ def equalize(img):
         raise TypeError(augment_error_message.format(type(img)))
 
     return ImageOps.equalize(img)
-
-
-def uniform_augment(img, transforms, num_ops):
-    """
-    Uniformly select and apply a number of transforms sequentially from
-    a list of transforms. Randomly assigns a probability to each transform for
-    each image to decide whether apply it or not.
-    All the transforms in transform list must have the same input/output data type.
-
-    Args:
-        img: Image to be applied transformation.
-        transforms (list): List of transformations to be chosen from to apply.
-        num_ops (int): number of transforms to sequentially aaply.
-
-    Returns:
-        img, Transformed image.
-
-    """
-
-    op_idx = np.random.choice(len(transforms), size=num_ops, replace=False)
-    for idx in op_idx:
-        augment_op = transforms[idx]
-        pr = random.random()
-        if random.random() < pr:
-            img = augment_op(img.copy())
-
-    return img

@@ -937,14 +937,6 @@ def _is_equal_one(x):
 
 
 @constexpr
-def _dtype_check(x_dtype, prim_name=None):
-    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-    if x_dtype not in [mstype.float32, mstype.float16]:
-        raise TypeError(
-            f"{msg_prefix} x_dtype must be float32 or float16, but got {x_dtype}.")
-
-
-@constexpr
 def _is_float_dtype(dtype):
     if dtype in [mstype.float32, mstype.float16]:
         return True
