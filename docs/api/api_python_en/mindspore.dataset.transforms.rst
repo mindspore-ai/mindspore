@@ -83,38 +83,3 @@ Preprocess text into token IDs, or call a Python text-processing function of you
 Check vocabularies and special tokens, case handling and Unicode normalization, tokenization, offset units,
 shape/dtype and throughput. External tokenizers are not guaranteed to be equivalent; vocabulary training
 and model file compatibility require separate validation.
-
-Audio
-------
-
-.. automodule:: mindspore.dataset.audio
-
-Example Gallery
-^^^^^^^^^^^^^^^^
-
-Example gallery of using vision transform APIs, jump to `Illustration of audio transforms <https://www.mindspore.cn/docs/en/master/api_python/samples/dataset/audio_gallery.html>`_.
-This guide presents various transforms and input/output results.
-
-Utilities
-^^^^^^^^^^
-
-.. autosummary::
-    :toctree: dataset_audio
-    :nosignatures:
-    :template: classtemplate_dataset.rst
-
-    mindspore.dataset.audio.BorderType
-    mindspore.dataset.audio.DensityFunction
-    mindspore.dataset.audio.FadeShape
-    mindspore.dataset.audio.GainType
-    mindspore.dataset.audio.Interpolation
-    mindspore.dataset.audio.MelType
-    mindspore.dataset.audio.Modulation
-    mindspore.dataset.audio.NormMode
-    mindspore.dataset.audio.NormType
-    mindspore.dataset.audio.ResampleMethod
-    mindspore.dataset.audio.ScaleType
-    mindspore.dataset.audio.WindowType
-    mindspore.dataset.audio.create_dct
-    mindspore.dataset.audio.linear_fbanks
-    mindspore.dataset.audio.melscale_fbanks

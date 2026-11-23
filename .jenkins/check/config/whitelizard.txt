@@ -7,7 +7,6 @@ mindspore/mindspore/core/mindrt/src/thread/actor_threadpool.cc:mindspore::ActorW
 mindspore/mindspore/ccsrc/minddata/dataset/data_source/csv_op.cc:mindspore::dataset::CsvOp::CsvParser::InitCsvParser
 mindspore/mindspore/ccsrc/minddata/dataset/engine/datasetops/data_queue_op.cc:mindspore::dataset::DataQueueOp::SendDataToAscend
 mindspore/mindspore/ccsrc/minddata/dataset/core/tensor_row.cc:mindspore::dataset::RowTimer::Summary
-mindspore/mindspore/ccsrc/minddata/dataset/audio/kernels/audio_utils.h:mindspore::dataset::Vad
 mindspore/mindspore/ccsrc/minddata/dataset/vision/kernels/dvpp/utils/dvpp_video.cc:DvppVideo::SaveYuvFile
 mindspore/mindspore/ccsrc/minddata/dataset/vision/kernels/dvpp/utils/dvpp_image_utils.cc:mindspore::dataset::DvppConvertColor, mindspore::dataset::DvppErase, mindspore::dataset::DvppNormalize, mindspore::dataset::DvppPerspective, mindspore::dataset::DvppResizedCrop, mindspore::dataset::DvppRotate, mindspore::dataset::CreateAclTensor
 mindspore/mindspore/python/mindspore/dataset/engine/datasets.py:_worker_loop

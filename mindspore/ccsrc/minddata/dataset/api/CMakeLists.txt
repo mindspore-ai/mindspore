@@ -2,8 +2,6 @@ file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc"
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 if(ENABLE_PYTHON)
     add_library(APItoPython OBJECT
-            python/bindings/dataset/audio/bindings.cc
-            python/bindings/dataset/audio/transform/bindings.cc
             python/bindings/dataset/callback/bindings.cc
             python/bindings/dataset/core/bindings.cc
             python/bindings/dataset/data_source/bindings.cc
@@ -26,7 +24,6 @@ if(ENABLE_PYTHON)
 endif()
 
 add_library(cpp-API OBJECT
-        audio.cc
         config.cc
         data_helper.cc
         datasets.cc

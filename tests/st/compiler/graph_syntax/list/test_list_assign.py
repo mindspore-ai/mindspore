@@ -109,23 +109,20 @@ def test_graph_list_slice_assign_extended_number():
 def test_graph_list_slice_assign_number():
     """
     Feature: List assign
-    Description: Test negative step list slice assign
-    Expectation: No exception.
+    Description: Assign a scalar to a list slice in PyNative and Graph modes.
+    Expectation: Both modes raise TypeError for the non-iterable value.
     """
     a = [1, 2, 3, 4, 5, 6]
     b = 1
     net = Net2()
+    error_match = r"can only assign an iterable|must assign iterable to extended slice"
     context.set_context(mode=context.PYNATIVE_MODE)
-    with pytest.raises(TypeError) as err:
+    with pytest.raises(TypeError, match=error_match):
         net(a, b, 0, None, 1)
-    assert "can only assign an iterable" in str(err.value)
 
     context.set_context(mode=context.GRAPH_MODE)
-    with pytest.raises(TypeError) as err:
+    with pytest.raises(TypeError, match=error_match + r"|object is not iterable"):
         net(a, b, 0, None, 1)
-    # pylint: disable=condition-evals-to-constant
-    assert "None object is not iterable" or \
-           "can only assign an iterable" in str(err.value)
 
 
 def convert_tuple(a):

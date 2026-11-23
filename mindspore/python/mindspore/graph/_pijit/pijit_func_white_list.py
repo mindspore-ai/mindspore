@@ -58,7 +58,6 @@ from mindspore.run_check._check_version import check_version_and_env_config
 from mindspore.dataset.callback.ds_callback import DSCallback, WaitedDSCallback
 from mindspore.dataset.transforms.transforms import TensorOperation, _Compose, Plugin, TypeCast
 from mindspore.dataset.core.datatypes import nptype_to_detype, mstype_to_detype, mstypelist_to_detypelist
-from mindspore.dataset.audio.utils import create_dct, linear_fbanks, melscale_fbanks
 from mindspore.dataset.engine.cache_client import DatasetCache
 from mindspore.dataset.engine.iterators import Iterator
 from mindspore.dataset.engine.datasets_standard_format import CSVDataset, MindDataset, TFRecordDataset
@@ -130,7 +129,6 @@ def _get_dataset_forbidden_code():
     codes = []
     codes.extend([DSCallback.__init__, WaitedDSCallback.__init__])
     codes.extend([TensorOperation.__call__, _Compose.parse, Plugin.parse, TypeCast.parse])
-    codes.extend([create_dct, linear_fbanks, melscale_fbanks])
     codes.extend([DatasetCache.__init__, Iterator.__init__])
     codes.extend([CSVDataset.parse, MindDataset.parse, TFRecordDataset.parse])
     codes.extend([AGNewsDataset.parse, AmazonReviewDataset.parse, CLUEDataset.parse, CoNLL2000Dataset.parse, \

@@ -887,9 +887,7 @@ class Dataset:
 
         - If you use transformations (
           `vision transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
-          dataset.transforms.html#module-mindspore.dataset.vision>`_ ,
-          `audio transform <https://mindspore.cn/docs/en/master/api_python/mindspore.\
-          dataset.transforms.html#module-mindspore.dataset.audio>`_ )
+          dataset.transforms.html#module-mindspore.dataset.vision>`_ )
           provided by mindspore dataset, please use the following parameters:
 
           .. image:: map_parameter_en.png
