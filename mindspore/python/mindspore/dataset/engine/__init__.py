@@ -38,25 +38,7 @@ __all__ = [
            "ImageFolderDataset",       # Vision
            "ManifestDataset",          # Vision
            "RandomDataset",            # Vision
-           "AGNewsDataset",            # Text
-           "AmazonReviewDataset",      # Text
-           "CLUEDataset",              # Text
-           "CoNLL2000Dataset",         # Text
-           "DBpediaDataset",           # Text
-           "EnWik9Dataset",            # Text
-           "IMDBDataset",              # Text
-           "IWSLT2016Dataset",         # Text
-           "IWSLT2017Dataset",         # Text
-           "Multi30kDataset",          # Text
-           "PennTreebankDataset",      # Text
-           "SogouNewsDataset",         # Text
-           "SQuADDataset",             # Text
-           "SST2Dataset",              # Text
            "TextFileDataset",          # Text
-           "UDPOSDataset",             # Text
-           "WikiTextDataset",          # Text
-           "YahooAnswersDataset",      # Text
-           "YelpReviewDataset",        # Text
            "CSVDataset",               # Standard Format
            "MindDataset",              # Standard Format
            "OBSMindDataset",           # Standard Format

@@ -297,7 +297,6 @@ class Dataset:
     Impl Dataset - vision:       ImageFolderDataset(MappableDataset, VisionBaseDataset)
                                  RandomDataset(SourceDataset, VisionBaseDataset)
     Impl Dataset - text:         TextFileDataset(SourceDataset, TextBaseDataset)
-                                 YahooAnswersDataset(SourceDataset, TextBaseDataset)
     Impl Dataset - standard:     MindDataset(MappableDataset, UnionBaseDataset)
                                  TFRecordDataset(SourceDataset, UnionBaseDataset)
     Impl Dataset - user defined: GeneratorDataset(MappableDataset, UnionBaseDataset)

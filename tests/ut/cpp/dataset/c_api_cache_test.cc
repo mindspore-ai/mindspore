@@ -542,54 +542,6 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCsvCApi) {
 }
 
 /// Feature: Cache
-/// Description: Test Cache and Repeat on CLUEDataset, iterate through dataset and count rows
-/// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestCacheOp, DISABLED_TestCacheClueCApi) {
-  session_id_type env_session;
-  Status s = GetSessionFromEnv(&env_session);
-  EXPECT_EQ(s, Status::OK());
-
-  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, false);
-  EXPECT_NE(some_cache, nullptr);
-
-  // Create a CLUE Dataset, this file_path has 3 records in it
-  std::string file_path = datasets_root_path_ + "/testCLUE/afqmc/train.json";
-  std::string task = "AFQMC";
-  std::string usage = "train";
-
-  // In this one, a num_samples=2 argument is given.
-  // In this case, a sequential sampler would be chosen with the same num_samples argument.
-  // The samples will be selected by the sequential sampler, not by the CLUE leaf node.
-  std::shared_ptr<Dataset> ds = CLUE({file_path}, task, usage, 2, ShuffleMode::kFalse, 1, 0, some_cache);
-  EXPECT_NE(ds, nullptr);
-
-  // Create a Repeat operation on ds
-  int32_t repeat_num = 2;
-  ds = ds->Repeat(repeat_num);
-  EXPECT_NE(ds, nullptr);
-
-  // Create an iterator over the result of the above dataset
-  // This will trigger the creation of the Execution Tree and launch it.
-  std::shared_ptr<Iterator> iter = ds->CreateIterator();
-  EXPECT_NE(iter, nullptr);
-
-  // Iterate the dataset and get each row
-  std::unordered_map<std::string, mindspore::MSTensor> row;
-  ASSERT_OK(iter->GetNextRow(&row));
-
-  uint64_t i = 0;
-  while (row.size() != 0) {
-    i++;
-    ASSERT_OK(iter->GetNextRow(&row));
-  }
-
-  EXPECT_EQ(i, 4);
-
-  // Manually terminate the pipeline
-  iter->Stop();
-}
-
-/// Feature: Cache
 /// Description: Test Cache share by having two datasets where both pipeline is ImageFolderDataset with RandomSampler
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare1) {

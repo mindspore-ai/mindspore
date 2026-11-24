@@ -57,26 +57,8 @@ Text
     :nosignatures:
     :template: classtemplate_dataset.rst
 
-    mindspore.dataset.AGNewsDataset
-    mindspore.dataset.AmazonReviewDataset
-    mindspore.dataset.CLUEDataset
     mindspore.dataset.CSVDataset
-    mindspore.dataset.CoNLL2000Dataset
-    mindspore.dataset.DBpediaDataset
-    mindspore.dataset.EnWik9Dataset
-    mindspore.dataset.IMDBDataset
-    mindspore.dataset.IWSLT2016Dataset
-    mindspore.dataset.IWSLT2017Dataset
-    mindspore.dataset.Multi30kDataset
-    mindspore.dataset.PennTreebankDataset
-    mindspore.dataset.SogouNewsDataset
-    mindspore.dataset.SQuADDataset
-    mindspore.dataset.SST2Dataset
     mindspore.dataset.TextFileDataset
-    mindspore.dataset.UDPOSDataset
-    mindspore.dataset.WikiTextDataset
-    mindspore.dataset.YahooAnswersDataset
-    mindspore.dataset.YelpReviewDataset
 
 Others
 -------

@@ -135,21 +135,6 @@ def test_manifest_dataset_size():
     assert len(ds_shard_3_0) == 2
 
 
-def test_clue_dataset_size():
-    """
-    Feature: get_dataset_size
-    Description: Test get_dataset_size on CLUEDataset
-    Expectation: The dataset is processed as expected
-    """
-    dataset = ds.CLUEDataset(CLUE_FILE, task='AFQMC', usage='train', shuffle=False)
-    assert dataset.get_dataset_size() == 3
-    assert len(dataset) == 3
-
-    dataset_shard_2_0 = ds.CLUEDataset(CLUE_FILE, task='AFQMC', usage='train', shuffle=False, num_shards=2, shard_id=0)
-    assert dataset_shard_2_0.get_dataset_size() == 2
-    assert len(dataset_shard_2_0) == 2
-
-
 def test_csv_dataset_size():
     """
     Feature: get_dataset_size
