@@ -220,18 +220,6 @@ def check_plugin(method):
     return new_method
 
 
-def invalidate_callable(method):
-    """Wrapper method to invalidate cached callable_op_ used in eager mode. \
-    This decorator must be added to any method which modifies the state of transform."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        self.callable_op_ = None
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_type_cast(method):
     """Wrapper method to check the parameters of TypeCast."""
 

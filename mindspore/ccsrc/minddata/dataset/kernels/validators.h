@@ -29,18 +29,6 @@ namespace dataset {
 // Helper function to validate probability
 Status ValidateProbability(const std::string &op_name, double probability);
 
-// Helper function to positive int scalar
-Status ValidateIntScalarPositive(const std::string &op_name, const std::string &scalar_name, int32_t scalar);
-
-// Helper function to positive int scalar
-Status ValidateIntScalarNonNegative(const std::string &op_name, const std::string &scalar_name, int32_t scalar);
-
-// Helper function to positive float scalar
-Status ValidateFloatScalarPositive(const std::string &op_name, const std::string &scalar_name, float scalar);
-
-// Helper function to non-negative float scalar
-Status ValidateFloatScalarNonNegative(const std::string &op_name, const std::string &scalar_name, float scalar);
-
 // Helper function to validate scalar
 template <typename T>
 Status ValidateScalar(const std::string &op_name, const std::string &scalar_name, const T scalar,
@@ -94,21 +82,8 @@ Status ValidateVectorFillvalue(const std::string &op_name, const std::vector<uin
 // Helper function to validate mean/std value
 Status ValidateVectorMeanStd(const std::string &op_name, const std::vector<float> &mean, const std::vector<float> &std);
 
-// Helper function to validate odd value
-Status ValidateVectorOdd(const std::string &op_name, const std::string &vec_name, const std::vector<int32_t> &value);
-
 // Helper function to validate padding
 Status ValidateVectorPadding(const std::string &op_name, const std::vector<int32_t> &padding);
-
-// Helper function to validate positive value
-Status ValidateVectorPositive(const std::string &op_name, const std::string &vec_name, const std::vector<int32_t> &vec);
-
-// Helper function to validate non-negative value
-Status ValidateVectorNonNegative(const std::string &op_name, const std::string &vec_name,
-                                 const std::vector<int32_t> &vec);
-
-// Helper function to validate size of sigma
-Status ValidateVectorSigma(const std::string &op_name, const std::vector<float> &sigma);
 
 // Helper function to validate size of size
 Status ValidateVectorSize(const std::string &op_name, const std::vector<int32_t> &size);

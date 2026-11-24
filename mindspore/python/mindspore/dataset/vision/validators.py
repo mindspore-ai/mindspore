@@ -26,16 +26,13 @@ from mindspore.dataset.core.validator_helpers import (
     FLOAT_MAX_INTEGER,
     check_pos_float32,
     check_float32,
-    check_2tuple,
     check_range,
     check_positive,
     INT32_MAX,
-    INT32_MIN,
     parse_user_args,
     type_check,
     type_check_list,
     check_value_normalize_std,
-    check_non_negative_float32,
     check_pos_int32,
     check_valid_str,
 )
@@ -56,17 +53,6 @@ def check_crop_size(size):
             check_value(value, (1, FLOAT_MAX_INTEGER))
     else:
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
-
-
-def check_crop_coordinates(coordinates):
-    """Wrapper method to check the parameters of crop size."""
-    type_check(coordinates, (list, tuple), "coordinates")
-    if isinstance(coordinates, (tuple, list)) and len(coordinates) == 2:
-        for index, value in enumerate(coordinates):
-            type_check(value, (int,), "coordinates[{}]".format(index))
-            check_value(value, (0, INT32_MAX), "coordinates[{}]".format(index))
-    else:
-        raise TypeError("Coordinates should be a list/tuple (y, x) of length 2.")
 
 
 def check_resize_size(size):
@@ -141,22 +127,6 @@ def check_padding(padding):
             check_value(pad_value, (0, INT32_MAX), "pad_value")
 
 
-def check_degrees(degrees):
-    """Check if the `degrees` is legal."""
-    type_check(degrees, (int, float, list, tuple), "degrees")
-    if isinstance(degrees, (int, float)):
-        check_non_negative_float32(degrees, "degrees")
-    elif isinstance(degrees, (list, tuple)):
-        if len(degrees) == 2:
-            type_check_list(degrees, (int, float), "degrees")
-            for value in degrees:
-                check_float32(value, "degrees")
-            if degrees[0] > degrees[1]:
-                raise ValueError("degrees should be in (min,max) format. Got (max,min).")
-        else:
-            raise TypeError("If degrees is a sequence, the length must be 2.")
-
-
 def check_random_color_adjust_param(value, input_name, center=1, bound=(0, FLOAT_MAX_INTEGER), non_negative=True):
     """Check the parameters in random color adjust operation."""
     type_check(value, (numbers.Number, list, tuple), input_name)
@@ -170,14 +140,6 @@ def check_random_color_adjust_param(value, input_name, center=1, bound=(0, FLOAT
             raise ValueError("{0} value should be in (min,max) format. Got ({1}, {2}).".format(input_name,
                                                                                                value[0], value[1]))
         check_range(value, bound)
-
-
-def check_erasing_value(value):
-    if not (isinstance(value, (numbers.Number,)) or
-            (isinstance(value, (str,)) and value == 'random') or
-            (isinstance(value, (tuple, list)) and len(value) == 3)):
-        raise ValueError("The value for erasing should be either a single value, "
-                         "or a string 'random', or a sequence of 3 elements for RGB respectively.")
 
 
 def check_center_crop(method):
@@ -217,19 +179,6 @@ def check_device_target(method):
         [device_target], _ = parse_user_args(method, *args, **kwargs)
         check_valid_str(device_target, ["CPU", "Ascend"], "device_target")
         return method(self, *args, **kwargs)
-    return new_method
-
-
-def check_resize(method):
-    """A wrapper that wraps a parameter checker around the original function(resize operation)."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [size], _ = parse_user_args(method, *args, **kwargs)
-        check_resize_size(size)
-
-        return method(self, *args, **kwargs)
-
     return new_method
 
 
@@ -360,17 +309,6 @@ def check_random_color_adjust(method):
         return method(self, *args, **kwargs)
 
     return new_method
-
-
-def check_resample_expand_center_fill_value_params(resample, expand, center, fill_value):
-    type_check(resample, (Inter,), "resample")
-    type_check(expand, (bool,), "expand")
-    if center is not None:
-        check_2tuple(center, "center")
-        for value in center:
-            type_check(value, (int, float), "center")
-            check_value(value, [INT32_MIN, INT32_MAX], "center")
-    check_fill_value(fill_value)
 
 
 def check_rgb_to_bgr(method):

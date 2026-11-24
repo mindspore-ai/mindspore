@@ -16,7 +16,6 @@
 Built-in py_transforms_utils functions.
 """
 import json
-import random
 from enum import IntEnum
 from types import FunctionType, MethodType
 
@@ -68,56 +67,6 @@ def compose(transforms, *args):
         args = (args,) if not isinstance(args, tuple) else args
 
     return args
-
-
-def random_order(img, transforms):
-    """
-    Applies a list of transforms in a random order.
-
-    Args:
-        img: Image to be applied transformations in a random order.
-        transforms (list): List of the transformations to be applied.
-
-    Returns:
-        img, Transformed image.
-    """
-    random.shuffle(transforms)
-    for transform in transforms:
-        img = transform(img)
-    return img
-
-
-def random_apply(img, transforms, prob):
-    """
-    Apply a list of transformation, randomly with a given probability.
-
-    Args:
-        img: Image to be randomly applied a list transformations.
-        transforms (list): List of transformations to be applied.
-        prob (float): The probability to apply the transformation list.
-
-    Returns:
-        img, Transformed image.
-    """
-    if prob < random.random():
-        return img
-    for transform in transforms:
-        img = transform(img)
-    return img
-
-
-def random_choice(img, transforms):
-    """
-    Random selects one transform from a list of transforms and applies that on the image.
-
-    Args:
-        img: Image to be applied transformation.
-        transforms (list): List of transformations to be chosen from to apply.
-
-    Returns:
-        img, Transformed image.
-    """
-    return random.choice(transforms)(img)
 
 
 class FuncWrapper:

@@ -28,21 +28,6 @@ Status ValidateProbability(const std::string &op_name, double probability) {
   return Status::OK();
 }
 
-Status ValidateIntScalarPositive(const std::string &op_name, const std::string &scalar_name, int32_t scalar) {
-  RETURN_IF_NOT_OK(ValidateScalar(op_name, scalar_name, scalar, {0}, true));
-  return Status::OK();
-}
-
-Status ValidateFloatScalarPositive(const std::string &op_name, const std::string &scalar_name, float scalar) {
-  RETURN_IF_NOT_OK(ValidateScalar(op_name, scalar_name, scalar, {0}, true));
-  return Status::OK();
-}
-
-Status ValidateFloatScalarNonNegative(const std::string &op_name, const std::string &scalar_name, float scalar) {
-  RETURN_IF_NOT_OK(ValidateScalar(op_name, scalar_name, scalar, {0}, false));
-  return Status::OK();
-}
-
 Status ValidateVectorFillvalue(const std::string &op_name, const std::vector<uint8_t> &fill_value) {
   const size_t kMaxFillValueSize = 3;
   if (fill_value.empty() || (fill_value.size() != 1 && fill_value.size() != kMaxFillValueSize)) {
@@ -98,19 +83,6 @@ Status ValidateVectorMeanStd(const std::string &op_name, const std::vector<float
   return Status::OK();
 }
 
-Status ValidateVectorOdd(const std::string &op_name, const std::string &vec_name, const std::vector<int32_t> &value) {
-  constexpr int64_t divided_two = 2;
-  for (int i = 0; i < value.size(); i++) {
-    if (value[i] % divided_two != 1) {
-      std::string err_msg = op_name + ":" + vec_name + " must be odd value, got: " + vec_name + "[" +
-                            std::to_string(i) + "]=" + std::to_string(value[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_SYNTAX_ERROR(err_msg);
-    }
-  }
-  return Status::OK();
-}
-
 Status ValidateVectorPadding(const std::string &op_name, const std::vector<int32_t> &padding) {
   const size_t kDefaultPaddingSize = 2;
   const size_t kMaxPaddingSize = 4;
@@ -120,37 +92,6 @@ Status ValidateVectorPadding(const std::string &op_name, const std::vector<int32
   }
   for (const auto &pad_val : padding) {
     RETURN_IF_NOT_OK(ValidateScalar(op_name, "padding", pad_val, {0, INT_MAX}, false, false));
-  }
-
-  return Status::OK();
-}
-
-Status ValidateVectorPositive(const std::string &op_name, const std::string &vec_name,
-                              const std::vector<int32_t> &vec) {
-  for (const auto &vec_val : vec) {
-    RETURN_IF_NOT_OK(ValidateScalar(op_name, vec_name, vec_val, {0}, true));
-  }
-
-  return Status::OK();
-}
-
-Status ValidateVectorNonNegative(const std::string &op_name, const std::string &vec_name,
-                                 const std::vector<int32_t> &vec) {
-  for (const auto &vec_val : vec) {
-    RETURN_IF_NOT_OK(ValidateScalar(op_name, vec_name, vec_val, {0}, false));
-  }
-
-  return Status::OK();
-}
-
-Status ValidateVectorSigma(const std::string &op_name, const std::vector<float> &sigma) {
-  const size_t kMaxSigmaSize = 2;
-  if (sigma.empty() || sigma.size() > kMaxSigmaSize) {
-    std::string err_msg = op_name + ": sigma expecting size 2, got sigma.size(): " + std::to_string(sigma.size());
-    LOG_AND_RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  for (const auto &sigma_val : sigma) {
-    RETURN_IF_NOT_OK(ValidateScalar(op_name, "sigma", sigma_val, {0}, false));
   }
 
   return Status::OK();
