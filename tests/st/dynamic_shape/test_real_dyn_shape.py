@@ -50,7 +50,7 @@ def test_real_forward(mode):
     np.testing.assert_equal(output.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'], level_mark='level1',
           card_mark='onecard', mem_peak=2048.75)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On

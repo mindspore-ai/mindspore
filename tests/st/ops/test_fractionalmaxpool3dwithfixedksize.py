@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test fractional_max_pool3d_with_fixed_ksize op"""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
@@ -25,7 +25,7 @@ import mindspore.ops.operations._grad_ops as grad_ops
 
 class NetFractionalMaxPool3DWithFixedKsize(nn.Cell):
     def __init__(self, ksize, output_shape):
-        super(NetFractionalMaxPool3DWithFixedKsize, self).__init__()
+        super().__init__()
         self.fractional_max_pool_3d_with_fixed_ksize = ops.FractionalMaxPool3DWithFixedKsize(
             ksize, output_shape)
 
@@ -35,14 +35,14 @@ class NetFractionalMaxPool3DWithFixedKsize(nn.Cell):
 
 class NetFractionalMaxPool3DGradWithFixedKsize(nn.Cell):
     def __init__(self):
-        super(NetFractionalMaxPool3DGradWithFixedKsize, self).__init__()
+        super().__init__()
         self.fractional_max_pool_3d_grad_with_fixed_ksize = grad_ops.FractionalMaxPool3DGradWithFixedKsize()
 
     def construct(self, origin_input, out_backprop, argmax):
         return self.fractional_max_pool_3d_grad_with_fixed_ksize(origin_input, out_backprop, argmax)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', mem_peak=0.01)
 def test_fractionalmaxpool3dwithfixedksize():
     """

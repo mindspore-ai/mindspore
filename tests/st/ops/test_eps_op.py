@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test eps op"""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -25,15 +26,15 @@ from mindspore.ops import operations as P
 
 class NetEps(nn.Cell):
     def __init__(self):
-        super(NetEps, self).__init__()
+        super().__init__()
         self.eps = P.Eps()
 
     def construct(self, x):
         return self.eps(x)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', mem_peak=1026.00)
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', mem_peak=1026.00)
 @pytest.mark.parametrize("nptype", [np.float32])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_eps(nptype, mode):

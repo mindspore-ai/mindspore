@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test pad_v3 op"""
 from tests.mark_utils import arg_mark
 
 import pytest
@@ -25,7 +26,7 @@ from mindspore.ops.operations import nn_ops
 
 class PadV3Net(nn.Cell):
     def __init__(self, mode, paddings_contiguous=True):
-        super(PadV3Net, self).__init__()
+        super().__init__()
         self.ops = nn_ops.PadV3(mode, paddings_contiguous)
         self.mode = mode
 
@@ -172,7 +173,7 @@ def test_padv3_constant_shape_4d(x_data_type, mode, ms_mode):
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=1025.98)
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', mem_peak=1025.98)
 @pytest.mark.parametrize('x_data_type', [np.int16, np.float32])
 @pytest.mark.parametrize('mode', ["constant", "edge"])
 @pytest.mark.parametrize('ms_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

@@ -34,7 +34,7 @@ from tests.st.scipy_st.utils import match_array
 
 class LinearSumAssignmentNet(nn.Cell):
     def __init__(self):
-        super(LinearSumAssignmentNet, self).__init__()
+        super().__init__()
         self.solve = linear_sum_assignment
 
     def construct(self, cost_matrix, maximize, dimension_limit):
@@ -77,7 +77,7 @@ def test_bfgs1(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS')
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
@@ -95,7 +95,7 @@ def test_bfgs2(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS')
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
@@ -113,7 +113,7 @@ def test_bfgs3(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS')
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
@@ -133,7 +133,7 @@ def test_bfgs_fixes4594(dtype):
         return mnp.mean((mnp.dot(A, x)) ** 2)
 
     results = msp.optimize.minimize(func, Tensor(onp.ones(n, dtype=dtype)), method='BFGS',
-                                    options=dict(maxiter=None, gtol=1e-6)).x
+                                    options={"maxiter": None, "gtol": 1e-6}).x
     onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
 
 
@@ -152,7 +152,7 @@ def test_bfgs_graph(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     scipy_res = osp.optimize.minimize(func(onp), x0, method='BFGS')
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
@@ -313,9 +313,9 @@ def test_lbfgs1(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
@@ -334,9 +334,9 @@ def test_lbfgs2(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
@@ -355,9 +355,9 @@ def test_lbfgs3(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
@@ -376,9 +376,9 @@ def test_lbfgs4(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
@@ -397,9 +397,9 @@ def test_lbfgs5(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
@@ -418,9 +418,9 @@ def test_lbfgs6(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
@@ -441,7 +441,7 @@ def test_lbfgs_fixes4594(dtype):
         return mnp.mean((mnp.dot(a, x)) ** 2)
 
     results = msp.optimize.minimize(func, Tensor(onp.ones(n, dtype=dtype)), method='LBFGS',
-                                    options=dict(maxiter=None, gtol=1e-6)).x
+                                    options={"maxiter": None, "gtol": 1e-6}).x
     onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
@@ -461,14 +461,15 @@ def test_lbfgs_graph(dtype, func_x0):
     x0 = x0.astype(dtype)
     x0_tensor = Tensor(x0)
     ms_res = msp.optimize.minimize(func(mnp), x0_tensor, method='LBFGS',
-                                   options=dict(history_size=150, maxiter=None, gtol=1e-6))
+                                   options={"history_size": 150, "maxiter": None, "gtol": 1e-6})
     ma_res = msp.optimize.minimize(func(mnp), x0_tensor, method='BFGS',
-                                   options=dict(maxiter=None, gtol=1e-6))
+                                   options={"maxiter": None, "gtol": 1e-6})
     match_array(ms_res.x.asnumpy(), ma_res.x, error=5, err_msg=str(ms_res))
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard', mem_peak=2048.25)
+@arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          mem_peak=2048.25)
 @pytest.mark.parametrize('cost_matrix_type', [ms.float16, ms.float32, ms.float64, ms.bool_, ms.int16, ms.int32,
                                               ms.int64, ms.int8, ms.uint16, ms.uint32, ms.uint64, ms.uint8])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

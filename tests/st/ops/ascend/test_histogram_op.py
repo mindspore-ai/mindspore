@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test histogram op"""
 import numpy as np
 import pytest
 
@@ -25,14 +26,14 @@ from tests.mark_utils import arg_mark
 
 class Net(nn.Cell):
     def __init__(self, bins, min_val, max_val):
-        super(Net, self).__init__()
+        super().__init__()
         self.histogram = ops.Histogram(bins=bins, min=min_val, max=max_val)
 
     def construct(self, x):
         return self.histogram(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
         card_mark='onecard', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_histogram_normal(mode):

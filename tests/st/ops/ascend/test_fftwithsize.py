@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test fftwithsize op"""
 from tests.mark_utils import arg_mark
 
 import numpy as np
@@ -31,7 +32,7 @@ def irfft_backward_func(x, signal_ndim, inverse, real, norm='backward', onesided
     return ops.grad(irfft_forward_func, (0,))(x, signal_ndim, inverse, real, norm, onesided, signal_sizes)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
         card_mark='onecard', mem_peak=1025.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fft_with_size_irfft(mode):
