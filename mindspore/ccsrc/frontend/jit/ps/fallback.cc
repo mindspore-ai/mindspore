@@ -531,15 +531,22 @@ void AttachPyObjToExtraInfoHolder(const abstract::AbstractBasePtr &abs, const py
   MS_EXCEPTION_IF_NULL(abs);
   constexpr auto py_object_key = "py_obj_key";
   constexpr auto create_in_graph_key = "create_in_graph_key";
+  auto make_gil_safe_object = [](const py::object &value) {
+    // The last reference may be released by an analysis worker without the GIL.
+    return std::shared_ptr<py::object>(new py::object(value), [](py::object *object) {
+      py::gil_scoped_acquire acquire_gil;
+      delete object;
+    });
+  };
   if (abs->isa<abstract::AbstractList>()) {
     auto abs_list = abs->cast<abstract::AbstractListPtr>();
-    abs_list->SetData<py::object>(py_object_key, std::make_shared<py::object>(obj));
+    abs_list->SetData<py::object>(py_object_key, make_gil_safe_object(obj));
     abs_list->SetData<bool>(create_in_graph_key, std::make_shared<bool>(create_in_graph));
     return;
   }
   if (abs->isa<abstract::AbstractDictionary>()) {
     auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
-    abs_dict->SetData<py::object>(py_object_key, std::make_shared<py::object>(obj));
+    abs_dict->SetData<py::object>(py_object_key, make_gil_safe_object(obj));
     abs_dict->SetData<bool>(create_in_graph_key, std::make_shared<bool>(create_in_graph));
     return;
   }
