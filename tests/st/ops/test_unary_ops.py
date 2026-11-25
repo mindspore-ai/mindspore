@@ -49,8 +49,8 @@ def test_unary_op_reference_forward(mode, op_info):
     fact.test_op_reference()
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level0',
+@arg_mark(plat_marks=['platform_ascend910b'],
+          level_mark='level1',
           card_mark='onecard', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ops_params_dict['test_unary_op_reference_backward'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_unary_op_reference_backward'][1])
