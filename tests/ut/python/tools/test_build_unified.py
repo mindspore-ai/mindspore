@@ -70,12 +70,22 @@ assert pathlib.Path(sys.argv[sys.argv.index('--module-wheel') + 1]).read_text() 
         return result, trace
 
     def test_native_options_and_abi_are_separate(self):
-        result, trace = self.run_build('--torch-npu-source', '--torch=2.13.0', '--disable_fxrt', '-e', 'ascend', '-j4')
+        result, trace = self.run_build('--torch=2.13.0', '--disable_rpc', '-e', 'ascend', '-j4')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('mindspore -e ascend -j4 ABI=unset', trace)
-        self.assertIn('--torch=2.13.0 --disable_fxrt ABI=1', trace)
+        self.assertIn('--torch=2.13.0 --disable_rpc ABI=1', trace)
         self.assertLess(trace.index('mindspore '), trace.index('torch_npu '))
         self.assertLess(trace.index('torch_npu '), trace.index('merge '))
+
+    def test_default_build_compiles_source_without_download(self):
+        """The unchanged build command compiles both modules without querying a release."""
+        self.write('bin/curl', '#!/bin/bash\nexit 22\n', executable=True)
+        self.write('scripts/packaging/resolve_torch_npu_wheel.py', 'raise SystemExit(23)\n')
+        result, trace = self.run_build()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(trace.startswith('git submodule update --init --recursive -- third_party/torch_npu\n'))
+        self.assertLess(trace.index('mindspore '), trace.index('torch_npu --python'))
+        self.assertLess(trace.index('torch_npu --python'), trace.index('merge '))
 
     def test_prepare_only_needs_no_python_or_build(self):
         self.env['MS_PYTHON_EXECUTABLE'] = '/no/python'
@@ -133,12 +143,10 @@ destination.write_text('native-torch_npu')
         self.stub_official_download()
         self.write('scripts/packaging/resolve_torch_npu_wheel.py',
                    'import os, sys\nassert sys.argv[1] == "2.13.0"\nprint(os.environ["EXPECTED_URL"])\n')
-        for args in ((), ('--torch-npu-wheel=2.13.0',)):
-            with self.subTest(args=args):
-                result, trace = self.run_build(*args)
-                self.assertEqual(result.returncode, 0, result.stderr)
-                self.assertIn('merge ', trace)
-                self.assertNotIn('git ', trace)
+        result, trace = self.run_build('--torch-npu-wheel=2.13.0')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('merge ', trace)
+        self.assertNotIn('git ', trace)
         self.write('scripts/packaging/resolve_torch_npu_wheel.py', 'raise SystemExit(21)\n')
         result, trace = self.run_build('--torch-npu-wheel=2.13.0')
         self.assertEqual(result.returncode, 21)
@@ -146,7 +154,7 @@ destination.write_text('native-torch_npu')
 
     def test_prebuilt_rejects_source_options_and_invalid_urls(self):
         """Reject ineffective source-only flags before any download or build."""
-        for option in ('--torch-npu-source', '--prepare-only', '--clean', '--torch=2.13.0', '--disable_torchair',
+        for option in ('--prepare-only', '--clean', '--torch=2.13.0', '--disable_torchair',
                        '--disable_fxrt', '--disable_rpc', '--enable_lto', '--enable_pgo=1'):
             with self.subTest(option=option):
                 result, trace = self.run_build('--torch-npu-wheel=' + WHEEL_URL, option)
@@ -169,7 +177,7 @@ destination.write_text('native-torch_npu')
         for numpy_version in ('1.26.4', '2.0.0'):
             with self.subTest(numpy_version=numpy_version):
                 self.write('numpy.py', f'__version__ = "{numpy_version}"\n')
-                result, trace = self.run_build('--torch-npu-source')
+                result, trace = self.run_build()
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn('merge ', trace)
                 self.assertEqual('--require numpy<2' in trace, numpy_version.startswith('1.'))
@@ -178,13 +186,13 @@ destination.write_text('native-torch_npu')
         for stage, code in (('ms', 17), ('torch_npu', 18)):
             with self.subTest(stage=stage):
                 self.env['FAIL_STAGE'] = stage
-                result, trace = self.run_build('--torch-npu-source')
+                result, trace = self.run_build()
                 self.assertEqual(result.returncode, code, result.stderr)
                 self.assertNotIn('merge ', trace)
 
     def test_incompatible_torch_abi_fails_before_compilation(self):
         self.env['_GLIBCXX_USE_CXX11_ABI'] = '0'
-        result, trace = self.run_build('--torch-npu-source')
+        result, trace = self.run_build()
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('ABI override', result.stderr)
         self.assertNotIn('mindspore ', trace)
@@ -200,7 +208,7 @@ destination.write_text('native-torch_npu')
                 (['-egpu', '-V11.1'], '-egpu -V11.1'),
                 (['-e', 'cpu'], '-e cpu')):
             with self.subTest(args=args):
-                result, trace = self.run_build('--torch-npu-source', *args)
+                result, trace = self.run_build(*args)
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertIn(f'mindspore {expected} ABI=unset\n', trace)
 
@@ -234,7 +242,7 @@ python -c 'import os, sys; assert sys.prefix == os.environ["EXPECTED_PREFIX"], s
             path.write_text(path.read_text() + 'mkdir -p nested\ncd nested\n' + check)
         self.write('third_party/torch_npu/setup.py',
                    'import os, sys\nassert sys.prefix == os.environ["EXPECTED_PREFIX"]\n')
-        result, trace = self.run_build('--torch-npu-source', '--python=./venv/bin/python', '--clean', cwd=caller)
+        result, trace = self.run_build('--python=./venv/bin/python', '--clean', cwd=caller)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('merge ', trace)
 

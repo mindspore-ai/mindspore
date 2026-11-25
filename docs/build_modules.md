@@ -1,7 +1,8 @@
 # MindSpore 与 torch_npu 联合 wheel
 
 两套源码独立使用原生构建入口。MindSpore 使用自身的 CMake、`build.sh`、`setup.py` 和 CPack，
-torch_npu 当前临时默认下载官方 2.13.0 wheel，也可显式选择原生 `ci/build.sh` 编译。外层脚本仅串联构建、下载和合包。
+torch_npu 默认使用原生 `ci/build.sh` 编译，也可通过 `--torch-npu-wheel=VERSION|URL` 显式下载官方 wheel。
+外层脚本仅串联构建、下载和合包。
 
 ```text
 build.sh                           → output/mindspore-*.whl
@@ -49,18 +50,19 @@ bash scripts/build_unified.sh
 未指定 `-e` 时默认构建 Ascend；此时未指定 `-V` 才补充 `910b`。
 因此只传 `-j48` 仍构建默认 Ascend 包；显式指定设备时沿用 MindSpore 原生参数规则。
 
-原来的构建命令无需增加参数：当前临时默认下载 torch_npu 2.13.0，编译 MindSpore 后合包。
+原来的构建命令无需增加参数：默认依次编译 MindSpore 和 torch_npu，再合并两者的 wheel。
+源码构建需在当前 Python 环境中安装匹配的 PyTorch 及 torch_npu 原生构建依赖。
 `-j` 控制 MindSpore；`MAX_JOBS` 仅在源码编译 torch_npu 时生效：
 
 ```bash
 MAX_JOBS=48 bash scripts/build_unified.sh -e ascend -V 910b -j48
 ```
 
-显式使用 `--torch-npu-source` 恢复双源码构建，再选择 Python、校验 PyTorch 版本或调整组件：
+可直接选择 Python、校验 PyTorch 版本或调整组件：
 
 ```bash
-bash scripts/build_unified.sh --torch-npu-source --python=3.10 --torch=2.13.0 -e ascend -V 910b -j48
-bash scripts/build_unified.sh --torch-npu-source --clean --disable_fxrt -e ascend -V 910b -j48
+bash scripts/build_unified.sh --python=3.10 --torch=2.13.0 -e ascend -V 910b -j48
+bash scripts/build_unified.sh --clean --disable_rpc -e ascend -V 910b -j48
 ```
 
 `--python` 接受解释器版本或路径，相对路径以调用时的工作目录为准；`--torch` 校验已安装 PyTorch 的版本，不安装 PyTorch，
@@ -83,13 +85,13 @@ bash scripts/build_unified.sh --torch-npu-wheel=2.13.0 -e ascend -V 910b -j48
 后续版本需更新 `scripts/packaging/resolve_torch_npu_wheel.py` 的 `RELEASE_TAGS`，或直接传入官方 wheel URL。
 查询和附件下载均使用 curl，保留 HTTPS 证书校验；CI 如有自定义 CA，需配置 curl 的可信 CA。
 
-默认下载合包模式不需要安装 PyTorch，根目录 `requirements.txt` 不再引入 torch_npu 源码构建依赖。
-CI 前置步骤中的独立 `pip install torch==2.13.0` 也应跳过；需要源码编译时显式安装对应依赖：
+显式下载合包模式不需要安装 PyTorch；默认源码构建需要。根目录 `requirements.txt` 不包含
+torch_npu 源码构建依赖，CI 的默认构建路径需安装对应依赖，不能跳过 PyTorch 安装。以 2.13 为例：
 
 ```bash
 bash scripts/build_unified.sh --prepare-only
 python -m pip install -r third_party/torch_npu/requirements_2.13-build.txt
-bash scripts/build_unified.sh --torch-npu-source -e ascend -V 910b -j48
+bash scripts/build_unified.sh -e ascend -V 910b -j48
 ```
 
 也可手动指定直链。将 `TORCH_NPU_WHEEL_URL` 替换为
@@ -123,7 +125,7 @@ MindSpore 打包会重建 `output/`，再次构建前请保存历史产物。
 ## 源码版本
 
 `third_party/torch_npu` 是 Git 子模块，其 gitlink 是唯一版本锁；没有补丁清单或私有提交。
-显式选择源码构建时，先自动执行指定子模块的递归初始化；使用官方 wheel 时跳过。单独下载源码：
+默认源码构建时，先自动执行指定子模块的递归初始化；使用官方 wheel 时跳过。单独下载源码：
 
 ```bash
 bash scripts/build_unified.sh --prepare-only
@@ -198,7 +200,7 @@ MindSpore:
       Version: 2.13.0
 ```
 
-版本来自实际输入 wheel；默认下载模式读取官方 torch_npu wheel 的元数据，源码模式读取原生构建产物。
+版本来自实际输入 wheel；下载模式读取官方 torch_npu wheel 的元数据，默认源码模式读取原生构建产物。
 合包时生成统一的 `components.json` 并存入发行包的 dist-info 目录。
 旧格式联合 wheel 缺少 torch_npu 元数据时，从内置 `torch_npu/version.py` 读取版本。
 `msinfo` 仅使用 Python 标准库读取安装元数据，不导入 MindSpore、PyTorch 或 torch_npu，
