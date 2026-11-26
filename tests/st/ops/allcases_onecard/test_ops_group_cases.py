@@ -457,7 +457,7 @@ def test_binary_op_group_case_level1():
 @arg_mark(plat_marks=['platform_ascend910b',
                       'platform_gpu',
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_unary_op_group_case_level0():
@@ -505,7 +505,7 @@ def test_reduction_op_group_case_level1():
 @arg_mark(plat_marks=['platform_ascend910b',
                       'platform_gpu',
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_other_op_group_case_level0():
