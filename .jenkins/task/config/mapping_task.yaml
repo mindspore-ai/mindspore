@@ -24,6 +24,7 @@ MS_ALL:
     mindspore/ccsrc/CMakeLists.txt
     mindspore/ccsrc/backend/kernel_compiler
     scripts/build
+    build.sh
 # fl: cpu gpu lite
 MS_FL:
     mindspore/lite/java

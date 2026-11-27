@@ -1,7 +1,6 @@
 {
   "CODECHECK": {
     "DIR_ARRAY": [
-      "build.sh",
       "CODEOWNERS",
       ".jenkins",
       ".clang-format",
