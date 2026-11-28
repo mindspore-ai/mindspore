@@ -14,7 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
-set -e
+set -xe
 BASEPATH=$(cd "$(dirname $0)"; pwd)
 export CUDA_PATH=""
 export BUILD_PATH="${BASEPATH}/build/"
